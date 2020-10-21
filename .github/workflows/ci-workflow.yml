@@ -1,0 +1,31 @@
+name: Compilation & tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  job_build_debug:
+    name: Build debug
+    runs-on: ubuntu-latest
+
+    container:
+      image: docker://ledgerhq/ledger-app-builder:1.6.0
+
+    steps:
+      - name: Clone
+        uses: actions/checkout@v2
+
+      - name: Build
+        run: |
+          make DEBUG=1
+
+      - name: Upload app binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: boilerplate-app-debug
+          path: bin
