@@ -105,13 +105,19 @@ int recv() {
     return ret;
 }
 
-int send(const buf_t *buf) {
+int send(const buf_t *buf, uint16_t sw) {
     int ret;
 
-    os_memmove(G_io_apdu_buffer, buf->bytes, buf->size);
-    output_len = buf->size;
+    if (buf != NULL) {
+        os_memmove(G_io_apdu_buffer, buf->bytes, buf->size);
+        output_len = buf->size;
+        PRINTF("<= %.*H %02X%02X\n", buf->size, buf->bytes, sw >> 8, sw & 0xFF);
+    } else {
+        PRINTF("<= %02X%02X\n", sw >> 8, sw & 0xFF);
+    }
 
-    PRINTF("<= %.*H\n", buf->size, buf->bytes);
+    G_io_apdu_buffer[output_len++] = (uint8_t)(sw >> 8);
+    G_io_apdu_buffer[output_len++] = (uint8_t)(sw & 0xFF);
 
     switch (io_state) {
         case READY:
@@ -131,12 +137,6 @@ int send(const buf_t *buf) {
     return ret;
 }
 
-int send_sw(uint16_t reponse) {
-    const buf_t buf = {
-        .bytes = (uint8_t[2]){(uint8_t)((reponse >> 8) & 0xFF),  //
-                              (uint8_t)(reponse & 0xFF)},        //
-        .size = 2                                                //
-    };
-
-    return send(&buf);
+int send_sw(uint16_t sw) {
+    return send(NULL, sw);
 }
