@@ -23,7 +23,7 @@ The following Python dependencies are required:
 
 - [ledgercomm](https://github.com/LedgerHQ/ledgercomm)
 
-## Using Speculos
+### Using Speculos
 
 First start your application with Speculos
 
@@ -37,7 +37,7 @@ then at the root of `app-boilerplate` folder run
 pytest
 ```
 
-## Using Nano S/X
+### Using Nano S/X
 
 Be sure to have you device connected through USB (without any other software interacting with it) and run
 
