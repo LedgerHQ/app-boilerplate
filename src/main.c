@@ -41,32 +41,45 @@ void app_main() {
     io_state = READY;
 
     for (;;) {
-        input_len = recv();
+        BEGIN_TRY {
+            TRY {
+                input_len = recv();
 
-        if (input_len == -1) {
-            return;
-        }
+                if (input_len == -1) {
+                    return;
+                }
 
-        PRINTF("=> %.*H\n", input_len, G_io_apdu_buffer);
+                PRINTF("=> %.*H\n", input_len, G_io_apdu_buffer);
 
-        if (input_len < OFFSET_CDATA) {
-            send_sw(SW_WRONG_DATA_LENGTH);
-            continue;
-        }
+                if (input_len < OFFSET_CDATA) {
+                    send_sw(SW_WRONG_DATA_LENGTH);
+                    continue;
+                }
 
-        if (G_io_apdu_buffer[OFFSET_CLA] != CLA) {
-            send_sw(SW_CLA_NOT_SUPPORTED);
-            continue;
-        }
+                if (G_io_apdu_buffer[OFFSET_CLA] != CLA) {
+                    send_sw(SW_CLA_NOT_SUPPORTED);
+                    continue;
+                }
 
-        const buf_t input = {.bytes = G_io_apdu_buffer + OFFSET_CDATA,
-                             .size = input_len - OFFSET_CDATA};
+                const buf_t input = {.bytes = G_io_apdu_buffer + OFFSET_CDATA,
+                                     .size = input_len - OFFSET_CDATA};
 
-        if (dispatch(G_io_apdu_buffer[OFFSET_INS],  //
-                     G_io_apdu_buffer[OFFSET_P1],   //
-                     G_io_apdu_buffer[OFFSET_P2],
-                     &input) < 0) {
-            return;
+                if (dispatch(G_io_apdu_buffer[OFFSET_INS],  //
+                             G_io_apdu_buffer[OFFSET_P1],   //
+                             G_io_apdu_buffer[OFFSET_P2],
+                             &input) < 0) {
+                    return;
+                }
+            }
+            CATCH(EXCEPTION_IO_RESET) {
+                THROW(EXCEPTION_IO_RESET);
+            }
+            CATCH_OTHER(e) {
+                send_sw(e);
+            }
+            FINALLY {
+            }
+            END_TRY;
         }
     }
 }
