@@ -20,7 +20,7 @@ class Command:
                  debug: bool = False) -> None:
         self.transport = transport
         self.debug = debug
-    
+
     def get_version(self) -> str:
         ins: InsType = InsType.INS_GET_VERSION
 
@@ -29,7 +29,7 @@ class Command:
                             p1=0x00,
                             p2=0x00,
                             payload=b"")
-        
+
         sw, response = self.transport.recv()  # type: int, bytes
 
         if not sw & 0x9000:
@@ -52,7 +52,7 @@ class Command:
                             p1=0x00,
                             p2=0x00,
                             payload=b"")
-        
+
         sw, response = self.transport.recv()  # type: int, bytes
 
         if not sw & 0x9000:

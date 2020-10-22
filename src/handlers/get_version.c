@@ -35,7 +35,7 @@ int get_version(uint8_t p1, uint8_t p2, const buf_t *input) {
                                (uint8_t) MAJOR_VERSION,  //
                                (uint8_t) MINOR_VERSION,  //
                                (uint8_t) PATCH_VERSION,  //
-                           },                            //
+                           },
                        .size = 3};
 
     return send(&buf, SW_OK);
