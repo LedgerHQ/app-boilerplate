@@ -105,11 +105,16 @@ int recv() {
     return ret;
 }
 
-int send(const buf_t *buf) {
+int send(const buf_t *buf, uint16_t status_word) {
     int ret;
+    output_len = 0;
 
-    os_memmove(G_io_apdu_buffer, buf->bytes, buf->size);
-    output_len = buf->size;
+    if (buf != NULL) {
+        os_memmove(G_io_apdu_buffer, buf->bytes, buf->size);
+        output_len = buf->size;
+    }
+    G_io_apdu_buffer[output_len++] = (uint8_t)(status_word >> 8);
+    G_io_apdu_buffer[output_len++] = (uint8_t)(status_word & 0xFF);
 
     PRINTF("<= %.*H\n", buf->size, buf->bytes);
 
@@ -131,12 +136,6 @@ int send(const buf_t *buf) {
     return ret;
 }
 
-int send_sw(uint16_t reponse) {
-    const buf_t buf = {
-        .bytes = (uint8_t[2]){(uint8_t)((reponse >> 8) & 0xFF),  //
-                              (uint8_t)(reponse & 0xFF)},        //
-        .size = 2                                                //
-    };
-
-    return send(&buf);
+int send_sw(uint16_t status_word) {
+    return send(NULL, status_word);
 }
