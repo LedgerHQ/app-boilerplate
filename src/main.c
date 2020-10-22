@@ -24,7 +24,6 @@
 #include "types.h"
 #include "globals.h"
 #include "ui/menu.h"
-#include "ui/processing.h"
 #include "io.h"
 #include "sw.h"
 #include "offsets.h"
@@ -63,16 +62,12 @@ void app_main() {
         const buf_t input = {.bytes = G_io_apdu_buffer + OFFSET_CDATA,
                              .size = input_len - OFFSET_CDATA};
 
-        ui_processing();
-
         if (dispatch(G_io_apdu_buffer[OFFSET_INS],  //
                      G_io_apdu_buffer[OFFSET_P1],   //
                      G_io_apdu_buffer[OFFSET_P2],
                      &input) < 0) {
             return;
         }
-
-        ui_menu_main();
     }
 }
 
