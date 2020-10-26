@@ -34,7 +34,14 @@ io_state_e io_state;
 ux_state_t G_ux;
 bolos_ux_params_t G_ux_params;
 
+/**
+ * Function to handle IO event loop.
+ *
+ * @brief handle APDU command received and send APDU response using handlers.
+ *
+ */
 void app_main() {
+    // Length of APDU command received.
     int input_len = 0;
 
     output_len = 0;
@@ -85,6 +92,12 @@ void app_main() {
     }
 }
 
+/**
+ * Function to exit the application.
+ *
+ * @brief exit the application and go back to the dashboard.
+ *
+ */
 void app_exit() {
     BEGIN_TRY_L(exit) {
         TRY_L(exit) {
@@ -96,6 +109,12 @@ void app_exit() {
     END_TRY_L(exit);
 }
 
+/**
+ * Entrypoint of the application.
+ *
+ * @brief main loop to setup USB, Bluetooth, UI and launch app_main().
+ *
+ */
 __attribute__((section(".boot"))) int main() {
     __asm volatile("cpsie i");
 

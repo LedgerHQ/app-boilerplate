@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "get_version.h"
+#include "globals.h"
 #include "io.h"
 #include "sw.h"
 #include "types.h"
@@ -29,8 +30,12 @@ int get_app_name(uint8_t p1, uint8_t p2, const buf_t *input) {
         return send_sw(SW_WRONG_P1P2);
     }
 
-    uint8_t response[64];
+    uint8_t response[MAX_APPNAME_LEN];
     size_t n = strlen(APPNAME);
+
+    if (n > MAX_APPNAME_LEN) {
+        return send_sw(SW_APPNAME_TOO_LONG);
+    }
 
     strncpy((char *) response, APPNAME, n);
 
