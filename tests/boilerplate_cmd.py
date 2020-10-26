@@ -14,7 +14,7 @@ class InsType(enum.IntEnum):
     INS_GET_APP_NAME = 0x04
 
 
-class Command:
+class BoilerplateCommand:
     def __init__(self,
                  transport: Transport,
                  debug: bool = False) -> None:

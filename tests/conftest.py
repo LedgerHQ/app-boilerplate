@@ -2,7 +2,7 @@ import pytest
 
 from ledgercomm import Transport
 
-from apdu_cmd import Command
+from boilerplate_cmd import BoilerplateCommand
 
 
 def pytest_addoption(parser):
@@ -17,8 +17,9 @@ def hid(pytestconfig):
 
 @pytest.fixture(scope="module")
 def cmd(hid):
-    transport = Transport(hid=hid, debug=True)
-    command = Command(
+    transport = (Transport(interface="hid", debug=True)
+                 if hid else Transport(interface="tcp", debug=True))
+    command = BoilerplateCommand(
         transport=transport,
         debug=True
     )
