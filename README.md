@@ -16,14 +16,13 @@ make load     # load the app on the Nano using ledgerblue
 ## Tests
 
 End-to-end tests are implemented in Python and can be executed either using the [Speculos](https://github.com/LedgerHQ/speculos) emulator or a Ledger Nano S/X.
+Python dependencies required are [pytest](https://pypi.org/project/pytest/) and [ledgercomm](https://pypi.org/project/ledgercomm/), install them using [pip](https://pypi.org/project/pip/)
 
-The following Python dependencies are required:
+```
+pip install -r tests/requirements.txt
+```
 
-- [pytest](https://pypi.org/project/pytest/)
-
-- [ledgercomm](https://github.com/LedgerHQ/ledgercomm)
-
-### Using Speculos
+### Launch with Speculos
 
 First start your application with Speculos
 
@@ -37,7 +36,7 @@ then at the root of `app-boilerplate` folder run
 pytest
 ```
 
-### Using Nano S/X
+### Launch with your Nano S/X
 
 Be sure to have you device connected through USB (without any other software interacting with it) and run
 
