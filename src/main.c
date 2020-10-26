@@ -51,7 +51,8 @@ void app_main() {
 
                 PRINTF("=> %.*H\n", input_len, G_io_apdu_buffer);
 
-                if (input_len < OFFSET_CDATA) {
+                if (input_len < OFFSET_CDATA ||
+                    input_len - OFFSET_CDATA != G_io_apdu_buffer[OFFSET_LC]) {
                     send_sw(SW_WRONG_DATA_LENGTH);
                     continue;
                 }
@@ -66,7 +67,7 @@ void app_main() {
 
                 if (dispatch(G_io_apdu_buffer[OFFSET_INS],  //
                              G_io_apdu_buffer[OFFSET_P1],   //
-                             G_io_apdu_buffer[OFFSET_P2],
+                             G_io_apdu_buffer[OFFSET_P2],   //
                              &input) < 0) {
                     return;
                 }
