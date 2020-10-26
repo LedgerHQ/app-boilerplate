@@ -113,6 +113,7 @@ int send(const buf_t *buf, uint16_t sw) {
         output_len = buf->size;
         PRINTF("<= %.*H %02X%02X\n", buf->size, buf->bytes, sw >> 8, sw & 0xFF);
     } else {
+        output_len = 0;
         PRINTF("<= %02X%02X\n", sw >> 8, sw & 0xFF);
     }
 
