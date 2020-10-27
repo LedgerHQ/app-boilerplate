@@ -17,3 +17,6 @@ __pycache__/
 *.egg-info/
 .eggs/
 .python-version
+
+# Doxygen
+doc/
