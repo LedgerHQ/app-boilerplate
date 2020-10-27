@@ -30,9 +30,6 @@ void io_seproxyhal_display(const bagl_element_t *element) {
 
 uint8_t io_event(uint8_t channel) {
     switch (G_io_seproxyhal_spi_buffer[0]) {
-        case SEPROXYHAL_TAG_FINGER_EVENT:
-            UX_FINGER_EVENT(G_io_seproxyhal_spi_buffer);
-            break;
         case SEPROXYHAL_TAG_BUTTON_PUSH_EVENT:
             UX_BUTTON_PUSH_EVENT(G_io_seproxyhal_spi_buffer);
             break;
@@ -43,16 +40,17 @@ uint8_t io_event(uint8_t channel) {
                 THROW(EXCEPTION_IO_RESET);
             }
             /* fallthrough */
-        default:
-            UX_DEFAULT_EVENT();
-            break;
         case SEPROXYHAL_TAG_DISPLAY_PROCESSED_EVENT:
             UX_DISPLAYED_EVENT({});
             break;
         case SEPROXYHAL_TAG_TICKER_EVENT:
             UX_TICKER_EVENT(G_io_seproxyhal_spi_buffer, {});
             break;
+        default:
+            UX_DEFAULT_EVENT();
+            break;
     }
+
     if (!io_seproxyhal_spi_is_status_sent()) {
         io_seproxyhal_general_status();
     }
