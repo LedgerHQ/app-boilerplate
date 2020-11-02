@@ -1,6 +1,6 @@
 import pytest
 
-from exception import *
+from boilerplate_client.exception import *
 
 
 @pytest.mark.xfail(raises=ClaNotSupportedError)

@@ -2,7 +2,7 @@ import pytest
 
 from ledgercomm import Transport
 
-from boilerplate_cmd import BoilerplateCommand
+from boilerplate_client.boilerplate_cmd import BoilerplateCommand
 
 
 def pytest_addoption(parser):
