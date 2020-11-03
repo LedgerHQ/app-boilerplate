@@ -13,8 +13,6 @@
  *
  * @return positive integer if success, -1 otherwise.
  *
- * @throw SW_APPVERSION_WRONG_LENGTH if len(MAJOR || MINOR || PATCH) != 3.
- *
  */
 int get_version(void);
 

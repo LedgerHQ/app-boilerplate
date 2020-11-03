@@ -13,8 +13,6 @@
  *
  * @return positive integer if success, -1 otherwise.
  *
- * @throw SW_APPNAME_TOO_LONG if len(APPNAME) > 64.
- *
  */
 int get_app_name(void);
 
