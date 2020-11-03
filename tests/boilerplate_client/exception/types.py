@@ -18,5 +18,5 @@ class ClaNotSupportedError(Exception):
     pass
 
 
-class AppNameTooLongError(Exception):
+class WrongResponseLengthError(Exception):
     pass

@@ -10,8 +10,7 @@ class DeviceException(Exception):  # pylint: disable=too-few-public-methods
         0x6A87: WrongDataLengthError,
         0x6D00: InsNotSupportedError,
         0x6E00: ClaNotSupportedError,
-        0xB000: AppNameTooLongError
-
+        0xB000: WrongResponseLengthError
     }
 
     def __new__(cls,

@@ -4,7 +4,7 @@ from .types import (UnknownDeviceError,
                     WrongDataLengthError,
                     InsNotSupportedError,
                     ClaNotSupportedError,
-                    AppNameTooLongError)
+                    WrongResponseLengthError)
 
 __all__ = [
     "DeviceException",
@@ -13,5 +13,5 @@ __all__ = [
     "WrongDataLengthError",
     "InsNotSupportedError",
     "ClaNotSupportedError",
-    "AppNameTooLongError"
+    "WrongResponseLengthError"
 ]
