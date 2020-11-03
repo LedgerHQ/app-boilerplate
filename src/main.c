@@ -16,7 +16,6 @@
  *****************************************************************************/
 
 #include <stdint.h>
-#include <string.h>
 
 #include "os.h"
 #include "ux.h"
@@ -41,9 +40,9 @@ bolos_ux_params_t G_ux_params;
  *
  */
 void app_main() {
-    // Length of APDU command received
+    // Length of APDU command received in G_io_apdu_buffer
     int input_len = 0;
-    // APDU command received
+    // Structured APDU command
     command_t cmd;
 
     // Reset length of APDU response
@@ -53,19 +52,21 @@ void app_main() {
     for (;;) {
         BEGIN_TRY {
             TRY {
-                memset(&cmd, 0, sizeof(cmd));
+                // Reset structured APDU command
+                os_memset(&cmd, 0, sizeof(cmd));
 
-                input_len = recv_command();
-
-                if (input_len == -1) {
+                // Receive command bytes in G_io_apdu_buffer
+                if ((input_len = recv_command()) < 0) {
                     return;
                 }
 
+                // Parse APDU command
                 if (parse_apdu(&cmd, G_io_apdu_buffer, input_len) < 0) {
                     send_sw(SW_WRONG_DATA_LENGTH);
                     continue;
                 }
 
+                // Dispatch APDU command to handler
                 if (dispatch_command(&cmd) < 0) {
                     return;
                 }

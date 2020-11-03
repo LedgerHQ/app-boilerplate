@@ -17,7 +17,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <string.h>
 
 #include "get_app_name.h"
 #include "../globals.h"
