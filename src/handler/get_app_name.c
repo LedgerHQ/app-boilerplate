@@ -15,22 +15,34 @@
  *  limitations under the License.
  *****************************************************************************/
 
+#include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
-#include "dispatcher.h"
-#include "types.h"
-#include "io.h"
-#include "sw.h"
-#include "handlers/get_version.h"
-#include "handlers/get_app_name.h"
+#include "get_app_name.h"
+#include "../globals.h"
+#include "../io.h"
+#include "../sw.h"
+#include "../types.h"
 
-int dispatch(cmd_e ins, uint8_t p1, uint8_t p2, const buf_t *input) {
-    switch (ins) {
-        case GET_VERSION:
-            return get_version(p1, p2, input);
-        case GET_APP_NAME:
-            return get_app_name(p1, p2, input);
-        default:
-            return send_sw(SW_INS_NOT_SUPPORTED);
+int set_app_name(uint8_t *out, size_t out_len, char *name, size_t name_len) {
+    if (out_len < name_len) {
+        return -1;
     }
+
+    strncpy((char *) out, name, name_len);
+
+    return 0;
+}
+
+int get_app_name(uint8_t *cdata, uint8_t cdata_len) {
+    _Static_assert(APPNAME_LEN < MAX_APPNAME_LEN, "APPNAME must be at most 64 characters!");
+
+    response_t resp = {.data = (uint8_t[APPNAME_LEN]){0}, .data_len = APPNAME_LEN};
+
+    if (set_app_name(resp.data, resp.data_len, APPNAME, APPNAME_LEN) < 0) {
+        return send_sw(SW_WRONG_RESPONSE_LENGTH);
+    }
+
+    return send_response(&resp, SW_OK);
 }

@@ -26,8 +26,8 @@
 #include "ui/menu.h"
 #include "io.h"
 #include "sw.h"
-#include "offsets.h"
-#include "dispatcher.h"
+#include "apdu/parser.h"
+#include "apdu/dispatcher.h"
 
 uint8_t G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 io_state_e io_state;
@@ -37,45 +37,36 @@ bolos_ux_params_t G_ux_params;
 /**
  * Function to handle IO event loop.
  *
- * @brief handle APDU command received and send APDU response using handlers.
+ * @brief handle APDU command received and send back APDU response using handlers.
  *
  */
 void app_main() {
-    // Length of APDU command received.
+    // Length of APDU command received
     int input_len = 0;
+    // APDU command received
+    command_t cmd;
 
+    // Reset length of APDU response
     output_len = 0;
     io_state = READY;
 
     for (;;) {
         BEGIN_TRY {
             TRY {
-                input_len = recv();
+                memset(&cmd, 0, sizeof(cmd));
+
+                input_len = recv_command();
 
                 if (input_len == -1) {
                     return;
                 }
 
-                PRINTF("=> %.*H\n", input_len, G_io_apdu_buffer);
-
-                if (input_len < OFFSET_CDATA ||
-                    input_len - OFFSET_CDATA != G_io_apdu_buffer[OFFSET_LC]) {
+                if (parse_apdu(&cmd, G_io_apdu_buffer, input_len) < 0) {
                     send_sw(SW_WRONG_DATA_LENGTH);
                     continue;
                 }
 
-                if (G_io_apdu_buffer[OFFSET_CLA] != CLA) {
-                    send_sw(SW_CLA_NOT_SUPPORTED);
-                    continue;
-                }
-
-                const buf_t input = {.bytes = G_io_apdu_buffer + OFFSET_CDATA,
-                                     .size = input_len - OFFSET_CDATA};
-
-                if (dispatch(G_io_apdu_buffer[OFFSET_INS],  //
-                             G_io_apdu_buffer[OFFSET_P1],   //
-                             G_io_apdu_buffer[OFFSET_P2],   //
-                             &input) < 0) {
+                if (dispatch_command(&cmd) < 0) {
                     return;
                 }
             }

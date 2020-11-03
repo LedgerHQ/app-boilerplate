@@ -11,15 +11,14 @@
  * @brief send APDU response with ASCII encoded name of the application
  * as in APPNAME variable of the Makefile.
  *
- * @param p1 instruction P1 (1 byte).
- * @param p2 instruction P2 (1 byte).
- * @param input buffer buf_t with command data.
+ * @param cdata buffer with APDU command data.
+ * @param cdata_len length of APDU command data buffer.
  *
  * @return positive integer if success, -1 otherwise.
  *
  * @throw SW_APPNAME_TOO_LONG if len(APPNAME) > 64.
  *
  */
-int get_app_name(uint8_t p1, uint8_t p2, const buf_t *input);
+int get_app_name(uint8_t *cdata, uint8_t cdata_len);
 
 #endif  // _GET_APP_NAME_H_

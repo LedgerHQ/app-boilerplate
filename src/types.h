@@ -17,15 +17,15 @@ typedef enum {
 } io_state_e;
 
 /**
- * Structure for buffering APDU command or response.
+ * Structure of APDU response data to send.
  *
- * @brief buffer for bytes of APDU.
+ * @brief response buffer with data and data length of APDU response.
  *
  */
 typedef struct {
-    uint8_t *bytes;  ///< pointer to buffer of bytes
-    size_t size;     ///< size of pointed bytes buffer
-} buf_t;
+    uint8_t *data;    ///< pointer to buffer with response data
+    size_t data_len;  ///< length of response data
+} response_t;
 
 /**
  * Enumeration with expected INS of APDU commands.
@@ -34,8 +34,23 @@ typedef struct {
  *
  */
 typedef enum {
-    GET_VERSION = 0x03,   ///< version of the application command
-    GET_APP_NAME = 0x04,  ///< name of the application command
-} cmd_e;
+    GET_VERSION = 0x03,   ///< version of the application
+    GET_APP_NAME = 0x04,  ///< name of the application
+} command_e;
+
+/**
+ * Structure of APDU command to receive.
+ *
+ * @brief struct of APDU command fields (CLA, INS, P1, P2, Lc, Command data).
+ *
+ */
+typedef struct {
+    uint8_t cla;
+    command_e ins;
+    uint8_t p1;
+    uint8_t p2;
+    uint8_t lc;
+    uint8_t *data;
+} command_t;
 
 #endif  // _TYPES_H_

@@ -81,7 +81,7 @@ uint16_t io_exchange_al(uint8_t channel, uint16_t tx_len) {
     return 0;
 }
 
-int recv() {
+int recv_command() {
     int ret;
 
     switch (io_state) {
@@ -103,13 +103,13 @@ int recv() {
     return ret;
 }
 
-int send(const buf_t *buf, uint16_t sw) {
+int send_response(const response_t *resp, uint16_t sw) {
     int ret;
 
-    if (buf != NULL) {
-        os_memmove(G_io_apdu_buffer, buf->bytes, buf->size);
-        output_len = buf->size;
-        PRINTF("<= %.*H %02X%02X\n", buf->size, buf->bytes, sw >> 8, sw & 0xFF);
+    if (resp != NULL) {
+        os_memmove(G_io_apdu_buffer, resp->data, resp->data_len);
+        output_len = resp->data_len;
+        PRINTF("<= %.*H %02X%02X\n", resp->data_len, resp->data, sw >> 8, sw & 0xFF);
     } else {
         output_len = 0;
         PRINTF("<= %02X%02X\n", sw >> 8, sw & 0xFF);
@@ -137,5 +137,5 @@ int send(const buf_t *buf, uint16_t sw) {
 }
 
 int send_sw(uint16_t sw) {
-    return send(NULL, sw);
+    return send_response(NULL, sw);
 }

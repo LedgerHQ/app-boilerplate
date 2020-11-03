@@ -15,31 +15,33 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#include <stddef.h>
 #include <stdint.h>
-#include <string.h>
 
-#include "get_version.h"
-#include "globals.h"
-#include "io.h"
-#include "sw.h"
-#include "types.h"
+#include "dispatcher.h"
+#include "../globals.h"
+#include "../types.h"
+#include "../io.h"
+#include "../sw.h"
+#include "../handler/get_version.h"
+#include "../handler/get_app_name.h"
 
-int get_app_name(uint8_t p1, uint8_t p2, const buf_t *input) {
-    if (p1 != 0 || p2 != 0) {
-        return send_sw(SW_WRONG_P1P2);
+int dispatch_command(const command_t *cmd) {
+    if (cmd->cla != CLA) {
+        return send_sw(SW_CLA_NOT_SUPPORTED);
     }
 
-    uint8_t response[MAX_APPNAME_LEN];
-    size_t n = strlen(APPNAME);
-
-    if (n > MAX_APPNAME_LEN) {
-        return send_sw(SW_APPNAME_TOO_LONG);
+    switch (cmd->ins) {
+        case GET_VERSION:
+            if (cmd->p1 != 0 || cmd->p2 != 0) {
+                return send_sw(SW_WRONG_P1P2);
+            }
+            return get_version(cmd->data, cmd->lc);
+        case GET_APP_NAME:
+            if (cmd->p1 != 0 || cmd->p2 != 0) {
+                return send_sw(SW_WRONG_P1P2);
+            }
+            return get_app_name(cmd->data, cmd->lc);
+        default:
+            return send_sw(SW_INS_NOT_SUPPORTED);
     }
-
-    strncpy((char *) response, APPNAME, n);
-
-    const buf_t buf = {.bytes = response, .size = n};
-
-    return send(&buf, SW_OK);
 }

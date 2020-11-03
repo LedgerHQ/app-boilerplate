@@ -11,7 +11,7 @@
 #define SW_INS_NOT_SUPPORTED 0x6D00
 /// Status word for instruction class is different than CLA.
 #define SW_CLA_NOT_SUPPORTED 0x6E00
-/// Status word for length of APPNAME greater than MAX_APPNAME_LEN.
-#define SW_APPNAME_TOO_LONG 0xB000
+/// Status word for wrong reponse length (buffer too small or too big).
+#define SW_WRONG_RESPONSE_LENGTH 0xB000
 
 #endif  // _ERRORS_H_

@@ -15,28 +15,28 @@
  *  limitations under the License.
  *****************************************************************************/
 
+#include <string.h>
+#include <stddef.h>
 #include <stdint.h>
-#include <limits.h>
-#include <math.h>
-#include <stdlib.h>
 
-#include "get_version.h"
-#include "io.h"
-#include "sw.h"
-#include "types.h"
+#include "parser.h"
+#include "../types.h"
+#include "../offsets.h"
 
-int get_version(uint8_t p1, uint8_t p2, const buf_t *input) {
-    if (p1 != 0 || p2 != 0) {
-        return send_sw(SW_WRONG_P1P2);
+int parse_apdu(command_t *cmd, uint8_t *buf, size_t buf_len) {
+    PRINTF("=> %.*H\n", buf_len, buf);
+
+    // Check minimum length and Lc field of APDU command
+    if (buf_len < OFFSET_CDATA || buf_len - OFFSET_CDATA != buf[OFFSET_LC]) {
+        return -1;
     }
 
-    const buf_t buf = {.bytes =
-                           (uint8_t[3]){
-                               (uint8_t) MAJOR_VERSION,  //
-                               (uint8_t) MINOR_VERSION,  //
-                               (uint8_t) PATCH_VERSION,  //
-                           },
-                       .size = 3};
+    cmd->cla = buf[OFFSET_CLA];
+    cmd->ins = buf[OFFSET_INS];
+    cmd->p1 = buf[OFFSET_P1];
+    cmd->p2 = buf[OFFSET_P2];
+    cmd->lc = buf[OFFSET_LC];
+    cmd->data = (buf[OFFSET_LC] > 0) ? buf + OFFSET_CDATA : NULL;
 
-    return send(&buf, SW_OK);
+    return 0;
 }
