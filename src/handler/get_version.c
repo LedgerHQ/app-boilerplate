@@ -26,19 +26,7 @@
 #include "../sw.h"
 #include "../types.h"
 
-int set_app_version(uint8_t *out, size_t out_len, uint8_t major, uint8_t minor, uint8_t patch) {
-    if (out_len < 3) {
-        return -1;
-    }
-
-    out[0] = major;
-    out[1] = minor;
-    out[2] = patch;
-
-    return 0;
-}
-
-int get_version(uint8_t *cdata, uint8_t cdata_len) {
+int get_version() {
     _Static_assert(APPVERSION_LEN == 3, "Length of (MAJOR || MINOR || PATCH) must be 3!");
     _Static_assert(MAJOR_VERSION >= 0 && MAJOR_VERSION <= UINT8_MAX,
                    "MAJOR version must be between 0 and 255!");
@@ -47,15 +35,13 @@ int get_version(uint8_t *cdata, uint8_t cdata_len) {
     _Static_assert(PATCH_VERSION >= 0 && PATCH_VERSION <= UINT8_MAX,
                    "PATCH version must be between 0 and 255!");
 
-    response_t resp = {.data = (uint8_t[APPVERSION_LEN]){0}, .data_len = APPVERSION_LEN};
-
-    if (set_app_version(resp.data,      //
-                        resp.data_len,  //
-                        MAJOR_VERSION,  //
-                        MINOR_VERSION,  //
-                        PATCH_VERSION) < 0) {
-        return send_sw(SW_WRONG_RESPONSE_LENGTH);
-    }
+    response_t resp = {.data =
+                           (uint8_t[APPVERSION_LEN]){
+                               (uint8_t) MAJOR_VERSION,  //
+                               (uint8_t) MINOR_VERSION,  //
+                               (uint8_t) PATCH_VERSION,  //
+                           },
+                       .data_len = APPVERSION_LEN};
 
     return send_response(&resp, SW_OK);
 }

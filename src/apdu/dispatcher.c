@@ -35,12 +35,12 @@ int dispatch_command(const command_t *cmd) {
             if (cmd->p1 != 0 || cmd->p2 != 0) {
                 return send_sw(SW_WRONG_P1P2);
             }
-            return get_version(cmd->data, cmd->lc);
+            return get_version();
         case GET_APP_NAME:
             if (cmd->p1 != 0 || cmd->p2 != 0) {
                 return send_sw(SW_WRONG_P1P2);
             }
-            return get_app_name(cmd->data, cmd->lc);
+            return get_app_name();
         default:
             return send_sw(SW_INS_NOT_SUPPORTED);
     }
