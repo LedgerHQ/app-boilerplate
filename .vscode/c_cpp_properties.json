@@ -7,9 +7,10 @@
         {
             "name": "Nano S",
             "includePath": [
-                "${workspaceFolder}/**",
-                "${env:BOLOS_SDK}/include/**",
-                "${env:BOLOS_SDK}/lib_ux/include/**"
+                "/usr/include",
+                "${workspaceFolder}/src",
+                "${env:BOLOS_SDK}/include/*",
+                "${env:BOLOS_SDK}/lib_ux/include/*"
             ],
             "defines": [
                 "TARGET_NANOS",
@@ -34,14 +35,11 @@
                 "HAVE_PRINTF",
                 "PRINTF=screen_printf"
             ],
-            "compilerPath": "${BOLOS_ENV}/gcc-arm-none-eabi-5_3-2016q1/bin/arm-none-eabi-gcc",
+            "compilerPath": "${env:BOLOS_ENV}/gcc-arm-none-eabi-5_3-2016q1/bin/arm-none-eabi-gcc",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "gcc-arm",
             "browse": {
-                "path": [
-                    "${workspaceFolder}/src"
-                ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
             }
