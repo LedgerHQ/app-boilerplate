@@ -16,6 +16,7 @@
  *****************************************************************************/
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "dispatcher.h"
 #include "../globals.h"
@@ -24,24 +25,35 @@
 #include "../sw.h"
 #include "../handler/get_version.h"
 #include "../handler/get_app_name.h"
+#include "../handler/get_public_key.h"
 
-int dispatch_command(const command_t *cmd) {
+int apdu_dispatcher(const command_t *cmd) {
     if (cmd->cla != CLA) {
-        return send_sw(SW_CLA_NOT_SUPPORTED);
+        return io_send_sw(SW_CLA_NOT_SUPPORTED);
     }
 
     switch (cmd->ins) {
         case GET_VERSION:
             if (cmd->p1 != 0 || cmd->p2 != 0) {
-                return send_sw(SW_WRONG_P1P2);
+                return io_send_sw(SW_WRONG_P1P2);
             }
-            return get_version();
+            return handler_get_version();
         case GET_APP_NAME:
             if (cmd->p1 != 0 || cmd->p2 != 0) {
-                return send_sw(SW_WRONG_P1P2);
+                return io_send_sw(SW_WRONG_P1P2);
             }
-            return get_app_name();
+            return handler_get_app_name();
+        case GET_PUBLIC_KEY: {
+            if (cmd->p1 > 1 || cmd->p2 > 0) {
+                return io_send_sw(SW_WRONG_P1P2);
+            }
+            if (!cmd->data) {
+                return io_send_sw(SW_WRONG_DATA_LENGTH);
+            }
+            buffer_t buf = {.ptr = cmd->data, .size = cmd->lc, .offset = 0};
+            return handler_get_public_key(&buf, (bool) cmd->p1);
+        }
         default:
-            return send_sw(SW_INS_NOT_SUPPORTED);
+            return io_send_sw(SW_INS_NOT_SUPPORTED);
     }
 }

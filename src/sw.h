@@ -1,8 +1,9 @@
-#ifndef _ERRORS_H_
-#define _ERRORS_H_
+#pragma once
 
 /// Status word for success.
 #define SW_OK 0x9000
+/// Status word for denied by user.
+#define SW_DENY 0x6985
 /// Status word for incorrect P1 or P2.
 #define SW_WRONG_P1P2 0x6A86
 /// Status word for either wrong Lc or lenght of APDU command less than 5.
@@ -13,5 +14,3 @@
 #define SW_CLA_NOT_SUPPORTED 0x6E00
 /// Status word for wrong reponse length (buffer too small or too big).
 #define SW_WRONG_RESPONSE_LENGTH 0xB000
-
-#endif  // _ERRORS_H_

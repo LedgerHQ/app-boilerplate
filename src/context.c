@@ -15,19 +15,14 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#include <stdint.h>  // uint*_t
+#include <string.h>  // memset
 
-#include "get_app_name.h"
-#include "../globals.h"
-#include "../io.h"
-#include "../sw.h"
-#include "../types.h"
-#include "common/buffer.h"
+#include "os.h"
 
-int handler_get_app_name() {
-    _Static_assert(APPNAME_LEN < MAX_APPNAME_LEN, "APPNAME must be at most 64 characters!");
+#include "context.h"
 
-    buffer_t rdata = {.ptr = (uint8_t *) PIC(APPNAME), .size = APPNAME_LEN, .offset = 0};
+pubkey_ctx_t pk_ctx;
 
-    return io_send_response(&rdata, SW_OK);
+void context_reset_pubkey() {
+    memset(&pk_ctx, 0, sizeof(pk_ctx));
 }

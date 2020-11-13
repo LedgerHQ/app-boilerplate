@@ -1,23 +1,21 @@
-#ifndef _APDU_PARSER_H_
-#define _APDU_PARSER_H_
+#pragma once
 
-#include <stddef.h>
-#include <stdint.h>
+#include <stddef.h>   // size_t
+#include <stdint.h>   // uint*_t
+#include <stdbool.h>  // bool
 
 #include "../types.h"
 
 /**
  * Function to parse APDU command.
  *
- * @brief parse buf and fill cmd struct with APDU command.
+ * @brief parse input buffer into command_t struct.
  *
- * @param cmd struct to be filled with APDU command in buf.
- * @param buf buffer of bytes within APDU command.
- * @param buf_len length of the buffer.
+ * @param[out] cmd command_t struct with APDU command fields.
+ * @param[in]  buf bytes buffer within APDU command.
+ * @param[in]  buf_len length of bytes buffer.
  *
- * @return positive integer if success, -1 otherwise.
+ * @return true if success, false otherwise.
  *
  */
-int parse_apdu(command_t *cmd, uint8_t *buf, size_t buf_len);
-
-#endif  // _APDU_PARSER_H_
+bool apdu_parser(command_t *cmd, uint8_t *buf, size_t buf_len);

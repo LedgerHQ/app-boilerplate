@@ -1,14 +1,14 @@
-#ifndef _GLOBALS_H_
-#define _GLOBALS_H_
+#pragma once
 
 #include <stdint.h>
 
 #include "ux.h"
 
 #include "io.h"
+#include "types.h"
 
 /**
- * Instruction class of the application.
+ * Instruction class of the Boilerplate application.
  */
 #define CLA 0xE0
 
@@ -35,7 +35,7 @@ extern uint8_t G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 /**
  * Global variable with the lenght of APDU response to send back.
  */
-extern uint32_t output_len;
+extern uint32_t G_output_len;
 
 /**
  * Global structure to perform asynchronous UX aside IO operations.
@@ -50,6 +50,4 @@ extern bolos_ux_params_t G_ux_params;
 /**
  * Global enumeration with the state of IO (READY, RECEIVING, WAITING).
  */
-extern io_state_e io_state;
-
-#endif  // _GLOBALS_H_
+extern io_state_e G_io_state;

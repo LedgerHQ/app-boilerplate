@@ -10,12 +10,12 @@ def pytest_addoption(parser):
                      action="store_true")
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def hid(pytestconfig):
     return pytestconfig.getoption("hid")
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def cmd(hid):
     transport = (Transport(interface="hid", debug=True)
                  if hid else Transport(interface="tcp", debug=True))

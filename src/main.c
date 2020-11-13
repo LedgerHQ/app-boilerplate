@@ -15,7 +15,8 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#include <stdint.h>
+#include <stdint.h>  // uint*_t
+#include <string.h>  // memset
 
 #include "os.h"
 #include "ux.h"
@@ -25,11 +26,12 @@
 #include "ui/menu.h"
 #include "io.h"
 #include "sw.h"
+#include "context.h"
 #include "apdu/parser.h"
 #include "apdu/dispatcher.h"
 
 uint8_t G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
-io_state_e io_state;
+io_state_e G_io_state;
 ux_state_t G_ux;
 bolos_ux_params_t G_ux_params;
 
@@ -46,28 +48,42 @@ void app_main() {
     command_t cmd;
 
     // Reset length of APDU response
-    output_len = 0;
-    io_state = READY;
+    G_output_len = 0;
+    G_io_state = READY;
 
     for (;;) {
         BEGIN_TRY {
             TRY {
                 // Reset structured APDU command
-                os_memset(&cmd, 0, sizeof(cmd));
+                memset(&cmd, 0, sizeof(cmd));
 
                 // Receive command bytes in G_io_apdu_buffer
-                if ((input_len = recv_command()) < 0) {
+                if ((input_len = io_recv_command()) < 0) {
                     return;
                 }
 
-                // Parse APDU command
-                if (parse_apdu(&cmd, G_io_apdu_buffer, input_len) < 0) {
-                    send_sw(SW_WRONG_DATA_LENGTH);
+                // Parse APDU command from G_io_apdu_buffer
+                if (!apdu_parser(&cmd, G_io_apdu_buffer, input_len)) {
+                    PRINTF("=> /!\\ BAD LENGTH: %.*H\n", input_len, G_io_apdu_buffer);
+                    io_send_sw(SW_WRONG_DATA_LENGTH);
                     continue;
                 }
 
-                // Dispatch APDU command to handler
-                if (dispatch_command(&cmd) < 0) {
+                PRINTF("=> CLA=%02X | INS=%02X | P1=%02X | P2=%02X | Lc=%02X | ",
+                       cmd.cla,
+                       cmd.ins,
+                       cmd.p1,
+                       cmd.p2,
+                       cmd.lc);
+
+                if (cmd.data) {
+                    PRINTF("CData=%.*H\n", cmd.lc, cmd.data);
+                } else {
+                    PRINTF("CData=NULL\n");
+                }
+
+                // Dispatch structured APDU command to handler
+                if (apdu_dispatcher(&cmd) < 0) {
                     return;
                 }
             }
@@ -75,7 +91,7 @@ void app_main() {
                 THROW(EXCEPTION_IO_RESET);
             }
             CATCH_OTHER(e) {
-                send_sw(e);
+                io_send_sw(e);
             }
             FINALLY {
             }
@@ -113,7 +129,7 @@ __attribute__((section(".boot"))) int main() {
     os_boot();
 
     for (;;) {
-        UX_INIT();
+        memset(&G_ux, 0, sizeof(G_ux));
 
         BEGIN_TRY {
             TRY {
@@ -132,7 +148,7 @@ __attribute__((section(".boot"))) int main() {
                 BLE_power(0, NULL);
                 BLE_power(1, "Nano X");
 #endif  // HAVE_BLE
-
+                context_reset_pubkey();
                 app_main();
             }
             CATCH(EXCEPTION_IO_RESET) {

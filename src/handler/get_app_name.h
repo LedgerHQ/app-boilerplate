@@ -1,9 +1,4 @@
-#ifndef _GET_APP_NAME_H_
-#define _GET_APP_NAME_H_
-
-#include <stdint.h>
-
-#include "../types.h"
+#pragma once
 
 /**
  * Function handling GET_APP_NAME command.
@@ -11,9 +6,7 @@
  * @brief send APDU response with ASCII encoded name of the application
  * as in APPNAME variable of the Makefile.
  *
- * @return positive integer if success, -1 otherwise.
+ * @return zero or positive integer if success, negative number otherwise.
  *
  */
-int get_app_name(void);
-
-#endif  // _GET_APP_NAME_H_
+int handler_get_app_name(void);

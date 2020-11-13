@@ -1,5 +1,4 @@
-#ifndef _OFFSETS_H_
-#define _OFFSETS_H_
+#pragma once
 
 // Offset of instruction class.
 #define OFFSET_CLA 0
@@ -13,5 +12,3 @@
 #define OFFSET_LC 4
 // Offset of command data.
 #define OFFSET_CDATA 5
-
-#endif  // _OFFSETS_H_

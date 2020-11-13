@@ -15,18 +15,18 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <assert.h>
+#include <stdint.h>  // uint*_t
+#include <limits.h>  // UINT8_MAX
+#include <assert.h>  // _Static_assert
 
 #include "get_version.h"
 #include "../globals.h"
 #include "../io.h"
 #include "../sw.h"
 #include "../types.h"
+#include "common/buffer.h"
 
-int get_version() {
+int handler_get_version() {
     _Static_assert(APPVERSION_LEN == 3, "Length of (MAJOR || MINOR || PATCH) must be 3!");
     _Static_assert(MAJOR_VERSION >= 0 && MAJOR_VERSION <= UINT8_MAX,
                    "MAJOR version must be between 0 and 255!");
@@ -35,13 +35,11 @@ int get_version() {
     _Static_assert(PATCH_VERSION >= 0 && PATCH_VERSION <= UINT8_MAX,
                    "PATCH version must be between 0 and 255!");
 
-    response_t resp = {.data =
-                           (uint8_t[APPVERSION_LEN]){
-                               (uint8_t) MAJOR_VERSION,  //
-                               (uint8_t) MINOR_VERSION,  //
-                               (uint8_t) PATCH_VERSION,  //
-                           },
-                       .data_len = APPVERSION_LEN};
+    uint8_t response[APPVERSION_LEN] = {(uint8_t) MAJOR_VERSION,
+                                        (uint8_t) MINOR_VERSION,
+                                        (uint8_t) PATCH_VERSION};
 
-    return send_response(&resp, SW_OK);
+    buffer_t rdata = {.ptr = response, .size = sizeof(response), .offset = 0};
+
+    return io_send_response(&rdata, SW_OK);
 }

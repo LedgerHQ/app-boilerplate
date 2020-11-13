@@ -15,19 +15,31 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#include <stdint.h>  // uint*_t
+#include <stdbool.h>  // bool
 
-#include "get_app_name.h"
-#include "../globals.h"
-#include "../io.h"
-#include "../sw.h"
-#include "../types.h"
-#include "common/buffer.h"
+#include "validate.h"
+#include "../../helper/send_response.h"
+#include "../menu.h"
+#include "../../context.h"
+#include "../../sw.h"
+#include "../../io.h"
 
-int handler_get_app_name() {
-    _Static_assert(APPNAME_LEN < MAX_APPNAME_LEN, "APPNAME must be at most 64 characters!");
+void ui_action_validate_pubkey(bool choice) {
+    if (choice) {
+        helper_send_response_pubkey(&pk_ctx);
+    } else {
+        io_send_sw(SW_DENY);
+    }
 
-    buffer_t rdata = {.ptr = (uint8_t *) PIC(APPNAME), .size = APPNAME_LEN, .offset = 0};
+    ui_menu_main();
+}
 
-    return io_send_response(&rdata, SW_OK);
+void ui_action_validate_amount(bool choice) {
+    if (choice) {
+        io_send_sw(SW_OK);
+    } else {
+        io_send_sw(SW_DENY);
+    }
+
+    ui_menu_main();
 }

@@ -1,12 +1,15 @@
 import enum
 import logging
 import struct
-from typing import Union, cast
+from typing import List, Union, cast
+
+from boilerplate_client.utils import bip32_path_from_string
 
 
 class InsType(enum.IntEnum):
     INS_GET_VERSION = 0x03
     INS_GET_APP_NAME = 0x04
+    INS_GET_PUBLIC_KEY = 0x05
 
 
 class BoilerplateCommandBuilder:
@@ -71,6 +74,21 @@ class BoilerplateCommandBuilder:
 
         return header + cdata
 
+    def get_app_and_version(self) -> bytes:
+        """Command builder for GET_APP_AND_VERSION (builtin in BOLOS SDK).
+
+        Returns
+        -------
+        bytes
+            APDU command for GET_APP_AND_VERSION.
+
+        """
+        return self.serialize(cla=0xB0,  # specific CLA for BOLOS
+                              ins=0x01,
+                              p1=0x00,
+                              p2=0x00,
+                              cdata=b"")
+
     def get_version(self) -> bytes:
         """Command builder for GET_VERSION.
 
@@ -100,3 +118,32 @@ class BoilerplateCommandBuilder:
                               p1=0x00,
                               p2=0x00,
                               cdata=b"")
+
+    def get_public_key(self, bip32_path: str, display: bool = False) -> bytes:
+        """Command builder for GET_PUBLIC_KEY.
+
+        Parameters
+        ----------
+        bip32_path: str
+            String representation of BIP32 path.
+        display : bool
+            Whether you want to display the address on the device.
+
+        Returns
+        -------
+        bytes
+            APDU command for GET_PUBLIC_KEY.
+
+        """
+        bip32_paths: List[bytes] = bip32_path_from_string(bip32_path)
+
+        cdata: bytes = b"".join([
+            len(bip32_paths).to_bytes(1, byteorder="big"),
+            *bip32_paths
+        ])
+
+        return self.serialize(cla=self.CLA,
+                              ins=InsType.INS_GET_PUBLIC_KEY,
+                              p1=0x01 if display else 0x00,
+                              p2=0x00,
+                              cdata=cdata)

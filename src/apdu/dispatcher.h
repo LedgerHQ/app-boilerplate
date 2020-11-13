@@ -1,18 +1,15 @@
-#ifndef _DISPATCHER_H_
-#define _DISPATCHER_H_
+#pragma once
 
 #include "../types.h"
 
 /**
- * Function to dispatch all commands.
+ * Function to dispatch APDU command.
  *
  * @brief redirect APDU command received to the right handler.
  *
- * @param cmd APDU command (CLA, INS, P1, P2, Lc, Command data).
+ * @param[in] cmd APDU command (CLA, INS, P1, P2, Lc, Command data).
  *
- * @return positive integer if success, -1 otherwise.
+ * @return zero or positive integer if success, negative otherwise.
  *
  */
-int dispatch_command(const command_t *cmd);
-
-#endif  // _DISPATCHER_H_
+int apdu_dispatcher(const command_t *cmd);

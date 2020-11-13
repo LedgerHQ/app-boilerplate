@@ -1,5 +1,5 @@
 import enum
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Union
 
 from .types import *
 
@@ -15,7 +15,7 @@ class DeviceException(Exception):  # pylint: disable=too-few-public-methods
 
     def __new__(cls,
                 error_code: int,
-                ins: Optional[enum.IntEnum] = None,
+                ins: Union[int, enum.IntEnum, None] = None,
                 message: str = ""
                 ) -> Any:
         error_message: str = (f"Error in {ins!r} command"

@@ -1,11 +1,11 @@
-#ifndef _IO_H_
-#define _IO_H_
+#pragma once
 
 #include <stdint.h>
 
 #include "ux.h"
 
 #include "types.h"
+#include "common/buffer.h"
 
 void io_seproxyhal_display(const bagl_element_t *element);
 
@@ -25,12 +25,12 @@ uint16_t io_exchange_al(uint8_t channel, uint16_t tx_len);
 /**
  * Function to receive APDU command.
  *
- * @brief receive APDU command in G_io_apdu_buffer and update output_len.
+ * @brief receive APDU command in G_io_apdu_buffer and update G_output_len.
  *
- * @return positive integer if success, -1 otherwise.
+ * @return zero or positive integer if success, -1 otherwise.
  *
  */
-int recv_command(void);
+int io_recv_command(void);
 
 /**
  * Function to send back APDU response (response data + status word).
@@ -38,13 +38,13 @@ int recv_command(void);
  * @brief send back APDU response (response data + status word) by filling
  * G_io_apdu_buffer with resp and sw.
  *
- * @param resp buffer with APDU reponse data and its length.
+ * @param resp rdata with APDU reponse data.
  * @param sw status word of APDU response (2 bytes).
  *
- * @return positive integer if success, -1 otherwise.
+ * @return zero or positive integer if success, -1 otherwise.
  *
  */
-int send_response(const response_t *resp, uint16_t sw);
+int io_send_response(const buffer_t *rdata, uint16_t sw);
 
 /**
  * Function to send back APDU response (only status word).
@@ -54,9 +54,7 @@ int send_response(const response_t *resp, uint16_t sw);
  *
  * @param sw status word of APDU response (2 bytes).
  *
- * @return positive integer if success, -1 otherwise.
+ * @return zero or positive integer if success, -1 otherwise.
  *
  */
-int send_sw(uint16_t sw);
-
-#endif  // _IO_H_
+int io_send_sw(uint16_t sw);

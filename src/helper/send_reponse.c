@@ -15,19 +15,28 @@
  *  limitations under the License.
  *****************************************************************************/
 
+#include <stddef.h>  // size_t
 #include <stdint.h>  // uint*_t
+#include <string.h>  // memmove
 
-#include "get_app_name.h"
-#include "../globals.h"
-#include "../io.h"
+#include "send_response.h"
+#include "../context.h"
 #include "../sw.h"
-#include "../types.h"
+#include "../globals.h"
 #include "common/buffer.h"
 
-int handler_get_app_name() {
-    _Static_assert(APPNAME_LEN < MAX_APPNAME_LEN, "APPNAME must be at most 64 characters!");
+int helper_send_response_pubkey(pubkey_ctx_t *pk_ctx) {
+    uint8_t resp[1 + PUBKEY_LEN + 1 + CHAINCODE_LEN] = {0};
+    size_t offset = 0;
 
-    buffer_t rdata = {.ptr = (uint8_t *) PIC(APPNAME), .size = APPNAME_LEN, .offset = 0};
+    resp[offset++] = PUBKEY_LEN;
+    memmove(resp + offset, pk_ctx->public_key.W, PUBKEY_LEN);
+    offset += PUBKEY_LEN;
+    resp[offset++] = CHAINCODE_LEN;
+    memmove(resp + offset, pk_ctx->chain_code, CHAINCODE_LEN);
+    offset += CHAINCODE_LEN;
+
+    buffer_t rdata = {.ptr = resp, .size = offset, .offset = 0};
 
     return io_send_response(&rdata, SW_OK);
 }

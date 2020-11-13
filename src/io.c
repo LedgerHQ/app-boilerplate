@@ -20,9 +20,13 @@
 #include "os.h"
 #include "ux.h"
 
+#include "io.h"
 #include "globals.h"
+#include "sw.h"
+#include "common/buffer.h"
+#include "common/write.h"
 
-uint32_t output_len = 0;
+uint32_t G_output_len = 0;
 
 void io_seproxyhal_display(const bagl_element_t *element) {
     io_seproxyhal_display_default((bagl_element_t *) element);
@@ -67,7 +71,7 @@ uint16_t io_exchange_al(uint8_t channel, uint16_t tx_len) {
                 io_seproxyhal_spi_send(G_io_apdu_buffer, tx_len);
 
                 if (channel & IO_RESET_AFTER_REPLIED) {
-                    reset();
+                    halt();
                 }
 
                 return 0;
@@ -81,21 +85,21 @@ uint16_t io_exchange_al(uint8_t channel, uint16_t tx_len) {
     return 0;
 }
 
-int recv_command() {
+int io_recv_command() {
     int ret;
 
-    switch (io_state) {
+    switch (G_io_state) {
         case READY:
-            io_state = RECEIVED;
-            ret = io_exchange(CHANNEL_APDU, output_len);
+            G_io_state = RECEIVED;
+            ret = io_exchange(CHANNEL_APDU, G_output_len);
             break;
         case RECEIVED:
-            io_state = WAITING;
-            ret = io_exchange(CHANNEL_APDU | IO_ASYNCH_REPLY, output_len);
-            io_state = RECEIVED;
+            G_io_state = WAITING;
+            ret = io_exchange(CHANNEL_APDU | IO_ASYNCH_REPLY, G_output_len);
+            G_io_state = RECEIVED;
             break;
         case WAITING:
-            io_state = READY;
+            G_io_state = READY;
             ret = -1;
             break;
     }
@@ -103,39 +107,42 @@ int recv_command() {
     return ret;
 }
 
-int send_response(const response_t *resp, uint16_t sw) {
+int io_send_response(const buffer_t *rdata, uint16_t sw) {
     int ret;
 
-    if (resp != NULL) {
-        os_memmove(G_io_apdu_buffer, resp->data, resp->data_len);
-        output_len = resp->data_len;
-        PRINTF("<= %.*H %02X%02X\n", resp->data_len, resp->data, sw >> 8, sw & 0xFF);
+    if (rdata != NULL) {
+        if (rdata->size - rdata->offset > IO_APDU_BUFFER_SIZE - 2 ||  //
+            !buffer_copy(rdata, G_io_apdu_buffer, sizeof(G_io_apdu_buffer))) {
+            return io_send_sw(SW_WRONG_RESPONSE_LENGTH);
+        }
+        G_output_len = rdata->size - rdata->offset;
+        PRINTF("<= SW=%04X | RData=%.*H\n", sw, rdata->size, rdata->ptr);
     } else {
-        output_len = 0;
-        PRINTF("<= %02X%02X\n", sw >> 8, sw & 0xFF);
+        G_output_len = 0;
+        PRINTF("<= SW=%04X | RData=NULL\n", sw);
     }
 
-    G_io_apdu_buffer[output_len++] = (uint8_t)(sw >> 8);
-    G_io_apdu_buffer[output_len++] = (uint8_t)(sw & 0xFF);
+    write_u16_be(G_io_apdu_buffer, G_output_len, sw);
+    G_output_len += 2;
 
-    switch (io_state) {
+    switch (G_io_state) {
         case READY:
             ret = -1;
             break;
         case RECEIVED:
-            io_state = READY;
+            G_io_state = READY;
             ret = 0;
             break;
         case WAITING:
-            ret = io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, output_len);
-            output_len = 0;
-            io_state = READY;
+            ret = io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, G_output_len);
+            G_output_len = 0;
+            G_io_state = READY;
             break;
     }
 
     return ret;
 }
 
-int send_sw(uint16_t sw) {
-    return send_response(NULL, sw);
+int io_send_sw(uint16_t sw) {
+    return io_send_response(NULL, sw);
 }

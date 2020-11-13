@@ -15,20 +15,18 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#include <string.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <stddef.h>   // size_t
+#include <stdint.h>   // uint*_t
+#include <stdbool.h>  // bool
 
 #include "parser.h"
 #include "../types.h"
 #include "../offsets.h"
 
-int parse_apdu(command_t *cmd, uint8_t *buf, size_t buf_len) {
-    PRINTF("=> %.*H\n", buf_len, buf);
-
+bool apdu_parser(command_t *cmd, uint8_t *buf, size_t buf_len) {
     // Check minimum length and Lc field of APDU command
     if (buf_len < OFFSET_CDATA || buf_len - OFFSET_CDATA != buf[OFFSET_LC]) {
-        return -1;
+        return false;
     }
 
     cmd->cla = buf[OFFSET_CLA];
@@ -38,5 +36,5 @@ int parse_apdu(command_t *cmd, uint8_t *buf, size_t buf_len) {
     cmd->lc = buf[OFFSET_LC];
     cmd->data = (buf[OFFSET_LC] > 0) ? buf + OFFSET_CDATA : NULL;
 
-    return 0;
+    return true;
 }
