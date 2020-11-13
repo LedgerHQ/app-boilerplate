@@ -16,7 +16,7 @@ and for code coverage generation:
 In `unit-tests` folder, compile with
 
 ```
-cmake -Bbuild -H . && make -C build
+cmake -Bbuild -H. && make -C build
 ```
 
 and run tests with
@@ -30,7 +30,7 @@ make -C build test
 Just execute in `unit-tests` folder
 
 ```
-./gen_coverage
+./gen_coverage.sh
 ```
 
 it will output `coverage.total` and `coverage/` folder with HTML details (in `coverage/index.html`).
