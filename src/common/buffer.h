@@ -129,6 +129,21 @@ bool buffer_read_u32(buffer_t *buffer, uint32_t *value, endianness_t endianness)
 bool buffer_read_u64(buffer_t *buffer, uint64_t *value, endianness_t endianness);
 
 /**
+ * Function to read Bitcoin-like varint from buffer.
+ *
+ * @see https://en.bitcoin.it/wiki/Protocol_documentation#Variable_length_integer
+ *
+ * @brief read 1, 2, 4 or 8 bytes from buffer if possible.
+ *
+ * @param[in,out]  buffer pointer to input buffer.
+ * @param[out]     value 64 bit value read from buffer.
+ *
+ * @return true if success, false otherwise.
+ *
+ */
+bool buffer_read_varint(buffer_t *buffer, uint64_t *value);
+
+/**
  * Function to copy `out_len` bytes from buffer.
  *
  * @brief copy `out_len` bytes from buffer in `out`.
