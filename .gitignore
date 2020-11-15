@@ -24,4 +24,5 @@ __pycache__/
 .python-version
 
 # Doxygen
-doc/
+doc/html
+doc/latex
