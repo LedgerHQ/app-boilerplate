@@ -1,6 +1,8 @@
 class UnknownDeviceError(Exception):
     pass
 
+class DenyError(Exception):
+    pass
 
 class WrongP1P2Error(Exception):
     pass
