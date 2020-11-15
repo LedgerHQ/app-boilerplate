@@ -137,6 +137,7 @@ bool buffer_read_varint(buffer_t *buffer, uint64_t *value) {
     }
 
     *value = (uint64_t) prefix;  // prefix <= 0xFC
+
     return true;
 }
 

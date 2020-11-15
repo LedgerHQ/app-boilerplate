@@ -96,6 +96,7 @@ bool buffer_read_u8(buffer_t *buffer, uint8_t *value);
  *
  * @param[in,out]  buffer pointer to input buffer.
  * @param[out]     value 16 bit value read from buffer.
+ * @param[in]      endianness either BE or LE.
  *
  * @return true if success, false otherwise.
  *
@@ -109,6 +110,7 @@ bool buffer_read_u16(buffer_t *buffer, uint16_t *value, endianness_t endianness)
  *
  * @param[in,out]  buffer pointer to input buffer.
  * @param[out]     value 32 bit value read from buffer.
+ * @param[in]      endianness either BE or LE.
  *
  * @return true if success, false otherwise.
  *
@@ -122,6 +124,7 @@ bool buffer_read_u32(buffer_t *buffer, uint32_t *value, endianness_t endianness)
  *
  * @param[in,out]  buffer pointer to input buffer.
  * @param[out]     value 64 bit value read from buffer.
+ * @param[in]      endianness either BE or LE.
  *
  * @return true if success, false otherwise.
  *

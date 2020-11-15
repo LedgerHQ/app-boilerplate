@@ -38,7 +38,7 @@ int io_recv_command(void);
  * @brief send back APDU response (response data + status word) by filling
  * G_io_apdu_buffer with resp and sw.
  *
- * @param resp rdata with APDU reponse data.
+ * @param[in] rdata buffer within APDU response data.
  * @param sw status word of APDU response (2 bytes).
  *
  * @return zero or positive integer if success, -1 otherwise.
@@ -52,7 +52,7 @@ int io_send_response(const buffer_t *rdata, uint16_t sw);
  * @brief send back APDU response (only status word) by filling
  * G_io_apdu_buffer with sw.
  *
- * @param sw status word of APDU response (2 bytes).
+ * @param[in] sw status word of APDU response (2 bytes).
  *
  * @return zero or positive integer if success, -1 otherwise.
  *
