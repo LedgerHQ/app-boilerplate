@@ -9,7 +9,7 @@ obj/
 # Unit tests and code coverage
 unit-tests/build/
 unit-tests/coverage/
-unit-tests/coverage.total
+unit-tests/coverage.info
 
 
 # Editors
