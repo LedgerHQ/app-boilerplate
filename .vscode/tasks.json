@@ -1,6 +1,4 @@
 {
-    // See https://go.microsoft.com/fwlink/?LinkId=733558
-    // for the documentation about the tasks.json format
     "version": "2.0.0",
     "tasks": [
         {
@@ -10,7 +8,22 @@
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "make debug",
+            "type": "shell",
+            "command": "make DEBUG=1",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
         },
         {
             "label": "make clean",
@@ -19,7 +32,33 @@
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "run Speculos",
+            "type": "shell",
+            "command": "python /path/to/speculos.py ${workspaceFolder}/bin/app.elf --ontop --sdk 1.6",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": [
+                "make debug"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "kill Speculos",
+            "type": "shell",
+            "command": "pkill -f speculos.py",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
         }
     ]
 }
