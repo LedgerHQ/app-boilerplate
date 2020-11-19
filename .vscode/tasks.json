@@ -4,7 +4,7 @@
         {
             "label": "make",
             "type": "shell",
-            "command": "make",
+            "command": "make clean && make",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -16,7 +16,7 @@
         {
             "label": "make debug",
             "type": "shell",
-            "command": "make DEBUG=1",
+            "command": "make clean && make DEBUG=1",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -38,6 +38,18 @@
             ]
         },
         {
+            "label": "run unit tests",
+            "type": "shell",
+            "command": "cd unit-tests && cmake -Bbuild -H. && make -C build && CTEST_OUTPUT_ON_FAILURE=1 make -C build test",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
             "label": "run Speculos",
             "type": "shell",
             "command": "python /path/to/speculos.py ${workspaceFolder}/bin/app.elf --ontop --sdk 1.6",
@@ -48,6 +60,16 @@
             "dependsOn": [
                 "make debug"
             ],
+            "problemMatcher": []
+        },
+        {
+            "label": "run tests",
+            "type": "shell",
+            "command": "pytest",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
             "problemMatcher": []
         },
         {
