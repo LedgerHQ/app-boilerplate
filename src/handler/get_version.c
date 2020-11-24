@@ -21,6 +21,7 @@
 
 #include "get_version.h"
 #include "../globals.h"
+#include "../constants.h"
 #include "../io.h"
 #include "../sw.h"
 #include "../types.h"
@@ -35,11 +36,11 @@ int handler_get_version() {
     _Static_assert(PATCH_VERSION >= 0 && PATCH_VERSION <= UINT8_MAX,
                    "PATCH version must be between 0 and 255!");
 
-    uint8_t response[APPVERSION_LEN] = {(uint8_t) MAJOR_VERSION,
-                                        (uint8_t) MINOR_VERSION,
-                                        (uint8_t) PATCH_VERSION};
-
-    buffer_t rdata = {.ptr = response, .size = sizeof(response), .offset = 0};
-
-    return io_send_response(&rdata, SW_OK);
+    return io_send_response(
+        &(const buffer_t){.ptr = (uint8_t[APPVERSION_LEN]){(uint8_t) MAJOR_VERSION,
+                                                           (uint8_t) MINOR_VERSION,
+                                                           (uint8_t) PATCH_VERSION},
+                          .size = APPVERSION_LEN,
+                          .offset = 0},
+        SW_OK);
 }

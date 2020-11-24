@@ -4,7 +4,9 @@ from typing import Tuple
 from ledgercomm import Transport
 
 from boilerplate_client.boilerplate_cmd_builder import BoilerplateCommandBuilder, InsType
+from boilerplate_client.button import Button
 from boilerplate_client.exception import DeviceException
+from boilerplate_client.transaction import Transaction
 
 
 class BoilerplateCommand:
@@ -34,11 +36,11 @@ class BoilerplateCommand:
         offset += 1
         app_name_len: int = response[offset]
         offset += 1
-        app_name: str = response[offset:offset+app_name_len].decode("ascii")
+        app_name: str = response[offset:offset + app_name_len].decode("ascii")
         offset += app_name_len
         version_len: int = response[offset]
         offset += 1
-        version: str = response[offset:offset+version_len].decode("ascii")
+        version: str = response[offset:offset + version_len].decode("ascii")
         offset += version_len
 
         return app_name, version
@@ -88,13 +90,49 @@ class BoilerplateCommand:
 
         pub_key_len: int = response[offset]
         offset += 1
-        pub_key: bytes = response[offset:offset+pub_key_len]
+        pub_key: bytes = response[offset:offset + pub_key_len]
         offset += pub_key_len
         chain_code_len: int = response[offset]
         offset += 1
-        chain_code: bytes = response[offset:offset+chain_code_len]
+        chain_code: bytes = response[offset:offset + chain_code_len]
         offset += chain_code_len
 
         assert len(response) == 1 + pub_key_len + 1 + chain_code_len
 
         return pub_key, chain_code
+
+    def sign_tx(self, bip32_path: str, transaction: Transaction, button: Button) -> Tuple[int, bytes]:
+        sw: int
+        response: bytes = b""
+
+        for is_last, chunk in self.builder.sign_tx(bip32_path=bip32_path, transaction=transaction):
+            self.transport.send_raw(chunk)
+
+            if is_last:
+                # Review Transaction
+                button.right_click()
+                # Address 1/3, 2/3, 3/3
+                button.right_click()
+                button.right_click()
+                button.right_click()
+                # Amount
+                button.right_click()
+                # Approve
+                button.both_click()
+
+            sw, response = self.transport.recv()  # type: int, bytes
+
+            if not sw & 0x9000:
+                raise DeviceException(error_code=sw, ins=InsType.INS_SIGN_TX)
+
+        offset: int = 0
+        der_sig_len: int = response[offset]
+        offset += 1
+        der_sig: bytes = response[offset:offset + der_sig_len]
+        offset += der_sig_len
+        v: int = response[offset]
+        offset += 1
+
+        assert len(response) == 1 + der_sig_len + 1
+
+        return v, der_sig

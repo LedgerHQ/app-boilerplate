@@ -4,29 +4,28 @@
 #include <stdint.h>   // uint*_t
 #include <stdbool.h>  // bool
 
-#include "buffer.h"
-
 /**
  * Maximum length of BIP32 path allowed.
  */
 #define MAX_BIP32_PATH 10
 
 /**
- * Function to convert BIP32 path bytes to array of integers.
+ * Function to read BIP32 path.
  *
- * @brief read bytes of BIP32 path in buffer and convert to array of 32 bit integers.
+ * @brief read BIP32 path in byte array.
  *
- * @param[in,out] buf buffer with bytes of BIP32 path.
- * @param[out]    out pointer to array of 32 bit integers.
- * @param[in]     out_len lenght of the array pointed.
+ * @param[in]  in pointer to byte array.
+ * @param[in]  in_len length of byte array.
+ * @param[out] out pointer to 32-bit integer array.
+ * @param[in]  out_len lenght of the 32-bit integer array.
  *
  * @return true if success, false otherwise.
  *
  */
-bool bip32_path_from_buffer(buffer_t *buf, uint32_t *out, size_t out_len);
+bool bip32_path_read(const uint8_t *in, size_t in_len, uint32_t *out, size_t out_len);
 
 /**
- * Function to convert BIP32 path to string.
+ * Function to format BIP32 path as string.
  *
  * @brief convert 32 bit integer array with BIP32 path to string.
  *
@@ -38,7 +37,7 @@ bool bip32_path_from_buffer(buffer_t *buf, uint32_t *out, size_t out_len);
  * @return true if success, false otherwise.
  *
  */
-bool bip32_path_to_str(const uint32_t *bip32_path,
+bool bip32_path_format(const uint32_t *bip32_path,
                        size_t bip32_path_len,
                        char *out,
                        size_t out_len);

@@ -1,15 +1,38 @@
 import enum
 import logging
 import struct
-from typing import List, Union, cast
+from typing import List, Tuple, Union, Iterator, cast
 
+from boilerplate_client.transaction import Transaction
 from boilerplate_client.utils import bip32_path_from_string
+
+MAX_APDU_LEN: int = 255
+
+
+def chunkify(data: bytes, chunk_len: int) -> Iterator[Tuple[bool, bytes]]:
+    size: int = len(data)
+
+    if size <= chunk_len:
+        yield True, data
+        return
+
+    chunk: int = size // chunk_len
+    remaining: int = size % chunk_len
+    offset: int = 0
+
+    for i in range(chunk):
+        yield False, data[offset:offset + chunk_len]
+        offset += chunk_len
+
+    if remaining:
+        yield True, data[offset:]
 
 
 class InsType(enum.IntEnum):
     INS_GET_VERSION = 0x03
     INS_GET_APP_NAME = 0x04
     INS_GET_PUBLIC_KEY = 0x05
+    INS_SIGN_TX = 0x06
 
 
 class BoilerplateCommandBuilder:
@@ -147,3 +170,49 @@ class BoilerplateCommandBuilder:
                               p1=0x01 if display else 0x00,
                               p2=0x00,
                               cdata=cdata)
+
+    def sign_tx(self, bip32_path: str, transaction: Transaction) -> Iterator[Tuple[bool, bytes]]:
+        """Command builder for INS_SIGN_TX.
+
+        Parameters
+        ----------
+        bip32_path : str
+            String representation of BIP32 path.
+        transaction : Transaction
+            Representation of the transaction to be signed.
+
+        Yields
+        -------
+        bytes
+            APDU command chunk for INS_SIGN_TX.
+
+        """
+        bip32_paths: List[bytes] = bip32_path_from_string(bip32_path)
+
+        cdata: bytes = b"".join([
+            len(bip32_paths).to_bytes(1, byteorder="big"),
+            *bip32_paths
+        ])
+
+        yield False, self.serialize(cla=self.CLA,
+                                    ins=InsType.INS_SIGN_TX,
+                                    p1=0x00,
+                                    p2=0x80,
+                                    cdata=cdata)
+
+        tx: bytes = transaction.serialize()
+
+        for i, (is_last, chunk) in enumerate(chunkify(tx, MAX_APDU_LEN)):
+            if is_last:
+                yield True, self.serialize(cla=self.CLA,
+                                           ins=InsType.INS_SIGN_TX,
+                                           p1=i + 1,
+                                           p2=0x00,
+                                           cdata=chunk)
+                return
+            else:
+                yield False, self.serialize(cla=self.CLA,
+                                            ins=InsType.INS_SIGN_TX,
+                                            p1=i + 1,
+                                            p2=0x80,
+                                            cdata=chunk)

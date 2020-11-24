@@ -18,15 +18,16 @@
 #include <stdbool.h>  // bool
 
 #include "validate.h"
-#include "../../helper/send_response.h"
 #include "../menu.h"
-#include "../../context.h"
 #include "../../sw.h"
 #include "../../io.h"
+#include "../../crypto.h"
+#include "../../globals.h"
+#include "../../helper/send_response.h"
 
 void ui_action_validate_pubkey(bool choice) {
     if (choice) {
-        helper_send_response_pubkey(&pk_ctx);
+        helper_send_response_pubkey();
     } else {
         io_send_sw(SW_DENY);
     }
@@ -34,10 +35,18 @@ void ui_action_validate_pubkey(bool choice) {
     ui_menu_main();
 }
 
-void ui_action_validate_amount(bool choice) {
+void ui_action_validate_transaction(bool choice) {
     if (choice) {
-        io_send_sw(SW_OK);
+        G_context.state = STATE_APPROVED;
+
+        if (crypto_sign_message() < 0) {
+            G_context.state = STATE_NONE;
+            io_send_sw(SW_SIGNATURE_FAIL);
+        } else {
+            helper_send_response_sig();
+        }
     } else {
+        G_context.state = STATE_NONE;
         io_send_sw(SW_DENY);
     }
 

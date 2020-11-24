@@ -13,11 +13,11 @@
 void ui_action_validate_pubkey(bool choice);
 
 /**
- * Function to handle amount validation on display.
+ * Function to handle transaction validation on display.
  *
- * @brief user action for amount validation.
+ * @brief user action for transaction validation.
  *
  * @param choice user choice on display.
  *
  */
-void ui_action_validate_amount(bool choice);
+void ui_action_validate_transaction(bool choice);

@@ -3,30 +3,22 @@
 #include <stdbool.h>  // bool
 
 /**
- * Structure to display title/text in FLOW.
- */
-typedef struct {
-    char title[30];
-    char text[200];
-} strbuf_t;
-
-/**
  * Callback to reuse action with approve/reject in step FLOW.
  */
 typedef void (*action_validate_cb)(bool);
 
 /**
- * Function to display public on the device.
+ * Function to display address on the device.
  *
- * @brief show public key on the device and ask confirmation to export.
+ * @brief show address on the device and ask confirmation to export.
  *
  */
-void ui_display_public_key(void);
+int ui_display_address(void);
 
 /**
- * Function to display amount on the device.
+ * Function to display transaction information on the device.
  *
- * @brief show amount and recipient and ask confirmation to export.
+ * @brief show amount and recipient then ask confirmation to export.
  *
  */
-void ui_display_amount(void);
+int ui_display_transaction(void);

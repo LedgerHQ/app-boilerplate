@@ -146,6 +146,8 @@ bool buffer_read_u64(buffer_t *buffer, uint64_t *value, endianness_t endianness)
  */
 bool buffer_read_varint(buffer_t *buffer, uint64_t *value);
 
+bool buffer_read_bip32_path(buffer_t *buffer, uint32_t *out, size_t out_len);
+
 /**
  * Function to copy `out_len` bytes from buffer.
  *

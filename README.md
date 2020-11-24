@@ -22,10 +22,10 @@ BOLOS_SDK=/opt/nanos-secure-sdk
 
 ```
 make DEBUG=1  # compile optionally with PRINTF (require debug firmware)
-make load     # load the app on the Nano using ledgerblue 
+make load     # load the app on the Nano using ledgerblue
 ```
 
-## Continuous integration
+## Tests & Continuous Integration
 
 The flow processed in [GitHub Actions](https://github.com/features/actions) is the following:
 
@@ -41,3 +41,4 @@ It outputs 4 artifacts:
 - `boilerplate-app-debug` within output files of the compilation process in debug mode
 - `speculos-log` within APDU commands and response when executing end-to-end tests
 - `code-coverage` within HTML details of code coverage
+- `documentation` within HTML auto-generated documentation

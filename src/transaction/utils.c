@@ -15,20 +15,27 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#include <stdint.h>  // uint*_t
+#include <stdint.h>   // uint*_t
+#include <stdbool.h>  // bool
+#include <string.h>   // memmove
 
-#include "get_app_name.h"
-#include "../constants.h"
-#include "../globals.h"
-#include "../io.h"
-#include "../sw.h"
-#include "../types.h"
-#include "common/buffer.h"
+bool transaction_utils_check_encoding(uint8_t *memo, uint64_t memo_len) {
+    for (uint64_t i = 0; i < memo_len; i++) {
+        if (memo[i] > 0x7F) {
+            return false;
+        }
+    }
 
-int handler_get_app_name() {
-    _Static_assert(APPNAME_LEN < MAX_APPNAME_LEN, "APPNAME must be at most 64 characters!");
+    return true;
+}
 
-    buffer_t rdata = {.ptr = (uint8_t *) PIC(APPNAME), .size = APPNAME_LEN, .offset = 0};
+bool transaction_utils_format_memo(uint8_t *memo, uint64_t memo_len, char *dst, uint64_t dst_len) {
+    if (dst_len < memo_len + 1) {
+        return false;
+    }
 
-    return io_send_response(&rdata, SW_OK);
+    memmove(dst, memo, memo_len);
+    dst[memo_len] = '\0';
+
+    return true;
 }

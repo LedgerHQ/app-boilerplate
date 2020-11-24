@@ -2,6 +2,11 @@
 
 #include "../types.h"
 
+#define P2_LAST  0x00
+#define P2_MORE  0x80
+#define P1_START 0x00
+#define P1_MAX   0x03
+
 /**
  * Function to dispatch APDU command.
  *

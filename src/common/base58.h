@@ -20,7 +20,7 @@
  *
  * @see https://tools.ietf.org/html/draft-msporny-base58-02
  *
- * @param[in]  in pointer to string buffer to be decoded.
+ * @param[in]  in pointer to input string buffer to be decoded.
  * @param[in]  in_len length of the string buffer.
  * @param[out] out pointer to array.
  * @param[in]  out_len maximum length to be stored in out.
@@ -35,10 +35,10 @@ int base58_decode(const char *in, size_t in_len, uint8_t *out, size_t out_len);
  *
  * @see https://tools.ietf.org/html/draft-msporny-base58-02
  *
- * @param[in]  in pointer to byte buffer to be encoded.
+ * @param[in]  in pointer to input byte buffer to be encoded.
  * @param[in]  in_len length of the byte buffer.
- * @param[out] out pointer to byte buffer.
+ * @param[out] out pointer to output string buffer.
  * @param[in]  out_len maximum length to be stored in out.
  *
  */
-int base58_encode(const uint8_t *in, size_t in_len, uint8_t *out, size_t out_len);
+int base58_encode(const uint8_t *in, size_t in_len, char *out, size_t out_len);

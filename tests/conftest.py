@@ -5,10 +5,13 @@ import pytest
 from ledgercomm import Transport
 
 from boilerplate_client.boilerplate_cmd import BoilerplateCommand
+from boilerplate_client.button import ButtonTCP, ButtonFake
 
 
 def pytest_addoption(parser):
     parser.addoption("--hid",
+                     action="store_true")
+    parser.addoption("--headless",
                      action="store_true")
 
 
@@ -31,9 +34,29 @@ def hid(pytestconfig):
 
 
 @pytest.fixture(scope="session")
+def headless(pytestconfig):
+    return pytestconfig.getoption("headless")
+
+
+@pytest.fixture(scope="module")
+def button(headless):
+    if headless:
+        button_client = ButtonTCP(server="127.0.0.1", port=42000)
+    else:
+        button_client = ButtonFake()
+
+    yield button_client
+
+    button_client.close()
+
+
+@pytest.fixture(scope="session")
 def cmd(hid):
     transport = (Transport(interface="hid", debug=True)
-                 if hid else Transport(interface="tcp", debug=True))
+                 if hid else Transport(interface="tcp",
+                                       server="127.0.0.1",
+                                       port=9999,
+                                       debug=True))
     command = BoilerplateCommand(
         transport=transport,
         debug=True

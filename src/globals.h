@@ -6,26 +6,7 @@
 
 #include "io.h"
 #include "types.h"
-
-/**
- * Instruction class of the Boilerplate application.
- */
-#define CLA 0xE0
-
-/**
- * Length of APPNAME variable in Makefile.
- */
-#define APPNAME_LEN (sizeof(APPNAME) - 1)
-
-/**
- * Length of (MAJOR_VERSION || MINOR_VERSION || PATCH_VERSION) variables in Makefile.
- */
-#define APPVERSION_LEN 3
-
-/**
- * Maximum length of application name (APPNAME variable in Makefile).
- */
-#define MAX_APPNAME_LEN 64
+#include "constants.h"
 
 /**
  * Global buffer for interactions between SE and MCU.
@@ -51,3 +32,8 @@ extern bolos_ux_params_t G_ux_params;
  * Global enumeration with the state of IO (READY, RECEIVING, WAITING).
  */
 extern io_state_e G_io_state;
+
+/**
+ * Global context.
+ */
+extern global_ctx_t G_context;

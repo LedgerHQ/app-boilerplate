@@ -17,10 +17,12 @@
 #include <stdint.h>   // uint*_t
 #include <stddef.h>   // size_t
 #include <stdbool.h>  // bool
-#include <string.h>   // memcpy
+#include <string.h>   // memmove
 
 #include "buffer.h"
 #include "read.h"
+#include "varint.h"
+#include "bip32.h"
 
 bool buffer_can_read(const buffer_t *buffer, size_t n) {
     return buffer->size - buffer->offset >= n;
@@ -116,27 +118,28 @@ bool buffer_read_u64(buffer_t *buffer, uint64_t *value, endianness_t endianness)
 }
 
 bool buffer_read_varint(buffer_t *buffer, uint64_t *value) {
-    uint8_t prefix = 0;
+    int length = varint_read(buffer->ptr + buffer->offset, buffer->size - buffer->offset, value);
 
-    if (!buffer_read_u8(buffer, &prefix)) {
+    if (length < 0) {
         *value = 0;
 
         return false;
     }
 
-    if (prefix == 0xFD) {
-        return buffer_read_u16(buffer, (uint16_t *) value, LE);
+    buffer_seek_cur(buffer, (size_t) length);
+
+    return true;
+}
+
+bool buffer_read_bip32_path(buffer_t *buffer, uint32_t *out, size_t out_len) {
+    if (!bip32_path_read(buffer->ptr + buffer->offset,
+                         buffer->size - buffer->offset,
+                         out,
+                         out_len)) {
+        return false;
     }
 
-    if (prefix == 0xFE) {
-        return buffer_read_u32(buffer, (uint32_t *) value, LE);
-    }
-
-    if (prefix == 0xFF) {
-        return buffer_read_u64(buffer, (uint64_t *) value, LE);
-    }
-
-    *value = (uint64_t) prefix;  // prefix <= 0xFC
+    buffer_seek_cur(buffer, sizeof(*out) * out_len);
 
     return true;
 }
@@ -146,7 +149,7 @@ bool buffer_copy(const buffer_t *buffer, uint8_t *out, size_t out_len) {
         return false;
     }
 
-    memcpy(out, buffer->ptr + buffer->offset, buffer->size - buffer->offset);
+    memmove(out, buffer->ptr + buffer->offset, buffer->size - buffer->offset);
 
     return true;
 }

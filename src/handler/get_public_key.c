@@ -28,47 +28,37 @@
 #include "../types.h"
 #include "../io.h"
 #include "../sw.h"
-#include "../context.h"
+#include "../crypto.h"
 #include "../common/buffer.h"
-#include "../common/bip32.h"
 #include "../ui/display.h"
 #include "../helper/send_response.h"
 
 int handler_get_public_key(buffer_t *cdata, bool display) {
-    uint8_t raw_private_key[32] = {0};
-    cx_ecfp_private_key_t private_key = {0};
+    memset(&G_context, 0, sizeof(G_context));
+    G_context.req_type = CONFIRM_ADDRESS;
+    G_context.state = STATE_NONE;
 
-    if (!buffer_read_u8(cdata, (uint8_t *) &pk_ctx.bip32_path_len) ||
-        !bip32_path_from_buffer(cdata, pk_ctx.bip32_path, pk_ctx.bip32_path_len)) {
+    cx_ecfp_private_key_t private_key = {0};
+    cx_ecfp_public_key_t public_key = {0};
+
+    if (!buffer_read_u8(cdata, &G_context.bip32_path_len) ||
+        !buffer_read_bip32_path(cdata, G_context.bip32_path, (size_t) G_context.bip32_path_len)) {
         return io_send_sw(SW_WRONG_DATA_LENGTH);
     }
 
-    char str[30];
-    bip32_path_to_str(pk_ctx.bip32_path, pk_ctx.bip32_path_len, str, sizeof(str));
-    PRINTF("BIP32 path (%u): %s\n", pk_ctx.bip32_path_len, str);
-
-    // derive the seed with bip32_path
-    os_perso_derive_node_bip32(CX_CURVE_256K1,
-                               pk_ctx.bip32_path,
-                               pk_ctx.bip32_path_len,
-                               raw_private_key,
-                               pk_ctx.chain_code);
-    // new private_key from raw
-    cx_ecfp_init_private_key(CX_CURVE_256K1,
-                             raw_private_key,
-                             sizeof(raw_private_key),
-                             &private_key);
+    // derive private key according to BIP32 path
+    crypto_derive_private_key(&private_key,
+                              G_context.pk_info.chain_code,
+                              G_context.bip32_path,
+                              G_context.bip32_path_len);
     // generate corresponding public key
-    cx_ecfp_generate_pair(CX_CURVE_256K1, &pk_ctx.public_key, &private_key, 1);
-
-    // reset private keys
+    crypto_init_public_key(&private_key, &public_key, G_context.pk_info.raw_public_key);
+    // reset private key
     memset(&private_key, 0, sizeof(private_key));
-    memset(raw_private_key, 0, sizeof(raw_private_key));
 
     if (display) {
-        ui_display_public_key();
-        return 0;
+        return ui_display_address();
     }
 
-    return helper_send_response_pubkey(&pk_ctx);
+    return helper_send_response_pubkey();
 }

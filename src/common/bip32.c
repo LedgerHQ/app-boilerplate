@@ -21,28 +21,30 @@
 #include <stdbool.h>  // bool
 
 #include "bip32.h"
-#include "buffer.h"
+#include "read.h"
 
-bool bip32_path_from_buffer(buffer_t *buf, uint32_t *out, size_t out_len) {
+bool bip32_path_read(const uint8_t *in, size_t in_len, uint32_t *out, size_t out_len) {
     if (out_len == 0 || out_len > MAX_BIP32_PATH) {
         return false;
     }
 
+    size_t offset = 0;
+
     for (size_t i = 0; i < out_len; i++) {
-        if (!buffer_read_u32(buf, out + i, BE)) {
+        if (offset > in_len) {
             return false;
         }
+        out[i] = read_u32_be(in, offset);
+        offset += 4;
     }
 
     return true;
 }
 
-bool bip32_path_to_str(const uint32_t *bip32_path,
+bool bip32_path_format(const uint32_t *bip32_path,
                        size_t bip32_path_len,
                        char *out,
                        size_t out_len) {
-    memset(out, 0, out_len);
-
     if (bip32_path_len == 0 || bip32_path_len > MAX_BIP32_PATH) {
         return false;
     }

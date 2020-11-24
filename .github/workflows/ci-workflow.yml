@@ -50,8 +50,7 @@ jobs:
           lcov --directory . -b "$(realpath build/)" --remove coverage.info '*/unit-tests/*' -o coverage.info && \
           genhtml coverage.info -o coverage
 
-      - name: Upload code coverage
-        uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v2
         with:
           name: code-coverage
           path: unit-tests/coverage
@@ -65,6 +64,16 @@ jobs:
           name: codecov-app-boilerplate
           fail_ci_if_error: true
           verbose: true
+      
+      - name: HTML documentation
+        run: doxygen .doxygen/Doxyfile
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: documentation
+          path: doc/html
+
+
 
   job_test:
     name: Test
@@ -95,8 +104,7 @@ jobs:
       - name: Run test
         run: |
           nohup bash -c "python /speculos/speculos.py bin/app.elf --sdk 1.6 --apdu-port 9999 --button-port 42000 --automation-port 43000 --display headless" > speculos.log 2<&1 &
-          pip install -r tests/requirements.txt
-          pytest
+          cd tests && pip install -r requirements.txt && pytest --headless
 
       - name: Upload Speculos log
         uses: actions/upload-artifact@v2

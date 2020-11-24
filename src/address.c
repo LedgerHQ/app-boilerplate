@@ -15,14 +15,30 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#include <string.h>  // memset
+#include <stdint.h>   // uint*_t
+#include <stddef.h>   // size_t
+#include <stdbool.h>  // bool
+#include <string.h>   // memmove
 
 #include "os.h"
+#include "cx.h"
 
-#include "context.h"
+#include "address.h"
 
-pubkey_ctx_t pk_ctx;
+#include "transaction/types.h"
 
-void context_reset_pubkey() {
-    memset(&pk_ctx, 0, sizeof(pk_ctx));
+bool address_from_pubkey(uint8_t public_key[static 64], uint8_t *out, size_t out_len) {
+    uint8_t address[32] = {0};
+    cx_sha3_t sha3;
+
+    if (out_len < ADDRESS_LEN) {
+        return false;
+    }
+
+    cx_keccak_init(&sha3, 256);
+    cx_hash((cx_hash_t *) &sha3, CX_LAST, public_key, 64, address, sizeof(address));
+
+    memmove(out, address + sizeof(address) - ADDRESS_LEN, ADDRESS_LEN);
+
+    return true;
 }

@@ -26,30 +26,35 @@
 #include "glyphs.h"
 
 #include "display.h"
-#include "action/validate.h"
-#include "../context.h"
+#include "../globals.h"
 #include "../io.h"
 #include "../sw.h"
+#include "../address.h"
+#include "action/validate.h"
+#include "../transaction/types.h"
 #include "../common/bip32.h"
+#include "../common/format.h"
 
-static strbuf_t g_buf, g_buf2;
 static action_validate_cb g_validate_callback;
+static char g_amount[30];
+static char g_bip32_path[60];
+static char g_address[43];
 
-// Step with icon
+// Step with icon and text
 UX_STEP_NOCB(ux_display_confirm_addr_step, pn, {&C_icon_eye, "Confirm Address"});
-// Step to display title/text using buffer #1
-UX_STEP_NOCB(ux_display_title_text_step,
+// Step with title/text for BIP32 path
+UX_STEP_NOCB(ux_display_path_step,
              bnnn_paging,
              {
-                 .title = g_buf.title,
-                 .text = g_buf.text,
+                 .title = "Path",
+                 .text = g_bip32_path,
              });
-// Step to display title/text using buffer #2
-UX_STEP_NOCB(ux_display_title_text2_step,
+// Step with title/text for address
+UX_STEP_NOCB(ux_display_address_step,
              bnnn_paging,
              {
-                 .title = g_buf2.title,
-                 .text = g_buf2.text,
+                 .title = "Address",
+                 .text = g_address,
              });
 // Step with approve button
 UX_STEP_CB(ux_display_approve_step,
@@ -68,38 +73,48 @@ UX_STEP_CB(ux_display_reject_step,
                "Reject",
            });
 
-// FLOW to display address UI:
+// FLOW to display address and BIP32 path:
 // #1 screen: eye icon + "Confirm Address"
 // #2 screen: display BIP32 Path
-// #3 screen: display public key
+// #3 screen: display address
 // #4 screen: approve button
 // #5 screen: reject button
 UX_FLOW(ux_display_pubkey_flow,
         &ux_display_confirm_addr_step,
-        &ux_display_title_text_step,
-        &ux_display_title_text2_step,
+        &ux_display_path_step,
+        &ux_display_address_step,
         &ux_display_approve_step,
         &ux_display_reject_step);
 
-void ui_display_public_key() {
-    memset(&g_buf, 0, sizeof(g_buf));
-    const char path[] = "Path";
-    snprintf(g_buf.title, sizeof(g_buf.title), "%.*s", sizeof(path), path);
-    bip32_path_to_str(pk_ctx.bip32_path, pk_ctx.bip32_path_len, g_buf.text, sizeof(g_buf.text));
-    const char address[] = "Address";
-    snprintf(g_buf2.title, sizeof(g_buf2.title), "%.*s", sizeof(address), address);
-    snprintf(g_buf2.text,
-             sizeof(g_buf2.text),
-             "%.*H",
-             sizeof(pk_ctx.public_key.W),
-             pk_ctx.public_key.W);
+int ui_display_address() {
+    if (G_context.req_type != CONFIRM_ADDRESS || G_context.state != STATE_NONE) {
+        G_context.state = STATE_NONE;
+        return io_send_sw(SW_BAD_STATE);
+    }
+
+    memset(g_bip32_path, 0, sizeof(g_bip32_path));
+    if (!bip32_path_format(G_context.bip32_path,
+                           G_context.bip32_path_len,
+                           g_bip32_path,
+                           sizeof(g_bip32_path))) {
+        return io_send_sw(SW_DISPLAY_BIP32_PATH_FAIL);
+    }
+
+    memset(g_address, 0, sizeof(g_address));
+    uint8_t address[ADDRESS_LEN] = {0};
+    if (!address_from_pubkey(G_context.pk_info.raw_public_key, address, sizeof(address))) {
+        return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
+    }
+    snprintf(g_address, sizeof(g_address), "0x%.*H", sizeof(address), address);
 
     g_validate_callback = &ui_action_validate_pubkey;
 
     ux_flow_init(0, ux_display_pubkey_flow, NULL);
+
+    return 0;
 }
 
-// Step to display amount
+// Step with icon and text
 UX_STEP_NOCB(ux_display_review_step,
              pnn,
              {
@@ -107,27 +122,44 @@ UX_STEP_NOCB(ux_display_review_step,
                  "Review",
                  "Transaction",
              });
+// Step with title/text for amount
+UX_STEP_NOCB(ux_display_amount_step,
+             bnnn_paging,
+             {
+                 .title = "Amount",
+                 .text = g_amount,
+             });
 
-// FLOW to display amount info:
+// FLOW to display transaction information:
 // #1 screen : eye icon + "Review Transaction"
 // #2 screen : display amount
-// #3 screen : approve button
-// #4 scree : reject button
-UX_FLOW(ux_display_amount_flow,
+// #3 screen : display destination address
+// #4 screen : approve button
+// #5 screen : reject button
+UX_FLOW(ux_display_transaction_flow,
         &ux_display_review_step,
-        &ux_display_title_text_step,
+        &ux_display_address_step,
+        &ux_display_amount_step,
         &ux_display_approve_step,
         &ux_display_reject_step);
 
-void ui_display_amount() {
-    memset(&g_buf, 0, sizeof(g_buf));
+int ui_display_transaction() {
+    if (G_context.req_type != CONFIRM_TRANSACTION || G_context.state != STATE_PARSED) {
+        G_context.state = STATE_NONE;
+        return io_send_sw(SW_BAD_STATE);
+    }
 
-    const char title[] = "Amount";
-    snprintf(g_buf.title, sizeof(g_buf.title), "%.*s", sizeof(title), title);
-    const char amount[] = "233.333 XYZ";
-    snprintf(g_buf.text, sizeof(g_buf.text), "%.*s", sizeof(amount), amount);
+    memset(g_amount, 0, sizeof(g_amount));
+    char amount[21] = {0};
+    format_fpu64(amount, sizeof(amount), G_context.tx_info.transaction.value, 4);
+    snprintf(g_amount, sizeof(g_amount), "BOL %.*s", sizeof(amount), amount);
 
-    g_validate_callback = &ui_action_validate_amount;
+    memset(g_address, 0, sizeof(g_address));
+    snprintf(g_address, sizeof(g_address), "0x%.*H", ADDRESS_LEN, G_context.tx_info.transaction.to);
 
-    ux_flow_init(0, ux_display_amount_flow, NULL);
+    g_validate_callback = &ui_action_validate_transaction;
+
+    ux_flow_init(0, ux_display_transaction_flow, NULL);
+
+    return 0;
 }

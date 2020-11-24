@@ -4,7 +4,7 @@ These tests are implemented in Python and can be executed either using the [Spec
 Python dependencies required are [pytest](https://pypi.org/project/pytest/) and [ledgercomm](https://pypi.org/project/ledgercomm/), install them using [pip](https://pypi.org/project/pip/)
 
 ```
-pip install -r tests/requirements.txt
+pip install -r requirements.txt
 ```
 
 ### Launch with Speculos
@@ -12,10 +12,10 @@ pip install -r tests/requirements.txt
 First start your application with Speculos
 
 ```
-./speculos.py /path/to/app-boilerplate/bin/elf --ontop --sdk 1.6
+./path/to/speculos.py /path/to/app-boilerplate/bin/app.elf --ontop --sdk 1.6
 ```
 
-then at the root of `app-boilerplate` folder run
+then in the `tests` folder run
 
 ```
 pytest
@@ -23,7 +23,7 @@ pytest
 
 ### Launch with your Nano S/X
 
-To run the tests on your Ledger Nano S/X you also need to install optional dependency
+To run the tests on your Ledger Nano S/X you also need to install an optional dependency
 
 ```
 pip install ledgercomm[hid]

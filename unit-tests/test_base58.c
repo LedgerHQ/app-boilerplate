@@ -14,18 +14,16 @@ static void test_base58(void **state) {
 
     const char in[] = "USm3fpXnKG5EUBx2ndxBDMPVciP5hGey2Jh4NDv6gmeo1LkMeiKrLJUUBk6Z";
     const char expected_out[] = "The quick brown fox jumps over the lazy dog.";
-    uint8_t out[100];
+    uint8_t out[100] = {0};
     int out_len = base58_decode(in, sizeof(in) - 1, out, sizeof(out));
     assert_int_equal(out_len, strlen(expected_out));
-    out[out_len] = 0;  // add '\0'
     assert_string_equal((char *) out, expected_out);
 
     const char in2[] = "The quick brown fox jumps over the lazy dog.";
     const char expected_out2[] = "USm3fpXnKG5EUBx2ndxBDMPVciP5hGey2Jh4NDv6gmeo1LkMeiKrLJUUBk6Z";
-    uint8_t out2[100];
+    char out2[100] = {0};
     int out_len2 = base58_encode((uint8_t *) in2, sizeof(in2) - 1, out2, sizeof(out2));
     assert_int_equal(out_len2, strlen(expected_out2));
-    out2[out_len2] = 0;  // add '\0'
     assert_string_equal((char *) out2, expected_out2);
 }
 
