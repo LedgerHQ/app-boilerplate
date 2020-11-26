@@ -19,9 +19,9 @@ typedef enum {
 } parser_status_e;
 
 typedef struct {
-    uint64_t nonce;     /// 8 bytes nonce
-    uint64_t value;     /// 8 bytes amount value
-    uint8_t *to;        /// pointer to 20 bytes address
-    uint8_t *memo;      /// variable length memo (ascii encoded)
-    uint64_t memo_len;  /// 8 bytes length of memo (varint 1-8 bytes)
+    uint64_t nonce;     /// nonce (8 bytes)
+    uint64_t value;     /// amount value (8 bytes)
+    uint8_t *to;        /// pointer to address (20 bytes)
+    uint8_t *memo;      /// memo (variable length)
+    uint64_t memo_len;  /// length of memo (8 bytes)
 } transaction_t;

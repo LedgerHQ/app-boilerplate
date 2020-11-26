@@ -6,31 +6,28 @@
 
 /**
  * Enumeration for endianness.
- *
- * @brief either Big Endian (BE) or Little Endian (LE).
- *
  */
-typedef enum { BE, LE } endianness_t;
+typedef enum {
+    BE,  /// Big Endian
+    LE   /// Little Endian
+} endianness_t;
 
 /**
- * Struct representing a buffer.
- *
- * @brief buffer representation with size and offset.
- *
+ * Struct for buffer with size and offset.
  */
 typedef struct {
-    const uint8_t *ptr;
-    size_t size;
-    size_t offset;
+    const uint8_t *ptr;  /// Pointer to byte buffer
+    size_t size;         /// Size of byte buffer
+    size_t offset;       /// Offset in byte buffer
 } buffer_t;
 
 /**
- * Function to know if buffer is readable.
+ * Tell whether buffer can read bytes or not.
  *
- * @brief whether buffer can read `n` bytes or not.
- *
- * @param[in] buffer pointer to input buffer.
- * @param[in] n length to read in buffer.
+ * @param[in] buffer
+ *   Pointer to input buffer struct.
+ * @param[in] n
+ *   Number of bytes to read in buffer.
  *
  * @return true if success, false otherwise.
  *
@@ -38,12 +35,12 @@ typedef struct {
 bool buffer_can_read(const buffer_t *buffer, size_t n);
 
 /**
- * Function to seek the buffer to specific offset.
+ * Seek the buffer to specific offset.
  *
- * @brief seek buffer to `offset`.
- *
- * @param[in,out] buffer pointer to input buffer.
- * @param[in]     offset position to seek.
+ * @param[in,out] buffer
+ *   Pointer to input buffer struct.
+ * @param[in]     offset
+ *   Specific offset to seek.
  *
  * @return true if success, false otherwise.
  *
@@ -51,12 +48,12 @@ bool buffer_can_read(const buffer_t *buffer, size_t n);
 bool buffer_seek_set(buffer_t *buffer, size_t offset);
 
 /**
- * Function to seek the buffer relatively to current offset.
+ * Seek buffer relatively to current offset.
  *
- * @brief seek buffer to `buffer->offset` + `offset`.
- *
- * @param[in,out] buffer pointer to input buffer.
- * @param[in]     offset position to seek relatively from `buffer->offset`.
+ * @param[in,out] buffer
+ *   Pointer to input buffer struct.
+ * @param[in]     offset
+ *   Offset to seek relatively to `buffer->offset`.
  *
  * @return true if success, false otherwise.
  *
@@ -64,12 +61,12 @@ bool buffer_seek_set(buffer_t *buffer, size_t offset);
 bool buffer_seek_cur(buffer_t *buffer, size_t offset);
 
 /**
- * Function to seek the buffer relatively to the end.
+ * Seek the buffer relatively to the end.
  *
- * @brief seek buffer to `buffer->size` - `offset`.
- *
- * @param[in,out] buffer pointer to input buffer.
- * @param[in]     offset position to seek relatively to `buffer->size`.
+ * @param[in,out] buffer
+ *   Pointer to input buffer struct.
+ * @param[in]     offset
+ *   Offset to seek relatively to `buffer->size`.
  *
  * @return true if success, false otherwise.
  *
@@ -77,12 +74,12 @@ bool buffer_seek_cur(buffer_t *buffer, size_t offset);
 bool buffer_seek_end(buffer_t *buffer, size_t offset);
 
 /**
- * Function to read 1 byte from buffer.
+ * Read 1 byte from buffer into uint8_t.
  *
- * @brief read uint8_t from buffer if possible.
- *
- * @param[in,out]  buffer pointer to input buffer.
- * @param[out]     value 8 bit value read from buffer.
+ * @param[in,out]  buffer
+ *   Pointer to input buffer struct.
+ * @param[out]     value
+ *   Pointer to 8-bit unsigned integer read from buffer.
  *
  * @return true if success, false otherwise.
  *
@@ -90,13 +87,14 @@ bool buffer_seek_end(buffer_t *buffer, size_t offset);
 bool buffer_read_u8(buffer_t *buffer, uint8_t *value);
 
 /**
- * Function to read 2 bytes from buffer.
+ * Read 2 bytes from buffer into uint16_t.
  *
- * @brief read uint16_t from buffer if possible.
- *
- * @param[in,out]  buffer pointer to input buffer.
- * @param[out]     value 16 bit value read from buffer.
- * @param[in]      endianness either BE or LE.
+ * @param[in,out]  buffer
+ *   Pointer to input buffer struct.
+ * @param[out]     value
+ *   Pointer to 16-bit unsigned integer read from buffer.
+ * @param[in]      endianness
+ *   Either BE (Big Endian) or LE (Little Endian).
  *
  * @return true if success, false otherwise.
  *
@@ -104,13 +102,14 @@ bool buffer_read_u8(buffer_t *buffer, uint8_t *value);
 bool buffer_read_u16(buffer_t *buffer, uint16_t *value, endianness_t endianness);
 
 /**
- * Function to read 4 bytes from buffer.
+ * Read 4 bytes from buffer into uint32_t.
  *
- * @brief read uint32_t from buffer if possible.
- *
- * @param[in,out]  buffer pointer to input buffer.
- * @param[out]     value 32 bit value read from buffer.
- * @param[in]      endianness either BE or LE.
+ * @param[in,out]  buffer
+ *   Pointer to input buffer struct.
+ * @param[out]     value
+ *   Pointer to 32-bit unsigned integer read from buffer.
+ * @param[in]      endianness
+ *   Either BE (Big Endian) or LE (Little Endian).
  *
  * @return true if success, false otherwise.
  *
@@ -118,13 +117,14 @@ bool buffer_read_u16(buffer_t *buffer, uint16_t *value, endianness_t endianness)
 bool buffer_read_u32(buffer_t *buffer, uint32_t *value, endianness_t endianness);
 
 /**
- * Function to read 8 bytes from buffer.
+ * Read 8 bytes from buffer into uint64_t.
  *
- * @brief read uint16_t from buffer if possible.
- *
- * @param[in,out]  buffer pointer to input buffer.
- * @param[out]     value 64 bit value read from buffer.
- * @param[in]      endianness either BE or LE.
+ * @param[in,out]  buffer
+ *   Pointer to input buffer struct.
+ * @param[out]     value
+ *   Pointer to 64-bit unsigned integer read from buffer.
+ * @param[in]      endianness
+ *   Either BE (Big Endian) or LE (Little Endian).
  *
  * @return true if success, false otherwise.
  *
@@ -132,30 +132,44 @@ bool buffer_read_u32(buffer_t *buffer, uint32_t *value, endianness_t endianness)
 bool buffer_read_u64(buffer_t *buffer, uint64_t *value, endianness_t endianness);
 
 /**
- * Function to read Bitcoin-like varint from buffer.
+ * Read Bitcoin-like varint from buffer into uint64_t.
  *
  * @see https://en.bitcoin.it/wiki/Protocol_documentation#Variable_length_integer
  *
- * @brief read 1, 2, 4 or 8 bytes from buffer if possible.
- *
- * @param[in,out]  buffer pointer to input buffer.
- * @param[out]     value 64 bit value read from buffer.
+ * @param[in,out]  buffer
+ *   Pointer to input buffer struct.
+ * @param[out]     value
+ *   Pointer to 64-bit unsigned integer read from buffer.
  *
  * @return true if success, false otherwise.
  *
  */
 bool buffer_read_varint(buffer_t *buffer, uint64_t *value);
 
+/**
+ * Read BIP32 path from buffer.
+ *
+ * @param[in,out]  buffer
+ *   Pointer to input buffer struct.
+ * @param[out]     out
+ *   Pointer to output 32-bit integer buffer.
+ * @param[in]      out_len
+ *   Number of BIP32 paths read in the output buffer.
+ *
+ * @return true if success, false otherwise.
+ *
+ */
 bool buffer_read_bip32_path(buffer_t *buffer, uint32_t *out, size_t out_len);
 
 /**
- * Function to copy `out_len` bytes from buffer.
+ * Copy bytes from buffer without moving offset.
  *
- * @brief copy `out_len` bytes from buffer in `out`.
- *
- * @param[in]  buffer pointer to input buffer.
- * @param[out] out array to copy data from buffer.
- * @param[in]  out_len length of array.
+ * @param[in]  buffer
+ *   Pointer to input buffer struct.
+ * @param[out] out
+ *   Pointer to output byte buffer.
+ * @param[in]  out_len
+ *   Length of output byte buffer.
  *
  * @return true if success, false otherwise.
  *
@@ -163,13 +177,14 @@ bool buffer_read_bip32_path(buffer_t *buffer, uint32_t *out, size_t out_len);
 bool buffer_copy(const buffer_t *buffer, uint8_t *out, size_t out_len);
 
 /**
- * Function to move `out_len` bytes from buffer.
+ * Move bytes from buffer.
  *
- * @brief copy `out_len` bytes from buffer in `out` and move `buffer->offset` accordingly.
- *
- * @param[in,out]  buffer pointer to input buffer.
- * @param[out]     out array to move data from buffer.
- * @param[in]      out_len length of array.
+ * @param[in,out]  buffer
+ *   Pointer to input buffer struct.
+ * @param[out]     out
+ *   Pointer to output byte buffer.
+ * @param[in]      out_len
+ *   Length of output byte buffer.
  *
  * @return true if success, false otherwise.
  *

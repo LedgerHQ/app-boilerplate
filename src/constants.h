@@ -8,7 +8,7 @@
 #define CLA 0xE0
 
 /**
- * Length of APPNAME variable in Makefile.
+ * Length of APPNAME variable in the Makefile.
  */
 #define APPNAME_LEN (sizeof(APPNAME) - 1)
 
@@ -18,16 +18,16 @@
 #define APPVERSION_LEN 3
 
 /**
- * Maximum length of application name (APPNAME variable in Makefile).
+ * Maximum length of application name.
  */
 #define MAX_APPNAME_LEN 64
 
 /**
- * Maximum transaction length in bytes.
+ * Maximum transaction length (bytes).
  */
 #define MAX_TRANSACTION_LEN 510
 
 /**
- * Maximum signature length in bytes.
+ * Maximum signature length (bytes).
  */
 #define MAX_DER_SIG_LEN 72

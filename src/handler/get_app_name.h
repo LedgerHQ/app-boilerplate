@@ -1,12 +1,12 @@
 #pragma once
 
 /**
- * Function handling GET_APP_NAME command.
+ * Handler for GET_APP_NAME command. Send APDU response with ASCII
+ * encoded name of the application.
  *
- * @brief send APDU response with ASCII encoded name of the application
- * as in APPNAME variable of the Makefile.
+ * @see variable APPNAME in Makefile.
  *
- * @return zero or positive integer if success, negative number otherwise.
+ * @return zero or positive integer if success, negative integer otherwise.
  *
  */
 int handler_get_app_name(void);

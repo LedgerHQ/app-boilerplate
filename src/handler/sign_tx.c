@@ -46,7 +46,7 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
         }
 
         return io_send_sw(SW_OK);
-    } else {
+    } else {  // parse transaction
         if (G_context.req_type != CONFIRM_TRANSACTION) {
             return io_send_sw(SW_BAD_STATE);
         }

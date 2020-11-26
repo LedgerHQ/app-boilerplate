@@ -3,21 +3,19 @@
 #include <stdbool.h>  // bool
 
 /**
- * Function to handle public key validation on display.
+ * Action for public key validation and export.
  *
- * @brief user action for public key validation.
- *
- * @param choice user choice on display.
+ * @param[in] choice
+ *   User choice (either approved or rejectd).
  *
  */
 void ui_action_validate_pubkey(bool choice);
 
 /**
- * Function to handle transaction validation on display.
+ * Action for transaction information validation.
  *
- * @brief user action for transaction validation.
- *
- * @param choice user choice on display.
+ * @param[in] choice
+ *   User choice (either approved or rejectd).
  *
  */
 void ui_action_validate_transaction(bool choice);

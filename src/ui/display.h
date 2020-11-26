@@ -8,17 +8,17 @@
 typedef void (*action_validate_cb)(bool);
 
 /**
- * Function to display address on the device.
+ * Display address on the device and ask confirmation to export.
  *
- * @brief show address on the device and ask confirmation to export.
+ * @return 0 if success, negative integer otherwise.
  *
  */
 int ui_display_address(void);
 
 /**
- * Function to display transaction information on the device.
+ * Display transaction information on the device and ask confirmation to sign.
  *
- * @brief show amount and recipient then ask confirmation to export.
+ * @return 0 if success, negative integer otherwise.
  *
  */
 int ui_display_transaction(void);

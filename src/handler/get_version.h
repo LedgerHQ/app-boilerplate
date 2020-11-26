@@ -1,12 +1,12 @@
 #pragma once
 
 /**
- * Function handling GET_VERSION command.
+ * Handler gor GET_VERSION command. Send APDU response with version
+ * of the application.
  *
- * @brief send APDU response with version of the application as: MAJOR (1 byte) ||
- * MINOR (1 byte) || PATCH (1 byte).
+ * @see MAJOR_VERSION, MINOR_VERSION and PATCH_VERSION in Makefile.
  *
- * @return zero or positive integer if success, negative number otherwise.
+ * @return zero or positive integer if success, negative integer otherwise.
  *
  */
 int handler_get_version(void);

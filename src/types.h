@@ -9,9 +9,6 @@
 
 /**
  * Enumeration for the status of IO.
- *
- * @brief status of IO, either READY, RECEIVED or WAITING.
- *
  */
 typedef enum {
     READY,     /// ready for new event
@@ -21,9 +18,6 @@ typedef enum {
 
 /**
  * Enumeration with expected INS of APDU commands.
- *
- * @brief available INS for APDU command.
- *
  */
 typedef enum {
     GET_VERSION = 0x03,     /// version of the application
@@ -33,10 +27,7 @@ typedef enum {
 } command_e;
 
 /**
- * Structure of APDU command to receive.
- *
- * @brief struct within APDU command fields (CLA, INS, P1, P2, Lc, Command data).
- *
+ * Structure with fields of APDU command.
  */
 typedef struct {
     uint8_t cla;    /// Instruction class
@@ -49,9 +40,6 @@ typedef struct {
 
 /**
  * Enumeration with parsing state.
- *
- * @brief state of transaction parsing.
- *
  */
 typedef enum {
     STATE_NONE,     /// No state
@@ -60,10 +48,7 @@ typedef enum {
 } state_e;
 
 /**
- * Enumeration with request type to user.
- *
- * @brief request type to user.
- *
+ * Enumeration with user request type.
  */
 typedef enum {
     CONFIRM_ADDRESS,     /// confirm address derived from public key
@@ -72,44 +57,35 @@ typedef enum {
 
 /**
  * Structure for public key context information.
- *
- * @brief public key context with chain code.
- *
  */
 typedef struct {
-    uint8_t raw_public_key[64];
-    uint8_t chain_code[32];
+    uint8_t raw_public_key[64];  /// x-coordinate (32), y-coodinate (32)
+    uint8_t chain_code[32];      /// for public key derivation
 } pubkey_ctx_t;
 
 /**
  * Structure for transaction information context.
- *
- * @brief transaction context needed to be signed.
- *
  */
 typedef struct {
-    uint8_t raw_tx[MAX_TRANSACTION_LEN];
-    size_t raw_tx_len;
-    transaction_t transaction;
-    uint8_t m_hash[32];
-    uint8_t signature[MAX_DER_SIG_LEN];
-    uint8_t signature_len;
-    uint8_t v;
+    uint8_t raw_tx[MAX_TRANSACTION_LEN];  /// raw transaction serialized
+    size_t raw_tx_len;                    /// length of raw transaction
+    transaction_t transaction;            /// structured transaction
+    uint8_t m_hash[32];                   /// message hash digest
+    uint8_t signature[MAX_DER_SIG_LEN];   /// transaction signature
+    uint8_t signature_len;                /// length of transaction signature
+    uint8_t v;                            /// parity of y-coordinate of R in signature
 } transaction_ctx_t;
 
 /**
  * Structure for global context.
- *
- * @brief global context used during user request.
- *
  */
 typedef struct {
-    state_e state;
+    state_e state;  /// state of the context
     union {
-        pubkey_ctx_t pk_info;
-        transaction_ctx_t tx_info;
+        pubkey_ctx_t pk_info;       /// public key context
+        transaction_ctx_t tx_info;  /// transaction context
     };
-    request_type_e req_type;
-    uint32_t bip32_path[MAX_BIP32_PATH];
-    uint8_t bip32_path_len;
+    request_type_e req_type;              /// user request
+    uint32_t bip32_path[MAX_BIP32_PATH];  /// BIP32 path
+    uint8_t bip32_path_len;               /// lenght of BIP32 path
 } global_ctx_t;

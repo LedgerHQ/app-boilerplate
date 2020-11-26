@@ -14,31 +14,39 @@
 #define MAX_ENC_INPUT_SIZE 120
 
 /**
- * Function to decode in base 58.
- *
- * @brief decode string to bytes in base 58.
+ * Decode input string in base 58.
  *
  * @see https://tools.ietf.org/html/draft-msporny-base58-02
  *
- * @param[in]  in pointer to input string buffer to be decoded.
- * @param[in]  in_len length of the string buffer.
- * @param[out] out pointer to array.
- * @param[in]  out_len maximum length to be stored in out.
+ * @param[in]  in
+ *   Pointer to input string buffer.
+ * @param[in]  in_len
+ *   Length of the input string buffer.
+ * @param[out] out
+ *   Pointer to output byte buffer.
+ * @param[in]  out_len
+ *   Maximum length to write in output byte buffer.
+ *
+ * @return number of bytes decoded, -1 otherwise.
  *
  */
 int base58_decode(const char *in, size_t in_len, uint8_t *out, size_t out_len);
 
 /**
- * Function to encode in base 58.
- *
- * @brief encode bytes to string in base 58.
+ * Encode input bytes in base 58.
  *
  * @see https://tools.ietf.org/html/draft-msporny-base58-02
  *
- * @param[in]  in pointer to input byte buffer to be encoded.
- * @param[in]  in_len length of the byte buffer.
- * @param[out] out pointer to output string buffer.
- * @param[in]  out_len maximum length to be stored in out.
+ * @param[in]  in
+ *   Pointer to input byte buffer.
+ * @param[in]  in_len
+ *   Length of the input byte buffer.
+ * @param[out] out
+ *   Pointer to output string buffer.
+ * @param[in]  out_len
+ *   Maximum length to write in output byte buffer.
+ *
+ * @return number of bytes encoded, -1 otherwise.
  *
  */
 int base58_encode(const uint8_t *in, size_t in_len, char *out, size_t out_len);

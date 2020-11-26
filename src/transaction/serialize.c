@@ -24,7 +24,7 @@
 #include "../common/write.h"
 #include "../common/varint.h"
 
-int transaction_serialize(transaction_t *tx, uint8_t *out, size_t out_len) {
+int transaction_serialize(const transaction_t *tx, uint8_t *out, size_t out_len) {
     size_t offset = 0;
 
     if (8 + ADDRESS_LEN + 8 + varint_size(tx->memo_len) + tx->memo_len > out_len) {

@@ -5,13 +5,14 @@
 #include <stdbool.h>  // bool
 
 /**
- * Function to convert 64 bit signed integer as string.
+ * Format 64-bit signed integer as string.
  *
- * @brief 64 bit signed integer to string.
- *
- * @param[out] dst destination string.
- * @param[in]  dst_len length of destination string.
- * @param[in]  value 64 bit signed integer to convert.
+ * @param[out] dst
+ *   Pointer to output string.
+ * @param[in]  dst_len
+ *   Length of output string.
+ * @param[in]  value
+ *   64-bit signed integer to format.
  *
  * @return true if success, false otherwise.
  *
@@ -19,14 +20,16 @@
 bool format_i64(char *dst, size_t dst_len, const int64_t value);
 
 /**
- * Function to convert 64 bit unsigned integer as string.
+ * Format 64-bit unsigned integer as string with decimals.
  *
- * @brief 64 bit unsigned integer to string.
- *
- * @param[out] dst destination string.
- * @param[in]  dst_len length of destination string.
- * @param[in]  value 64 bit unsigned integer to convert.
- * @param[in]  decimals number of digits after decimal separator.
+ * @param[out] dst
+ *   Pointer to output string.
+ * @param[in]  dst_len
+ *   Length of output string.
+ * @param[in]  value
+ *   64-bit unsigned integer to format.
+ * @param[in]  decimals
+ *   Number of digits after decimal separator.
  *
  * @return true if success, false otherwise.
  *

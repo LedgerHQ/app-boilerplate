@@ -10,14 +10,16 @@
 #define MAX_BIP32_PATH 10
 
 /**
- * Function to read BIP32 path.
+ * Read BIP32 path from byte buffer.
  *
- * @brief read BIP32 path in byte array.
- *
- * @param[in]  in pointer to byte array.
- * @param[in]  in_len length of byte array.
- * @param[out] out pointer to 32-bit integer array.
- * @param[in]  out_len lenght of the 32-bit integer array.
+ * @param[in]  in
+ *   Pointer to input byte buffer.
+ * @param[in]  in_len
+ *   Length of input byte buffer.
+ * @param[out] out
+ *   Pointer to output 32-bit integer buffer.
+ * @param[in]  out_len
+ *   Number of BIP32 paths read in the output buffer.
  *
  * @return true if success, false otherwise.
  *
@@ -25,14 +27,16 @@
 bool bip32_path_read(const uint8_t *in, size_t in_len, uint32_t *out, size_t out_len);
 
 /**
- * Function to format BIP32 path as string.
+ * Format BIP32 path as string.
  *
- * @brief convert 32 bit integer array with BIP32 path to string.
- *
- * @param[in]  bip32_path array of 32 bit integers.
- * @param[in]  bip32_path_len length of the array.
- * @param[out] out string representation of BIP32 path.
- * @param[in]  out_len length of the string.
+ * @param[in]  bip32_path
+ *   Pointer to 32-bit integer input buffer.
+ * @param[in]  bip32_path_len
+ *   Maximum number of BIP32 paths in the input buffer.
+ * @param[out] out string
+ *   Pointer to output string.
+ * @param[in]  out_len
+ *   Length of the output string.
  *
  * @return true if success, false otherwise.
  *

@@ -7,13 +7,14 @@
 #include "../types.h"
 
 /**
- * Function to parse APDU command.
+ * Parse APDU command from byte buffer.
  *
- * @brief parse input buffer into command_t struct.
- *
- * @param[out] cmd command_t struct with APDU command fields.
- * @param[in]  buf bytes buffer within APDU command.
- * @param[in]  buf_len length of bytes buffer.
+ * @param[out] cmd
+ *   Structured APDU command (CLA, INS, P1, P2, Lc, Command data).
+ * @param[in]  buf
+ *   Byte buffer with raw APDU command.
+ * @param[in]  buf_len
+ *   Length of byte buffer.
  *
  * @return true if success, false otherwise.
  *

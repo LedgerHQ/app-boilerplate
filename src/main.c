@@ -36,10 +36,7 @@ bolos_ux_params_t G_ux_params;
 global_ctx_t G_context;
 
 /**
- * Function to handle IO event loop.
- *
- * @brief handle APDU command received and send back APDU response using handlers.
- *
+ * Handle APDU command received and send back APDU response using handlers.
  */
 void app_main() {
     // Length of APDU command received in G_io_apdu_buffer
@@ -104,10 +101,7 @@ void app_main() {
 }
 
 /**
- * Function to exit the application.
- *
- * @brief exit the application and go back to the dashboard.
- *
+ * Exit the application and go back to the dashboard.
  */
 void app_exit() {
     BEGIN_TRY_L(exit) {
@@ -121,10 +115,7 @@ void app_exit() {
 }
 
 /**
- * Entrypoint of the application.
- *
- * @brief main loop to setup USB, Bluetooth, UI and launch app_main().
- *
+ * Main loop to setup USB, Bluetooth, UI and launch app_main().
  */
 __attribute__((section(".boot"))) int main() {
     __asm volatile("cpsie i");

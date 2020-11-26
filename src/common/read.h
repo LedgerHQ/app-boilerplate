@@ -4,79 +4,79 @@
 #include <stddef.h>  // size_t
 
 /**
- * Function to read 2 bytes as Big Endian.
+ * Read 2 bytes as Big Endian from byte buffer.
  *
- * @brief read 2 bytes as Big Endian from `ptr`.
+ * @param[in] ptr
+ *   Pointer to byte buffer.
+ * @param[in] offset
+ *   Offset in the byte buffer.
  *
- * @param[in] ptr pointer to array of bytes.
- * @param[in] offset index to read in the array.
- *
- * @return 16-bit unsigned integer value.
+ * @return 2 bytes value read from buffer.
  *
  */
 uint16_t read_u16_be(const uint8_t *ptr, size_t offset);
 
 /**
- * Function to read 4 bytes as Big Endian.
+ * Read 4 bytes as Big Endian from byte buffer.
  *
- * @brief read 4 bytes as Big Endian from `ptr`.
+ * @param[in] ptr
+ *   Pointer to byte buffer.
+ * @param[in] offset
+ *   Offset in the byte buffer.
  *
- * @param[in] ptr pointer to array of bytes.
- * @param[in] offset index to read in the array.
- *
- * @return 32-bit unsigned integer value.
+ * @return 4 bytes value read from buffer.
  *
  */
 uint32_t read_u32_be(const uint8_t *ptr, size_t offset);
 
 /**
- * Function to read 8 bytes as Big Endian.
+ * Read 8 bytes as Big Endian from byte buffer.
  *
- * @brief read 8 bytes as Big Endian from `ptr`.
+ * @param[in] ptr
+ *   Pointer to byte buffer.
+ * @param[in] offset
+ *   Offset in the byte buffer.
  *
- * @param[in] ptr pointer to array of bytes.
- * @param[in] offset index to read in the array.
- *
- * @return 64-bit unsigned integer value.
+ * @return 8 bytes value read from buffer.
  *
  */
 uint64_t read_u64_be(const uint8_t *ptr, size_t offset);
 
 /**
- * Function to read 2 bytes as Little Endian.
+ * Read 2 bytes as Little Endian from byte buffer.
  *
- * @brief read 2 bytes as Little Endian from `ptr`.
+ * @param[in] ptr
+ *   Pointer to byte buffer.
+ * @param[in] offset
+ *   Offset in the byte buffer.
  *
- * @param[in] ptr pointer to array of bytes.
- * @param[in] offset index to read in the array.
- *
- * @return 16-bit unsigned integer value.
+ * @return 2 bytes value read from buffer.
  *
  */
 uint16_t read_u16_le(const uint8_t *ptr, size_t offset);
 
 /**
- * Function to read 4 bytes as Little Endian.
+ * Read 4 bytes as Little Endian from byte buffer.
  *
- * @brief read 4 bytes as Little Endian from `ptr`.
+ * @param[in] ptr
+ *   Pointer to byte buffer.
+ * @param[in] offset
+ *   Offset in the byte buffer.
  *
- * @param[in] ptr pointer to array of bytes.
- * @param[in] offset index to read in the array.
- *
- * @return 32-bit unsigned integer value.
+ * @return 4 bytes value read from buffer.
  *
  */
 uint32_t read_u32_le(const uint8_t *ptr, size_t offset);
 
 /**
- * Function to read 8 bytes as Little Endian.
+ * Read 8 bytes as Little Endian from byte buffer.
  *
- * @brief read 8 bytes as Little Endian from `ptr`.
+ * @param[in] ptr
+ *   Pointer to byte buffer.
+ * @param[in] offset
+ *   Offset in the byte buffer.
  *
- * @param[in] ptr pointer to array of bytes.
- * @param[in] offset index to read in the array.
- *
- * @return 64-bit unsigned integer value.
+ * @return 8 bytes value read from buffer.
  *
  */
 uint64_t read_u64_le(const uint8_t *ptr, size_t offset);

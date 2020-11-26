@@ -25,7 +25,7 @@
 
 int crypto_derive_private_key(cx_ecfp_private_key_t *private_key,
                               uint8_t chain_code[static 32],
-                              uint32_t *bip32_path,
+                              const uint32_t *bip32_path,
                               uint8_t bip32_path_len) {
     uint8_t raw_private_key[32] = {0};
 

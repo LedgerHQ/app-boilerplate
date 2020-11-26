@@ -125,6 +125,9 @@ class BoilerplateCommand:
             if not sw & 0x9000:
                 raise DeviceException(error_code=sw, ins=InsType.INS_SIGN_TX)
 
+        # response = der_sig_len (1) ||
+        #            der_sig (var) ||
+        #            v (1)
         offset: int = 0
         der_sig_len: int = response[offset]
         offset += 1
