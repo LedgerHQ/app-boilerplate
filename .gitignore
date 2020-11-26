@@ -11,6 +11,9 @@ unit-tests/build/
 unit-tests/coverage/
 unit-tests/coverage.info
 
+# Fuzzing
+fuzzing/build/
+
 
 # Editors
 .idea/
