@@ -50,12 +50,12 @@ parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
     // memo
     tx->memo = (uint8_t *) (buf->ptr + buf->offset);
 
-    if (!transaction_utils_check_encoding(tx->memo, tx->memo_len)) {
-        return MEMO_ENCODING_ERROR;
-    }
-
     if (!buffer_seek_cur(buf, tx->memo_len)) {
         return MEMO_PARSING_ERROR;
+    }
+
+    if (!transaction_utils_check_encoding(tx->memo, tx->memo_len)) {
+        return MEMO_ENCODING_ERROR;
     }
 
     return (buf->offset == buf->size) ? PARSING_OK : WRONG_LENGTH_ERROR;
