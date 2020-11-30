@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-
 /**
  * Instruction class of the Boilerplate application.
  */
@@ -31,3 +29,8 @@
  * Maximum signature length (bytes).
  */
 #define MAX_DER_SIG_LEN 72
+
+/**
+ * Exponent used to convert mBOL to BOL unit (N BOL = N * 10^3 mBOL).
+ */
+#define EXPONENT_SMALLEST_UNIT 3

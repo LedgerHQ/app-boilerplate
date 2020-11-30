@@ -26,6 +26,7 @@
 #include "glyphs.h"
 
 #include "display.h"
+#include "constants.h"
 #include "../globals.h"
 #include "../io.h"
 #include "../sw.h"
@@ -151,7 +152,10 @@ int ui_display_transaction() {
 
     memset(g_amount, 0, sizeof(g_amount));
     char amount[21] = {0};
-    format_fpu64(amount, sizeof(amount), G_context.tx_info.transaction.value, 4);
+    format_fpu64(amount,
+                 sizeof(amount),
+                 G_context.tx_info.transaction.value,
+                 EXPONENT_SMALLEST_UNIT);
     snprintf(g_amount, sizeof(g_amount), "BOL %.*s", sizeof(amount), amount);
 
     memset(g_address, 0, sizeof(g_address));
