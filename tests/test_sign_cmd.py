@@ -1,4 +1,5 @@
 from hashlib import sha256
+from sha3 import keccak_256
 
 from ecdsa.curves import SECP256k1
 from ecdsa.keys import VerifyingKey
@@ -34,5 +35,5 @@ def test_sign_tx(cmd, button):
 
     assert pk.verify(signature=der_sig,
                      data=tx.serialize(),
-                     hashfunc=sha256,
+                     hashfunc=keccak_256,
                      sigdecode=sigdecode_der) is True

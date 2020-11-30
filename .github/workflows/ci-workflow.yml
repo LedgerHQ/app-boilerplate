@@ -103,6 +103,7 @@ jobs:
 
       - name: Run test
         run: |
+          apt update && apt install -qy gcc  # /!\ workaround for pysha3
           nohup bash -c "python /speculos/speculos.py bin/app.elf --sdk 1.6 --apdu-port 9999 --button-port 42000 --automation-port 43000 --display headless" > speculos.log 2<&1 &
           cd tests && pip install -r requirements.txt && pytest --headless
 
