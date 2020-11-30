@@ -75,7 +75,7 @@ Status words tend to be similar to common [APDU responses](https://www.eftlab.co
 
 | CLA | INS | P1 | P2 | Lc | Payload |
 | --- | --- | --- | --- | --- | --- |
-| 0xE0 | 0x05 | 0x00 (no display) <br> 0x01 (display) | 0x00 | 0x00 | `len(bip32_path) (1)` \|\|<br> `bip32_path{1} (4)` \|\|<br>`...` \|\|<br>`bip32_path{n} (4)` |
+| 0xE0 | 0x05 | 0x00 (no display) <br> 0x01 (display) | 0x00 | 1 + 4n | `len(bip32_path) (1)` \|\|<br> `bip32_path{1} (4)` \|\|<br>`...` \|\|<br>`bip32_path{n} (4)` |
 
 #### Response
 
@@ -89,13 +89,13 @@ Status words tend to be similar to common [APDU responses](https://www.eftlab.co
 
 | CLA | INS | P1 | P2 | Lc | Payload |
 | --- | --- | --- | --- | --- | --- |
-| 0xE0 | 0x06 | 0x00-0x03 (chunk index) | 0x00 (more) <br> 0x80 (last) | 0x00 | `len(bip32_path) (1)` \|\|<br> `bip32_path{1} (4)` \|\|<br>`...` \|\|<br>`bip32_path{n} (4)` |
+| 0xE0 | 0x06 | 0x00-0x03 (chunk index) | 0x00 (more) <br> 0x80 (last) | 1 + 4n | `len(bip32_path) (1)` \|\|<br> `bip32_path{1} (4)` \|\|<br>`...` \|\|<br>`bip32_path{n} (4)` |
 
 #### Response
 
 | Response length (bytes) | SW | Description |
 | --- | --- | --- |
-| var | 0x9000 | `len(signature) (1)` \|\| <br> `signature (var)` \|\| <br> `v (1)`| 
+| var | 0x9000 | `len(signature) (1)` \|\| <br> `signature (var)` \|\| <br> `v (1)`|
 
 
 ### Status Words

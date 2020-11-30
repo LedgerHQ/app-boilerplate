@@ -7,10 +7,12 @@
 /**
  * Convert public key to address.
  *
+ * address = Keccak256(public_key)[12:32] (20 bytes)
+ *
  * @param[in]  public_key
  *   Pointer to byte buffer with public key.
- *   The public key is represented as 64 bytes (32 bytes for
- *   each coordinate).
+ *   The public key is represented as 64 bytes with 32 bytes for
+ *   each coordinate.
  * @param[out] out
  *   Pointer to output byte buffer for address.
  * @param[in]  out_len

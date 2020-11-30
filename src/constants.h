@@ -11,7 +11,7 @@
 #define APPNAME_LEN (sizeof(APPNAME) - 1)
 
 /**
- * Length of (MAJOR_VERSION || MINOR_VERSION || PATCH_VERSION) variables in Makefile.
+ * Maximum length of MAJOR_VERSION || MINOR_VERSION || PATCH_VERSION.
  */
 #define APPVERSION_LEN 3
 

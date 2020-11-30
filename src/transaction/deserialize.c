@@ -32,7 +32,7 @@ parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
 
     tx->to = (uint8_t *) (buf->ptr + buf->offset);
 
-    // to address
+    // TO address
     if (!buffer_seek_cur(buf, ADDRESS_LEN)) {
         return TO_PARSING_ERROR;
     }

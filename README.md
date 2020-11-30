@@ -21,9 +21,19 @@ BOLOS_SDK=/opt/nanos-secure-sdk
 ## Compilation
 
 ```
-make DEBUG=1  # compile optionally with PRINTF (require debug firmware)
+make DEBUG=1  # compile optionally with PRINTF
 make load     # load the app on the Nano using ledgerblue
 ```
+
+## Documentation
+
+High level documentation such as [protocol specification](doc/PROTOCOL.md) and [transaction serialization](doc/TRANSACTION.md) are included in developer documentation which can be generated with [doxygen](https://www.doxygen.nl)
+
+```
+doxygen .doxygen/Doxyfile
+```
+
+the process outputs HTML and LaTeX documentations in `doc/html` and `doc/latex` folders.
 
 ## Tests & Continuous Integration
 
@@ -39,6 +49,6 @@ The flow processed in [GitHub Actions](https://github.com/features/actions) is t
 It outputs 4 artifacts:
 
 - `boilerplate-app-debug` within output files of the compilation process in debug mode
-- `speculos-log` within APDU commands and response when executing end-to-end tests
+- `speculos-log` within APDU command/response when executing end-to-end tests
 - `code-coverage` within HTML details of code coverage
 - `documentation` within HTML auto-generated documentation
