@@ -151,11 +151,13 @@ int ui_display_transaction() {
     }
 
     memset(g_amount, 0, sizeof(g_amount));
-    char amount[21] = {0};
-    format_fpu64(amount,
-                 sizeof(amount),
-                 G_context.tx_info.transaction.value,
-                 EXPONENT_SMALLEST_UNIT);
+    char amount[30] = {0};
+    if (!format_fpu64(amount,
+                      sizeof(amount),
+                      G_context.tx_info.transaction.value,
+                      EXPONENT_SMALLEST_UNIT)) {
+        return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+    }
     snprintf(g_amount, sizeof(g_amount), "BOL %.*s", sizeof(amount), amount);
     PRINTF("Amount: %s\n", g_amount);
 
