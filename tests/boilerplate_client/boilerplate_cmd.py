@@ -22,7 +22,7 @@ class BoilerplateCommand:
             self.builder.get_app_and_version()
         )  # type: int, bytes
 
-        if not sw & 0x9000:
+        if sw != 0x9000:
             raise DeviceException(error_code=sw, ins=0x01)
 
         # response = format_id (1) ||
@@ -50,7 +50,7 @@ class BoilerplateCommand:
             self.builder.get_version()
         )  # type: int, bytes
 
-        if not sw & 0x9000:
+        if sw != 0x9000:
             raise DeviceException(error_code=sw, ins=InsType.INS_GET_VERSION)
 
         # response = MAJOR (1) || MINOR (1) || PATCH (1)
@@ -68,7 +68,7 @@ class BoilerplateCommand:
             self.builder.get_app_name()
         )  # type: int, bytes
 
-        if not sw & 0x9000:
+        if sw != 0x9000:
             raise DeviceException(error_code=sw, ins=InsType.INS_GET_APP_NAME)
 
         return response.decode("ascii")
@@ -79,7 +79,7 @@ class BoilerplateCommand:
                                         display=display)
         )  # type: int, bytes
 
-        if not sw & 0x9000:
+        if sw != 0x9000:
             raise DeviceException(error_code=sw, ins=InsType.INS_GET_PUBLIC_KEY)
 
         # response = pub_key_len (1) ||
@@ -122,7 +122,7 @@ class BoilerplateCommand:
 
             sw, response = self.transport.recv()  # type: int, bytes
 
-            if not sw & 0x9000:
+            if sw != 0x9000:
                 raise DeviceException(error_code=sw, ins=InsType.INS_SIGN_TX)
 
         # response = der_sig_len (1) ||
