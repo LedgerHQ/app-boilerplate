@@ -60,10 +60,42 @@ bool format_i64(char *dst, size_t dst_len, const int64_t value) {
     return true;
 }
 
-bool format_fpu64(char *dst, size_t dst_len, const uint64_t value, uint8_t decimals) {
-    char buffer[21];
+bool format_u64(char *dst, size_t dst_len, const uint64_t value) {
+    char temp[] = "18446744073709551615";
 
-    if (value > INT64_MAX || !format_i64(buffer, 21, (int64_t) value)) {
+    char *ptr = temp;
+    uint64_t num = value;
+
+    while (num != 0) {
+        *ptr++ = '0' + (num % 10);
+        num /= 10;
+    }
+
+    if (value == 0) {
+        *ptr++ = '0';
+    }
+
+    int distance = (ptr - temp) + 1;
+
+    if ((int) dst_len < distance) {
+        return false;
+    }
+
+    size_t index = 0;
+
+    while (--ptr >= temp) {
+        dst[index++] = *ptr;
+    }
+
+    dst[index] = '\0';
+
+    return true;
+}
+
+bool format_fpu64(char *dst, size_t dst_len, const uint64_t value, uint8_t decimals) {
+    char buffer[21] = {0};
+
+    if (!format_u64(buffer, sizeof(buffer), value)) {
         return false;
     }
 

@@ -9,10 +9,10 @@
 
 #include "common/format.h"
 
-static void test_format(void **state) {
+static void test_format_i64(void **state) {
     (void) state;
 
-    char temp[21] = {0};
+    char temp[22] = {0};
 
     int64_t value = 0;
     assert_true(format_i64(temp, sizeof(temp), value));
@@ -30,6 +30,30 @@ static void test_format(void **state) {
     memset(temp, 0, sizeof(temp));
     assert_true(format_i64(temp, sizeof(temp), value));
     assert_string_equal(temp, "-9223372036854775808");
+}
+
+static void test_format_u64(void **state) {
+    (void) state;
+
+    char temp[21] = {0};
+
+    uint64_t value = 0;
+    assert_true(format_u64(temp, sizeof(temp), value));
+    assert_string_equal(temp, "0");
+
+    value = (uint64_t) 18446744073709551615ull;  // MAX_UNT64
+    memset(temp, 0, sizeof(temp));
+    assert_true(format_u64(temp, sizeof(temp), value));
+    assert_string_equal(temp, "18446744073709551615");
+
+    // buffer too small
+    assert_false(format_u64(temp, sizeof(temp) - 5, value));
+}
+
+static void test_format_fpu64(void **state) {
+    (void) state;
+
+    char temp[22] = {0};
 
     uint64_t amount = 100000000ull;  // satoshi
     memset(temp, 0, sizeof(temp));
@@ -56,12 +80,12 @@ static void test_format(void **state) {
 
     // buffer too small
     assert_false(format_fpu64(temp2, sizeof(temp2) - 20, amount, 18));
-    // overflow
-    assert_false(format_fpu64(temp2, sizeof(temp2), UINT64_MAX, 18));
 }
 
 int main() {
-    const struct CMUnitTest tests[] = {cmocka_unit_test(test_format)};
+    const struct CMUnitTest tests[] = {cmocka_unit_test(test_format_i64),
+                                       cmocka_unit_test(test_format_u64),
+                                       cmocka_unit_test(test_format_fpu64)};
 
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
