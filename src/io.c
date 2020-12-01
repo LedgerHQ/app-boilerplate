@@ -119,7 +119,7 @@ int io_send_response(const buffer_t *rdata, uint16_t sw) {
         PRINTF("<= SW=%04X | RData=%.*H\n", sw, rdata->size, rdata->ptr);
     } else {
         G_output_len = 0;
-        PRINTF("<= SW=%04X | RData=NULL\n", sw);
+        PRINTF("<= SW=%04X | RData=\n", sw);
     }
 
     write_u16_be(G_io_apdu_buffer, G_output_len, sw);

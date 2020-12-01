@@ -157,6 +157,7 @@ int ui_display_transaction() {
                  G_context.tx_info.transaction.value,
                  EXPONENT_SMALLEST_UNIT);
     snprintf(g_amount, sizeof(g_amount), "BOL %.*s", sizeof(amount), amount);
+    PRINTF("Amount: %s\n", g_amount);
 
     memset(g_address, 0, sizeof(g_address));
     snprintf(g_address, sizeof(g_address), "0x%.*H", ADDRESS_LEN, G_context.tx_info.transaction.to);

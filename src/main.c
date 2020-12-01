@@ -69,18 +69,14 @@ void app_main() {
                     continue;
                 }
 
-                PRINTF("=> CLA=%02X | INS=%02X | P1=%02X | P2=%02X | Lc=%02X | ",
+                PRINTF("=> CLA=%02X | INS=%02X | P1=%02X | P2=%02X | Lc=%02X | CData=%.*H\n",
                        cmd.cla,
                        cmd.ins,
                        cmd.p1,
                        cmd.p2,
-                       cmd.lc);
-
-                if (cmd.data) {
-                    PRINTF("CData=%.*H\n", cmd.lc, cmd.data);
-                } else {
-                    PRINTF("CData=NULL\n");
-                }
+                       cmd.lc,
+                       cmd.lc,
+                       cmd.data);
 
                 // Dispatch structured APDU command to handler
                 if (apdu_dispatcher(&cmd) < 0) {

@@ -88,7 +88,7 @@ int crypto_sign_message() {
                                     G_context.tx_info.signature,
                                     sizeof(G_context.tx_info.signature),
                                     &info);
-            PRINTF("signature: %.*H\n", sig_len, G_context.tx_info.signature);
+            PRINTF("Signature: %.*H\n", sig_len, G_context.tx_info.signature);
         }
         CATCH_OTHER(e) {
             THROW(e);
