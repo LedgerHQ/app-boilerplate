@@ -3,6 +3,8 @@
 #include <stdint.h>   // uint*_t
 #include <stdbool.h>  // bool
 
+#include "types.h"
+
 /**
  * Check if memo is encoded using ASCII characters.
  *

@@ -125,3 +125,30 @@ bool format_fpu64(char *dst, size_t dst_len, const uint64_t value, uint8_t decim
 
     return true;
 }
+
+int format_hex(const uint8_t *in, size_t in_len, char *out, size_t out_len) {
+    if (out_len < 2 * in_len + 1) {
+        return -1;
+    }
+
+    const char hex[] = "0123456789ABCDEF";
+    size_t i = 0;
+    int written = 0;
+
+    while (i < in_len && (i * 2 + (2 + 1)) <= out_len) {
+        uint8_t high_nibble = (in[i] & 0xF0) >> 4;
+        *out = hex[high_nibble];
+        out++;
+
+        uint8_t low_nibble = in[i] & 0x0F;
+        *out = hex[low_nibble];
+        out++;
+
+        i++;
+        written += 2;
+    }
+
+    *out = '\0';
+
+    return written + 1;
+}

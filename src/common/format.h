@@ -50,3 +50,20 @@ bool format_u64(char *dst, size_t dst_len, const uint64_t value);
  *
  */
 bool format_fpu64(char *dst, size_t dst_len, const uint64_t value, uint8_t decimals);
+
+/**
+ * Format byte buffer to uppercase hexadecimal string.
+ *
+ * @param[in]  in
+ *   Pointer to input byte buffer.
+ * @param[in]  in_len
+ *   Length of input byte buffer.
+ * @param[out] out
+ *   Pointer to output string.
+ * @param[in]  out_len
+ *   Length of output string.
+ *
+ * @return number of bytes written if success, -1 otherwise.
+ *
+ */
+int format_hex(const uint8_t *in, size_t in_len, char *out, size_t out_len);
