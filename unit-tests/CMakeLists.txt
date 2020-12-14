@@ -44,6 +44,7 @@ add_executable(test_format test_format.c)
 add_executable(test_write test_write.c)
 add_executable(test_apdu_parser test_apdu_parser.c)
 add_executable(test_tx_parser test_tx_parser.c)
+add_executable(test_tx_utils test_tx_utils.c)
 
 add_library(base58 SHARED ../src/common/base58.c)
 add_library(bip32 SHARED ../src/common/bip32.c)
@@ -74,6 +75,10 @@ target_link_libraries(test_tx_parser PUBLIC
                       transaction_deserialize
                       transaction_serialize
                       transaction_utils)
+target_link_libraries(test_tx_utils PUBLIC
+                      cmocka
+                      gcov
+                      transaction_utils)
 
 add_test(test_base58 test_base58)
 add_test(test_bip32 test_bip32)
@@ -82,3 +87,4 @@ add_test(test_format test_format)
 add_test(test_write test_write)
 add_test(test_apdu_parser test_apdu_parser)
 add_test(test_tx_parser test_tx_parser)
+add_test(test_tx_utils test_tx_utils)

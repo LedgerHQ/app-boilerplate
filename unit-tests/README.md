@@ -22,7 +22,7 @@ cmake -Bbuild -H. && make -C build
 and run tests with
 
 ```
-make -C build test
+CTEST_OUTPUT_ON_FAILURE=1 make -C build test
 ```
 
 ## Generate code coverage
