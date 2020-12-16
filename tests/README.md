@@ -1,7 +1,7 @@
 # End-to-end tests
 
 These tests are implemented in Python and can be executed either using the [Speculos](https://github.com/LedgerHQ/speculos) emulator or a Ledger Nano S/X.
-Python dependencies required are [pytest](https://pypi.org/project/pytest/) and [ledgercomm](https://pypi.org/project/ledgercomm/), install them using [pip](https://pypi.org/project/pip/)
+Python dependencies are listed in [requirements.txt](requirements.txt), install them using [pip](https://pypi.org/project/pip/)
 
 ```
 pip install -r requirements.txt
