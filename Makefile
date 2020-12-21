@@ -65,7 +65,7 @@ ifeq ($(TARGET_NAME),TARGET_NANOX)
     DEFINES += HAVE_BLE_APDU
 
     DEFINES += HAVE_GLO096
-    DEFINES += HAVE_BAGL BAGL_WIDTH=128 BAGL_HEIGHT=64
+    DEFINES += BAGL_WIDTH=128 BAGL_HEIGHT=64
     DEFINES += HAVE_BAGL_ELLIPSIS
     DEFINES += HAVE_BAGL_FONT_OPEN_SANS_REGULAR_11PX
     DEFINES += HAVE_BAGL_FONT_OPEN_SANS_EXTRABOLD_11PX
@@ -114,11 +114,10 @@ LDLIBS  += -lm -lgcc -lc
 include $(BOLOS_SDK)/Makefile.glyphs
 
 APP_SOURCE_PATH += src
-SDK_SOURCE_PATH += lib_stusb lib_stusb_impl
+SDK_SOURCE_PATH += lib_stusb lib_stusb_impl lib_ux
 
 ifeq ($(TARGET_NAME),TARGET_NANOX)
     SDK_SOURCE_PATH += lib_blewbxx lib_blewbxx_impl
-    SDK_SOURCE_PATH += lib_ux
 endif
 
 load: all
