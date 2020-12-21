@@ -18,7 +18,7 @@
 #include <stdint.h>   // uint*_t
 #include <stdbool.h>  // bool
 #include <stddef.h>   // size_t
-#include <string.h>   // memset
+#include <string.h>   // memset, explicit_bzero
 
 #include "os.h"
 #include "cx.h"
@@ -34,7 +34,7 @@
 #include "../helper/send_response.h"
 
 int handler_get_public_key(buffer_t *cdata, bool display) {
-    memset(&G_context, 0, sizeof(G_context));
+    explicit_bzero(&G_context, sizeof(G_context));
     G_context.req_type = CONFIRM_ADDRESS;
     G_context.state = STATE_NONE;
 
@@ -54,7 +54,7 @@ int handler_get_public_key(buffer_t *cdata, bool display) {
     // generate corresponding public key
     crypto_init_public_key(&private_key, &public_key, G_context.pk_info.raw_public_key);
     // reset private key
-    memset(&private_key, 0, sizeof(private_key));
+    explicit_bzero(&private_key, sizeof(private_key));
 
     if (display) {
         return ui_display_address();

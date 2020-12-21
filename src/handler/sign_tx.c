@@ -18,7 +18,7 @@
 #include <stdint.h>   // uint*_t
 #include <stdbool.h>  // bool
 #include <stddef.h>   // size_t
-#include <string.h>   // memset
+#include <string.h>   // memset, explicit_bzero
 
 #include "os.h"
 #include "cx.h"
@@ -34,7 +34,7 @@
 
 int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
     if (chunk == 0) {  // first APDU, parse BIP32 path
-        memset(&G_context, 0, sizeof(G_context));
+        explicit_bzero(&G_context, sizeof(G_context));
         G_context.req_type = CONFIRM_TRANSACTION;
         G_context.state = STATE_NONE;
 

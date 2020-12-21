@@ -16,7 +16,7 @@
  *****************************************************************************/
 
 #include <stdint.h>   // uint*_t
-#include <string.h>   // memset
+#include <string.h>   // memset, explicit_bzero
 #include <stdbool.h>  // bool
 
 #include "os.h"
@@ -47,7 +47,7 @@ int crypto_derive_private_key(cx_ecfp_private_key_t *private_key,
             THROW(e);
         }
         FINALLY {
-            memset(&raw_private_key, 0, sizeof(raw_private_key));
+            explicit_bzero(&raw_private_key, sizeof(raw_private_key));
         }
     }
     END_TRY;
@@ -94,7 +94,7 @@ int crypto_sign_message() {
             THROW(e);
         }
         FINALLY {
-            memset(&private_key, 0, sizeof(private_key));
+            explicit_bzero(&private_key, sizeof(private_key));
         }
     }
     END_TRY;

@@ -16,7 +16,7 @@
  *****************************************************************************/
 
 #include <stdint.h>  // uint*_t
-#include <string.h>  // memset
+#include <string.h>  // memset, explicit_bzero
 
 #include "os.h"
 #include "ux.h"
@@ -49,7 +49,7 @@ void app_main() {
     G_io_state = READY;
 
     // Reset context
-    memset(&G_context, 0, sizeof(G_context));
+    explicit_bzero(&G_context, sizeof(G_context));
 
     for (;;) {
         BEGIN_TRY {
