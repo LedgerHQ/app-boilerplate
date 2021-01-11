@@ -19,7 +19,7 @@
 #include <string.h>   // memset, explicit_bzero
 #include <stdbool.h>  // bool
 
-#include "os.h"
+#include "crypto.h"
 
 #include "globals.h"
 
