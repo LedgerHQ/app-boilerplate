@@ -60,35 +60,38 @@ bool format_i64(char *dst, size_t dst_len, const int64_t value) {
     return true;
 }
 
-bool format_u64(char *dst, size_t dst_len, const uint64_t value) {
-    char temp[] = "18446744073709551615";
+bool format_u64(char *out, size_t outLen, uint64_t in) {
+    uint8_t i = 0;
 
-    char *ptr = temp;
-    uint64_t num = value;
-
-    while (num != 0) {
-        *ptr++ = '0' + (num % 10);
-        num /= 10;
-    }
-
-    if (value == 0) {
-        *ptr++ = '0';
-    }
-
-    int distance = (ptr - temp) + 1;
-
-    if ((int) dst_len < distance) {
+    if (outLen == 0) {
         return false;
     }
+    outLen--;
 
-    size_t index = 0;
-
-    while (--ptr >= temp) {
-        dst[index++] = *ptr;
+    while (in > 9) {
+        out[i] = in % 10 + '0';
+        in /= 10;
+        i++;
+        if (i + 1 > outLen) {
+            return false;
+        }
     }
+    out[i] = in + '0';
+    out[i + 1] = '\0';
 
-    dst[index] = '\0';
+    uint8_t j = 0;
+    char tmp;
 
+    // revert the string
+    while (j < i) {
+        // swap out[j] and out[i]
+        tmp = out[j];
+        out[j] = out[i];
+        out[i] = tmp;
+
+        i--;
+        j++;
+    }
     return true;
 }
 

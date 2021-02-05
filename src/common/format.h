@@ -32,7 +32,7 @@ bool format_i64(char *dst, size_t dst_len, const int64_t value);
  * @return true if success, false otherwise.
  *
  */
-bool format_u64(char *dst, size_t dst_len, const uint64_t value);
+bool format_u64(char *dst, size_t dst_len, uint64_t value);
 
 /**
  * Format 64-bit unsigned integer as string with decimals.
