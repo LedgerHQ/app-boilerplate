@@ -72,14 +72,11 @@ bool format_u64(char *out, size_t outLen, uint64_t in) {
         out[i] = in % 10 + '0';
         in /= 10;
         i++;
-        if (i > outLen) {
+        if (i + 1 > outLen) {
             return false;
         }
     }
     out[i] = in + '0';
-    if (i + 1 > outLen) {
-        return false;
-    }
     out[i + 1] = '\0';
 
     uint8_t j = 0;
