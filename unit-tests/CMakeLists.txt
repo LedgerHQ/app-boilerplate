@@ -60,20 +60,20 @@ add_library(transaction_utils ../src/transaction/utils.c)
 
 target_link_libraries(test_base58 PUBLIC cmocka gcov base58)
 target_link_libraries(test_bip32 PUBLIC cmocka gcov bip32 read)
-target_link_libraries(test_buffer PUBLIC cmocka gcov read write varint bip32 buffer)
+target_link_libraries(test_buffer PUBLIC cmocka gcov buffer bip32 varint write read)
 target_link_libraries(test_format PUBLIC cmocka gcov format)
 target_link_libraries(test_write PUBLIC cmocka gcov write)
 target_link_libraries(test_apdu_parser PUBLIC cmocka gcov apdu_parser)
 target_link_libraries(test_tx_parser PUBLIC
+                      transaction_deserialize
+                      transaction_serialize
+                      buffer
+                      bip32
                       cmocka
                       gcov
                       write
-                      bip32
-                      buffer
                       read
                       varint
-                      transaction_deserialize
-                      transaction_serialize
                       transaction_utils)
 target_link_libraries(test_tx_utils PUBLIC
                       cmocka
