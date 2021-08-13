@@ -4,7 +4,7 @@ This is a boilerplate application which can be forked to start a new project for
 
 ## Prerequisite
 
-Be sure to have your environment correctly set up (see [Getting Started](https://ledger.readthedocs.io/en/latest/userspace/introduction.html)) and [ledgerblue](https://pypi.org/project/ledgerblue/) and installed.
+Be sure to have your environment correctly set up (see [Getting Started](https://developers.ledger.com/docs/nano-app/introduction/)) and [ledgerblue](https://pypi.org/project/ledgerblue/) and installed.
 
 If you want to benefit from [vscode](https://code.visualstudio.com/) integration, it's recommended to move the toolchain in `/opt` and set `BOLOS_ENV` environment variable as follows
 
