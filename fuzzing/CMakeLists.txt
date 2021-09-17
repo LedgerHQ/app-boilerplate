@@ -27,10 +27,10 @@ include(extra/TxParser.cmake)
 add_executable(fuzz_tx_parser fuzz_tx_parser.cc)
 
 target_compile_options(fuzz_tx_parser
-    PRIVATE $<$<C_COMPILER_ID:Clang>:-g -O2 -fsanitize=fuzzer,address>
+    PRIVATE $<$<C_COMPILER_ID:Clang>:-g -O2 -fsanitize=fuzzer,address,undefined>
 )
 
 target_link_libraries(fuzz_tx_parser
-    PRIVATE $<$<C_COMPILER_ID:Clang>:-fsanitize=fuzzer,address>
+    PRIVATE $<$<C_COMPILER_ID:Clang>:-fsanitize=fuzzer,address,undefined>
     PUBLIC txparser
 )
