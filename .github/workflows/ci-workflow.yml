@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-scanner:latest
+      image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
 
     steps:
       - name: Clone
@@ -64,7 +64,7 @@ jobs:
           name: codecov-app-boilerplate
           fail_ci_if_error: true
           verbose: true
-      
+
       - name: HTML documentation
         run: doxygen .doxygen/Doxyfile
 
@@ -72,8 +72,6 @@ jobs:
         with:
           name: documentation
           path: doc/html
-
-
 
   job_test:
     name: Test
@@ -112,4 +110,3 @@ jobs:
         with:
           name: speculos-log
           path: speculos.log
-
