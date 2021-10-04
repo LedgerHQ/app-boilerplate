@@ -17,7 +17,7 @@ void io_seproxyhal_display(const bagl_element_t *element);
  * @return 1 if success, 0 otherwise.
  *
  */
-uint8_t io_event(uint8_t channel);
+uint8_t io_event(uint8_t channel __attribute__((unused)));
 
 uint16_t io_exchange_al(uint8_t channel, uint16_t tx_len);
 
