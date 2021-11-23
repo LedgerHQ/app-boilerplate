@@ -38,6 +38,10 @@ bool address_from_pubkey(const uint8_t public_key[static 64], uint8_t *out, size
     cx_keccak_init(&keccak256, 256);
     cx_hash((cx_hash_t *) &keccak256, CX_LAST, public_key, 64, address, sizeof(address));
 
+    // Conflux user addresses start with b0001
+    address[sizeof(address) - ADDRESS_LEN] &= '\x0f';
+    address[sizeof(address) - ADDRESS_LEN] |= '\x10';
+
     memmove(out, address + sizeof(address) - ADDRESS_LEN, ADDRESS_LEN);
 
     return true;
