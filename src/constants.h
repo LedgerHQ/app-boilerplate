@@ -31,6 +31,6 @@
 #define MAX_DER_SIG_LEN 72
 
 /**
- * Exponent used to convert mBOL to BOL unit (N BOL = N * 10^3 mBOL).
+ * Exponent used to convert Drip to CFX unit (N CFX = N * 10^18 Drip).
  */
-#define EXPONENT_SMALLEST_UNIT 3
+#define EXPONENT_SMALLEST_UNIT 18

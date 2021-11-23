@@ -158,7 +158,7 @@ int ui_display_transaction() {
                       EXPONENT_SMALLEST_UNIT)) {
         return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
     }
-    snprintf(g_amount, sizeof(g_amount), "BOL %.*s", sizeof(amount), amount);
+    snprintf(g_amount, sizeof(g_amount), "CFX %.*s", sizeof(amount), amount);
     PRINTF("Amount: %s\n", g_amount);
 
     memset(g_address, 0, sizeof(g_address));
