@@ -37,3 +37,23 @@ extern io_state_e G_io_state;
  * Global context for user requests.
  */
 extern global_ctx_t G_context;
+
+/**
+ * Global application settings
+ */
+typedef struct AppSettings {
+    uint8_t allow_blind_sign;
+} AppSettings;
+
+enum BlindSign {
+    BlindSignDisabled = 0,
+    BlindSignEnabled = 1,
+};
+
+typedef struct internalStorage_t {
+    AppSettings settings;
+    uint8_t initialized;
+} internalStorage_t;
+
+extern const internalStorage_t N_storage_real;
+#define N_storage (*( volatile internalStorage_t *)PIC(&N_storage_real))

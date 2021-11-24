@@ -34,6 +34,22 @@ io_state_e G_io_state;
 ux_state_t G_ux;
 bolos_ux_params_t G_ux_params;
 global_ctx_t G_context;
+const internalStorage_t N_storage_real;
+
+void init_storage() {
+    if (N_storage.initialized != 0x01) {
+        internalStorage_t storage;
+        storage.settings.allow_blind_sign = BlindSignDisabled;
+        storage.initialized = 0x01;
+
+        nvm_write(
+            (internalStorage_t*)&N_storage,
+            (void*)&storage,
+            sizeof(internalStorage_t)
+        );
+    }
+}
+
 
 /**
  * Handle APDU command received and send back APDU response using handlers.
@@ -132,6 +148,8 @@ __attribute__((section(".boot"))) int main() {
 
                 USB_power(0);
                 USB_power(1);
+
+                init_storage();
 
                 ui_menu_main();
 
