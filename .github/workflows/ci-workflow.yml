@@ -133,7 +133,7 @@ jobs:
           path: doc/html
 
   job_functional_test_1:
-    name: Functional tests with Speculos + LedgerComm
+    name: Functional tests with LedgerComm (on Speculos)
     needs:
       - job_nanoS_build_debug
     runs-on: ubuntu-latest
@@ -172,3 +172,29 @@ jobs:
         with:
           name: speculos-log
           path: speculos.log
+
+  job_functional_test_2:
+    name: Functional tests with Speculos only
+    needs:
+      - job_nanoS_build_debug
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone
+        uses: actions/checkout@v2
+
+      - name: Download app binary
+        uses: actions/download-artifact@v2
+        with:
+          name: boilerplate-app-nanoS-debug
+          path: bin
+
+      - name: Install tests dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y qemu-user-static
+          pip install --extra-index-url https://test.pypi.org/simple/ -r tests/speculos/requirements.txt
+
+      - name: Run test
+        env:
+          CTEST_OUTPUT_ON_FAILURE: 1
+        run: pytest tests/speculos/
