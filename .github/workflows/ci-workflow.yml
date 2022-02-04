@@ -1,10 +1,18 @@
 name: Compilation & tests
 
-on: [push, pull_request]
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+      - develop
 
 jobs:
-  job_build_debug:
-    name: Build debug
+  job_nanoS_build_debug:
+    name: Build debug app for NanoS
     runs-on: ubuntu-latest
 
     container:
@@ -21,12 +29,32 @@ jobs:
       - name: Upload app binary
         uses: actions/upload-artifact@v2
         with:
-          name: boilerplate-app-debug
+          name: boilerplate-app-nanoS-debug
+          path: bin
+
+  job_nanoX_build_debug:
+    name: Build debug app for NanoX
+    runs-on: ubuntu-latest
+
+    container:
+      image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
+
+    steps:
+      - name: Clone
+        uses: actions/checkout@v2
+
+      - name: Build
+        run: |
+          make DEBUG=1 BOLOS_SDK=$NANOX_SDK
+
+      - name: Upload app binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: boilerplate-app-nanoX-debug
           path: bin
 
   job_scan_build:
     name: Clang Static Analyzer
-    needs: job_build_debug
     runs-on: ubuntu-latest
 
     container:
@@ -47,7 +75,6 @@ jobs:
 
   job_unit_test:
     name: Unit test
-    needs: job_build_debug
     runs-on: ubuntu-latest
 
     container:
@@ -85,7 +112,18 @@ jobs:
           name: codecov-app-boilerplate
           fail_ci_if_error: true
           verbose: true
-      
+
+  job_generate_doc:
+    name: Generate project documentation
+    runs-on: ubuntu-latest
+
+    container:
+      image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
+
+    steps:
+      - name: Clone
+        uses: actions/checkout@v2
+
       - name: HTML documentation
         run: doxygen .doxygen/Doxyfile
 
@@ -94,23 +132,19 @@ jobs:
           name: documentation
           path: doc/html
 
-
-
-  job_test:
-    name: Test
-    needs: job_build_debug
+  job_functional_test_1:
+    name: Functional tests with Speculos + LedgerComm
+    needs:
+      - job_nanoS_build_debug
     runs-on: ubuntu-latest
 
     container:
       image: ghcr.io/ledgerhq/speculos:latest
+      options: --entrypoint /bin/bash
       ports:
-        - 1234:1234
         - 9999:9999
-        - 40000:40000
-        - 41000:41000
         - 42000:42000
         - 43000:43000
-      options: --entrypoint /bin/bash
 
     steps:
       - name: Clone
@@ -119,18 +153,22 @@ jobs:
       - name: Download app binary
         uses: actions/download-artifact@v2
         with:
-          name: boilerplate-app-debug
+          name: boilerplate-app-nanoS-debug
           path: bin
+
+      - name: Install dependencies
+        run: |
+          apt update && apt install -qy gcc netcat  # /!\ needed when installing pysha3
+          pip install -r tests/requirements.txt
 
       - name: Run test
         run: |
-          apt update && apt install -qy gcc  # /!\ workaround for pysha3
           nohup bash -c "python /speculos/speculos.py bin/app.elf --apdu-port 9999 --button-port 42000 --automation-port 43000 --display headless" > speculos.log 2<&1 &
-          cd tests && pip install -r requirements.txt && pytest --headless
+          until `nc -w5 -z -v 127.0.0.1 9999`; do sleep 1; done;
+          pytest --headless tests/
 
       - name: Upload Speculos log
         uses: actions/upload-artifact@v2
         with:
           name: speculos-log
           path: speculos.log
-
