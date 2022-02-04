@@ -159,13 +159,13 @@ jobs:
       - name: Install dependencies
         run: |
           apt update && apt install -qy gcc netcat  # /!\ needed when installing pysha3
-          pip install -r tests/requirements.txt
+          pip install -r tests/ledgercomm/requirements.txt
 
       - name: Run test
         run: |
           nohup bash -c "python /speculos/speculos.py bin/app.elf --apdu-port 9999 --button-port 42000 --automation-port 43000 --display headless" > speculos.log 2<&1 &
           until `nc -w5 -z -v 127.0.0.1 9999`; do sleep 1; done;
-          pytest --headless tests/
+          pytest --headless tests/ledgercomm/
 
       - name: Upload Speculos log
         uses: actions/upload-artifact@v2
