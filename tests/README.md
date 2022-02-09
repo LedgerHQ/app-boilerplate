@@ -18,7 +18,7 @@ This directory contains examples of functional tests:
 Speculos is a Nano S/X emulator wich provides a Python HTTP client. Despite not
 being able to emulate **every** feature of a Nano S/X, it is a fast and powerful
 tool, and is broadly used to test appplication (directly, or through LedgerComm,
-or third-part tool such as [Zemu](https://github.com/Zondax/zemu)) which helps
+or third-party tool such as [Zemu](https://github.com/Zondax/zemu)) which helps
 building strong tests and CIs.
 
 LedgerComm is a library which eases the exchange of APDU though HID or TCP

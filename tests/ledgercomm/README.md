@@ -1,4 +1,4 @@
-# Ledgercomm functional tests
+# LedgerComm functional tests
 
 > :point_right: Every path on this document assumes you are at the root of the repository.
 
