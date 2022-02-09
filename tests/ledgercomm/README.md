@@ -54,9 +54,10 @@ dependency:
 pip install ledgercomm[hid]
 ```
 
-Be sure to have the boilerplate application installed and opened on the device,
-and the device connected through USB, without any other software interacting
-with it. Then run:
+Be sure to have the boilerplate application installed (see
+[this page](https://developers.ledger.com/docs/nano-app/load/) for installing an
+application on a Nano S) and opened on the device, and the device connected
+through USB, without any other software interacting with it. Then run:
 
 ```
 pytest --hid tests/ledgercomm/
