@@ -78,7 +78,6 @@ jobs:
   job_scan_build:
     name: Clang Static Analyzer
     runs-on: ubuntu-latest
-    needs: job_nanoS_build_debug
 
     container:
       image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
