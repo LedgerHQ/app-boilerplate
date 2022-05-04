@@ -25,7 +25,7 @@ def sw_h_path():
     return sw_h_path
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def client():
     file_path = SCRIPT_DIR.parent.parent / "bin" / "app.elf"
     args = ['--model', 'nanos', '--sdk', '2.1']
@@ -33,7 +33,7 @@ def client():
         yield client
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def cmd(client):
     yield BoilerplateCommand(
         client=client,
