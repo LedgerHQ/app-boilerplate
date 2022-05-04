@@ -12,67 +12,31 @@ on:
       - develop
 
 jobs:
-  job_nanoS_build_debug:
-    name: Build debug app for NanoS
+  nano_build:
+    name: Build boilerplate application for NanoS, X and S+
+    strategy:
+      matrix:
+        include:
+          - SDK: "$NANOS_SDK"
+            artifact: boilerplate-app-nanoS
+          - SDK: "$NANOX_SDK"
+            artifact: boilerplate-app-nanoX
+          - SDK: "$NANOSP_SDK"
+            artifact: boilerplate-app-nanoSP
     runs-on: ubuntu-latest
-
     container:
       image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
 
     steps:
       - name: Clone
         uses: actions/checkout@v2
-
       - name: Build
         run: |
-          make DEBUG=1
-
+          make BOLOS_SDK=${{ matrix.SDK }}
       - name: Upload app binary
         uses: actions/upload-artifact@v2
         with:
-          name: boilerplate-app-nanoS-debug
-          path: bin
-
-  job_nanoX_build_debug:
-    name: Build debug app for NanoX
-    runs-on: ubuntu-latest
-
-    container:
-      image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
-
-    steps:
-      - name: Clone
-        uses: actions/checkout@v2
-
-      - name: Build
-        run: |
-          make DEBUG=1 BOLOS_SDK=$NANOX_SDK
-
-      - name: Upload app binary
-        uses: actions/upload-artifact@v2
-        with:
-          name: boilerplate-app-nanoX-debug
-          path: bin
-
-  job_nanoSP_build_debug:
-    name: Build debug app for NanoS+
-    runs-on: ubuntu-latest
-
-    container:
-      image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
-
-    steps:
-      - name: Clone
-        uses: actions/checkout@v2
-
-      - name: Build
-        run: |
-          make DEBUG=1 BOLOS_SDK=$NANOSP_SDK
-
-      - name: Upload app binary
-        uses: actions/upload-artifact@v2
-        with:
-          name: boilerplate-app-nanoSP-debug
+          name: ${{ matrix.artifact }}
           path: bin
 
   job_scan_build:
@@ -84,7 +48,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-
       - name: Build with Clang Static Analyzer
         run: |
           make clean
@@ -105,12 +68,10 @@ jobs:
     steps:
       - name: Clone
         uses: actions/checkout@v2
-
       - name: Build unit tests
         run: |
           cd unit-tests/
           cmake -Bbuild -H. && make -C build && make -C build test
-
       - name: Generate code coverage
         run: |
           cd unit-tests/
@@ -157,7 +118,7 @@ jobs:
   job_functional_test_1:
     name: Functional tests with LedgerComm (on Speculos)
     needs:
-      - job_nanoS_build_debug
+      - nano_build
     runs-on: ubuntu-latest
 
     container:
@@ -171,25 +132,22 @@ jobs:
     steps:
       - name: Clone
         uses: actions/checkout@v2
-
       - name: Download app binary
         uses: actions/download-artifact@v2
         with:
-          name: boilerplate-app-nanoS-debug
+          name: boilerplate-app-nanoS
           path: bin
-
       - name: Install dependencies
         run: |
           apt update && apt install -qy gcc netcat  # /!\ needed when installing pysha3
           pip install -r tests/ledgercomm/requirements.txt
-
       - name: Run test
         run: |
           nohup bash -c "python /speculos/speculos.py bin/app.elf --apdu-port 9999 --button-port 42000 --automation-port 43000 --display headless" > speculos.log 2<&1 &
           until `nc -w5 -z -v 127.0.0.1 9999`; do sleep 1; done;
           pytest --headless tests/ledgercomm/
-
       - name: Upload Speculos log
+        if: ${{ always() }}
         uses: actions/upload-artifact@v2
         with:
           name: speculos-log
@@ -198,24 +156,21 @@ jobs:
   job_functional_test_2:
     name: Functional tests with Speculos only
     needs:
-      - job_nanoS_build_debug
+      - nano_build
     runs-on: ubuntu-latest
 
     steps:
       - name: Clone
         uses: actions/checkout@v2
-
       - name: Download app binary
         uses: actions/download-artifact@v2
         with:
-          name: boilerplate-app-nanoS-debug
+          name: boilerplate-app-nanoS
           path: bin
-
       - name: Install tests dependencies
         run: |
           sudo apt-get update && sudo apt-get install -y qemu-user-static
           pip install --extra-index-url https://test.pypi.org/simple/ -r tests/speculos/requirements.txt
-
       - name: Run test
         env:
           CTEST_OUTPUT_ON_FAILURE: 1
