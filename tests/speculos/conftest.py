@@ -14,7 +14,7 @@ API_URL = "http://127.0.0.1:5000"
 
 def pytest_addoption(parser):
     parser.addoption("--model",
-                     action="store", 
+                     action="store",
                      default="nanos")
     parser.addoption("--sdk",
                      action="store",
