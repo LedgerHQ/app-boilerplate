@@ -15,6 +15,13 @@ if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
+# compatible with ClusterFuzzLite
+if (NOT DEFINED ENV{LIB_FUZZING_ENGINE})
+	set(COMPILATION_FLAGS_ "-g -O2 -fsanitize=fuzzer,address,undefined")
+else()
+	set(COMPILATION_FLAGS_ "$ENV{LIB_FUZZING_ENGINE} $ENV{CXXFLAGS}")
+endif()
+
 # guard against in-source builds
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
   message(FATAL_ERROR "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there. You may need to remove CMakeCache.txt. ")
@@ -22,15 +29,17 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+string(REPLACE " " ";" COMPILATION_FLAGS ${COMPILATION_FLAGS_})
+
 include(extra/TxParser.cmake)
 
 add_executable(fuzz_tx_parser fuzz_tx_parser.cc)
 
 target_compile_options(fuzz_tx_parser
-    PRIVATE $<$<C_COMPILER_ID:Clang>:-g -O2 -fsanitize=fuzzer,address,undefined>
+	PRIVATE "$<$<C_COMPILER_ID:Clang>:${COMPILATION_FLAGS}>"
 )
 
 target_link_libraries(fuzz_tx_parser
-    PRIVATE $<$<C_COMPILER_ID:Clang>:-fsanitize=fuzzer,address,undefined>
-    PUBLIC txparser
+	PRIVATE "$<$<C_COMPILER_ID:Clang>:${COMPILATION_FLAGS}>"
+	PUBLIC txparser
 )

@@ -11,7 +11,7 @@ set(CMAKE_C_FLAGS_DEBUG
     "${CMAKE_C_FLAGS_DEBUG} -Werror -Wall -Wextra -Wno-unused-function -DFUZZ -pedantic -g -O0"
 )
 
-add_library(txparser SHARED
+add_library(txparser STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/bip32.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/varint.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/read.c
