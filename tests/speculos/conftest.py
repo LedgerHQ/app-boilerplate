@@ -45,7 +45,7 @@ def sw_h_path():
 
 @pytest.fixture
 def client(model, sdk):
-    file_path = SCRIPT_DIR.parent.parent / "bin" / "app.elf"
+    file_path = SCRIPT_DIR.parent.parent / "bin" / f"boilerplate_{model}.elf"
     args = ['--model', model, '--sdk', sdk]
     with SpeculosClient(app=str(file_path), args=args) as client:
         yield client

@@ -18,11 +18,11 @@ jobs:
       matrix:
         include:
           - SDK: "$NANOS_SDK"
-            artifact: boilerplate-app-nanos
+            model: nanos
           - SDK: "$NANOX_SDK"
-            artifact: boilerplate-app-nanox
+            model: nanox
           - SDK: "$NANOSP_SDK"
-            artifact: boilerplate-app-nanosp
+            model: nanosp
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
@@ -34,11 +34,12 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           make BOLOS_SDK=${{ matrix.SDK }}
+          mv bin/app.elf "bin/boilerplate_${{ matrix.model }}.elf"
       - name: Upload app binary
         uses: actions/upload-artifact@v2
         with:
           name: apps
-          path: bin
+          path: bin/*.elf
 
   job_scan_build:
     name: Clang Static Analyzer
@@ -137,7 +138,7 @@ jobs:
       - name: Download app binary
         uses: actions/download-artifact@v2
         with:
-          name: boilerplate-app-${{matrix.model}}
+          name: apps
           path: bin
       - name: Install dependencies
         run: |
@@ -145,7 +146,7 @@ jobs:
           pip install -r tests/ledgercomm/requirements.txt
       - name: Run test
         run: |
-          nohup bash -c "python /speculos/speculos.py bin/app.elf --apdu-port 9999 --button-port 42000 --automation-port 43000 --display headless --model=${{ matrix.model }} --sdk=${{ matrix.SDK }}" > speculos.log 2<&1 &
+          nohup bash -c "python /speculos/speculos.py bin/boilerplate_${{ matrix.model }}.elf --apdu-port 9999 --button-port 42000 --automation-port 43000 --display headless --model=${{ matrix.model }} --sdk=${{ matrix.SDK }}" > speculos.log 2<&1 &
           until `nc -w5 -z -v 127.0.0.1 9999`; do sleep 1; done;
           pytest --headless tests/ledgercomm/  --model=${{ matrix.model }}
 
@@ -176,7 +177,7 @@ jobs:
       - name: Download app binary
         uses: actions/download-artifact@v2
         with:
-          name: boilerplate-app-${{matrix.model}}
+          name: apps
           path: bin
       - name: Install tests dependencies
         run: |
@@ -186,3 +187,25 @@ jobs:
         env:
           CTEST_OUTPUT_ON_FAILURE: 1
         run: pytest tests/speculos/ --model=${{ matrix.model }} --sdk=${{ matrix.SDK }}
+
+  job_functional_test_3:
+    name: Functional tests with Ragger (compatible with Speculos & physical devices)
+    needs:
+      - nano_build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone
+        uses: actions/checkout@v2
+      - name: Download app binary
+        uses: actions/download-artifact@v2
+        with:
+          name: apps
+          path: elfs
+      - name: Install tests dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y qemu-user-static
+          pip install --extra-index-url https://test.pypi.org/simple/ -r tests/ragger/requirements.txt
+      - name: Run test
+        env:
+          CTEST_OUTPUT_ON_FAILURE: 1
+        run: pytest tests/ragger/
