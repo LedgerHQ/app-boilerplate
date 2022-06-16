@@ -59,6 +59,7 @@ void app_main() {
 
                 // Receive command bytes in G_io_apdu_buffer
                 if ((input_len = io_recv_command()) < 0) {
+                    CLOSE_TRY;
                     return;
                 }
 
@@ -66,6 +67,7 @@ void app_main() {
                 if (!apdu_parser(&cmd, G_io_apdu_buffer, input_len)) {
                     PRINTF("=> /!\\ BAD LENGTH: %.*H\n", input_len, G_io_apdu_buffer);
                     io_send_sw(SW_WRONG_DATA_LENGTH);
+                    CLOSE_TRY;
                     continue;
                 }
 
@@ -80,6 +82,7 @@ void app_main() {
 
                 // Dispatch structured APDU command to handler
                 if (apdu_dispatcher(&cmd) < 0) {
+                    CLOSE_TRY;
                     return;
                 }
             }
