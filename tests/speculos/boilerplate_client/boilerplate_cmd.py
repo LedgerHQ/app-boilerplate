@@ -100,7 +100,7 @@ class BoilerplateCommand:
 
         return pub_key, chain_code
 
-    def sign_tx(self, bip32_path: str, transaction: Transaction) -> Tuple[int, bytes]:
+    def sign_tx(self, bip32_path: str, transaction: Transaction, model: str) -> Tuple[int, bytes]:
         sw: int
         response: bytes = b""
 
@@ -111,9 +111,11 @@ class BoilerplateCommand:
                                                       data=chunk[5:]) as exchange:
                     # Review Transaction
                     self.client.press_and_release('right')
-                    # Address 1/3, 2/3, 3/3
-                    self.client.press_and_release('right')
-                    self.client.press_and_release('right')
+                    # Address
+                    # Due to screen size, NanoS needs 2 more screens to display the address
+                    if model == 'nanos':
+                        self.client.press_and_release('right')
+                        self.client.press_and_release('right')
                     self.client.press_and_release('right')
                     # Amount
                     self.client.press_and_release('right')
