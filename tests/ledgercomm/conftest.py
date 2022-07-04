@@ -13,6 +13,9 @@ def pytest_addoption(parser):
                      action="store_true")
     parser.addoption("--headless",
                      action="store_true")
+    parser.addoption("--model",
+                     action="store", 
+                     default="nanos")
 
 
 @pytest.fixture(scope="module")
@@ -36,6 +39,11 @@ def hid(pytestconfig):
 @pytest.fixture(scope="session")
 def headless(pytestconfig):
     return pytestconfig.getoption("headless")
+
+
+@pytest.fixture(scope="session")
+def model(pytestconfig):
+    return pytestconfig.getoption("model")
 
 
 @pytest.fixture(scope="module")
