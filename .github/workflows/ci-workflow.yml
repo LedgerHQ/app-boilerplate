@@ -18,11 +18,11 @@ jobs:
       matrix:
         include:
           - SDK: "$NANOS_SDK"
-            artifact: boilerplate-app-nanoS
+            artifact: boilerplate-app-nanos
           - SDK: "$NANOX_SDK"
-            artifact: boilerplate-app-nanoX
+            artifact: boilerplate-app-nanox
           - SDK: "$NANOSP_SDK"
-            artifact: boilerplate-app-nanoSP
+            artifact: boilerplate-app-nanosp
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
@@ -117,6 +117,15 @@ jobs:
 
   job_functional_test_1:
     name: Functional tests with LedgerComm (on Speculos)
+    strategy: 
+      matrix:
+        include:
+          - model: nanos
+            SDK: "2.1"
+          - model: nanox
+            SDK: "2.0.2"
+          - model: nanosp
+            SDK: "1.0.3"
     needs:
       - nano_build
     runs-on: ubuntu-latest
@@ -135,7 +144,7 @@ jobs:
       - name: Download app binary
         uses: actions/download-artifact@v2
         with:
-          name: boilerplate-app-nanoS
+          name: boilerplate-app-${{matrix.model}}
           path: bin
       - name: Install dependencies
         run: |
@@ -143,9 +152,10 @@ jobs:
           pip install -r tests/ledgercomm/requirements.txt
       - name: Run test
         run: |
-          nohup bash -c "python /speculos/speculos.py bin/app.elf --apdu-port 9999 --button-port 42000 --automation-port 43000 --display headless" > speculos.log 2<&1 &
+          nohup bash -c "python /speculos/speculos.py bin/app.elf --apdu-port 9999 --button-port 42000 --automation-port 43000 --display headless --model=${{ matrix.model }} --sdk=${{ matrix.SDK }}" > speculos.log 2<&1 &
           until `nc -w5 -z -v 127.0.0.1 9999`; do sleep 1; done;
-          pytest --headless tests/ledgercomm/
+          pytest --headless tests/ledgercomm/  --model=${{ matrix.model }}
+
       - name: Upload Speculos log
         if: ${{ always() }}
         uses: actions/upload-artifact@v2
@@ -155,6 +165,15 @@ jobs:
 
   job_functional_test_2:
     name: Functional tests with Speculos only
+    strategy: 
+      matrix:
+        include:
+          - model: nanos
+            SDK: "2.1"
+          - model: nanox
+            SDK: "2.0.2"
+          - model: nanosp
+            SDK: "1.0.3"
     needs:
       - nano_build
     runs-on: ubuntu-latest
@@ -165,7 +184,7 @@ jobs:
       - name: Download app binary
         uses: actions/download-artifact@v2
         with:
-          name: boilerplate-app-nanoS
+          name: boilerplate-app-${{matrix.model}}
           path: bin
       - name: Install tests dependencies
         run: |
@@ -174,4 +193,4 @@ jobs:
       - name: Run test
         env:
           CTEST_OUTPUT_ON_FAILURE: 1
-        run: pytest tests/speculos/
+        run: pytest tests/speculos/ --model=${{ matrix.model }} --sdk=${{ matrix.SDK }}

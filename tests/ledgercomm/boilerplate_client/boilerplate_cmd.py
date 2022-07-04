@@ -101,7 +101,7 @@ class BoilerplateCommand:
 
         return pub_key, chain_code
 
-    def sign_tx(self, bip32_path: str, transaction: Transaction, button: Button) -> Tuple[int, bytes]:
+    def sign_tx(self, bip32_path: str, transaction: Transaction, button: Button, model: str) -> Tuple[int, bytes]:
         sw: int
         response: bytes = b""
 
@@ -111,9 +111,11 @@ class BoilerplateCommand:
             if is_last:
                 # Review Transaction
                 button.right_click()
-                # Address 1/3, 2/3, 3/3
-                button.right_click()
-                button.right_click()
+                # Address
+                # Due to screen size, NanoS needs 2 more screens to display the address
+                if model == 'nanos':
+                    button.right_click()
+                    button.right_click()
                 button.right_click()
                 # Amount
                 button.right_click()
