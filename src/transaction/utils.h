@@ -11,7 +11,7 @@
  * @param[in] memo
  *   Pointer to input byte buffer.
  * @param[in] memo_len
- *   Lenght of input byte buffer.
+ *   Length of input byte buffer.
  *
  * @return true if success, false otherwise.
  *
@@ -24,11 +24,11 @@ bool transaction_utils_check_encoding(const uint8_t *memo, uint64_t memo_len);
  * @param[in]  memo
  *   Pointer to input byte buffer.
  * @param[in]  memo_len
- *   Lenght of input byte buffer.
+ *   Length of input byte buffer.
  * @param[out] dst
  *   Pointer to output string.
  * @param[in]  dst_len
- *   Lenght of output string.
+ *   Length of output string.
  *
  * @return true if success, false otherwise.
  *

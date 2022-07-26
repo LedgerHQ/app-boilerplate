@@ -13,7 +13,7 @@
  */
 #define SW_WRONG_P1P2 0x6A86
 /**
- * Status word for either wrong Lc or lenght of APDU command less than 5.
+ * Status word for either wrong Lc or length of APDU command less than 5.
  */
 #define SW_WRONG_DATA_LENGTH 0x6A87
 /**
@@ -25,7 +25,7 @@
  */
 #define SW_CLA_NOT_SUPPORTED 0x6E00
 /**
- * Status word for wrong reponse length (buffer too small or too big).
+ * Status word for wrong response length (buffer too small or too big).
  */
 #define SW_WRONG_RESPONSE_LENGTH 0xB000
 /**

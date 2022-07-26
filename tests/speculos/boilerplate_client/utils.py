@@ -58,7 +58,7 @@ def read(buf: BytesIO, size: int) -> bytes:
     b: bytes = buf.read(size)
 
     if len(b) < size:
-        raise ValueError(f"Cant read {size} bytes in buffer!")
+        raise ValueError(f"Can't read {size} bytes in buffer!")
 
     return b
 

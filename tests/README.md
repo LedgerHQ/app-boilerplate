@@ -12,12 +12,11 @@ This directory contains examples of functional tests:
   [Speculos](https://github.com/LedgerHQ/speculos) to run the tests directly on
   the Speculos emulator
 
-
 ## Speculos or LedgerComm?
 
-Speculos is a Nano S/X emulator wich provides a Python HTTP client. Despite not
+Speculos is a Nano S/X emulator which provides a Python HTTP client. Despite not
 being able to emulate **every** feature of a Nano S/X, it is a fast and powerful
-tool, and is broadly used to test appplication (directly, or through LedgerComm,
+tool, and is broadly used to test application (directly, or through LedgerComm,
 or third-party tool such as [Zemu](https://github.com/Zondax/zemu)) which helps
 building strong tests and CIs.
 
@@ -26,7 +25,7 @@ sockets. It works with both a real Nano S/X wallet, or Speculos. As the CI of
 this repository does not have access to a Nano S/X, it uses Speculos.
 
 The functional tests using Speculos (`tests/speculos/` directory) or LedgerComm
-+ Speculos (`tests/ledgercomm/` directory) are the same, use the same language
+\+ Speculos (`tests/ledgercomm/` directory) are the same, use the same language
 (Python) and most of the code is also the same, so it is a good opportunity to
 compare how they behave.
 
