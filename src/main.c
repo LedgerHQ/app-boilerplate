@@ -30,7 +30,6 @@
 #include "apdu/dispatcher.h"
 
 uint8_t G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
-io_state_e G_io_state;
 ux_state_t G_ux;
 bolos_ux_params_t G_ux_params;
 global_ctx_t G_context;
@@ -44,9 +43,7 @@ void app_main() {
     // Structured APDU command
     command_t cmd;
 
-    // Reset length of APDU response
-    G_output_len = 0;
-    G_io_state = READY;
+    io_init();
 
     // Reset context
     explicit_bzero(&G_context, sizeof(G_context));
