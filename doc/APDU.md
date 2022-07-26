@@ -24,5 +24,5 @@ Status words tend to be similar to common [APDU responses](https://www.eftlab.co
 
 | Field name | Length (bytes) | Description |
 | --- | --- | --- |
-| RData | var | Reponse data (can be empty) |
+| RData | var | Response data (can be empty) |
 | SW | 2 | Status word containing command processing status (e.g. `0x9000` for success) |

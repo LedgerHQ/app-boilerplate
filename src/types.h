@@ -34,7 +34,7 @@ typedef struct {
     command_e ins;  /// Instruction code
     uint8_t p1;     /// Instruction parameter 1
     uint8_t p2;     /// Instruction parameter 2
-    uint8_t lc;     /// Lenght of command data
+    uint8_t lc;     /// Length of command data
     uint8_t *data;  /// Command data
 } command_t;
 
@@ -87,5 +87,5 @@ typedef struct {
     };
     request_type_e req_type;              /// user request
     uint32_t bip32_path[MAX_BIP32_PATH];  /// BIP32 path
-    uint8_t bip32_path_len;               /// lenght of BIP32 path
+    uint8_t bip32_path_len;               /// length of BIP32 path
 } global_ctx_t;

@@ -16,7 +16,7 @@
  * @param[out] out
  *   Pointer to output byte buffer for address.
  * @param[in]  out_len
- *   Lenght of output byte buffer.
+ *   Length of output byte buffer.
  *
  * @return true if success, false otherwise.
  *

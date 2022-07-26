@@ -8,19 +8,19 @@ Be sure to have your environment correctly set up (see [Getting Started](https:/
 
 If you want to benefit from [vscode](https://code.visualstudio.com/) integration, it's recommended to move the toolchain in `/opt` and set `BOLOS_ENV` environment variable as follows
 
-```
+```shell
 BOLOS_ENV=/opt/bolos-devenv
 ```
 
 and do the same with `BOLOS_SDK` environment variable
 
-```
+```shell
 BOLOS_SDK=/opt/nanos-secure-sdk
 ```
 
 ## Compilation
 
-```
+```shell
 make DEBUG=1  # compile optionally with PRINTF
 make load     # load the app on the Nano using ledgerblue
 ```
@@ -29,7 +29,7 @@ make load     # load the app on the Nano using ledgerblue
 
 High level documentation such as [APDU](doc/APDU.md), [commands](doc/COMMANDS.md) and [transaction serialization](doc/TRANSACTION.md) are included in developer documentation which can be generated with [doxygen](https://www.doxygen.nl)
 
-```
+```shell
 doxygen .doxygen/Doxyfile
 ```
 
@@ -55,10 +55,9 @@ It outputs 4 artifacts:
 
 ## Are you developing a Nano S, S Plus, X application?
 
-If so, This boilerplate will help you get started. 
+If so, This boilerplate will help you get started.
 
 For a smooth and quick integration:
-- See the developers’ documentation on the [Developer Portal](https://developers.ledger.com/) and 
-- Go on Discord to chat with developper support and the developper community. See you there! If you are new to Ledger OP3N Discord server [click here](https://discord.gg/Ledger), otherwise directly join [the Nano App channel](https://discord.com/channels/885256081289379850/907623554542080070).
 
-
+- See the developers’ documentation on the [Developer Portal](https://developers.ledger.com/), and
+- Go on Discord to chat with developer support and the developer community. See you there! If you are new to Ledger OP3N Discord server [click here](https://discord.gg/Ledger), otherwise directly join [the Nano App channel](https://discord.com/channels/885256081289379850/907623554542080070).

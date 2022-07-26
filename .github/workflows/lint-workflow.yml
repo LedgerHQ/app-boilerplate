@@ -25,3 +25,17 @@ jobs:
           source: './src'
           extensions: 'h,c'
           clangFormatVersion: 11
+
+  misspell:
+    name: Check misspellings
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Check misspellings
+      uses: codespell-project/actions-codespell@2391250ab05295bddd51e36a8c6295edb6343b0e
+      with:
+        builtin: clear,rare
+        check_filenames: true
