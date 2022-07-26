@@ -26,8 +26,6 @@
 #include "common/buffer.h"
 #include "common/write.h"
 
-uint32_t G_output_len = 0;
-
 void io_seproxyhal_display(const bagl_element_t *element) {
     io_seproxyhal_display_default((bagl_element_t *) element);
 }
@@ -85,8 +83,24 @@ uint16_t io_exchange_al(uint8_t channel, uint16_t tx_len) {
     return 0;
 }
 
+/**
+ * Variable containing the length of the APDU response to send back.
+ */
+static uint32_t G_output_len = 0;
+
+/**
+ * IO state (READY, RECEIVING, WAITING).
+ */
+static io_state_e G_io_state = READY;
+
+void io_init() {
+    // Reset length of APDU response
+    G_output_len = 0;
+    G_io_state = READY;
+}
+
 int io_recv_command() {
-    int ret;
+    int ret = -1;
 
     switch (G_io_state) {
         case READY:
@@ -108,7 +122,7 @@ int io_recv_command() {
 }
 
 int io_send_response(const buffer_t *rdata, uint16_t sw) {
-    int ret;
+    int ret = -1;
 
     if (rdata != NULL) {
         if (rdata->size - rdata->offset > IO_APDU_BUFFER_SIZE - 2 ||  //
