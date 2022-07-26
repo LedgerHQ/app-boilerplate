@@ -100,7 +100,7 @@ void io_init() {
 }
 
 int io_recv_command() {
-    int ret;
+    int ret = -1;
 
     switch (G_io_state) {
         case READY:
@@ -122,7 +122,7 @@ int io_recv_command() {
 }
 
 int io_send_response(const buffer_t *rdata, uint16_t sw) {
-    int ret;
+    int ret = -1;
 
     if (rdata != NULL) {
         if (rdata->size - rdata->offset > IO_APDU_BUFFER_SIZE - 2 ||  //
