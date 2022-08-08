@@ -30,9 +30,12 @@ jobs:
     steps:
       - name: Clone
         uses: actions/checkout@v2
+
       - name: Build
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           make BOLOS_SDK=${{ matrix.SDK }}
+
       - name: Upload app binary
         uses: actions/upload-artifact@v2
         with:
@@ -42,17 +45,20 @@ jobs:
   job_scan_build:
     name: Clang Static Analyzer
     runs-on: ubuntu-latest
-
     container:
       image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Clone
+        uses: actions/checkout@v2
+
       - name: Build with Clang Static Analyzer
         run: |
           make clean
           scan-build --use-cc=clang -analyze-headers -enable-checker security -enable-checker unix -enable-checker valist -o scan-build --status-bugs make default
-      - uses: actions/upload-artifact@v2
+
+      - name: Upload scan result
+        uses: actions/upload-artifact@v2
         if: failure()
         with:
           name: scan-build
@@ -61,7 +67,6 @@ jobs:
   job_unit_test:
     name: Unit test
     runs-on: ubuntu-latest
-
     container:
       image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
 
@@ -117,7 +122,7 @@ jobs:
 
   job_functional_test_1:
     name: Functional tests with LedgerComm (on Speculos)
-    strategy: 
+    strategy:
       matrix:
         include:
           - model: nanos
@@ -165,7 +170,7 @@ jobs:
 
   job_functional_test_2:
     name: Functional tests with Speculos only
-    strategy: 
+    strategy:
       matrix:
         include:
           - model: nanos
