@@ -9,7 +9,7 @@ on:
     branches:
       - master
       - develop
-    # Excluded path : add the paths you want to ignore instead of deleting the workflow
+    # Excluded path: add the paths you want to ignore instead of deleting the workflow
     paths-ignore:
       - '.github/workflows/*.yml'
       - 'tests/*'
@@ -20,7 +20,7 @@ jobs:
     strategy: 
       matrix:
         sdk: [ "$NANOS_SDK", "$NANOX_SDK", "$NANOSP_SDK" ]
-        # cpp cover c and c++
+        #'cpp' covers C and C++
         language: [ 'cpp' ]
     runs-on: ubuntu-latest
     container:
