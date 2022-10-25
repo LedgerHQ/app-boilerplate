@@ -5,10 +5,9 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - master
+      - main
       - develop
+  pull_request:
 
 jobs:
   job_lint:
