@@ -1,14 +1,13 @@
 name: "CodeQL"
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
+      - main
       - develop
   pull_request:
-    branches:
-      - master
-      - develop
     # Excluded path: add the paths you want to ignore instead of deleting the workflow
     paths-ignore:
       - '.github/workflows/*.yml'
@@ -24,7 +23,7 @@ jobs:
         language: [ 'cpp' ]
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
+      image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-lite:latest
 
     steps:
       - name: Clone
