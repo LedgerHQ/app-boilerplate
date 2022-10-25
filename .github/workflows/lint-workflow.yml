@@ -5,10 +5,9 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - master
+      - main
       - develop
+  pull_request:
 
 jobs:
   job_lint:
@@ -17,7 +16,7 @@ jobs:
 
     steps:
       - name: Clone
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Lint
         uses: DoozyX/clang-format-lint-action@v0.11
@@ -31,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
     - name: Check misspellings
