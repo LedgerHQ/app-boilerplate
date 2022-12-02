@@ -1,37 +1,66 @@
-# Functional tests
+# Ragger functional tests
 
-> :point_right: Every path on this document assumes you are at the root of the repository
+> :point_right: Every path on this document assumes you are at the root of the
+repository.
 
-This directory contains examples of functional tests:
+These tests are implemented in Python with the `Ragger` library, allowing to
+write tests which will run on both the
+[Speculos](https://github.com/LedgerHQ/speculos) emulator and physical devices
+by using either [LedgerComm](https://github.com/LedgerHQ/ledgercomm) or
+[LedgerWallet](https://github.com/LedgerHQ/ledgerctl) libraries.
 
-- `tests/ledgercomm/` directory uses the
-  [Python LedgerComm library](https://github.com/LedgerHQ/ledgercomm), which
-  allows the tests to run either on an actual Nano, or on
-  [Speculos](https://github.com/LedgerHQ/speculos),
-- `tests/speculos/` directory uses the Python client of
-  [Speculos](https://github.com/LedgerHQ/speculos) to run the tests directly on
-  the Speculos emulator
 
-## Speculos or LedgerComm?
+## Dependencies
 
-Speculos is a Nano S/X emulator which provides a Python HTTP client. Despite not
-being able to emulate **every** feature of a Nano S/X, it is a fast and powerful
-tool, and is broadly used to test application (directly, or through LedgerComm,
-or third-party tool such as [Zemu](https://github.com/Zondax/zemu)) which helps
-building strong tests and CIs.
+Python dependencies are listed in [requirements.txt](requirements.txt), install
+them using [pip](https://pypi.org/project/pip/)
 
-LedgerComm is a library which eases the exchange of APDU though HID or TCP
-sockets. It works with both a real Nano S/X wallet, or Speculos. As the CI of
-this repository does not have access to a Nano S/X, it uses Speculos.
+```
+pip install --extra-index-url https://test.pypi.org/simple/ -r tests/requirements.txt
+```
 
-The functional tests using Speculos (`tests/speculos/` directory) or LedgerComm
-\+ Speculos (`tests/ledgercomm/` directory) are the same, use the same language
-(Python) and most of the code is also the same, so it is a good opportunity to
-compare how they behave.
+The extra index allows to fetch the latest version of Ragger.
 
-Speculos tests are a bit smaller and more straightforward, as the physical
-interaction through buttons are managed through the client just like the APDU,
-and the emulator is automatically spawned and stopped.
 
-LedgerComm tests are a bit heavier, and need a backend (either Speculos, or a
-physical device) up and running, but can be run on an actual Nano S/X.
+## Launching the tests
+
+### On Speculos
+
+Given the requirements are installed, you need to generate the application binaries
+for all the SDK. The tests will expect the binaries to be:
+
+- `tests/elfs/boilerplate_nanos.elf`
+- `tests/elfs/boilerplate_nanox.elf`
+- `tests/elfs/boilerplate_nanosp.elf`
+
+Once that's done, just do:
+
+```
+pytest -v tests/
+```
+
+This will run the tests inside the Speculos emulator, for all the current device
+SDKs (NanoS, NanoX and NanoS+).
+
+It is possible to test on a specific device model only:
+
+```
+pytest --nanox tests/
+```
+
+### On a physical device
+
+To run the tests on a physical device:
+
+- Install boilerplate on the device and open the application;
+- Launch the tests with the physical backend of your choice (they should behave
+  the same), and the model of the physical device:
+
+```
+pytest tests/ --backend ledgerwallet --nanos
+```
+... or:
+
+```
+pytest tests/ --backend ledgercomm --nanos
+```

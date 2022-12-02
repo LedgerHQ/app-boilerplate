@@ -109,84 +109,7 @@ jobs:
           name: documentation
           path: doc/html
 
-  job_functional_test_1:
-    name: Functional tests with LedgerComm (on Speculos)
-    strategy:
-      matrix:
-        include:
-          - model: nanos
-            SDK: "2.1"
-          - model: nanox
-            SDK: "2.0.2"
-          - model: nanosp
-            SDK: "1.0.3"
-    needs:
-      - nano_build
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/ledgerhq/speculos:latest
-      options: --entrypoint /bin/bash
-      ports:
-        - 9999:9999
-        - 42000:42000
-        - 43000:43000
-    steps:
-      - name: Clone
-        uses: actions/checkout@v3
-      - name: Download app binary
-        uses: actions/download-artifact@v3
-        with:
-          name: apps
-          path: bin
-      - name: Install dependencies
-        run: |
-          apt update && apt install -qy gcc netcat  # /!\ needed when installing pysha3
-          pip install -r tests/ledgercomm/requirements.txt
-      - name: Run test
-        run: |
-          nohup bash -c "python /speculos/speculos.py bin/boilerplate_${{ matrix.model }}.elf --apdu-port 9999 --button-port 42000 --automation-port 43000 --display headless --model=${{ matrix.model }} --sdk=${{ matrix.SDK }}" > speculos.log 2<&1 &
-          until `nc -w5 -z -v 127.0.0.1 9999`; do sleep 1; done;
-          pytest --headless tests/ledgercomm/  --model=${{ matrix.model }}
-
-      - name: Upload Speculos log
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: speculos-log
-          path: speculos.log
-
-  job_functional_test_2:
-    name: Functional tests with Speculos only
-    strategy:
-      matrix:
-        include:
-          - model: nanos
-            SDK: "2.1"
-          - model: nanox
-            SDK: "2.0.2"
-          - model: nanosp
-            SDK: "1.0.3"
-    needs:
-      - nano_build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Clone
-        uses: actions/checkout@v3
-      - name: Download app binary
-        uses: actions/download-artifact@v3
-        with:
-          name: apps
-          path: bin
-      - name: Install tests dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install -y qemu-user-static
-          pip install --extra-index-url https://test.pypi.org/simple/ -r tests/speculos/requirements.txt
-      - name: Run test
-        env:
-          CTEST_OUTPUT_ON_FAILURE: 1
-        run: pytest tests/speculos/ --model=${{ matrix.model }} --sdk=${{ matrix.SDK }}
-
-  job_functional_test_3:
+  job_functional_test:
     name: Functional tests with Ragger (compatible with Speculos & physical devices)
     needs:
       - nano_build
@@ -202,8 +125,8 @@ jobs:
       - name: Install tests dependencies
         run: |
           sudo apt-get update && sudo apt-get install -y qemu-user-static
-          pip install --extra-index-url https://test.pypi.org/simple/ -r tests/ragger/requirements.txt
+          pip install --extra-index-url https://test.pypi.org/simple/ -r tests/requirements.txt
       - name: Run test
         env:
           CTEST_OUTPUT_ON_FAILURE: 1
-        run: pytest --tb=short -v tests/ragger/
+        run: pytest --tb=short -v tests/
