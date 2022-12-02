@@ -39,8 +39,8 @@ Once that's done, just do:
 pytest tests/ragger
 ```
 
-This will run the tests inside the Speculos emulator, for all the current SDK
-versions (NanoS, NanoX and NanoS+).
+This will run the tests inside the Speculos emulator, for all the current device
+SDKs (NanoS, NanoX and NanoS+).
 
 You can comment the `APPS` variable in the `tests/ragger/conftest.py` file if
 you don't want the tests to run on specific versions.
