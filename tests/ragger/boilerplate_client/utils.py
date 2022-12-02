@@ -2,9 +2,9 @@ from io import BytesIO
 from typing import List, Optional, Literal
 
 
-UINT64_MAX: int = 18446744073709551615
-UINT32_MAX: int = 4294967295
-UINT16_MAX: int = 65535
+UINT64_MAX: int = 2**64-1
+UINT32_MAX: int = 2**32-1
+UINT16_MAX: int = 2**16-1
 
 
 def bip32_path_from_string(path: str) -> List[bytes]:

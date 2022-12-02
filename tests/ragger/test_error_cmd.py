@@ -2,8 +2,6 @@ import pytest
 
 from ragger.error import ExceptionRAPDU
 
-from boilerplate_client.exception import *
-
 
 @pytest.mark.xfail(raises=ExceptionRAPDU)
 def test_bad_cla(backend):

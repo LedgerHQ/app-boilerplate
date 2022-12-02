@@ -206,4 +206,4 @@ jobs:
       - name: Run test
         env:
           CTEST_OUTPUT_ON_FAILURE: 1
-        run: pytest tests/ragger/
+        run: pytest --tb=short -v tests/ragger/

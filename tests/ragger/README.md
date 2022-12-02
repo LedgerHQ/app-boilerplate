@@ -36,14 +36,17 @@ for all the SDK. The tests will expect the binaries to be:
 Once that's done, just do:
 
 ```
-pytest tests/ragger
+pytest -v tests/ragger/
 ```
 
 This will run the tests inside the Speculos emulator, for all the current device
 SDKs (NanoS, NanoX and NanoS+).
 
-You can comment the `APPS` variable in the `tests/ragger/conftest.py` file if
-you don't want the tests to run on specific versions.
+It is possible to test on a specific device model only:
+
+```
+pytest --nanox tests/ragger/
+```
 
 ### On a physical device
 
