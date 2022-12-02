@@ -1,0 +1,40 @@
+name: Checks on the Python client
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - develop
+  pull_request:
+
+jobs:
+
+  lint:
+    name: Boilerplate client linting
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone
+      uses: actions/checkout@v2
+    - name: Installing PIP dependencies
+      run: |
+        pip install pylint
+        pip install --extra-index-url https://test.pypi.org/simple/ -r tests/requirements.txt
+    - name: Lint Python code
+      run: |
+        pylint --rc tests/setup.cfg tests/boilerplate_client/
+
+  mypy:
+    name: Type checking
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone
+      uses: actions/checkout@v2
+    - name: Installing PIP dependencies
+      run: |
+        pip install mypy
+        pip install --extra-index-url https://test.pypi.org/simple/ -r tests/requirements.txt
+    - name: Mypy type checking
+      run: |
+        mypy tests/boilerplate_client/

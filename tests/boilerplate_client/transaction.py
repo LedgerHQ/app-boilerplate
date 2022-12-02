@@ -16,14 +16,14 @@ class Transaction:
         self.value: int = value
         self.memo: bytes = memo.encode("ascii")
 
-        if not (0 <= self.nonce <= UINT64_MAX):
+        if not 0 <= self.nonce <= UINT64_MAX:
             raise TransactionError(f"Bad nonce: '{self.nonce}'!")
 
-        if not (0 <= self.value <= UINT64_MAX):
+        if not 0 <= self.value <= UINT64_MAX:
             raise TransactionError(f"Bad value: '{self.value}'!")
 
         if len(self.to) != 20:
-            raise TransactionError(f"Bad address: '{self.to}'!")
+            raise TransactionError(f"Bad address: '{self.to.hex()}'!")
 
     def serialize(self) -> bytes:
         return b"".join([

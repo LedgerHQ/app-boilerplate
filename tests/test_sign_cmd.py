@@ -8,7 +8,7 @@ from ecdsa.util import sigdecode_der
 from boilerplate_client.transaction import Transaction
 
 
-def test_sign_tx(cmd, model):
+def test_sign_tx(cmd):
     bip32_path: str = "m/44'/0'/0'/0/0"
 
     pub_key, chain_code = cmd.get_public_key(
@@ -30,7 +30,7 @@ def test_sign_tx(cmd, model):
     )
 
     v, der_sig = cmd.sign_tx(bip32_path=bip32_path,
-                             transaction=tx, model=model)
+                             transaction=tx)
 
     assert pk.verify(signature=der_sig,
                      data=tx.serialize(),

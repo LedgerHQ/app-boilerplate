@@ -5,6 +5,7 @@ bin/
 debug/
 dep/
 obj/
+elfs/
 
 # Unit tests and code coverage
 unit-tests/build/

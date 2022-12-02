@@ -1,10 +1,11 @@
 import enum
 import logging
 import struct
-from typing import List, Tuple, Union, Iterator, cast
+from typing import Tuple, Union, Iterator, cast
+
+from ragger.utils.path import pack_derivation_path
 
 from boilerplate_client.transaction import Transaction
-from boilerplate_client.utils import bip32_path_from_string
 
 MAX_APDU_LEN: int = 255
 
@@ -20,7 +21,7 @@ def chunkify(data: bytes, chunk_len: int) -> Iterator[Tuple[bool, bytes]]:
     remaining: int = size % chunk_len
     offset: int = 0
 
-    for i in range(chunk):
+    for _ in range(chunk):
         yield False, data[offset:offset + chunk_len]
         offset += chunk_len
 
@@ -158,13 +159,7 @@ class BoilerplateCommandBuilder:
             APDU command for GET_PUBLIC_KEY.
 
         """
-        bip32_paths: List[bytes] = bip32_path_from_string(bip32_path)
-
-        cdata: bytes = b"".join([
-            len(bip32_paths).to_bytes(1, byteorder="big"),
-            *bip32_paths
-        ])
-
+        cdata: bytes = pack_derivation_path(bip32_path)
         return self.serialize(cla=self.CLA,
                               ins=InsType.INS_GET_PUBLIC_KEY,
                               p1=0x01 if display else 0x00,
@@ -187,13 +182,7 @@ class BoilerplateCommandBuilder:
             APDU command chunk for INS_SIGN_TX.
 
         """
-        bip32_paths: List[bytes] = bip32_path_from_string(bip32_path)
-
-        cdata: bytes = b"".join([
-            len(bip32_paths).to_bytes(1, byteorder="big"),
-            *bip32_paths
-        ])
-
+        cdata: bytes = pack_derivation_path(bip32_path)
         yield False, self.serialize(cla=self.CLA,
                                     ins=InsType.INS_SIGN_TX,
                                     p1=0x00,
@@ -210,9 +199,8 @@ class BoilerplateCommandBuilder:
                                            p2=0x00,
                                            cdata=chunk)
                 return
-            else:
-                yield False, self.serialize(cla=self.CLA,
-                                            ins=InsType.INS_SIGN_TX,
-                                            p1=i + 1,
-                                            p2=0x80,
-                                            cdata=chunk)
+            yield False, self.serialize(cla=self.CLA,
+                                        ins=InsType.INS_SIGN_TX,
+                                        p1=i + 1,
+                                        p2=0x80,
+                                        cdata=chunk)

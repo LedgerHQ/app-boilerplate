@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Tuple
 import re
 
-from boilerplate_client.exception import DeviceException
+from boilerplate_client.exception.errors import ERRORS
 
 
 SW_RE = re.compile(r"""(?x)
@@ -27,13 +27,12 @@ def parse_sw(path: Path) -> List[Tuple[str, int]]:
 
 def test_status_word(sw_h_path):
     expected_status_words: List[Tuple[str, int]] = parse_sw(sw_h_path)
-    status_words: Dict[int, Any] = DeviceException.exc
 
-    assert len(expected_status_words) == len(status_words), (
+    assert len(expected_status_words) == len(ERRORS), (
         f"{expected_status_words} doesn't match {status_words}")
 
     # just keep status words
     expected_status_words = [sw for (identifier, sw) in expected_status_words]
 
-    for sw in status_words.keys():
+    for sw in [partial.args[0] for partial in ERRORS]:
         assert sw in expected_status_words, f"{status_words[sw]}({hex(sw)}) not found in sw.h!"
