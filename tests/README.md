@@ -33,6 +33,12 @@ for all the SDK. The tests will expect the binaries to be:
 - `tests/elfs/boilerplate_nanox.elf`
 - `tests/elfs/boilerplate_nanosp.elf`
 
+The `Makefile` contains a `build_all` rule doing just that:
+
+```
+make build_all
+```
+
 Once that's done, just do:
 
 ```

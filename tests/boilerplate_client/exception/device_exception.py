@@ -1,7 +1,7 @@
 import enum
-from typing import Dict, Any, Union
+from typing import Union
 
-from .errors import ERRORS
+from .errors import ERRORS, UnknownDeviceError
 
 
 class DeviceException(Exception):  # pylint: disable=too-few-public-methods
@@ -10,7 +10,7 @@ class DeviceException(Exception):  # pylint: disable=too-few-public-methods
             error_code: int,
             ins: Union[int, enum.IntEnum, None] = None,
             message: str = ""
-    ) -> Exception:
+    ) -> "DeviceException":
         error_message: str = (f"Error in {ins!r} command"
                               if ins else "Error in command")
         for partial_error in ERRORS:

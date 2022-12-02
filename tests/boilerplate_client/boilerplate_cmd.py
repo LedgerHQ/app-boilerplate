@@ -23,17 +23,9 @@ class BoilerplateCommand:
                 self.builder.get_app_and_version()
             ).data
         except ExceptionRAPDU as error:
-            raise DeviceException(error_code=error.status, ins=0x01)
+            raise DeviceException(error_code=error.status, ins=0x01) from error
 
-        # response = format_id (1) ||
-        #            app_name_len (1) ||
-        #            app_name (var) ||
-        #            version_len (1) ||
-        #            version (var) ||
-        offset: int = 0
-
-        format_id: int = response[offset]
-        offset += 1
+        offset: int = 1
         app_name_len: int = response[offset]
         offset += 1
         app_name: str = response[offset:offset + app_name_len].decode("ascii")
@@ -51,7 +43,7 @@ class BoilerplateCommand:
                 self.builder.get_version()
             ).data
         except ExceptionRAPDU as error:
-            raise DeviceException(error_code=error.status, ins=InsType.INS_GET_VERSION)
+            raise DeviceException(error_code=error.status, ins=InsType.INS_GET_VERSION) from error
 
         # response = MAJOR (1) || MINOR (1) || PATCH (1)
         assert len(response) == 3
@@ -69,7 +61,7 @@ class BoilerplateCommand:
                 self.builder.get_app_name()
             ).data
         except ExceptionRAPDU as error:
-            raise DeviceException(error_code=error.status, ins=InsType.INS_GET_APP_NAME)
+            raise DeviceException(error_code=error.status, ins=InsType.INS_GET_APP_NAME) from error
 
         return response.decode("ascii")
 
@@ -80,7 +72,8 @@ class BoilerplateCommand:
                                             display=display)
             ).data
         except ExceptionRAPDU as error:
-            raise DeviceException(error_code=error.status, ins=InsType.INS_GET_PUBLIC_KEY)
+            raise DeviceException(error_code=error.status, ins=InsType.INS_GET_PUBLIC_KEY) \
+                from error
 
         # response = pub_key_len (1) ||
         #            pub_key (var) ||
@@ -102,7 +95,6 @@ class BoilerplateCommand:
         return pub_key, chain_code
 
     def sign_tx(self, bip32_path: str, transaction: Transaction) -> Tuple[int, bytes]:
-        sw: int
         response: bytes = b""
 
         for is_last, chunk in self.builder.sign_tx(bip32_path=bip32_path, transaction=transaction):

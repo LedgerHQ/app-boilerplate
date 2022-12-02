@@ -8,7 +8,8 @@ from ragger.error import ExceptionRAPDU
 class BoilerplateError(ExceptionRAPDU):
     error_message: str = str()
 
-class UnknownDeviceError(Exception): pass
+class UnknownDeviceError(Exception):
+    pass
 
 DenyError = partial(BoilerplateError, 0x6985, 'SW_DENY')
 WrongP1P2Error = partial(BoilerplateError, 0x6A86, 'SW_WRONG_P1P2')
