@@ -193,9 +193,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Download app binary
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: apps
           path: elfs
