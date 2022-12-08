@@ -1,8 +1,9 @@
 from pathlib import Path
 from typing import List, Dict, Any, Tuple
+import unittest
 import re
 
-from boilerplate_client.exception.errors import ERRORS
+from boilerplate_client.errors import ERRORS
 
 
 SW_RE = re.compile(r"""(?x)
@@ -15,24 +16,29 @@ SW_RE = re.compile(r"""(?x)
 """)
 
 
-def parse_sw(path: Path) -> List[Tuple[str, int]]:
+def parse_sw(path: Path) -> Dict[str, int]:
     if not path.is_file():
         raise FileNotFoundError(f"Can't find file: '{path}'")
 
     sw_h: str = path.read_text()
 
-    return [(identifier, int(sw, base=16))
-            for identifier, sw in SW_RE.findall(sw_h) if sw != "9000"]
+    return {identifier: int(sw, base=16) for identifier, sw in SW_RE.findall(sw_h) if sw != "9000"}
 
 
-def test_status_word(sw_h_path):
-    expected_status_words: List[Tuple[str, int]] = parse_sw(sw_h_path)
+def get_sw_h_path():
+    # path with tests
+    conftest_folder_path: Path = Path(__file__).parent
+    # sw.h should be in ../../src/sw.h
+    sw_h_path = conftest_folder_path.parent / "src" / "sw.h"
+    if not sw_h_path.is_file():
+        raise FileNotFoundError(f"Can't find sw.h: '{sw_h_path}'")
+    return sw_h_path
 
-    assert len(expected_status_words) == len(ERRORS), (
-        f"{expected_status_words} doesn't match {status_words}")
 
-    # just keep status words
-    expected_status_words = [sw for (identifier, sw) in expected_status_words]
-
-    for sw in [partial.args[0] for partial in ERRORS]:
-        assert sw in expected_status_words, f"{status_words[sw]}({hex(sw)}) not found in sw.h!"
+def test_status_word():
+    # Find the sw.h file containing the error apdu
+    sw_h_file = get_sw_h_path()
+    # Parse it to construct a dict of errors
+    expected_status_words: List[Dict[str, int]] = parse_sw(sw_h_file)
+    # Verify that this dict is the same as the one stored in python tests
+    unittest.TestCase().assertCountEqual(expected_status_words, ERRORS)
