@@ -1,6 +1,6 @@
 import pytest
 from pathlib import Path
-from ragger import Firmware
+from ragger.firmware import Firmware
 from ragger.backend import SpeculosBackend, LedgerCommBackend, LedgerWalletBackend
 from ragger.navigator import NanoNavigator
 from ragger.utils import app_path_from_app_name
