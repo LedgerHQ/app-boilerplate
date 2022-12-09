@@ -46,31 +46,29 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
         }
 
         return io_send_sw(SW_OK);
+
     } else {  // parse transaction
+
         if (G_context.req_type != CONFIRM_TRANSACTION) {
             return io_send_sw(SW_BAD_STATE);
         }
+        if (G_context.tx_info.raw_tx_len + cdata->size > sizeof(G_context.tx_info.raw_tx)) {
+            return io_send_sw(SW_WRONG_TX_LENGTH);
+        }
+        if (!buffer_move(cdata,
+                         G_context.tx_info.raw_tx + G_context.tx_info.raw_tx_len,
+                         cdata->size)) {
+            return io_send_sw(SW_TX_PARSING_FAIL);
+        }
+        G_context.tx_info.raw_tx_len += cdata->size;
 
-        if (more) {  // more APDUs with transaction part
-            if (G_context.tx_info.raw_tx_len + cdata->size > MAX_TRANSACTION_LEN &&  //
-                !buffer_move(cdata,
-                             G_context.tx_info.raw_tx + G_context.tx_info.raw_tx_len,
-                             cdata->size)) {
-                return io_send_sw(SW_WRONG_TX_LENGTH);
-            }
-
-            G_context.tx_info.raw_tx_len += cdata->size;
-
+        if (more) {
+            // more APDUs with transaction part are expected.
+            // Send a SW_OK to signal that we have received the chunk
             return io_send_sw(SW_OK);
-        } else {  // last APDU, let's parse and sign
-            if (G_context.tx_info.raw_tx_len + cdata->size > MAX_TRANSACTION_LEN ||  //
-                !buffer_move(cdata,
-                             G_context.tx_info.raw_tx + G_context.tx_info.raw_tx_len,
-                             cdata->size)) {
-                return io_send_sw(SW_WRONG_TX_LENGTH);
-            }
 
-            G_context.tx_info.raw_tx_len += cdata->size;
+        } else {
+            // last APDU for this transaction, let's parse, display and request a sign confirmation
 
             buffer_t buf = {.ptr = G_context.tx_info.raw_tx,
                             .size = G_context.tx_info.raw_tx_len,
