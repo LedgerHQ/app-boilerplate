@@ -39,7 +39,7 @@ void ui_action_validate_transaction(bool choice) {
     if (choice) {
         G_context.state = STATE_APPROVED;
 
-        if (crypto_sign_message() < 0) {
+        if (crypto_sign_message() != 0) {
             G_context.state = STATE_NONE;
             io_send_sw(SW_SIGNATURE_FAIL);
         } else {

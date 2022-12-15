@@ -18,9 +18,7 @@
  * @param[in]  bip32_path_len
  *   Number of path in BIP32 path.
  *
- * @return 0 if success, -1 otherwise.
- *
- * @throw INVALID_PARAMETER
+ * @return 0 on success, error number otherwise.
  *
  */
 int crypto_derive_private_key(cx_ecfp_private_key_t *private_key,
@@ -53,9 +51,7 @@ int crypto_init_public_key(cx_ecfp_private_key_t *private_key,
  * @see G_context.bip32_path, G_context.tx_info.m_hash,
  * G_context.tx_info.signature.
  *
- * @return 0 if success, -1 otherwise.
- *
- * @throw INVALID_PARAMETER
+ * @return 0 on success, error number otherwise.
  *
  */
 int crypto_sign_message(void);
