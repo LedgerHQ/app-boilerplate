@@ -36,14 +36,12 @@ int crypto_derive_private_key(cx_ecfp_private_key_t *private_key,
  * @param[out] raw_public_key
  *   Pointer to raw public key.
  *
- * @return 0 if success, -1 otherwise.
- *
  * @throw INVALID_PARAMETER
  *
  */
-int crypto_init_public_key(cx_ecfp_private_key_t *private_key,
-                           cx_ecfp_public_key_t *public_key,
-                           uint8_t raw_public_key[static 64]);
+void crypto_init_public_key(cx_ecfp_private_key_t *private_key,
+                            cx_ecfp_public_key_t *public_key,
+                            uint8_t raw_public_key[static 64]);
 
 /**
  * Sign message hash in global context.
