@@ -47,10 +47,13 @@ int handler_get_public_key(buffer_t *cdata, bool display) {
     }
 
     // derive private key according to BIP32 path
-    crypto_derive_private_key(&private_key,
-                              G_context.pk_info.chain_code,
-                              G_context.bip32_path,
-                              G_context.bip32_path_len);
+    int error = crypto_derive_private_key(&private_key,
+                                          G_context.pk_info.chain_code,
+                                          G_context.bip32_path,
+                                          G_context.bip32_path_len);
+    if (error != 0) {
+        return io_send_sw(error);
+    }
     // generate corresponding public key
     crypto_init_public_key(&private_key, &public_key, G_context.pk_info.raw_public_key);
     // reset private key

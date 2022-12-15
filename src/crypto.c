@@ -28,6 +28,7 @@ int crypto_derive_private_key(cx_ecfp_private_key_t *private_key,
                               const uint32_t *bip32_path,
                               uint8_t bip32_path_len) {
     uint8_t raw_private_key[32] = {0};
+    int error = 0;
 
     BEGIN_TRY {
         TRY {
@@ -44,7 +45,7 @@ int crypto_derive_private_key(cx_ecfp_private_key_t *private_key,
                                      private_key);
         }
         CATCH_OTHER(e) {
-            THROW(e);
+            error = e;
         }
         FINALLY {
             explicit_bzero(&raw_private_key, sizeof(raw_private_key));
@@ -52,31 +53,32 @@ int crypto_derive_private_key(cx_ecfp_private_key_t *private_key,
     }
     END_TRY;
 
-    return 0;
+    return error;
 }
 
-int crypto_init_public_key(cx_ecfp_private_key_t *private_key,
-                           cx_ecfp_public_key_t *public_key,
-                           uint8_t raw_public_key[static 64]) {
+void crypto_init_public_key(cx_ecfp_private_key_t *private_key,
+                            cx_ecfp_public_key_t *public_key,
+                            uint8_t raw_public_key[static 64]) {
     // generate corresponding public key
     cx_ecfp_generate_pair(CX_CURVE_256K1, public_key, private_key, 1);
 
     memmove(raw_public_key, public_key->W + 1, 64);
-
-    return 0;
 }
 
-int crypto_sign_message() {
+int crypto_sign_message(void) {
     cx_ecfp_private_key_t private_key = {0};
     uint8_t chain_code[32] = {0};
     uint32_t info = 0;
     int sig_len = 0;
 
     // derive private key according to BIP32 path
-    crypto_derive_private_key(&private_key,
-                              chain_code,
-                              G_context.bip32_path,
-                              G_context.bip32_path_len);
+    int error = crypto_derive_private_key(&private_key,
+                                          chain_code,
+                                          G_context.bip32_path,
+                                          G_context.bip32_path_len);
+    if (error != 0) {
+        return error;
+    }
 
     BEGIN_TRY {
         TRY {
@@ -91,7 +93,7 @@ int crypto_sign_message() {
             PRINTF("Signature: %.*H\n", sig_len, G_context.tx_info.signature);
         }
         CATCH_OTHER(e) {
-            THROW(e);
+            error = e;
         }
         FINALLY {
             explicit_bzero(&private_key, sizeof(private_key));
@@ -99,12 +101,10 @@ int crypto_sign_message() {
     }
     END_TRY;
 
-    if (sig_len < 0) {
-        return -1;
+    if (error == 0) {
+        G_context.tx_info.signature_len = sig_len;
+        G_context.tx_info.v = (uint8_t)(info & CX_ECCINFO_PARITY_ODD);
     }
 
-    G_context.tx_info.signature_len = sig_len;
-    G_context.tx_info.v = (uint8_t)(info & CX_ECCINFO_PARITY_ODD);
-
-    return 0;
+    return error;
 }
