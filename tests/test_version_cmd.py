@@ -1,5 +1,5 @@
-from boilerplate_client.boilerplate_cmd import BoilerplateCommand
-from utils import unpack_get_version_response
+from application_client.boilerplate_cmd import BoilerplateCommand
+from application_client.boilerplate_response_unpacker import unpack_get_version_response
 
 # Taken from the Makefile, to update every time the Makefile version is bumped
 MAJOR = 1

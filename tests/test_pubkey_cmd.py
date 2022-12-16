@@ -1,7 +1,8 @@
-from boilerplate_client.boilerplate_cmd import BoilerplateCommand, Errors
+from application_client.boilerplate_cmd import BoilerplateCommand, Errors
+from application_client.boilerplate_response_unpacker import unpack_get_public_key_response
 from ragger.bip import calculate_public_key_and_chaincode, CurveChoice
 from ragger.backend import RaisePolicy
-from utils import create_simple_nav_instructions, ROOT_SCREENSHOT_PATH, unpack_get_public_key_response
+from utils import create_simple_nav_instructions, ROOT_SCREENSHOT_PATH
 
 
 # In this test we check that the GET_PUBLIC_KEY works in non-confirmation mode

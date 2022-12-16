@@ -1,6 +1,6 @@
 from ragger.backend import RaisePolicy
+from application_client.boilerplate_cmd import CLA, InsType, P1, P2, Errors
 
-from boilerplate_client.boilerplate_cmd import CLA, InsType, P1, P2, Errors
 
 # Ensure the app returns an error when a bad CLA is used
 def test_bad_cla(backend):

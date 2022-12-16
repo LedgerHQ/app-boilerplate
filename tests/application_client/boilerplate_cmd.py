@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from ragger.backend.interface import BackendInterface, RAPDU
 from ragger.bip import pack_derivation_path
 
+
 MAX_APDU_LEN: int = 255
 
 CLA: int = 0xE0

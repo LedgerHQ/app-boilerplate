@@ -1,7 +1,8 @@
-from boilerplate_client.transaction import Transaction
-from boilerplate_client.boilerplate_cmd import BoilerplateCommand, Errors
+from application_client.transaction import Transaction
+from application_client.boilerplate_cmd import BoilerplateCommand, Errors
+from application_client.boilerplate_response_unpacker import unpack_get_public_key_response, unpack_sign_tx_response
 from ragger.backend import RaisePolicy
-from utils import create_simple_nav_instructions, ROOT_SCREENSHOT_PATH, unpack_get_public_key_response, unpack_sign_tx_response, check_signature_validity
+from utils import create_simple_nav_instructions, ROOT_SCREENSHOT_PATH, check_signature_validity
 
 # In this tests we check the behavior of the device when asked to sign a transaction
 

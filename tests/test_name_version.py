@@ -1,5 +1,5 @@
-from boilerplate_client.boilerplate_cmd import BoilerplateCommand
-from utils import unpack_get_app_and_version_response
+from application_client.boilerplate_cmd import BoilerplateCommand
+from application_client.boilerplate_response_unpacker import unpack_get_app_and_version_response
 
 
 # Test a specific APDU asking BOLOS (and not the app) the name and version of the current app

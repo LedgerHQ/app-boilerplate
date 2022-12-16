@@ -5,7 +5,7 @@ from ragger.backend import SpeculosBackend, LedgerCommBackend, LedgerWalletBacke
 from ragger.navigator import NanoNavigator
 from ragger.utils import app_path_from_app_name
 
-from boilerplate_client.boilerplate_cmd import BoilerplateCommand
+from application_client.boilerplate_cmd import BoilerplateCommand
 
 
 # This variable is needed for Speculos only (physical tests need the application to be already installed)
