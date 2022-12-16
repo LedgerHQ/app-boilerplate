@@ -1,6 +1,5 @@
-import struct
 from enum import IntEnum
-from typing import Tuple, Generator, List
+from typing import Generator, List
 from contextlib import contextmanager
 
 from ragger.backend.interface import BackendInterface, RAPDU

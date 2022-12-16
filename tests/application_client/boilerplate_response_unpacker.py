@@ -33,7 +33,7 @@ def unpack_get_version_response(response: bytes) -> Tuple[int, int, int]:
 #            unused_len (1)
 #            unused (var)
 def unpack_get_app_and_version_response(response: bytes) -> Tuple[str, str]:
-    response, format_id = pop_sized_buf_from_buffer(response, 1)
+    response, _ = pop_sized_buf_from_buffer(response, 1)
     response, _, app_name_raw = pop_size_prefixed_buf_from_buf(response)
     response, _, version_raw = pop_size_prefixed_buf_from_buf(response)
     response, _, _ = pop_size_prefixed_buf_from_buf(response)
@@ -51,8 +51,8 @@ def unpack_get_public_key_response(response: bytes) -> Tuple[int, bytes, int, by
     response, pub_key_len, pub_key = pop_size_prefixed_buf_from_buf(response)
     response, chain_code_len, chain_code = pop_size_prefixed_buf_from_buf(response)
 
-    assert(pub_key_len == 65)
-    assert(chain_code_len == 32)
+    assert pub_key_len == 65
+    assert chain_code_len == 32
     assert len(response) == 0
 
     return pub_key_len, pub_key, chain_code_len, chain_code
