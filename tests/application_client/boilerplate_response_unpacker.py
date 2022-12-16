@@ -2,7 +2,7 @@ from typing import Tuple
 from struct import unpack
 
 # remainder, data_len, data
-def pop_sized_buf_from_buffer(buffer:bytes, size:int) -> Tuple[bytes, int]:
+def pop_sized_buf_from_buffer(buffer:bytes, size:int) -> Tuple[bytes, bytes]:
     return buffer[size:], buffer[0:size]
 
 # remainder, data_len, data
@@ -21,7 +21,8 @@ def unpack_get_app_name_response(response: bytes) -> str:
 #            PATCH (1)
 def unpack_get_version_response(response: bytes) -> Tuple[int, int, int]:
     assert len(response) == 3
-    return unpack("BBB", response)
+    major, minor, patch = unpack("BBB", response)
+    return (major, minor, patch)
 
 # Unpack from response:
 # response = format_id (1)
@@ -66,4 +67,4 @@ def unpack_sign_tx_response(response: bytes) -> Tuple[int, bytes, int]:
 
     assert len(response) == 0
 
-    return der_sig_len, der_sig, v
+    return der_sig_len, der_sig, int.from_bytes(v, byteorder='big')
