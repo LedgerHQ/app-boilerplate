@@ -11,8 +11,8 @@ from ragger.navigator import NavInsID, NavIns
 
 ROOT_SCREENSHOT_PATH = Path(__file__).parent.resolve()
 
-# Helper to create a serie of n right_clicks instructions and a final double button press
-# usefull for navigating through Nano menus
+# Helper to create a list of n right_clicks instructions and a final double button press
+# useful for navigating through Nano menus
 def create_simple_nav_instructions(right_clicks: int) -> List[NavIns]:
     instructions = [NavIns(NavInsID.RIGHT_CLICK)] * right_clicks
     instructions.append(NavIns(NavInsID.BOTH_CLICK))
