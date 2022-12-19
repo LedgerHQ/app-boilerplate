@@ -40,6 +40,13 @@ void io_seproxyhal_display(const bagl_element_t *element) {
 
 uint8_t io_event(uint8_t channel) {
     (void) channel;
+    nbgl_area_t area = {
+    .x0 = 0,
+    .y0 = 0,
+    .width = 8,
+    .height = 8,
+    .backgroundColor = BLACK,
+  };
 
     switch (G_io_seproxyhal_spi_buffer[0]) {
         case SEPROXYHAL_TAG_BUTTON_PUSH_EVENT:
@@ -65,6 +72,10 @@ uint8_t io_event(uint8_t channel) {
 #ifdef HAVE_NBGL
         case SEPROXYHAL_TAG_FINGER_EVENT:
             UX_FINGER_EVENT(G_io_seproxyhal_spi_buffer);
+            area.x0 = (G_io_seproxyhal_spi_buffer[4] << 8) + G_io_seproxyhal_spi_buffer[5];
+            area.y0 = (G_io_seproxyhal_spi_buffer[6] << 8) + G_io_seproxyhal_spi_buffer[7];
+            nbgl_frontDrawRect(&area);
+            nbgl_frontRefreshArea(&area,BLACK_AND_WHITE_FAST_REFRESH);
             break;
 #endif  // HAVE_NBGL
         case SEPROXYHAL_TAG_TICKER_EVENT:

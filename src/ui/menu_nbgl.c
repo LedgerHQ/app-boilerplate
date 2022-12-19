@@ -25,6 +25,24 @@
 #include "../globals.h"
 #include "menu.h"
 
+void nbgl_fullScreenClear(color_t color, bool refresh)
+{
+  // Draw full screen
+  nbgl_area_t area = {
+    .x0 = 0,
+    .y0 = 0,
+    .width = SCREEN_WIDTH,
+    .height = SCREEN_HEIGHT,
+    // .bpp = NBGL_BPP_1,
+    .backgroundColor = color,
+  };
+  nbgl_frontDrawRect(&area);
+  if (refresh)
+  {
+    nbgl_frontRefreshArea(&area,FULL_COLOR_REFRESH);
+  }
+}
+
 void app_quit(void) {
     // exit app here
     os_sched_exit(-1);
