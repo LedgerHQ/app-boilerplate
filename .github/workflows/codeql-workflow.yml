@@ -16,14 +16,14 @@ on:
 jobs:
   analyse:
     name: Analyse
-    strategy: 
+    strategy:
       matrix:
         sdk: [ "$NANOS_SDK", "$NANOX_SDK", "$NANOSP_SDK" ]
         #'cpp' covers C and C++
         language: [ 'cpp' ]
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-lite:latest
+      image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-legacy:latest
 
     steps:
       - name: Clone
@@ -39,6 +39,6 @@ jobs:
       - name: Build
         run: |
           make BOLOS_SDK=${{ matrix.sdk }}
-        
+
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
