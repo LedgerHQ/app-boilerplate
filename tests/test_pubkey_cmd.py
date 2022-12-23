@@ -1,4 +1,4 @@
-from application_client.boilerplate_cmd import BoilerplateCommand, Errors
+from application_client.boilerplate_command_sender import BoilerplateCommandSender, Errors
 from application_client.boilerplate_response_unpacker import unpack_get_public_key_response
 from ragger.bip import calculate_public_key_and_chaincode, CurveChoice
 from ragger.backend import RaisePolicy
@@ -8,7 +8,7 @@ from utils import create_simple_nav_instructions, ROOT_SCREENSHOT_PATH
 # In this test we check that the GET_PUBLIC_KEY works in non-confirmation mode
 def test_get_public_key_no_confirm(backend, firmware):
     for path in ["m/44'/0'/0'/0/0", "m/44'/0'/0/0/0", "m/44'/0'/911'/0/0", "m/44'/0'/255/255/255", "m/44'/0'/2147483647/0/0/0/0/0/0/0"]:
-        client = BoilerplateCommand(backend)
+        client = BoilerplateCommandSender(backend)
         response = client.get_public_key(path=path).data
         _, public_key, _, chain_code = unpack_get_public_key_response(response)
 
@@ -19,7 +19,7 @@ def test_get_public_key_no_confirm(backend, firmware):
 
 # In this test we check that the GET_PUBLIC_KEY works in confirmation mode
 def test_get_public_key_confirm_accepted(backend, firmware, navigator, test_name):
-    client = BoilerplateCommand(backend)
+    client = BoilerplateCommandSender(backend)
     path="m/44'/0'/0'/0/0"
     with client.get_public_key_with_confirmation(path=path):
         if backend.firmware.device == "nanos":
@@ -37,7 +37,7 @@ def test_get_public_key_confirm_accepted(backend, firmware, navigator, test_name
 
 # In this test we check that the GET_PUBLIC_KEY in confirmation mode replies an error if the user refuses
 def test_get_public_key_confirm_refused(backend, firmware, navigator, test_name):
-    client = BoilerplateCommand(backend)
+    client = BoilerplateCommandSender(backend)
     path="m/44'/0'/0'/0/0"
     with client.get_public_key_with_confirmation(path=path):
         if backend.firmware.device == "nanos":

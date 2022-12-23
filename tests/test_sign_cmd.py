@@ -1,5 +1,5 @@
-from application_client.transaction import Transaction
-from application_client.boilerplate_cmd import BoilerplateCommand, Errors
+from application_client.boilerplate_transaction import Transaction
+from application_client.boilerplate_command_sender import BoilerplateCommandSender, Errors
 from application_client.boilerplate_response_unpacker import unpack_get_public_key_response, unpack_sign_tx_response
 from ragger.backend import RaisePolicy
 from utils import create_simple_nav_instructions, ROOT_SCREENSHOT_PATH, check_signature_validity
@@ -12,7 +12,7 @@ from utils import create_simple_nav_instructions, ROOT_SCREENSHOT_PATH, check_si
 # We will ensure that the displayed information is correct by using screenshots comparison
 def test_sign_tx_short_tx(backend, navigator, test_name):
     # Use the app interface instead of raw interface
-    client = BoilerplateCommand(backend)
+    client = BoilerplateCommandSender(backend)
     # The path used for this entire test
     path: str = "m/44'/0'/0'/0/0"
 
@@ -50,7 +50,7 @@ def test_sign_tx_short_tx(backend, navigator, test_name):
 # In particular the long memo will force the transaction to be sent in multiple chunks
 def test_sign_tx_long_tx(backend, navigator, test_name):
     # Use the app interface instead of raw interface
-    client = BoilerplateCommand(backend)
+    client = BoilerplateCommandSender(backend)
     path: str = "m/44'/0'/0'/0/0"
 
     rapdu = client.get_public_key(path=path)
@@ -84,7 +84,7 @@ def test_sign_tx_long_tx(backend, navigator, test_name):
 
 def test_sign_tx_refused(backend, navigator, test_name):
     # Use the app interface instead of raw interface
-    client = BoilerplateCommand(backend)
+    client = BoilerplateCommandSender(backend)
     path: str = "m/44'/0'/0'/0/0"
 
     rapdu = client.get_public_key(path=path)

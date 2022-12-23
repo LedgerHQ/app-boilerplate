@@ -1,5 +1,5 @@
 from ragger.backend import RaisePolicy
-from application_client.boilerplate_cmd import CLA, InsType, P1, P2, Errors
+from application_client.boilerplate_command_sender import CLA, InsType, P1, P2, Errors
 
 
 # Ensure the app returns an error when a bad CLA is used
