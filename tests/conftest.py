@@ -5,8 +5,6 @@ from ragger.backend import SpeculosBackend, LedgerCommBackend, LedgerWalletBacke
 from ragger.navigator import NanoNavigator
 from ragger.utils import app_path_from_app_name
 
-from application_client.boilerplate_cmd import BoilerplateCommand
-
 
 # This variable is needed for Speculos only (physical tests need the application to be already installed)
 # Adapt this path to your 'tests/elfs' directory
@@ -107,11 +105,6 @@ def create_backend(backend_name: str, firmware: Firmware, display: bool):
 def backend(backend_name, firmware, display):
     with create_backend(backend_name, firmware, display) as b:
         yield b
-
-
-@pytest.fixture
-def cmd(backend):
-    yield BoilerplateCommand(client=backend, debug=True)
 
 
 @pytest.fixture
