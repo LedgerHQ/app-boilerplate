@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import Generator, List
+from typing import Generator, List, Optional
 from contextlib import contextmanager
 
 from ragger.backend.interface import BackendInterface, RAPDU
@@ -89,7 +89,7 @@ class BoilerplateCommandSender:
 
 
     @contextmanager
-    def get_public_key_with_confirmation(self, path: str) -> Generator[RAPDU, None, None]:
+    def get_public_key_with_confirmation(self, path: str) -> Generator[None, None, None]:
         with self.backend.exchange_async(cla=CLA,
                                          ins=InsType.GET_PUBLIC_KEY,
                                          p1=P1.P1_CONFIRM,
@@ -99,7 +99,7 @@ class BoilerplateCommandSender:
 
 
     @contextmanager
-    def sign_tx(self, path: str, transaction: bytes) -> Generator[RAPDU, None, None]:
+    def sign_tx(self, path: str, transaction: bytes) -> Generator[None, None, None]:
         self.backend.exchange(cla=CLA,
                               ins=InsType.SIGN_TX,
                               p1=P1.P1_START,
@@ -123,5 +123,5 @@ class BoilerplateCommandSender:
                                          data=messages[-1]) as response:
             yield response
 
-    def get_async_response(self) -> RAPDU:
+    def get_async_response(self) -> Optional[RAPDU]:
         return self.backend.last_async_response
