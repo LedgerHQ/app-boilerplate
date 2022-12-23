@@ -1,16 +1,14 @@
 import pytest
 from pathlib import Path
-from ragger import Firmware
+from ragger.firmware import Firmware
 from ragger.backend import SpeculosBackend, LedgerCommBackend, LedgerWalletBackend
 from ragger.navigator import NanoNavigator
 from ragger.utils import app_path_from_app_name
 
-from boilerplate_client.boilerplate_cmd import BoilerplateCommand
-
 
 # This variable is needed for Speculos only (physical tests need the application to be already installed)
 # Adapt this path to your 'tests/elfs' directory
-APPS_DIRECTORY = (Path(__file__).parent.parent / "elfs").resolve()
+APPS_DIRECTORY = (Path(__file__).parent / "elfs").resolve()
 
 # Adapt this path to the APPNAME in your Makefile
 APP_NAME = "boilerplate"
@@ -20,16 +18,6 @@ BACKENDS = ["speculos", "ledgercomm", "ledgerwallet"]
 FIRMWARES = [Firmware('nanos', '2.1'),
              Firmware('nanox', '2.0.2'),
              Firmware('nanosp', '1.0.3')]
-
-@pytest.fixture(scope="module")
-def sw_h_path():
-    # path with tests
-    conftest_folder_path: Path = Path(__file__).parent
-    # sw.h should be in ../../src/sw.h
-    sw_h_path = conftest_folder_path.parent / "src" / "sw.h"
-    if not sw_h_path.is_file():
-        raise FileNotFoundError(f"Can't find sw.h: '{sw_h_path}'")
-    return sw_h_path
 
 
 def pytest_addoption(parser):
@@ -117,11 +105,6 @@ def create_backend(backend_name: str, firmware: Firmware, display: bool):
 def backend(backend_name, firmware, display):
     with create_backend(backend_name, firmware, display) as b:
         yield b
-
-
-@pytest.fixture
-def cmd(backend):
-    yield BoilerplateCommand(client=backend, debug=True)
 
 
 @pytest.fixture

@@ -1,4 +1,7 @@
+pytest
 ragger[speculos]
-pytest>=6.1.1,<7.0.0
+ragger[ledgerwallet]
+Jinja2==3.1.2
+Flask==2.1.2
 ecdsa>=0.16.1,<0.17.0
 pysha3>=1.0.0,<2.0.0

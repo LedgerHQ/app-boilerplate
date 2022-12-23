@@ -5,7 +5,9 @@ bin/
 debug/
 dep/
 obj/
-elfs/
+
+tests/elfs/*.elf
+tests/snapshots-tmp/
 
 # Unit tests and code coverage
 unit-tests/build/

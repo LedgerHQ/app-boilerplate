@@ -16,25 +16,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Installing PIP dependencies
       run: |
         pip install pylint
         pip install --extra-index-url https://test.pypi.org/simple/ -r tests/requirements.txt
     - name: Lint Python code
       run: |
-        pylint --rc tests/setup.cfg tests/boilerplate_client/
+        pylint --rc tests/setup.cfg tests/application_client/
 
   mypy:
     name: Type checking
     runs-on: ubuntu-latest
     steps:
     - name: Clone
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Installing PIP dependencies
       run: |
         pip install mypy
         pip install --extra-index-url https://test.pypi.org/simple/ -r tests/requirements.txt
     - name: Mypy type checking
       run: |
-        mypy tests/boilerplate_client/
+        mypy tests/application_client/
