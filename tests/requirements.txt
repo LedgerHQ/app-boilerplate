@@ -1,6 +1,6 @@
 pytest
-ragger[speculos]
-ragger[ledgerwallet]
+ragger[speculos]>=1.1.0
+ragger[ledgerwallet]>=1.1.0
 Jinja2==3.1.2
 Flask==2.1.2
 ecdsa>=0.16.1,<0.17.0
