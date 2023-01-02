@@ -2,7 +2,8 @@ from application_client.boilerplate_transaction import Transaction
 from application_client.boilerplate_command_sender import BoilerplateCommandSender, Errors
 from application_client.boilerplate_response_unpacker import unpack_get_public_key_response, unpack_sign_tx_response
 from ragger.backend import RaisePolicy
-from utils import create_simple_nav_instructions, ROOT_SCREENSHOT_PATH, check_signature_validity
+from ragger.navigator import NavInsID, NavIns
+from utils import ROOT_SCREENSHOT_PATH, check_signature_validity
 
 # In this tests we check the behavior of the device when asked to sign a transaction
 
@@ -32,12 +33,12 @@ def test_sign_tx_short_tx(backend, navigator, test_name):
     # As it requires on-screen validation, the function is asynchronous.
     # It will yield the result when the navigation is done
     with client.sign_tx(path=path, transaction=transaction):
-        if backend.firmware.device == "nanos":
-            nav_ins = create_simple_nav_instructions(5)
-        elif backend.firmware.device.startswith("nano"):
-            nav_ins = create_simple_nav_instructions(3)
         # Validate the on-screen request by performing the navigation appropriate for this device
-        navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name, nav_ins)
+        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
+                                                  [NavIns(NavInsID.BOTH_CLICK)],
+                                                  "Approve",
+                                                  ROOT_SCREENSHOT_PATH,
+                                                  test_name)
 
     # The device as yielded the result, parse it and ensure that the signature is correct
     response = client.get_async_response().data
@@ -67,21 +68,18 @@ def test_sign_tx_long_tx(backend, navigator, test_name):
     ).serialize()
 
     with client.sign_tx(path=path, transaction=transaction):
-        if backend.firmware.device == "nanos":
-            nav_ins = create_simple_nav_instructions(5)
-        elif backend.firmware.device.startswith("nano"):
-            nav_ins = create_simple_nav_instructions(3)
-        navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name, nav_ins)
-
+        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
+                                                  [NavIns(NavInsID.BOTH_CLICK)],
+                                                  "Approve",
+                                                  ROOT_SCREENSHOT_PATH,
+                                                  test_name)
     response = client.get_async_response().data
     _, der_sig, _ = unpack_sign_tx_response(response)
     assert check_signature_validity(public_key, der_sig, transaction)
 
 
-
 # Transaction signature refused test
 # The test will ask for a transaction signature that will be refused on screen
-
 def test_sign_tx_refused(backend, navigator, test_name):
     # Use the app interface instead of raw interface
     client = BoilerplateCommandSender(backend)
@@ -98,12 +96,12 @@ def test_sign_tx_refused(backend, navigator, test_name):
     ).serialize()
 
     with client.sign_tx(path=path, transaction=transaction):
-        if backend.firmware.device == "nanos":
-            nav_ins = create_simple_nav_instructions(5 + 1)
-        elif backend.firmware.device.startswith("nano"):
-            nav_ins = create_simple_nav_instructions(3 + 1)
         # Disable raising when trying to unpack an error APDU
         backend.raise_policy = RaisePolicy.RAISE_NOTHING
-        navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name, nav_ins)
+        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
+                                                  [NavIns(NavInsID.BOTH_CLICK)],
+                                                  "Reject",
+                                                  ROOT_SCREENSHOT_PATH,
+                                                  test_name)
 
     assert client.get_async_response().status == Errors.SW_DENY
