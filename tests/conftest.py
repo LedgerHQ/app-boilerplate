@@ -1,4 +1,5 @@
 import pytest
+from typing import Optional
 from pathlib import Path
 from ragger.firmware import Firmware
 from ragger.backend import SpeculosBackend, LedgerCommBackend, LedgerWalletBackend
@@ -25,6 +26,7 @@ def pytest_addoption(parser):
     parser.addoption("--backend", action="store", default="speculos")
     parser.addoption("--display", action="store_true", default=False)
     parser.addoption("--golden_run", action="store_true", default=False)
+    parser.addoption("--log_apdu_file", action="store", default=None)
     # Enable using --'device' in the pytest command line to restrict testing to specific devices
     for fw in FIRMWARES:
         parser.addoption("--"+fw.device, action="store_true", help="run on nanos only")
@@ -43,6 +45,12 @@ def display(pytestconfig):
 @pytest.fixture(scope="session")
 def golden_run(pytestconfig):
     return pytestconfig.getoption("golden_run")
+
+
+@pytest.fixture(scope="session")
+def log_apdu_file(pytestconfig):
+    filename = pytestconfig.getoption("log_apdu_file")
+    return Path(filename).resolve() if filename is not None else None
 
 
 @pytest.fixture
@@ -88,22 +96,22 @@ def prepare_speculos_args(firmware: Firmware, display: bool):
 # Depending on the "--backend" option value, a different backend is
 # instantiated, and the tests will either run on Speculos or on a physical
 # device depending on the backend
-def create_backend(backend_name: str, firmware: Firmware, display: bool):
+def create_backend(backend_name: str, firmware: Firmware, display: bool, log_apdu_file: Optional[Path]):
     if backend_name.lower() == "ledgercomm":
-        return LedgerCommBackend(firmware, interface="hid")
+        return LedgerCommBackend(firmware=firmware, interface="hid", log_apdu_file=log_apdu_file)
     elif backend_name.lower() == "ledgerwallet":
-        return LedgerWalletBackend(firmware)
+        return LedgerWalletBackend(firmware=firmware, log_apdu_file=log_apdu_file)
     elif backend_name.lower() == "speculos":
         args, kwargs = prepare_speculos_args(firmware, display)
-        return SpeculosBackend(*args, firmware, **kwargs)
+        return SpeculosBackend(*args, firmware=firmware, log_apdu_file=log_apdu_file, **kwargs)
     else:
         raise ValueError(f"Backend '{backend_name}' is unknown. Valid backends are: {BACKENDS}")
 
 
 # This final fixture will return the properly configured backend, to be used in tests
 @pytest.fixture
-def backend(backend_name, firmware, display):
-    with create_backend(backend_name, firmware, display) as b:
+def backend(backend_name, firmware, display, log_apdu_file):
+    with create_backend(backend_name, firmware, display, log_apdu_file) as b:
         yield b
 
 
