@@ -42,7 +42,7 @@ else
     ICONNAME=icons/nanox_app_boilerplate.gif
 endif
 
-all: default
+all: custom
 
 DEFINES += $(DEFINES_LIB)
 DEFINES += APPNAME=\"$(APPNAME)\"
@@ -113,6 +113,11 @@ SDK_SOURCE_PATH += lib_stusb lib_stusb_impl lib_ux
 ifeq ($(TARGET_NAME),TARGET_NANOX)
     SDK_SOURCE_PATH += lib_blewbxx lib_blewbxx_impl
 endif
+
+custom: default
+	echo $(TARGET_NAME) > bin/metadata
+	arm-none-eabi-objcopy --add-section .mydata="bin/metadata" \
+	--set-section-flags .mydata=noload,readonly bin/app.elf bin/app.elf
 
 load: all
 	python3 -m ledgerblue.loadApp $(APP_LOAD_PARAMS)
