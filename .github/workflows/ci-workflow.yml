@@ -113,6 +113,12 @@ jobs:
     name: Functional tests with Ragger (compatible with Speculos & physical devices)
     needs:
       - nano_build
+    strategy:
+      matrix:
+        include:
+          - model: nanos
+          - model: nanox
+          - model: nanosp
     runs-on: ubuntu-latest
     steps:
       - name: Clone
@@ -129,4 +135,4 @@ jobs:
       - name: Run test
         env:
           CTEST_OUTPUT_ON_FAILURE: 1
-        run: pytest --tb=short -v tests/
+        run: pytest --tb=short -v tests/ --device ${{ matrix.model }}

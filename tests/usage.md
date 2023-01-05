@@ -36,7 +36,7 @@ cp bin/app.elf tests/elfs/<appname>_<device>.elf    # replace <device> with one 
 
 You can use the following command to get your first experience with Ragger and Speculos
 ```
-pytest -v --tb=short --nanox --display
+pytest -v --tb=short --device nanox --display
 ```
 Or you can refer to the section `Available pytest options` to configure the options you want to use
 
@@ -56,7 +56,7 @@ exit
 You can use the following command to get your first experience with Ragger and Ledgerwallet on a NANOX.
 Make sure that the device is plugged, unlocked, and that the tested application is open.
 ```
-pytest -v --tb=short --nanox --backend ledgerwallet
+pytest -v --tb=short --device nanox --backend ledgerwallet
 ```
 Or you can refer to the section `Available pytest options` to configure the options you want to use
 
@@ -73,11 +73,9 @@ Standard useful pytest options
 
 Custom pytest options
 ```
-    --backend <backend>  run the tests against the backend [speculos, ledgercomm, ledgerwallet]. Speculos is the default
-    --display            on Speculos, enables the display of the app screen using QT
-    --golden_run         on Speculos, screen comparison functions will save the current screen instead of comparing
-    --nanos              run only the test for the nanos device
-    --nanox              run only the test for the nanox device
-    --nanosp             run only the test for the nanosp device
+    --device <device>           run the test on the specified device [nanos,nanox,nanosp,all]. This parameter is mandatory
+    --backend <backend>         run the tests against the backend [speculos, ledgercomm, ledgerwallet]. Speculos is the default
+    --display                   on Speculos, enables the display of the app screen using QT
+    --golden_run                on Speculos, screen comparison functions will save the current screen instead of comparing
+    --log_apdu_file <filepath>  log all apdu exchanges to the file in parameter. The previous file content is erased
 ``` 
-
