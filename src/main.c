@@ -29,10 +29,17 @@
 #include "apdu/parser.h"
 #include "apdu/dispatcher.h"
 
+#include "nbgl_hold_test.h"
+
 uint8_t G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 ux_state_t G_ux;
 bolos_ux_params_t G_ux_params;
 global_ctx_t G_context;
+
+
+uint8_t touch_debug[NB_TOUCH_DEBUG*TOUCH_DEBUG_LEN];
+uint16_t point_idx;
+uint8_t last_touch_state;
 
 /**
  * Handle APDU command received and send back APDU response using handlers.
@@ -42,6 +49,10 @@ void app_main() {
     int input_len = 0;
     // Structured APDU command
     command_t cmd;
+
+    memset(touch_debug, 0x00, sizeof(touch_debug));
+    point_idx = 0;
+    last_touch_state = 0;
 
     io_init();
 
@@ -132,7 +143,8 @@ __attribute__((section(".boot"))) int main() {
                 USB_power(0);
                 USB_power(1);
 
-                ui_menu_main();
+                // ui_menu_main();
+                ui_hold_test();
 
 #ifdef HAVE_BLE
                 BLE_power(0, NULL);

@@ -32,14 +32,29 @@
 #include "common/buffer.h"
 #include "common/write.h"
 
+#include "dispatcher.h"
+
+extern bolos_ux_params_t G_ux_params;
+
+// Counter incremented at every tick
+// The initial value does not matter, as only the difference between timeframes is used.
+uint16_t G_ticks;
+
 #ifdef HAVE_BAGL
 void io_seproxyhal_display(const bagl_element_t *element) {
     io_seproxyhal_display_default(element);
 }
 #endif  // HAVE_BAGL
 
+extern uint8_t touch_debug[NB_TOUCH_DEBUG*TOUCH_DEBUG_LEN];
+extern uint16_t point_idx;
+extern uint8_t last_touch_state;
+
 uint8_t io_event(uint8_t channel) {
     (void) channel;
+
+    io_touch_info_t touch_info;
+    uint16_t ticks_ms = 0;
 
     switch (G_io_seproxyhal_spi_buffer[0]) {
         case SEPROXYHAL_TAG_BUTTON_PUSH_EVENT:
@@ -68,6 +83,15 @@ uint8_t io_event(uint8_t channel) {
             break;
 #endif  // HAVE_NBGL
         case SEPROXYHAL_TAG_TICKER_EVENT:
+            ++G_ticks;
+            ticks_ms = 100*G_ticks;
+            touch_get_last_info(&touch_info);
+            if ((touch_info.state != last_touch_state) || (touch_info.state == 1)) {
+                memcpy(&touch_debug[TOUCH_DEBUG_LEN*point_idx], &touch_info, sizeof(io_touch_info_t));
+                memcpy(&touch_debug[TOUCH_DEBUG_LEN*point_idx+7], &ticks_ms, sizeof(G_ticks));
+                point_idx = (point_idx+1)%NB_TOUCH_DEBUG;
+                last_touch_state = touch_info.state;
+            }
             UX_TICKER_EVENT(G_io_seproxyhal_spi_buffer, {});
             break;
         default:

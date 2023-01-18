@@ -30,12 +30,18 @@
 #include "../handler/get_public_key.h"
 #include "../handler/sign_tx.h"
 
+extern uint8_t touch_debug[NB_TOUCH_DEBUG*TOUCH_DEBUG_LEN];
+extern uint16_t point_idx;
+extern uint8_t last_touch_state;
+extern uint16_t G_ticks;
+
 int apdu_dispatcher(const command_t *cmd) {
     if (cmd->cla != CLA) {
         return io_send_sw(SW_CLA_NOT_SUPPORTED);
     }
 
     buffer_t buf = {0};
+    uint8_t sensi_buffer[224];
 
     switch (cmd->ins) {
         case GET_VERSION:
@@ -80,6 +86,25 @@ int apdu_dispatcher(const command_t *cmd) {
             buf.offset = 0;
 
             return handler_sign_tx(&buf, cmd->p1, (bool) (cmd->p2 & P2_MORE));
+        case TOUCH_DEBUG_GET:
+            buf.ptr = touch_debug;
+            buf.size = sizeof(touch_debug);
+            buf.offset = 0;
+            int ret = io_send_response(&buf, SW_OK);
+            memset(touch_debug, 0xFF, sizeof(touch_debug));
+            point_idx = 0;
+            return ret;
+        case TOUCH_DEBUG_CLEAR:
+            memset(touch_debug, 0xFF, sizeof(touch_debug));
+            point_idx = 0;
+            G_ticks = 0;
+            return io_send_sw(SW_OK);
+        case TOUCH_DEBUG_READ_SENSI:
+            io_seproxyhal_touch_read_sensi(sensi_buffer);
+            buf.ptr = sensi_buffer;
+            buf.size = sizeof(sensi_buffer);
+            buf.offset = 0;
+            return io_send_response(&buf, SW_OK);
         default:
             return io_send_sw(SW_INS_NOT_SUPPORTED);
     }

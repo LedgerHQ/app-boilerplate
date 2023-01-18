@@ -4,9 +4,13 @@
 
 #include "ux.h"
 #include "os_io_seproxyhal.h"
+#include "os_io.h"
 
 #include "types.h"
 #include "common/buffer.h"
+
+#define NB_TOUCH_DEBUG 10
+#define TOUCH_DEBUG_LEN 9
 
 #ifdef HAVE_BAGL
 void io_seproxyhal_display(const bagl_element_t *element);
