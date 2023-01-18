@@ -15,6 +15,8 @@
  *  limitations under the License.
  *****************************************************************************/
 
+#ifdef HAVE_BAGL
+
 #include "os.h"
 #include "ux.h"
 #include "glyphs.h"
@@ -58,3 +60,5 @@ UX_FLOW(ux_menu_about_flow, &ux_menu_info_step, &ux_menu_back_step, FLOW_LOOP);
 void ui_menu_about() {
     ux_flow_init(0, ux_menu_about_flow, NULL);
 }
+
+#endif

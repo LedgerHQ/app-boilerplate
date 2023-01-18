@@ -21,6 +21,8 @@ jobs:
             model: nanox
           - SDK: "$NANOSP_SDK"
             model: nanosp
+          - SDK: "$STAX_SDK"
+            model: stax
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-lite:latest
@@ -119,6 +121,7 @@ jobs:
           - model: nanos
           - model: nanox
           - model: nanosp
+          - model: stax
     runs-on: ubuntu-latest
     steps:
       - name: Clone
@@ -130,7 +133,7 @@ jobs:
           path: tests/elfs
       - name: Install tests dependencies
         run: |
-          sudo apt-get update && sudo apt-get install -y qemu-user-static
+          sudo apt-get update && sudo apt-get install -y qemu-user-static tesseract-ocr libtesseract-dev
           pip install --extra-index-url https://test.pypi.org/simple/ -r tests/requirements.txt
       - name: Run test
         env:

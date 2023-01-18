@@ -3,7 +3,7 @@ from application_client.boilerplate_response_unpacker import unpack_get_app_name
 
 
 # In this test we check that the GET_APP_NAME replies the application name
-def test_app_name(backend, firmware):
+def test_app_name(backend):
     # Use the app interface instead of raw interface
     client = BoilerplateCommandSender(backend)
     # Send the GET_APP_NAME instruction to the app

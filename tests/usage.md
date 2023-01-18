@@ -29,7 +29,7 @@ exit
 Copy the compiled binaries to the `elfs` directory, create the directory if necessary.
 ```
 mkdir -p tests/elfs/
-cp bin/app.elf tests/elfs/<appname>_<device>.elf    # replace <device> with one of [nanos, nanox, nanosp]
+cp bin/app.elf tests/elfs/<appname>_<device>.elf    # replace <device> with one of [nanos, nanox, nanosp, stax]
                                                     # replace <appname> with the name of your app, (eg boilerplate)
                                                     # so for example tests/elfs/boilerplate_nanos.elf
 ```
@@ -73,7 +73,7 @@ Standard useful pytest options
 
 Custom pytest options
 ```
-    --device <device>           run the test on the specified device [nanos,nanox,nanosp,all]. This parameter is mandatory
+    --device <device>           run the test on the specified device [nanos,nanox,nanosp,stax,all]. This parameter is mandatory
     --backend <backend>         run the tests against the backend [speculos, ledgercomm, ledgerwallet]. Speculos is the default
     --display                   on Speculos, enables the display of the app screen using QT
     --golden_run                on Speculos, screen comparison functions will save the current screen instead of comparing
