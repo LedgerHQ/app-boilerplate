@@ -13,6 +13,7 @@ jobs:
   nano_build:
     name: Build boilerplate application for NanoS, X and S+
     strategy:
+      fail-fast: false
       matrix:
         include:
           - SDK: "$NANOS_SDK"
@@ -116,6 +117,7 @@ jobs:
     needs:
       - nano_build
     strategy:
+      fail-fast: false
       matrix:
         include:
           - model: nanos
