@@ -30,16 +30,16 @@ endif
 APP_LOAD_PARAMS += --path "44'"
 APP_LOAD_PARAMS += $(COMMON_LOAD_PARAMS)
 
-APPNAME      = "Boilerplate"
+APPNAME      = "Thibault"
 APPVERSION_M = 1
 APPVERSION_N = 0
-APPVERSION_P = 1
+APPVERSION_P = 0
 APPVERSION   = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 
 ifeq ($(TARGET_NAME),TARGET_NANOS)
-    ICONNAME=icons/nanos_app_boilerplate.gif
+    ICONNAME=icons/thib.gif
 else
-    ICONNAME=icons/nanox_app_boilerplate.gif
+    ICONNAME=icons/thib.gif
 endif
 
 all: default

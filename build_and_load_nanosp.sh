@@ -1,0 +1,3 @@
+BOLOS_SDK=$NANOSP_SDK make clean
+BOLOS_SDK=$NANOSP_SDK make
+BOLOS_SDK=$NANOSP_SDK make load
