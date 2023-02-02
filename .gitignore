@@ -32,3 +32,5 @@ __pycache__/
 # Doxygen
 doc/html
 doc/latex
+.vscode/c_cpp_properties.json
+.vscode/settings.json

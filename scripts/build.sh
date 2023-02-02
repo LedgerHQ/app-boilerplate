@@ -1,0 +1,1 @@
+docker run --rm -ti  -v "$(realpath .):/app" --privileged -v "/dev/bus/usb:/dev/bus/usb" ledger-app-builder bash -c "sh scripts/build_setup.sh $1"
