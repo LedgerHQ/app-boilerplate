@@ -135,4 +135,4 @@ jobs:
       - name: Run test
         env:
           CTEST_OUTPUT_ON_FAILURE: 1
-        run: pytest --tb=short -v tests/ --device ${{ matrix.model }}
+        run: PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python pytest --tb=short -v tests/ --device ${{ matrix.model }}
