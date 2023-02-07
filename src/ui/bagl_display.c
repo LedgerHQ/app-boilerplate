@@ -26,17 +26,17 @@
 #include "os.h"
 #include "ux.h"
 #include "glyphs.h"
+#include "io.h"
+#include "bip32.h"
+#include "format.h"
 
 #include "display.h"
 #include "constants.h"
 #include "../globals.h"
-#include "../io.h"
 #include "../sw.h"
 #include "../address.h"
 #include "action/validate.h"
 #include "../transaction/types.h"
-#include "../common/bip32.h"
-#include "../common/format.h"
 #include "../menu.h"
 
 static action_validate_cb g_validate_callback;

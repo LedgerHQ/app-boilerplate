@@ -18,13 +18,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "buffer.h"
+#include "io.h"
+
 #include "dispatcher.h"
 #include "../constants.h"
 #include "../globals.h"
 #include "../types.h"
-#include "../io.h"
 #include "../sw.h"
-#include "../common/buffer.h"
 #include "../handler/get_version.h"
 #include "../handler/get_app_name.h"
 #include "../handler/get_public_key.h"
