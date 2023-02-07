@@ -3,7 +3,7 @@
 #include <stdint.h>   // uint*_t
 #include <stdbool.h>  // bool
 
-#include "../common/buffer.h"
+#include "buffer.h"
 
 /**
  * Handler for SIGN_TX command. If successfully parse BIP32 path

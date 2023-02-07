@@ -3,9 +3,10 @@
 #include <stddef.h>  // size_t
 #include <stdint.h>  // uint*_t
 
+#include "bip32.h"
+
 #include "constants.h"
 #include "transaction/types.h"
-#include "common/bip32.h"
 
 /**
  * Enumeration for the status of IO.

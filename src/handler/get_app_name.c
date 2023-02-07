@@ -17,13 +17,14 @@
 
 #include <stdint.h>  // uint*_t
 
+#include "io.h"
+#include "buffer.h"
+
 #include "get_app_name.h"
 #include "../constants.h"
 #include "../globals.h"
-#include "../io.h"
 #include "../sw.h"
 #include "../types.h"
-#include "common/buffer.h"
 
 int handler_get_app_name() {
     _Static_assert(APPNAME_LEN < MAX_APPNAME_LEN, "APPNAME must be at most 64 characters!");

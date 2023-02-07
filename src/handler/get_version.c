@@ -19,13 +19,14 @@
 #include <limits.h>  // UINT8_MAX
 #include <assert.h>  // _Static_assert
 
+#include "io.h"
+#include "buffer.h"
+
 #include "get_version.h"
 #include "../globals.h"
 #include "../constants.h"
-#include "../io.h"
 #include "../sw.h"
 #include "../types.h"
-#include "common/buffer.h"
 
 int handler_get_version() {
     _Static_assert(APPVERSION_LEN == 3, "Length of (MAJOR || MINOR || PATCH) must be 3!");
