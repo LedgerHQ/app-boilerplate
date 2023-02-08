@@ -32,7 +32,7 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           make BOLOS_SDK=${{ matrix.SDK }}
-          mv bin/app.elf "bin/boilerplate_${{ matrix.model }}.elf"
+          mv bin/app.elf "bin/Thibault_${{ matrix.model }}.elf"
       - name: Upload app binary
         uses: actions/upload-artifact@v3
         with:
