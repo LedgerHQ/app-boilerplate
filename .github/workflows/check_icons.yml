@@ -12,3 +12,5 @@ on:
 jobs:
   build:
     uses: LedgerHQ/ledger-app-workflows/.github/workflows/check_icons.yml@master
+    with:
+      caller-repository: ${{ github.repository }}
