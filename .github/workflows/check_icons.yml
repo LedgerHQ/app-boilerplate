@@ -1,0 +1,14 @@
+name: Check icons
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  build:
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/check_icons.yml@master
