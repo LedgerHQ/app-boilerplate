@@ -10,7 +10,6 @@ on:
   pull_request:
 
 jobs:
-  build:
+  check_app_compliance:
+    name: Call Ledger app_compliance
     uses: LedgerHQ/ledger-app-workflows/.github/workflows/app_compliance.yml@master
-    with:
-      app-repository: ${{ github.repository }}
