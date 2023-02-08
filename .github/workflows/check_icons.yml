@@ -1,0 +1,16 @@
+name: Ensure app compliance with Ledger guidelines
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  build:
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/app_compliance.yml@master
+    with:
+      app-repository: ${{ github.repository }}
