@@ -21,6 +21,8 @@ endif
 
 include $(BOLOS_SDK)/Makefile.defines
 
+USE_COMMON_APP_FILES_IN_SDK = 1
+
 APP_LOAD_PARAMS  = --curve secp256k1
 ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
 APP_LOAD_PARAMS += --appFlags 0x200  # APPLICATION_FLAG_BOLOS_SETTINGS
