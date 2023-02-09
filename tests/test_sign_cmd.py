@@ -2,7 +2,7 @@ from application_client.boilerplate_transaction import Transaction
 from application_client.boilerplate_command_sender import BoilerplateCommandSender, Errors
 from application_client.boilerplate_response_unpacker import unpack_get_public_key_response, unpack_sign_tx_response
 from ragger.backend import RaisePolicy
-from ragger.navigator import NavInsID, NavIns
+from ragger.navigator import NavInsID
 from utils import ROOT_SCREENSHOT_PATH, check_signature_validity
 
 # In this tests we check the behavior of the device when asked to sign a transaction
@@ -35,15 +35,15 @@ def test_sign_tx_short_tx(firmware, backend, navigator, test_name):
     with client.sign_tx(path=path, transaction=transaction):
         # Validate the on-screen request by performing the navigation appropriate for this device
         if firmware.device.startswith("nano"):
-            navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                      [NavIns(NavInsID.BOTH_CLICK)],
+            navigator.navigate_until_text_and_compare(NavInsID.RIGHT_CLICK,
+                                                      [NavInsID.BOTH_CLICK],
                                                       "Approve",
                                                       ROOT_SCREENSHOT_PATH,
                                                       test_name)
         else:
-            navigator.navigate_until_text_and_compare(NavIns(NavInsID.USE_CASE_REVIEW_TAP),
-                                                      [NavIns(NavInsID.USE_CASE_REVIEW_CONFIRM),
-                                                       NavIns(NavInsID.USE_CASE_STATUS_WAIT)],
+            navigator.navigate_until_text_and_compare(NavInsID.USE_CASE_REVIEW_TAP,
+                                                      [NavInsID.USE_CASE_REVIEW_CONFIRM,
+                                                       NavInsID.USE_CASE_STATUS_WAIT],
                                                       "Hold to sign",
                                                       ROOT_SCREENSHOT_PATH,
                                                       test_name)
@@ -77,15 +77,15 @@ def test_sign_tx_long_tx(firmware, backend, navigator, test_name):
 
     with client.sign_tx(path=path, transaction=transaction):
         if firmware.device.startswith("nano"):
-            navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                      [NavIns(NavInsID.BOTH_CLICK)],
+            navigator.navigate_until_text_and_compare(NavInsID.RIGHT_CLICK,
+                                                      [NavInsID.BOTH_CLICK],
                                                       "Approve",
                                                       ROOT_SCREENSHOT_PATH,
                                                       test_name)
         else:
-            navigator.navigate_until_text_and_compare(NavIns(NavInsID.USE_CASE_REVIEW_TAP),
-                                                      [NavIns(NavInsID.USE_CASE_REVIEW_CONFIRM),
-                                                       NavIns(NavInsID.USE_CASE_STATUS_WAIT)],
+            navigator.navigate_until_text_and_compare(NavInsID.USE_CASE_REVIEW_TAP,
+                                                      [NavInsID.USE_CASE_REVIEW_CONFIRM,
+                                                       NavInsID.USE_CASE_STATUS_WAIT],
                                                       "Hold to sign",
                                                       ROOT_SCREENSHOT_PATH,
                                                       test_name)
@@ -115,8 +115,8 @@ def test_sign_tx_refused(firmware, backend, navigator, test_name):
         with client.sign_tx(path=path, transaction=transaction):
             # Disable raising when trying to unpack an error APDU
             backend.raise_policy = RaisePolicy.RAISE_NOTHING
-            navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                      [NavIns(NavInsID.BOTH_CLICK)],
+            navigator.navigate_until_text_and_compare(NavInsID.RIGHT_CLICK,
+                                                      [NavInsID.BOTH_CLICK],
                                                       "Reject",
                                                       ROOT_SCREENSHOT_PATH,
                                                       test_name)
@@ -124,10 +124,10 @@ def test_sign_tx_refused(firmware, backend, navigator, test_name):
         assert client.get_async_response().status == Errors.SW_DENY
     else:
         for i in range(3):
-            instructions = [NavIns(NavInsID.USE_CASE_REVIEW_TAP)] * i
-            instructions += [NavIns(NavInsID.USE_CASE_REVIEW_REJECT),
-                             NavIns(NavInsID.USE_CASE_CHOICE_CONFIRM),
-                             NavIns(NavInsID.USE_CASE_STATUS_WAIT)]
+            instructions = [NavInsID.USE_CASE_REVIEW_TAP] * i
+            instructions += [NavInsID.USE_CASE_REVIEW_REJECT,
+                             NavInsID.USE_CASE_CHOICE_CONFIRM,
+                             NavInsID.USE_CASE_STATUS_WAIT]
             with client.sign_tx(path=path, transaction=transaction):
                 backend.raise_policy = RaisePolicy.RAISE_NOTHING
                 navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH,
