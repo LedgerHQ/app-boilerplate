@@ -31,10 +31,9 @@ jobs:
     steps:
     - name: Clone
       uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
+
     - name: Check misspellings
-      uses: codespell-project/actions-codespell@2391250ab05295bddd51e36a8c6295edb6343b0e
+      uses: codespell-project/actions-codespell@v1
       with:
         builtin: clear,rare
         check_filenames: true
