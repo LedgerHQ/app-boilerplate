@@ -1,0 +1,25 @@
+name: Functional tests using Ragger
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  build_appplication:
+    name: Build application using the reusable workflow
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/build.yml@master
+    with:
+      uploaded_artifact_name: compiled_app_binaries
+
+  functionnal_tests:
+    name: Run ragger tests using the reusable workflow
+    needs: build_appplication
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/ragger_tests.yml@master
+    with:
+      test_dir: tests
+      uploaded_artifact_name: compiled_app_binaries

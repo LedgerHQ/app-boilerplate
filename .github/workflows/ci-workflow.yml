@@ -10,38 +10,6 @@ on:
   pull_request:
 
 jobs:
-  nano_build:
-    name: Build boilerplate application for NanoS, X and S+
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - SDK: "$NANOS_SDK"
-            model: nanos
-          - SDK: "$NANOX_SDK"
-            model: nanox
-          - SDK: "$NANOSP_SDK"
-            model: nanosp
-          - SDK: "$STAX_SDK"
-            model: stax
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-lite:latest
-    steps:
-      - name: Clone
-        uses: actions/checkout@v3
-
-      - name: Build
-        run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          make BOLOS_SDK=${{ matrix.SDK }}
-          mv bin/app.elf "bin/boilerplate_${{ matrix.model }}.elf"
-      - name: Upload app binary
-        uses: actions/upload-artifact@v3
-        with:
-          name: apps
-          path: bin/*.elf
-
   job_unit_test:
     name: Unit test
     runs-on: ubuntu-latest
@@ -90,33 +58,3 @@ jobs:
         with:
           name: documentation
           path: doc/html
-
-  job_functional_test:
-    name: Functional tests with Ragger (compatible with Speculos & physical devices)
-    needs:
-      - nano_build
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - model: nanos
-          - model: nanox
-          - model: nanosp
-          - model: stax
-    runs-on: ubuntu-latest
-    steps:
-      - name: Clone
-        uses: actions/checkout@v3
-      - name: Download app binary
-        uses: actions/download-artifact@v3
-        with:
-          name: apps
-          path: tests/elfs
-      - name: Install tests dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install -y qemu-user-static tesseract-ocr libtesseract-dev
-          pip install --extra-index-url https://test.pypi.org/simple/ -r tests/requirements.txt
-      - name: Run test
-        env:
-          CTEST_OUTPUT_ON_FAILURE: 1
-        run: pytest --tb=short -v tests/ --device ${{ matrix.model }}
