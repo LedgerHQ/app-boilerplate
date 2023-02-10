@@ -7,7 +7,7 @@ from utils import ROOT_SCREENSHOT_PATH
 
 
 # In this test we check that the GET_PUBLIC_KEY works in non-confirmation mode
-def test_get_public_key_no_confirm(backend, firmware):
+def test_get_public_key_no_confirm(backend):
     for path in ["m/44'/0'/0'/0/0", "m/44'/0'/0/0/0", "m/44'/0'/911'/0/0", "m/44'/0'/255/255/255", "m/44'/0'/2147483647/0/0/0/0/0/0/0"]:
         client = BoilerplateCommandSender(backend)
         response = client.get_public_key(path=path).data
@@ -19,15 +19,28 @@ def test_get_public_key_no_confirm(backend, firmware):
 
 
 # In this test we check that the GET_PUBLIC_KEY works in confirmation mode
-def test_get_public_key_confirm_accepted(backend, firmware, navigator, test_name):
+def test_get_public_key_confirm_accepted(firmware, backend, navigator, test_name):
     client = BoilerplateCommandSender(backend)
     path = "m/44'/0'/0'/0/0"
     with client.get_public_key_with_confirmation(path=path):
-        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                  [NavIns(NavInsID.BOTH_CLICK)],
-                                                  "Approve",
-                                                  ROOT_SCREENSHOT_PATH,
-                                                  test_name)
+        if firmware.device.startswith("nano"):
+            navigator.navigate_until_text_and_compare(NavInsID.RIGHT_CLICK,
+                                                      [NavInsID.BOTH_CLICK],
+                                                      "Approve",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
+        else:
+            instructions = [
+                NavInsID.USE_CASE_REVIEW_TAP,
+                NavIns(NavInsID.TOUCH, (200, 335)),
+                NavInsID.USE_CASE_ADDRESS_CONFIRMATION_EXIT_QR,
+                NavInsID.USE_CASE_ADDRESS_CONFIRMATION_TAP,
+                NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CONFIRM,
+                NavInsID.USE_CASE_STATUS_WAIT
+            ]
+            navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH,
+                                           test_name,
+                                           instructions)
     response = client.get_async_response().data
     _, public_key, _, chain_code = unpack_get_public_key_response(response)
 
@@ -37,20 +50,45 @@ def test_get_public_key_confirm_accepted(backend, firmware, navigator, test_name
 
 
 # In this test we check that the GET_PUBLIC_KEY in confirmation mode replies an error if the user refuses
-def test_get_public_key_confirm_refused(backend, firmware, navigator, test_name):
+def test_get_public_key_confirm_refused(firmware, backend, navigator, test_name):
     client = BoilerplateCommandSender(backend)
     path = "m/44'/0'/0'/0/0"
-    with client.get_public_key_with_confirmation(path=path):
-        # Disable raising when trying to unpack an error APDU
-        backend.raise_policy = RaisePolicy.RAISE_NOTHING
-        navigator.navigate_until_text_and_compare(NavIns(NavInsID.RIGHT_CLICK),
-                                                  [NavIns(NavInsID.BOTH_CLICK)],
-                                                  "Reject",
-                                                  ROOT_SCREENSHOT_PATH,
-                                                  test_name)
 
-    response = client.get_async_response()
+    if firmware.device.startswith("nano"):
+        with client.get_public_key_with_confirmation(path=path):
+            # Disable raising when trying to unpack an error APDU
+            backend.raise_policy = RaisePolicy.RAISE_NOTHING
+            navigator.navigate_until_text_and_compare(NavInsID.RIGHT_CLICK,
+                                                      [NavInsID.BOTH_CLICK],
+                                                      "Reject",
+                                                      ROOT_SCREENSHOT_PATH,
+                                                      test_name)
 
-    # Assert that we have received a refusal
-    assert response.status == Errors.SW_DENY
-    assert len(response.data) == 0
+        response = client.get_async_response()
+
+        # Assert that we have received a refusal
+        assert response.status == Errors.SW_DENY
+        assert len(response.data) == 0
+    else:
+        instructions_set = [
+            [
+                NavInsID.USE_CASE_REVIEW_REJECT,
+                NavInsID.USE_CASE_STATUS_WAIT
+            ],
+            [
+                NavInsID.USE_CASE_REVIEW_TAP,
+                NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CANCEL,
+                NavInsID.USE_CASE_STATUS_WAIT
+            ]
+        ]
+        for i, instructions in enumerate(instructions_set):
+            with client.get_public_key_with_confirmation(path=path):
+                backend.raise_policy = RaisePolicy.RAISE_NOTHING
+                navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH,
+                                               test_name + f"/part{i}",
+                                               instructions)
+            response = client.get_async_response()
+
+            # Assert that we have received a refusal
+            assert response.status == Errors.SW_DENY
+            assert len(response.data) == 0

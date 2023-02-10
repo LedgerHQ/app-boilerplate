@@ -15,6 +15,8 @@
  *  limitations under the License.
  *****************************************************************************/
 
+#ifdef HAVE_BAGL
+
 #pragma GCC diagnostic ignored "-Wformat-invalid-specifier"  // snprintf
 #pragma GCC diagnostic ignored "-Wformat-extra-args"         // snprintf
 
@@ -35,11 +37,24 @@
 #include "../transaction/types.h"
 #include "../common/bip32.h"
 #include "../common/format.h"
+#include "../menu.h"
 
 static action_validate_cb g_validate_callback;
 static char g_amount[30];
 static char g_bip32_path[60];
 static char g_address[43];
+
+// Validate/Invalidate public key and go back to home
+static void ui_action_validate_pubkey(bool choice) {
+    validate_pubkey(choice);
+    ui_menu_main();
+}
+
+// Validate/Invalidate transaction and go back to home
+static void ui_action_validate_transaction(bool choice) {
+    validate_transaction(choice);
+    ui_menu_main();
+}
 
 // Step with icon and text
 UX_STEP_NOCB(ux_display_confirm_addr_step, pn, {&C_icon_eye, "Confirm Address"});
@@ -111,7 +126,6 @@ int ui_display_address() {
     g_validate_callback = &ui_action_validate_pubkey;
 
     ux_flow_init(0, ux_display_pubkey_flow, NULL);
-
     return 0;
 }
 
@@ -170,3 +184,5 @@ int ui_display_transaction() {
 
     return 0;
 }
+
+#endif

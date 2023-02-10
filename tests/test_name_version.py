@@ -3,7 +3,7 @@ from application_client.boilerplate_response_unpacker import unpack_get_app_and_
 
 
 # Test a specific APDU asking BOLOS (and not the app) the name and version of the current app
-def test_get_app_and_version(backend, backend_name, firmware):
+def test_get_app_and_version(backend, backend_name):
     # Use the app interface instead of raw interface
     client = BoilerplateCommandSender(backend)
     # Send the special instruction to BOLOS
