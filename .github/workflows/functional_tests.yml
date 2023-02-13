@@ -1,11 +1,11 @@
 name: Run functional tests using ragger through reusable workflow
 
-# This workflow will run functionnal tests using the Ragger framework upon Speculos emulation.
-# It calls a reusable workflow developed by Ledger's internal developer team to build the appliation and upload the
+# This workflow will run functional tests using the Ragger framework upon Speculos emulation.
+# It calls a reusable workflow developed by Ledger's internal developer team to build the application and upload the
 # resulting binaries.
 # It then calls another reusable workflow to run the Ragger tests on the compiled application binary.
 #
-# While this workflow is optional, having functionnal testing on your application is mandatory and this workflow and
+# While this workflow is optional, having functional testing on your application is mandatory and this workflow and
 # tooling environment is meant to be easy to use and adapt after forking your application
 
 on:
@@ -18,7 +18,7 @@ on:
   pull_request:
 
 jobs:
-  build_appplication:
+  build_application:
     name: Build application using the reusable workflow
     uses: LedgerHQ/ledger-app-workflows/.github/workflows/build.yml@master
     with:
@@ -26,7 +26,7 @@ jobs:
 
   ragger_tests:
     name: Run ragger tests using the reusable workflow
-    needs: build_appplication
+    needs: build_application
     uses: LedgerHQ/ledger-app-workflows/.github/workflows/ragger_tests.yml@master
     with:
       test_dir: tests
