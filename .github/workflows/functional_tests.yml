@@ -1,4 +1,4 @@
-name: Functional tests using Ragger
+name: Run functional tests using ragger through reusable workflow
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ jobs:
     with:
       uploaded_artifact_name: compiled_app_binaries
 
-  functionnal_tests:
+  ragger_tests:
     name: Run ragger tests using the reusable workflow
     needs: build_appplication
     uses: LedgerHQ/ledger-app-workflows/.github/workflows/ragger_tests.yml@master
