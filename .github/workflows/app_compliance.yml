@@ -1,5 +1,13 @@
 name: Ensure app compliance with Ledger guidelines
 
+# This workflow is mandatory in all applications
+# It calls a reusable workflow app_compliance developed by Ledger's internal developer team.
+# The successful completion of the reusable workflow is a mandatory step for an app to be available on the Ledger
+# application store.
+#
+# More information on the content of the app_compliance checks can be found in the repository:
+# LedgerHQ/ledger-app-workflows/.github/workflows/app_compliance.yml@master
+
 on:
   workflow_dispatch:
   push:
