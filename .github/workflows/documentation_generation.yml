@@ -1,4 +1,4 @@
-name: Compilation & tests
+name: Generate project documentation
 
 on:
   workflow_dispatch:

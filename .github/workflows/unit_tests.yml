@@ -1,4 +1,4 @@
-name: Compilation & tests
+name: Unit testing with Codecov coverage checking
 
 on:
   workflow_dispatch:
