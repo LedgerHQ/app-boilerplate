@@ -15,13 +15,16 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-lite:latest
+
     steps:
       - name: Clone
         uses: actions/checkout@v3
+
       - name: Build unit tests
         run: |
           cd unit-tests/
           cmake -Bbuild -H. && make -C build && make -C build test
+
       - name: Generate code coverage
         run: |
           cd unit-tests/
@@ -30,10 +33,12 @@ jobs:
           lcov --directory . -b "$(realpath build/)" --add-tracefile coverage.base --add-tracefile coverage.capture -o coverage.info && \
           lcov --directory . -b "$(realpath build/)" --remove coverage.info '*/unit-tests/*' -o coverage.info && \
           genhtml coverage.info -o coverage
+
       - uses: actions/upload-artifact@v3
         with:
           name: code-coverage
           path: unit-tests/coverage
+
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v3
         with:

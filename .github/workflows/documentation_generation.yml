@@ -15,11 +15,14 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-lite:latest
+
     steps:
       - name: Clone
         uses: actions/checkout@v3
+
       - name: HTML documentation
         run: doxygen .doxygen/Doxyfile
+
       - uses: actions/upload-artifact@v3
         with:
           name: documentation

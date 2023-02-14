@@ -4,11 +4,12 @@ from pathlib import Path
 from ragger.firmware import Firmware
 from ragger.backend import SpeculosBackend, LedgerCommBackend, LedgerWalletBackend
 from ragger.navigator import NanoNavigator, StaxNavigator
-from ragger.utils import app_path_from_app_name
 
+# To move into ragger with the unified conftest
 def is_root(path_to_check: Path) -> bool:
     return (path_to_check).resolve() == Path("/").resolve()
 
+# To move into ragger with the unified conftest
 def find_app_path(device: str) -> Path:
     project_top_dir = Path(__file__).parent
     while not is_root(project_top_dir) and not (project_top_dir / ".git").resolve().is_dir():
@@ -30,13 +31,6 @@ def find_app_path(device: str) -> Path:
 
     return app_path
 
-
-# This variable is needed for Speculos only (physical tests need the application to be already installed)
-# Adapt this path to your 'tests/elfs' directory
-# APPS_DIRECTORY = (Path(__file__).parent.parent).resolve()
-
-# Adapt this name part of the compiled app <name>_<device>.elf in the APPS_DIRECTORY
-APP_NAME = "boilerplate"
 
 BACKENDS = ["speculos", "ledgercomm", "ledgerwallet"]
 
@@ -150,7 +144,7 @@ def create_backend(backend_name: str, firmware: Firmware, display: bool, log_apd
 # If your tests needs to be run on independent Speculos instances (in case they affect
 # settings for example), then you should change this fixture scope and choose between
 # function, class, module or session.
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def backend(backend_name, firmware, display, log_apdu_file):
     with create_backend(backend_name, firmware, display, log_apdu_file) as b:
         yield b
