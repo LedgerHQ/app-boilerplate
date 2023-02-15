@@ -1,0 +1,29 @@
+name: Generate project documentation
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  job_generate_doc:
+    name: Generate project documentation
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-lite:latest
+
+    steps:
+      - name: Clone
+        uses: actions/checkout@v3
+
+      - name: HTML documentation
+        run: doxygen .doxygen/Doxyfile
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: documentation
+          path: doc/html

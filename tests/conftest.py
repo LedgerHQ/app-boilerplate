@@ -4,15 +4,33 @@ from pathlib import Path
 from ragger.firmware import Firmware
 from ragger.backend import SpeculosBackend, LedgerCommBackend, LedgerWalletBackend
 from ragger.navigator import NanoNavigator, StaxNavigator
-from ragger.utils import app_path_from_app_name
 
+# To move into ragger with the unified conftest
+def is_root(path_to_check: Path) -> bool:
+    return (path_to_check).resolve() == Path("/").resolve()
 
-# This variable is needed for Speculos only (physical tests need the application to be already installed)
-# Adapt this path to your 'tests/elfs' directory
-APPS_DIRECTORY = (Path(__file__).parent / "elfs").resolve()
+# To move into ragger with the unified conftest
+def find_app_path(device: str) -> Path:
+    project_top_dir = Path(__file__).parent
+    while not is_root(project_top_dir) and not (project_top_dir / ".git").resolve().is_dir():
+        project_top_dir = project_top_dir.parent
+    if is_root(project_top_dir):
+        raise ValueError("Could not find project top directory")
 
-# Adapt this name part of the compiled app <name>_<device>.elf in the APPS_DIRECTORY
-APP_NAME = "boilerplate"
+    main_build_dir = (project_top_dir / "build").resolve()
+    if not main_build_dir.is_dir():
+        raise ValueError(f"Build directory '{main_build_dir}' does not exist. Did you compile?")
+
+    device_build_dir = (main_build_dir / device).resolve()
+    if not device_build_dir.is_dir():
+        raise ValueError(f"Build directory '{device_build_dir}' does not exist. Did you compile for this target?")
+
+    app_path = device_build_dir / "bin/app.elf"
+    if not app_path.is_file():
+        raise ValueError(f"File '{app_path}' does not exist. Did you compile for this target?")
+
+    return app_path
+
 
 BACKENDS = ["speculos", "ledgercomm", "ledgerwallet"]
 
@@ -98,7 +116,10 @@ def prepare_speculos_args(firmware: Firmware, display: bool):
     if display:
         speculos_args += ["--display", "qt"]
 
-    app_path = app_path_from_app_name(APPS_DIRECTORY, APP_NAME, firmware.device)
+    device = firmware.device
+    if device == "nanosp":
+        device = "nanos2"
+    app_path = find_app_path(device)
 
     return ([app_path], {"args": speculos_args})
 
@@ -123,7 +144,7 @@ def create_backend(backend_name: str, firmware: Firmware, display: bool, log_apd
 # If your tests needs to be run on independent Speculos instances (in case they affect
 # settings for example), then you should change this fixture scope and choose between
 # function, class, module or session.
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def backend(backend_name, firmware, display, log_apdu_file):
     with create_backend(backend_name, firmware, display, log_apdu_file) as b:
         yield b

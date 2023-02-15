@@ -127,14 +127,3 @@ dep/%.d: %.c Makefile
 
 listvariants:
 	@echo VARIANTS COIN BOL
-
-build_all:
-	@mkdir -p tests/elfs/
-	@for SDK in ${NANOS_SDK},nanos ${NANOSP_SDK},nanosp ${NANOX_SDK},nanox; \
-	do                                                                      \
-		IFS=",";                                                        \
-		set -- $${SDK};                                                 \
-		$(MAKE) clean;                                                  \
-		$(MAKE) all BOLOS_SDK=$$1;                                      \
-		mv bin/app.elf tests/elfs/boilerplate_$$2.elf;                  \
-	done
