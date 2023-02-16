@@ -55,7 +55,7 @@ static void confirm_transaction_rejection(void) {
     nbgl_useCaseStatus("Transaction rejected", false, ui_menu_main);
 }
 
-static void ask_address_rejection_confirmation(void) {
+static void ask_transaction_rejection_confirmation(void) {
     // display a choice to confirm/cancel rejection
     nbgl_useCaseConfirm("Reject transaction?",
                         NULL,
@@ -71,7 +71,7 @@ static void review_choice(bool confirm) {
         validate_transaction(true);
         nbgl_useCaseStatus("TRANSACTION\nSIGNED", true, ui_menu_main);
     } else {
-        ask_address_rejection_confirmation();
+        ask_transaction_rejection_confirmation();
     }
 }
 
@@ -124,7 +124,7 @@ int ui_display_transaction() {
                             NULL,
                             "Reject transaction",
                             review_continue,
-                            ask_address_rejection_confirmation);
+                            ask_transaction_rejection_confirmation);
     return 0;
 }
 
