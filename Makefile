@@ -49,6 +49,11 @@ endif
 # Enabling DEBUG flag will enable PRINTF and disable optimizations
 DEBUG ?= 0
 
+# Default IO SEPROXY BUFFER SIZE must me explicitly disabled to define custom size
+DISABLE_DEFAULT_IO_SEPROXY_BUFFER_SIZE = 0
+
+DISABLE_COMMON_APP_DEFINES = 0
+
 all: default
 
 CC      := $(CLANGPATH)clang
