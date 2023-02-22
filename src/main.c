@@ -126,10 +126,9 @@ __attribute__((section(".boot"))) int main() {
             TRY {
                 io_seproxyhal_init();
 
-#ifdef TARGET_NANOX
+#ifdef HAVE_BLE
                 G_io_app.plane_mode = os_setting_get(OS_SETTING_PLANEMODE, NULL, 0);
-#endif  // TARGET_NANOX
-
+#endif  // HAVE_BLE
                 USB_power(0);
                 USB_power(1);
 
@@ -137,7 +136,7 @@ __attribute__((section(".boot"))) int main() {
 
 #ifdef HAVE_BLE
                 BLE_power(0, NULL);
-                BLE_power(1, "Nano X");
+                BLE_power(1, NULL);
 #endif  // HAVE_BLE
                 app_main();
             }
