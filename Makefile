@@ -37,11 +37,11 @@ APPVERSION_P = 0
 APPVERSION   = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 
 ifeq ($(TARGET_NAME),TARGET_NANOS)
-    ICONNAME=icons/thib.gif
+    ICONNAME=icons/nanosp_thib.gif
 else ifeq ($(TARGET_NAME),TARGET_STAX)
     ICONNAME=icons/stax_app_thib_32px.gif
 else
-    ICONNAME=icons/thib.gif
+    ICONNAME=icons/nanosp_thib.gif
 endif
 
 all: default
@@ -126,4 +126,4 @@ include $(BOLOS_SDK)/Makefile.rules
 dep/%.d: %.c Makefile
 
 listvariants:
-	@echo VARIANTS COIN BOL
+	@echo VARIANTS COIN THI
