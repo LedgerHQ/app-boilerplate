@@ -1,6 +1,6 @@
-# Ledger Boilerplate Application
+# Ledger Thibault Application
 
-This is a boilerplate application which can be forked to start a new project for the Ledger Nano S/X.
+This is a Thibault application which can be forked to start a new project for the Ledger Nano S/X.
 
 ## Prerequisite
 
@@ -67,14 +67,14 @@ The flow processed in [GitHub Actions](https://github.com/features/actions) is t
 
 It outputs 4 artifacts:
 
-- `boilerplate-app-debug` within output files of the compilation process in debug mode
+- `Thibault-app-debug` within output files of the compilation process in debug mode
 - `speculos-log` within APDU command/response when executing end-to-end tests
 - `code-coverage` within HTML details of code coverage
 - `documentation` within HTML auto-generated documentation
 
 ## Are you developing a Nano S, S Plus, X application?
 
-If so, This boilerplate will help you get started.
+If so, This Thibault will help you get started.
 
 For a smooth and quick integration:
 

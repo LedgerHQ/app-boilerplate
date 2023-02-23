@@ -1,5 +1,5 @@
 # ****************************************************************************
-#    Ledger App Boilerplate
+#    Ledger App Thibault
 #    (c) 2020 Ledger SAS.
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,7 +39,7 @@ APPVERSION   = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 ifeq ($(TARGET_NAME),TARGET_NANOS)
     ICONNAME=icons/thib.gif
 else ifeq ($(TARGET_NAME),TARGET_STAX)
-    ICONNAME=icons/stax_app_boilerplate_32px.gif
+    ICONNAME=icons/stax_app_thib_32px.gif
 else
     ICONNAME=icons/thib.gif
 endif
