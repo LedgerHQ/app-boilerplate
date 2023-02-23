@@ -63,7 +63,6 @@ void ui_menu_about() {
     ux_flow_init(0, ux_menu_about_flow, NULL);
 }
 
-
 UX_STEP_NOCB(ux_menu_test_first_step, bn, {"Thib App", "(c) 2023 Ledger"});
 UX_STEP_CB(ux_menu_test_back_step, pb, ui_menu_main(), {&C_icon_back, "Back"});
 
