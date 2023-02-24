@@ -24,7 +24,7 @@
 #include "../globals.h"
 #include "menu.h"
 
-UX_STEP_NOCB(ux_menu_ready_step, pnn, {&C_boilerplate_logo, "Thibault", "is ready"});
+UX_STEP_NOCB(ux_menu_ready_step, pnn, {&C_nanosp_thib, "Thibault", "is ready"});
 UX_STEP_NOCB(ux_menu_version_step, bn, {"Version", APPVERSION});
 UX_STEP_CB(ux_menu_about_step, pb, ui_menu_about(), {&C_icon_certificate, "About"});
 UX_STEP_CB(ux_menu_test_step, pb, ui_menu_test(), {&C_icon_certificate, "Test Thibault"});
