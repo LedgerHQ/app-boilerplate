@@ -36,7 +36,7 @@ def test_get_public_key_confirm_accepted(firmware, backend, navigator, test_name
                 NavInsID.USE_CASE_ADDRESS_CONFIRMATION_EXIT_QR,
                 NavInsID.USE_CASE_ADDRESS_CONFIRMATION_TAP,
                 NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CONFIRM,
-                NavInsID.USE_CASE_STATUS_WAIT
+                NavInsID.USE_CASE_STATUS_DISMISS
             ]
             navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH,
                                            test_name,
@@ -73,12 +73,12 @@ def test_get_public_key_confirm_refused(firmware, backend, navigator, test_name)
         instructions_set = [
             [
                 NavInsID.USE_CASE_REVIEW_REJECT,
-                NavInsID.USE_CASE_STATUS_WAIT
+                NavInsID.USE_CASE_STATUS_DISMISS
             ],
             [
                 NavInsID.USE_CASE_REVIEW_TAP,
                 NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CANCEL,
-                NavInsID.USE_CASE_STATUS_WAIT
+                NavInsID.USE_CASE_STATUS_DISMISS
             ]
         ]
         for i, instructions in enumerate(instructions_set):
