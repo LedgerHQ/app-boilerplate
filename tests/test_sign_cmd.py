@@ -43,7 +43,7 @@ def test_sign_tx_short_tx(firmware, backend, navigator, test_name):
         else:
             navigator.navigate_until_text_and_compare(NavInsID.USE_CASE_REVIEW_TAP,
                                                       [NavInsID.USE_CASE_REVIEW_CONFIRM,
-                                                       NavInsID.USE_CASE_STATUS_WAIT],
+                                                       NavInsID.USE_CASE_STATUS_DISMISS],
                                                       "Hold to sign",
                                                       ROOT_SCREENSHOT_PATH,
                                                       test_name)
@@ -85,7 +85,7 @@ def test_sign_tx_long_tx(firmware, backend, navigator, test_name):
         else:
             navigator.navigate_until_text_and_compare(NavInsID.USE_CASE_REVIEW_TAP,
                                                       [NavInsID.USE_CASE_REVIEW_CONFIRM,
-                                                       NavInsID.USE_CASE_STATUS_WAIT],
+                                                       NavInsID.USE_CASE_STATUS_DISMISS],
                                                       "Hold to sign",
                                                       ROOT_SCREENSHOT_PATH,
                                                       test_name)
@@ -127,7 +127,7 @@ def test_sign_tx_refused(firmware, backend, navigator, test_name):
             instructions = [NavInsID.USE_CASE_REVIEW_TAP] * i
             instructions += [NavInsID.USE_CASE_REVIEW_REJECT,
                              NavInsID.USE_CASE_CHOICE_CONFIRM,
-                             NavInsID.USE_CASE_STATUS_WAIT]
+                             NavInsID.USE_CASE_STATUS_DISMISS]
             with client.sign_tx(path=path, transaction=transaction):
                 backend.raise_policy = RaisePolicy.RAISE_NOTHING
                 navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH,
