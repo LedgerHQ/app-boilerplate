@@ -120,7 +120,7 @@ int ui_display_transaction() {
 
     // Start review
     nbgl_useCaseReviewStart(&C_stax_app_thib_64px,
-                            "Review transaction\nto send BOL",
+                            "Review transaction\nto send THIB",
                             NULL,
                             "Reject transaction",
                             review_continue,

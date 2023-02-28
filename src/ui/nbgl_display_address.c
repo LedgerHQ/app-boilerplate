@@ -98,7 +98,7 @@ int ui_display_address() {
     snprintf(g_address, sizeof(g_address), "0x%.*H", sizeof(address), address);
 
     nbgl_useCaseReviewStart(&C_stax_app_thib_64px,
-                            "Verify BOL address",
+                            "Verify THIB address",
                             NULL,
                             "Cancel",
                             continue_review,

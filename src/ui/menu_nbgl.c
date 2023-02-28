@@ -25,13 +25,42 @@
 #include "../globals.h"
 #include "menu.h"
 
+
+
+
+
+
+static void confirmationCallback(void) {
+  // draw a status screen which continues by returning to appMain
+  // nbgl_useCaseStatus("END",false,ui_menu_main);
+  nbgl_useCaseSpinner("Wait ....");
+}
+ 
+
+// function called when "Do something" button is touched
+void onAction(void) {
+  nbgl_useCaseConfirm("Return main menu ?", NULL, "NO","YES",confirmationCallback);
+}
+ 
+
 void app_quit(void) {
     // exit app here
     os_sched_exit(-1);
 }
 
 void ui_menu_main(void) {
-    nbgl_useCaseHome(APPNAME, &C_stax_app_thib_64px, NULL, false, ui_menu_about, app_quit);
+    // nbgl_useCaseHomeExt(APPNAME, &C_stax_app_thib_64px, "My Thib App !", false, ui_menu_about, app_quit);
+
+
+  nbgl_useCaseHomeExt(APPNAME,
+                      &C_stax_app_thib_64px,
+                      "My Thib App !",
+                      false, // with info button
+                      "Press me",
+                      onAction,
+                      ui_menu_about,
+                      app_quit);
+
 }
 
 // 'About' menu
@@ -51,5 +80,10 @@ static bool nav_callback(uint8_t page, nbgl_pageContent_t* content) {
 void ui_menu_about() {
     nbgl_useCaseSettings(APPNAME, 0, 1, false, ui_menu_main, nav_callback, NULL);
 }
+
+
+
+
+
 
 #endif
