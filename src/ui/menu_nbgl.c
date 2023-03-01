@@ -33,7 +33,7 @@ static void confirmationCallback(void) {
  
 // function called when "Do something" button is touched
 void onAction(void) {
-    nbgl_useCaseConfirm("Return main menu ?", NULL, "NO","YES", confirmationCallback);
+    nbgl_useCaseConfirm("Return main menu ?", NULL, "NO", "YES", confirmationCallback);
 }
  
 void app_quit(void) {
@@ -43,7 +43,7 @@ void app_quit(void) {
 
 void ui_menu_main(void) {
     // nbgl_useCaseHomeExt(APPNAME, &C_stax_app_thib_64px, "My Thib App !", false, ui_menu_about, 
-       app_quit);
+    // app_quit);
 
     nbgl_useCaseHomeExt(APPNAME,
                         &C_stax_app_thib_64px,
