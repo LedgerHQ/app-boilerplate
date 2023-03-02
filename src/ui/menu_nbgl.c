@@ -30,12 +30,12 @@ static void confirmationCallback(void) {
     nbgl_useCaseStatus("END", false, ui_menu_main);
     // nbgl_useCaseSpinner("Wait ....");
 }
- 
+
 // function called when "Do something" button is touched
 void onAction(void) {
     nbgl_useCaseConfirm("Return main menu ?", NULL, "NO", "YES", confirmationCallback);
 }
- 
+
 void app_quit(void) {
     // exit app here
     os_sched_exit(-1);
