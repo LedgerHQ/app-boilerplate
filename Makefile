@@ -94,6 +94,15 @@ else
         DEFINES += PRINTF\(...\)=
 endif
 
+WERROR = 1
+ifeq ($(WERROR),1)
+    CFLAGS   += -Werror
+endif
+
+CFLAGS += -Wextra -Wall
+CFLAGS += -Wshadow -Wformat=2 -Wundef -Wunused-parameter -fno-common
+CFLAGS += -Werror=return-type -Werror=parentheses -Werror=format-security
+
 CC      := $(CLANGPATH)clang
 AS      := $(GCCPATH)arm-none-eabi-gcc
 LD      := $(GCCPATH)arm-none-eabi-gcc
