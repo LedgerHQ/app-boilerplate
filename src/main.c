@@ -119,8 +119,8 @@ __attribute__((section(".boot"))) int main() {
     os_boot();
 
     for (;;) {
-        // Reset UI
-        memset(&G_ux, 0, sizeof(G_ux));
+        // Initialize the UX system
+        UX_INIT();
 
         BEGIN_TRY {
             TRY {
