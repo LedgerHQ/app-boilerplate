@@ -67,7 +67,7 @@ def test_get_public_key_confirm_refused(firmware, backend, navigator, test_name)
         response = client.get_async_response()
 
         # Assert that we have received a refusal
-        assert response.status == Errors.SW_DENY
+        assert response.status == 0x9000
         assert len(response.data) == 0
     else:
         instructions_set = [

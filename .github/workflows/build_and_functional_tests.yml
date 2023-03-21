@@ -25,9 +25,10 @@ jobs:
       upload_app_binaries_artifact: "compiled_app_binaries"
 
   ragger_tests:
-    name: Run ragger tests using the reusable workflow
+    name: Run ragger tests using the reusable workflow.
     needs: build_application
-    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_ragger_tests.yml@v1
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_ragger_tests.yml@agr/upload-snaps-on-failure
     with:
       download_app_binaries_artifact: "compiled_app_binaries"
       test_dir: tests
+      upload_snapshots_on_failure: false
