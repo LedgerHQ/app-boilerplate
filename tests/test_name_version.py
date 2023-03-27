@@ -14,8 +14,8 @@ def test_get_app_and_version(backend, backend_name):
     # for now, Speculos always returns app:1.33.7, so this test is not very meaningful
     # however, its failure will mean that Speculos may have been improved on this front
     if backend_name == "speculos":
-        assert app_name == "app"
-        assert version == "1.33.7"
+        assert app_name == "Thibault"
+        assert version == "1.0.0"
     else:
-        assert app_name == "Boilerplate"
-        assert version == "1.0.1"
+        assert app_name == "Thibault"
+        assert version == "1.0.0"
