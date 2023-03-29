@@ -44,8 +44,6 @@ else
     ICONNAME=icons/nanox_app_boilerplate.gif
 endif
 
-all: default
-
 DEFINES += $(DEFINES_LIB)
 DEFINES += APPNAME=\"$(APPNAME)\"
 DEFINES += APPVERSION=\"$(APPVERSION)\"
@@ -82,7 +80,7 @@ else
     endif
 endif
 
-DEBUG = 0
+DEBUG ?= 0
 ifneq ($(DEBUG),0)
     DEFINES += HAVE_PRINTF
     ifeq ($(TARGET_NAME),TARGET_NANOS)
@@ -122,8 +120,6 @@ delete:
 	python3 -m ledgerblue.deleteApp $(COMMON_DELETE_PARAMS)
 
 include $(BOLOS_SDK)/Makefile.rules
-
-dep/%.d: %.c Makefile
 
 listvariants:
 	@echo VARIANTS COIN BOL
