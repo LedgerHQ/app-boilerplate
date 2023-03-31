@@ -121,5 +121,19 @@ delete:
 
 include $(BOLOS_SDK)/Makefile.rules
 
+# Prepare `listvariants` mandatory target.
+# This target output must contains:
+# - `VARIANTS` which is used as a marker for the tools parsing the output.
+# - <VARIANT_PARAM> which is the name of the parameter which should be set
+#   to specify the variant that should be build.
+# - <VARIANT_VALUES> a list of variant that can be build using this app code.
+#   * It must at least contains one value.
+#   * Values can be the app ticker or anything else but should be unique.
+#
+# Deployment scripts will use this Makefile target to retrieve the list of
+# available variants and then call `make -j <VARIANT_PARAM>=<VALUE>` for each
+# <VALUE> in <VARIANT_VALUES>.
+VARIANT_PARAM = COIN
+VARIANT_VALUES = BOL
 listvariants:
-	@echo VARIANTS COIN BOL
+	@echo VARIANTS $(VARIANT_PARAM) $(VARIANT_VALUES)
