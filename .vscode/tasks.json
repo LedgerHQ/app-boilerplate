@@ -2,9 +2,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "make",
+            "label": "Run make",
             "type": "shell",
-            "command": "make clean && make",
+            "command": "BOLOS_SDK=${input:sdk} make -j",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -14,9 +14,9 @@
             ]
         },
         {
-            "label": "[debug] make",
+            "label": "Run [debug] make",
             "type": "shell",
-            "command": "make clean && make DEBUG=1",
+            "command": "BOLOS_SDK=${input:sdk} make -j DEBUG=1",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -26,7 +26,7 @@
             ]
         },
         {
-            "label": "make clean",
+            "label": "Run make clean",
             "type": "shell",
             "command": "make clean",
             "group": {
@@ -38,9 +38,50 @@
             ]
         },
         {
-            "label": "make load",
+            "label": "Run Speculos",
             "type": "shell",
-            "command": "make load",
+            "command": "speculos --model ${input:model} build/${input:model}/bin/app.elf",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Kill Speculos",
+            "type": "shell",
+            "command": "pkill -f speculos",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run functional tests",
+            "type": "shell",
+            "command": "pytest tests/ --tb=short -v --device ${input:model}",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Install tests requirements",
+            "type": "shell",
+            "command": "pip install -r tests/requirements.txt",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            //  This won't work in Docker for Mac (no support for USB passthrough)
+            "label": "Run make load",
+            "type": "shell",
+            "command": "BOLOS_SDK=${input:sdk} make load",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -49,63 +90,29 @@
                 "$gcc"
             ]
         },
+    ],
+    "inputs": [
         {
-            "label": "run unit tests",
-            "type": "shell",
-            "command": "cd unit-tests && rm -rf  build && cmake -Bbuild -H. && make -C build && CTEST_OUTPUT_ON_FAILURE=1 make -C build test",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": [
-                "$gcc"
+            "id" : "sdk",
+            "type": "pickString",
+            "description": "Which device do you want to build for ?",
+            "options": [
+                "$NANOS_SDK TARGET=nanos",
+                "$NANOX_SDK TARGET=nanox",
+                "$NANOSP_SDK TARGET=nanos2",
+                "$STAX_SDK TARGET=stax",
             ]
         },
         {
-            "label": "run Speculos",
-            "type": "shell",
-            "command": "python /path/to/speculos/speculos.py ${workspaceFolder}/bin/app.elf --ontop --sdk 1.6 --apdu-port 9999 --button-port 42000 --automation-port 43000",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "dependsOn": [
-                "make debug"
-            ],
-            "problemMatcher": []
+            "id" : "model",
+            "type": "pickString",
+            "description": "Which model to run speculos for ?",
+            "options": [
+                "nanos",
+                "nanox",
+                "nanosp",
+                "stax",
+            ]
         },
-        {
-            "label": "[debug] run Speculos",
-            "type": "shell",
-            "command": "python /path/to/speculos/speculos.py -d ${workspaceFolder}/bin/app.elf --ontop --sdk 1.6 --apdu-port 9999 --button-port 42000 --automation-port 43000",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "dependsOn": [
-                "make debug"
-            ],
-            "problemMatcher": []
-        },
-        {
-            "label": "run tests",
-            "type": "shell",
-            "command": "cd tests && pytest",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "kill Speculos",
-            "type": "shell",
-            "command": "pkill -f speculos.py",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": []
-        }
     ]
 }

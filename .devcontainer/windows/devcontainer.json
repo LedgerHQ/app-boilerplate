@@ -1,0 +1,16 @@
+{
+    "name": "Ledger app dev tools (windows)",
+    // TODO : replace with "ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest" when
+    // app-builder PR is merged : https://github.com/LedgerHQ/ledger-app-builder/pull/52
+    "image": "ghcr.io/ledgerhq/ledger-app-builder-clang/ledger-app-tester:latest",
+    // TODO : remove the following line if not used, or add a custom init script for windows users.
+    // "initializeCommand": ".devcontainer/windows/init.sh",
+    "containerEnv": {
+        "DISPLAY": "host.docker.internal:0"
+    },
+    "runArgs": ["--privileged"],
+    "mounts": [
+        // Prevent vscode extensions from being wiped-out when rebuilding container.
+        "source=vscode-ext-volume,target=/root/.vscode-server/extensions,type=volume"
+    ]
+}

@@ -1,47 +1,97 @@
 # Ledger Boilerplate Application
 
-This is a boilerplate application which can be forked to start a new project for the Ledger Nano S/X.
+This is a boilerplate application which can be forked to start a new project for the Ledger Nano S/X/SP and Stax.
 
-## Prerequisite
+## Quick start guide
 
-### With the docker image builder
+### With VSCode and the docker development tools image
+
+You can quickly setup a convenient environment to build and test your application by using the vscode integration.
+
+It will allow you, whether you are developing on macOS, Windows or Linux to quickly **build** and **test** your apps on **Speculos** for any supported device.
+
+**Mac / Linux users**
+
+* Make sure you have installed [Docker](https://www.docker.com/products/docker-desktop/) and it is running.
+* Make sure you have an X11 server running.
+    * On Ubuntu Linux, it should be running by default.
+    * On macOS, Install and launch [XQuartz](https://www.xquartz.org/) (make sure to go to XQuartz > Preferences > Security and check "Allow client connections").
+* Install [VScode](https://code.visualstudio.com/download)
+* Open a terminal and clone `app-boilerplate` with `git clone git@github.com:LedgerHQ/app-boilerplate.git`.
+* Open the `app-boilerplate` folder with VSCode. VSCode should prompt you to install the "remote development" extension. Otherwise, install the extension manually.
+* Choose the [devcontainer](https://code.visualstudio.com/docs/devcontainers/containers) for your platform with `ctrl + shift + p` (`command + shift + p` on a Mac) and typing "Rebuild and Reopen in Container".
+* Wait for the [ledger-app-dev-tools]() docker image to be pulled...
+* Select the device to build for with `ctrl + shift + b` (`command + shift + b` on a Mac) and select `Run [debug] make`.
+* Test your binary on [Speculos](https://github.com/LedgerHQ/speculos) with `ctrl + shift + b` (`command + shift + b` on a Mac) and select task `Run Speculos`.
+
+**Notes**
+
+1. You can find the tasks definitions in `.vscode/tasks.json`
+2. You can find the devcontainers configuration files in the `.devcontainer` directory.
+
+**Windows users**
+
+### TODO WRITE THIS SECTION OR INTEGRATE IT IN THE PREVIOUS SECTION
+
+### With a shell and the docker builder image
 
 The app-builder docker image [from this repository](https://github.com/LedgerHQ/ledger-app-builder) contains all needed tools and library to build and load an application.
 You can download it from the ghcr.io docker repository:
 
 ```shell
-sudo docker pull ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-full
+sudo docker pull ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder
 ```
 
 You can then enter this development environment by executing the following command from the directory of the application `git` repository:
 
 ```shell
-sudo docker run --rm -ti --user "$(id -u)":"$(id -g)" -v "$(realpath .):/app" ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-full
+sudo docker run --rm -ti --user "$(id -u)":"$(id -g)" -v "$(realpath .):/app" ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder
 ```
 
 The application's code will be available from inside the docker container, you can proceed to the following compilation steps to build your app.
-
-### Without the docker image builder
-
-Be sure to have your environment correctly set up (see [Getting Started](https://developers.ledger.com/docs/nano-app/introduction/)) and [ledgerblue](https://pypi.org/project/ledgerblue/) and installed.
-
-If you want to benefit from [vscode](https://code.visualstudio.com/) integration, it's recommended to move the toolchain in `/opt` and set `BOLOS_ENV` environment variable as follows
-
-```shell
-BOLOS_ENV=/opt/bolos-devenv
-```
-
-and do the same with `BOLOS_SDK` environment variable
-
-```shell
-BOLOS_SDK=/opt/nanos-secure-sdk
-```
 
 ## Compilation and load
 
 ```shell
 make DEBUG=1  # compile optionally with PRINTF
 make load     # load the app on the Nano using ledgerblue
+```
+
+You can choose which device to compile and load for by setting the `BOLOS_SDK` and `TARGET` environment variables to the following values :
+
+* `BOLOS_SDK=$NANOS_SDK TARGET=nanos`
+* `BOLOS_SDK=$NANOX_SDK TARGET=nanox`
+* `BOLOS_SDK=$NANOSP_SDK TARGET=nanos2`
+* `BOLOS_SDK=$STAX_SDK TARGET=stax`
+
+By default these variables are set to build/load for Nano S.
+
+## Test
+
+### macOS/Windows
+
+On macOS and Windows, it is recommended to use the [VSCode approach](#with-vscode-and-the-docker-development-tools-image) to quickly setup a working test environment.
+
+### Linux (Ubuntu)
+
+Install the tests requirements :
+
+```shell
+pip install -r tests/requirements.txt 
+```
+
+Then you can :
+
+* Run the [ragger](https://github.com/LedgerHQ/ragger) functional tests (here for nanos but available for any device once you have built the binaries) :
+
+```shell
+pytest tests/ --tb=short -v --device nanos
+```
+
+* Or run your app directly with Speculos
+
+```shell
+speculos --model nanos build/nanos/bin/app.elf
 ```
 
 ## Documentation
@@ -54,7 +104,7 @@ doxygen .doxygen/Doxyfile
 
 the process outputs HTML and LaTeX documentations in `doc/html` and `doc/latex` folders.
 
-## Tests & Continuous Integration
+## Continuous Integration
 
 The flow processed in [GitHub Actions](https://github.com/features/actions) is the following:
 
