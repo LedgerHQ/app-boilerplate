@@ -27,7 +27,7 @@ APP_LOAD_PARAMS += --appFlags 0x200  # APPLICATION_FLAG_BOLOS_SETTINGS
 else
 APP_LOAD_PARAMS += --appFlags 0x000
 endif
-APP_LOAD_PARAMS += --path "44'"
+APP_LOAD_PARAMS += --path "44'/1'"   # purpose=coin(44) / coin_type=Testnet(1)
 APP_LOAD_PARAMS += $(COMMON_LOAD_PARAMS)
 
 APPNAME      = "Boilerplate"
