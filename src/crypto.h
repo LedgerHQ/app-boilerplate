@@ -41,7 +41,7 @@ int crypto_derive_private_key(cx_ecfp_private_key_t *private_key,
  */
 void crypto_init_public_key(cx_ecfp_private_key_t *private_key,
                             cx_ecfp_public_key_t *public_key,
-                            uint8_t raw_public_key[static 64]);
+                            uint8_t raw_public_key[static 65]);
 
 /**
  * Sign message hash in global context.
