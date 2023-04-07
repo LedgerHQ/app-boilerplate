@@ -21,8 +21,6 @@ endif
 
 include $(BOLOS_SDK)/Makefile.defines
 
-USE_STANDARD_APP_FILES_IN_SDK = 1
-
 APPNAME      = "Boilerplate"
 APPVERSION_M = 1
 APPVERSION_N = 0
@@ -48,34 +46,26 @@ else
     ICONNAME=icons/nanox_app_boilerplate.gif
 endif
 
-ifeq ($(TARGET_NAME), TARGET_STAX)
-	ENABLE_NBGL_QRCODE   = 1
-	ENABLE_NBGL_KEYBOARD = 0
-	ENABLE_NBGL_KEYPAD   = 0
-endif
-
-ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
-    ENABLE_BLUETOOTH = 1
-endif
+ENABLE_BLUETOOTH = 1
 
 # Enabling DEBUG flag will enable PRINTF and disable optimizations
 DEBUG ?= 0
 
-# Default IO SEPROXY BUFFER SIZE must me explicitly disabled to define custom size
-DISABLE_DEFAULT_IO_SEPROXY_BUFFER_SIZE = 0
-
-DISABLE_STANDARD_APP_DEFINES = 0
+ENABLE_NBGL_QRCODE   = 1
+ENABLE_NBGL_KEYBOARD = 0
+ENABLE_NBGL_KEYPAD   = 0
 
 APP_SOURCE_PATH += src
 
-all: default
+#CUSTOM_APP_FLAGS = 0x000 # Set custom flags here, see appflags.h in SDK for flags definition
+#DISABLE_STANDARD_APP_FILES = 1 
+#DISABLE_DEFAULT_IO_SEPROXY_BUFFER_SIZE = 1 # To allow custom size declaration
 
-
-CC      := $(CLANGPATH)clang
-AS      := $(GCCPATH)arm-none-eabi-gcc
-LD      := $(GCCPATH)arm-none-eabi-gcc
-LDLIBS  += -lm -lgcc -lc
-
-include $(BOLOS_SDK)/Makefile.glyphs
+#DISABLE_STANDARD_APP_DEFINES = 1 # Will set all the following disablers
+#DISABLE_STANDARD_SNPRINTF = 1
+#DISABLE_STANDARD_USB = 1
+#DISABLE_STANDARD_BLE = 1
+#DISABLE_STANDARD_WEBUSB = 1
+#DISABLE_STANDARD_BAGL_UX_FLOW = 1
 
 include $(BOLOS_SDK)/Makefile.standard_app
