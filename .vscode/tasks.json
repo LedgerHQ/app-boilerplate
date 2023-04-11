@@ -5,7 +5,7 @@
             "label": "Run dev-tools image (on Windows)",
             "type": "shell",
             // Checks if a container with name ${config:container_name} exists, otherwise creates it in detached mode with the proper parameters.
-            "command": "docker ps -a --format '{{.Names}}' | grep -q ${config:container_name} || (docker pull ${config:docker_image} && docker run --privileged -e DISPLAY=\"host.docker.internal:0\" -v \"${workspaceFolder}:/app\" -t -d --name ${config:container_name} ${config:docker_image})",
+            "command": "if (!(docker ps -a --format '{{.Names}}' | Select-String -Quiet ${config:container_name})) { docker pull ${config:docker_image} ; docker run --privileged -e DISPLAY=\"host.docker.internal:0\" -v \"${workspaceFolder}:/app\" -t -d --name ${config:container_name} ${config:docker_image} }",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -94,6 +94,16 @@
             "label": "Run functional tests",
             "type": "shell",
             "command": "docker exec -it ${config:container_name} bash -c 'pytest tests/ --tb=short -v --device ${input:model}'",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run functional tests (with display)",
+            "type": "shell",
+            "command": "docker exec -it ${config:container_name} bash -c 'pytest tests/ --tb=short -v --device ${input:model} --display'",
             "group": {
                 "kind": "build",
                 "isDefault": true
