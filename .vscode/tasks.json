@@ -91,6 +91,16 @@
             "problemMatcher": []
         },
         {
+            "label": "Kill Speculos",
+            "type": "shell",
+            "command": "docker exec -it ${config:container_name} bash -c 'pkill -f speculos'",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "Run functional tests",
             "type": "shell",
             "command": "docker exec -it ${config:container_name} bash -c 'pytest tests/ --tb=short -v --device ${input:model}'",
