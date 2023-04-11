@@ -151,6 +151,17 @@
             },
             "problemMatcher": []
         },
+        {
+            "label": "Load app on device (Windows)",
+            "type": "shell",
+            // Checks that virtual env is installed, otherwise installs it. Then installs ledgerblue in a virtualenv and side loads the app APDU file.
+            "command": "cmd.exe /C 'if exist ledger (call ledger\\Scripts\\activate.bat && python -m ledgerblue.runScript --scp --fileName bin/app.apdu --elfFile bin/app.elf) else (python -m pip install virtualenv && python -m venv ledger && call ledger\\Scripts\\activate.bat && python -m pip install ledgerblue && python -m ledgerblue.runScript --scp --fileName bin/app.apdu --elfFile bin/app.elf)'",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
     ],
     "inputs": [
         {
