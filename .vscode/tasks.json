@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Run dev-tools image (on Windows)",
+            "label": "Run dev-tools image (on Windows with PowerShell)",
             "type": "shell",
             // Checks if a container with name ${config:container_name} exists, otherwise creates it in detached mode with the proper parameters.
             "command": "if (!(docker ps -a --format '{{.Names}}' | Select-String -Quiet ${config:container_name})) { docker pull ${config:docker_image} ; docker run --privileged -e DISPLAY=\"host.docker.internal:0\" -v \"${workspaceFolder}:/app\" -t -d --name ${config:container_name} ${config:docker_image} }",
@@ -15,8 +15,8 @@
         {
             "label": "Run dev-tools image (on macOS)",
             "type": "shell",
-            // Checks if a container with name ${config:container_name} exists, otherwise creates it in detached mode with the proper parameters.
-            "command": "docker ps -a --format '{{.Names}}' | grep -q ${config:container_name} || (xhost +localhost && docker pull ${config:docker_image} && docker run --privileged -e DISPLAY='host.docker.internal:0' -v '/tmp/.X11-unix:/tmp/.X11-unix' -v '${workspaceFolder}:/app' -t -d --name ${config:container_name} ${config:docker_image})",
+            // Checks if a container with the name ${config:container_name} exists, and if it does, it is stopped and removed before a new container is created using the same name and other specified configuration parameters.
+            "command": "docker ps -a --format '{{.Names}}' | grep -q ${config:container_name} && (docker container stop ${config:container_name} && docker container rm ${config:container_name}) ; docker pull ${config:docker_image} && docker run --user $(id -u):$(id -g) --privileged -e DISPLAY='host.docker.internal:0' -v '/tmp/.X11-unix:/tmp/.X11-unix' -v '${workspaceFolder}:/app' -t -d --name ${config:container_name} ${config:docker_image}",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -26,8 +26,8 @@
         {
             "label": "Run dev-tools image (on Linux)",
             "type": "shell",
-            // Checks if a container with name ${config:container_name} exists, otherwise creates it in detached mode with the proper parameters.
-            "command": "docker ps -a --format '{{.Names}}' | grep -q ${config:container_name} || (xhost +localhost && docker pull ${config:docker_image} && docker run --privileged -e DISPLAY='host.docker.internal:0' -v '/dev/bus/usb:/dev/bus/usb' -v '/tmp/.X11-unix:/tmp/.X11-unix' -v '${workspaceFolder}:/app' -t -d --name ${config:container_name} ${config:docker_image})",
+            // Checks if a container with the name ${config:container_name} exists, and if it does, it is stopped and removed before a new container is created using the same name and other specified configuration parameters.
+            "command": "docker ps -a --format '{{.Names}}' | grep -q ${config:container_name} && (docker container stop ${config:container_name} && docker container rm ${config:container_name}) ; docker run --user $(id -u):$(id -g) --privileged -e DISPLAY=$DISPLAY -v '/dev/bus/usb:/dev/bus/usb' -v '/tmp/.X11-unix:/tmp/.X11-unix' -v '${workspaceFolder}:/app' -t -d --name ${config:container_name} ${config:docker_image}",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -37,6 +37,7 @@
         {
             "label": "Open dev-tools container terminal",
             "type": "shell",
+            // Opens a terminal of the dev-tools container.
             "command": "docker exec -it ${config:container_name} bash",
             "group": {
                 "kind": "build",
@@ -47,6 +48,7 @@
         {
             "label": "Build app",
             "type": "shell",
+            // Builds the app in release mode using the make command, inside the docker container.
             "command": "docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=${input:sdk} && make -j'",
             "group": {
                 "kind": "build",
@@ -59,6 +61,7 @@
         {
             "label": "Build app [debug]",
             "type": "shell",
+            // Builds the app with debug mode enabled using the make command, inside the docker container.
             "command": "docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=${input:sdk} && make -j DEBUG=1'",
             "group": {
                 "kind": "build",
@@ -71,6 +74,7 @@
         {
             "label": "Clean build files",
             "type": "shell",
+            // Cleans all app build files (for all device models).
             "command": "docker exec -it ${config:container_name} bash -c 'make clean'",
             "group": {
                 "kind": "build",
@@ -83,6 +87,7 @@
         {
             "label": "Test app with Speculos",
             "type": "shell",
+            // Runs the app on the speculos emulator for the selected device model, in the docker container.
             "command":"docker exec -it ${config:container_name} bash -c 'speculos --model ${input:model} build/${input:model}/bin/app.elf'",
             "group": {
                 "kind": "build",
@@ -93,6 +98,7 @@
         {
             "label": "Kill Speculos",
             "type": "shell",
+            // Kills speculos emulator in the docker container.
             "command": "docker exec -it ${config:container_name} bash -c 'pkill -f speculos'",
             "group": {
                 "kind": "build",
@@ -103,6 +109,7 @@
         {
             "label": "Run functional tests",
             "type": "shell",
+            // Runs functional tests inside the docker container (with Qt display disabled).
             "command": "docker exec -it ${config:container_name} bash -c 'pytest tests/ --tb=short -v --device ${input:model}'",
             "group": {
                 "kind": "build",
@@ -113,6 +120,7 @@
         {
             "label": "Run functional tests (with display)",
             "type": "shell",
+            // Runs functional tests inside the docker container (with Qt display enabled).
             "command": "docker exec -it ${config:container_name} bash -c 'pytest tests/ --tb=short -v --device ${input:model} --display'",
             "group": {
                 "kind": "build",
@@ -123,6 +131,7 @@
         {
             "label": "Install tests requirements",
             "type": "shell",
+            // Installs functional tests python requirements in the docker container. 
             "command":"docker exec -it ${config:container_name} bash -c 'pip3 install -r tests/requirements.txt'",
             "group": {
                 "kind": "build",
@@ -133,6 +142,7 @@
         {
             "label": "Load app on device (Linux)",
             "type": "shell",
+            // Copies the ledger udev rule file to the /etc/udev/rules.d/ directory if it does not exist, then reloads the rules and triggers udev. After that, it executes make load in the container to load the app on a physical device.
             "command": "if [ ! -f '/etc/udev/rules.d/${config:linux_udev_ledgerblue_rule_file}' ]; then sudo cp .vscode/${config:linux_udev_ledgerblue_rule_file} /etc/udev/rules.d/ && sudo udevadm control --reload-rules && sudo udevadm trigger; fi && docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=${input:sdk} && make load'",
             "group": {
                 "kind": "build",
@@ -152,7 +162,7 @@
             "problemMatcher": []
         },
         {
-            "label": "Load app on device (Windows)",
+            "label": "Load app on device (Windows with PowerShell)",
             "type": "shell",
             // Checks that virtual env is installed, otherwise installs it. Then installs ledgerblue in a virtualenv and side loads the app APDU file.
             "command": "cmd.exe /C 'if exist ledger (call ledger\\Scripts\\activate.bat && python -m ledgerblue.runScript --scp --fileName bin/app.apdu --elfFile bin/app.elf) else (python -m pip install virtualenv && python -m venv ledger && call ledger\\Scripts\\activate.bat && python -m pip install ledgerblue && python -m ledgerblue.runScript --scp --fileName bin/app.apdu --elfFile bin/app.elf)'",
