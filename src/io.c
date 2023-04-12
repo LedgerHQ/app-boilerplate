@@ -32,6 +32,8 @@
 #include "common/buffer.h"
 #include "common/write.h"
 
+#include "cdc_mgmt.h"
+
 #ifdef HAVE_BAGL
 void io_seproxyhal_display(const bagl_element_t *element) {
     io_seproxyhal_display_default(element);
@@ -69,6 +71,7 @@ uint8_t io_event(uint8_t channel) {
 #endif  // HAVE_NBGL
         case SEPROXYHAL_TAG_TICKER_EVENT:
             UX_TICKER_EVENT(G_io_seproxyhal_spi_buffer, {});
+            cdc_mgmt_tick();
             break;
         default:
             UX_DEFAULT_EVENT();
@@ -160,6 +163,30 @@ int io_send_response(const buffer_t *rdata, uint16_t sw) {
 
     write_u16_be(G_io_apdu_buffer, G_output_len, sw);
     G_output_len += 2;
+
+    switch (G_io_state) {
+        case READY:
+            ret = -1;
+            break;
+        case RECEIVED:
+            G_io_state = READY;
+            ret = 0;
+            break;
+        case WAITING:
+            ret = io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, G_output_len);
+            G_output_len = 0;
+            G_io_state = READY;
+            break;
+    }
+
+    return ret;
+}
+
+int io_send_raw_response(uint8_t *buffer, uint16_t length) {
+    int ret = -1;
+
+    G_output_len = length;
+    memmove(G_io_apdu_buffer, buffer, G_output_len);
 
     switch (G_io_state) {
         case READY:

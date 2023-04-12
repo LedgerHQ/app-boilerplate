@@ -51,6 +51,7 @@ int io_recv_command(void);
  *
  */
 int io_send_response(const buffer_t *rdata, uint16_t sw);
+int io_send_raw_response(uint8_t *buffer, uint16_t length);
 
 /**
  * Send APDU response (only status word) by filling

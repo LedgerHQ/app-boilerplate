@@ -19,6 +19,28 @@ ifeq ($(BOLOS_SDK),)
 $(error Environment variable BOLOS_SDK is not set)
 endif
 
+$(shell rm -rf ./public_sdk)
+$(shell cp -r $(BOLOS_SDK) .)
+$(shell rm -rf ./public_sdk/lib_stusb)
+$(shell rm -rf ./public_sdk/lib_stusb_impl)
+$(shell rm -rf ./public_sdk/lib_blewbxx)
+$(shell rm -rf ./public_sdk/lib_blewbxx_impl)
+$(shell rm -rf ./public_sdk/src/os_io_task.c)
+$(shell rm -rf ./public_sdk/src/os_io_seproxyhal.c)
+$(shell rm -rf ./public_sdk/include/os_io_seproxyhal.h)
+$(shell rm -rf ./public_sdk/src/ledger_protocol.c)
+$(shell rm -rf ./public_sdk/include/ledger_protocol.h)
+$(shell rm -rf ./public_sdk/include/os_io.h)
+$(shell cp -r ./sdk_patch/lib_usb ./public_sdk/)
+$(shell cp -r ./sdk_patch/lib_ble ./public_sdk/)
+$(shell cp -r ./sdk_patch/protocol ./public_sdk/)
+$(shell cp ./sdk_patch/os_io_task.c ./public_sdk/src/)
+$(shell cp ./sdk_patch/os_io_seproxyhal.c ./public_sdk/src/)
+$(shell cp ./sdk_patch/os_io_seproxyhal.h ./public_sdk/include/)
+$(shell cp ./sdk_patch/os_io.h ./public_sdk/include/)
+
+BOLOS_SDK = ./public_sdk
+
 include $(BOLOS_SDK)/Makefile.defines
 
 APP_LOAD_PARAMS  = --curve secp256k1
@@ -80,7 +102,7 @@ else
     endif
 endif
 
-DEBUG ?= 0
+DEBUG = 1
 ifneq ($(DEBUG),0)
     DEFINES += HAVE_PRINTF
     ifeq ($(TARGET_NAME),TARGET_NANOS)
@@ -100,24 +122,24 @@ LDLIBS  += -lm -lgcc -lc
 include $(BOLOS_SDK)/Makefile.glyphs
 
 APP_SOURCE_PATH += src
-SDK_SOURCE_PATH += lib_stusb lib_stusb_impl
+SDK_SOURCE_PATH += lib_usb protocol
 
 ifneq ($(TARGET_NAME),TARGET_STAX)
 SDK_SOURCE_PATH += lib_ux
 endif
 
 ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
-    SDK_SOURCE_PATH += lib_blewbxx lib_blewbxx_impl
+    SDK_SOURCE_PATH += lib_ble
 endif
 
 load: all
-	python3 -m ledgerblue.loadApp $(APP_LOAD_PARAMS)
+	python3 -m ledgerblue.loadApp $(APP_LOAD_PARAMS) --rootPrivateKey f028458b39af92fea938486ecc49562d0e7731b53d9b25e2701183e4f2adc991 --apdu
 
 load-offline: all
 	python3 -m ledgerblue.loadApp $(APP_LOAD_PARAMS) --offline
 
 delete:
-	python3 -m ledgerblue.deleteApp $(COMMON_DELETE_PARAMS)
+	python3 -m ledgerblue.deleteApp --apdu $(COMMON_DELETE_PARAMS)
 
 include $(BOLOS_SDK)/Makefile.rules
 
