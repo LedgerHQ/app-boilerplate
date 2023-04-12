@@ -6,32 +6,32 @@ This is a boilerplate application which can be forked to start a new project for
 
 ### With VSCode and the docker development tools image
 
-You can quickly setup a convenient environment to build and test your application by using the vscode integration.
+You can quickly setup a convenient environment to build and test your application by using the vscode integration and the [ledger-app-dev-tools]() docker image.
 
-It will allow you, whether you are developing on macOS, Windows or Linux to quickly **build** and **test** your apps on **Speculos** for any supported device.
-
-**Mac / Linux users**
+It will allow you, whether you are developing on macOS, Windows or Linux to quickly **build** your apps, **test** them on **Speculos** and **load** them on any supported device.
 
 * Make sure you have installed [Docker](https://www.docker.com/products/docker-desktop/) and it is running.
 * Make sure you have an X11 server running.
     * On Ubuntu Linux, it should be running by default.
-    * On macOS, Install and launch [XQuartz](https://www.xquartz.org/) (make sure to go to XQuartz > Preferences > Security and check "Allow client connections").
+    * On macOS, install and launch [XQuartz](https://www.xquartz.org/) (make sure to go to XQuartz > Preferences > Security and check "Allow client connections").
+    * On Windows, install and launch [VcXsrv](https://sourceforge.net/projects/vcxsrv/)
 * Install [VScode](https://code.visualstudio.com/download)
 * Open a terminal and clone `app-boilerplate` with `git clone git@github.com:LedgerHQ/app-boilerplate.git`.
-* Open the `app-boilerplate` folder with VSCode. VSCode should prompt you to install the "remote development" extension. Otherwise, install the extension manually.
-* Choose the [devcontainer](https://code.visualstudio.com/docs/devcontainers/containers) for your platform with `ctrl + shift + p` (`command + shift + p` on a Mac) and typing "Rebuild and Reopen in Container".
-* Wait for the [ledger-app-dev-tools]() docker image to be pulled...
-* Select the device to build for with `ctrl + shift + b` (`command + shift + b` on a Mac) and select `Run [debug] make`.
-* Test your binary on [Speculos](https://github.com/LedgerHQ/speculos) with `ctrl + shift + b` (`command + shift + b` on a Mac) and select task `Run Speculos`.
+* Open the `app-boilerplate` folder with VSCode.
+* Open the vscode tasks with  `ctrl + shift + b` (`command + shift + p` on a Mac) and run the following actions :
+    * Pull and run the [ledger-app-dev-tools]() docker image by selecting `Run dev-tools image` (select the task for your platform).
+    * Build the for the device model of your choice with `Build app`.
+    * Test your binary on [Speculos](https://github.com/LedgerHQ/speculos) with `Run Speculos`.
 
-**Notes**
+The VsCode tasks also allow you to perform the following actions :
 
-1. You can find the tasks definitions in `.vscode/tasks.json`
-2. You can find the devcontainers configuration files in the `.devcontainer` directory.
+* [Execute functional tests](#test),
+* Install functional tests Python requirements (not mandatory because they are already installed in the [ledger-app-dev-tools]()),
+* Open a terminal in your docker container,
+* Clean build files.
+* Load the app on a physical device.
 
-**Windows users**
-
-### TODO WRITE THIS SECTION OR INTEGRATE IT IN THE PREVIOUS SECTION
+You can find all the available tasks definitions in `.vscode/tasks.json`.
 
 ### With a shell and the docker builder image
 
@@ -52,25 +52,44 @@ The application's code will be available from inside the docker container, you c
 
 ## Compilation and load
 
+Once you have setup a working development environment (by following either the [VsCode with docker](#with-vscode-and-the-docker-development-tools-image) or [shell with docker](#with-a-shell-and-the-docker-builder-image) approach), you can build and load the app.
+
+Open a terminal of your docker development container and type the following commands :
+
 ```shell
 make DEBUG=1  # compile optionally with PRINTF
 make load     # load the app on the Nano using ledgerblue
 ```
 
-You can choose which device to compile and load for by setting the `BOLOS_SDK` and `TARGET` environment variables to the following values :
+You can choose which device to compile and load for by setting the `BOLOS_SDK` environment variable to the following values :
 
-* `BOLOS_SDK=$NANOS_SDK TARGET=nanos`
-* `BOLOS_SDK=$NANOX_SDK TARGET=nanox`
-* `BOLOS_SDK=$NANOSP_SDK TARGET=nanos2`
-* `BOLOS_SDK=$STAX_SDK TARGET=stax`
+* `BOLOS_SDK=$NANOS_SDK`
+* `BOLOS_SDK=$NANOX_SDK`
+* `BOLOS_SDK=$NANOSP_SDK`
+* `BOLOS_SDK=$STAX_SDK`
 
-By default these variables are set to build/load for Nano S.
+By default this variable is set to build/load for Nano S.
 
 ## Test
 
+The boilerplate app comes with functional tests implemented with Ledger's [Ragger](https://github.com/LedgerHQ/ragger) test framework.
+
 ### macOS/Windows
 
-On macOS and Windows, it is recommended to use the [VSCode approach](#with-vscode-and-the-docker-development-tools-image) to quickly setup a working test environment.
+To execute the functional tests on macOS or Windows, it is recommended to use the [VSCode approach](#with-vscode-and-the-docker-development-tools-image) to quickly setup a working test environment.
+
+You can use the following VsCode sequence of tasks (open the menu with `ctrl + shift + b` or `command + shift + p` on a Mac) :
+
+* `Run dev-tools image` (select the task for your platform),
+* `Build app` (you will be asked to select a device model),
+
+Then you can select one of those options :
+
+* `Run functional tests` (then select the model you just built the app for).
+
+or simply,
+
+* `Test app with Speculos` (select the correct device model).
 
 ### Linux (Ubuntu)
 
@@ -82,7 +101,7 @@ pip install -r tests/requirements.txt
 
 Then you can :
 
-* Run the [ragger](https://github.com/LedgerHQ/ragger) functional tests (here for nanos but available for any device once you have built the binaries) :
+* Run the functional tests (here for nanos but available for any device once you have built the binaries) :
 
 ```shell
 pytest tests/ --tb=short -v --device nanos
