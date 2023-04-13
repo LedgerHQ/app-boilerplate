@@ -5,7 +5,7 @@
             "label": "Run dev-tools image (on Windows with PowerShell)",
             "type": "shell",
             // Checks if a container with name ${config:container_name} exists, otherwise creates it in detached mode with the proper parameters.
-            "command": "if (!(docker ps -a --format '{{.Names}}' | Select-String -Quiet ${config:container_name})) { docker pull ${config:docker_image} ; docker run --privileged -e DISPLAY=\"host.docker.internal:0\" -v \"${workspaceFolder}:/app\" -t -d --name ${config:container_name} ${config:docker_image} }",
+            "command": "if (!(docker ps -a --format '{{.Names}}' | Select-String -Quiet ${config:container_name})) { docker pull ${config:docker_image} ; docker run --privileged -e DISPLAY='host.docker.internal:0' -v '${workspaceFolder}:/app' -t -d --name ${config:container_name} ${config:docker_image} }",
             "group": {
                 "kind": "build",
                 "isDefault": true
