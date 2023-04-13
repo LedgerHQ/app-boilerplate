@@ -49,7 +49,7 @@
             "label": "Build app",
             "type": "shell",
             // Builds the app in release mode using the make command, inside the docker container.
-            "command": "docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=${input:sdk} && make -j'",
+            "command": "docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=$(echo ${input:sdk}) && make -j'",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -62,7 +62,7 @@
             "label": "Build app [debug]",
             "type": "shell",
             // Builds the app with debug mode enabled using the make command, inside the docker container.
-            "command": "docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=${input:sdk} && make -j DEBUG=1'",
+            "command": "docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=$(echo ${input:sdk}) && make -j DEBUG=1'",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -143,7 +143,7 @@
             "label": "Load app on device (Linux)",
             "type": "shell",
             // Copies the ledger udev rule file to the /etc/udev/rules.d/ directory if it does not exist, then reloads the rules and triggers udev. After that, it executes make load in the container to load the app on a physical device.
-            "command": "if [ ! -f '/etc/udev/rules.d/${config:linux_udev_ledgerblue_rule_file}' ]; then sudo cp .vscode/${config:linux_udev_ledgerblue_rule_file} /etc/udev/rules.d/ && sudo udevadm control --reload-rules && sudo udevadm trigger; fi && docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=${input:sdk} && make load'",
+            "command": "if [ ! -f '/etc/udev/rules.d/${config:linux_udev_ledgerblue_rule_file}' ]; then sudo cp .vscode/${config:linux_udev_ledgerblue_rule_file} /etc/udev/rules.d/ && sudo udevadm control --reload-rules && sudo udevadm trigger; fi && docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=$(echo ${input:sdk}) && make load'",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -179,10 +179,10 @@
             "type": "pickString",
             "description": "Choose a SDK to build with",
             "options": [
-                "/opt/nanos-secure-sdk",
-                "/opt/nanox-secure-sdk",
-                "/opt/nanosplus-secure-sdk",
-                "/opt/stax-secure-sdk",
+                "$NANOS_SDK",
+                "$NANOX_SDK",
+                "$NANOSP_SDK",
+                "$STAX_SDK",
             ]
         },
         {
