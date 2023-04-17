@@ -5,7 +5,6 @@
     "C_Cpp.clang_format_path": "/usr/bin/clang-format",
     "editor.formatOnSave": false,
     "linux_udev_ledgerblue_rule_file":"20-ledger.ledgerblue.rules",
-    // TODO : update the following line when https://github.com/LedgerHQ/ledger-app-builder/pull/52 is merged
-    "docker_image": "ghcr.io/ledgerhq/ledger-app-builder-clang/ledger-app-tester:latest",
-    "container_name":"dev-tools-container"
+    "docker_image": "ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest",
+    "container_name": "dev-tools-container"
 }
