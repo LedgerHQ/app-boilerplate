@@ -132,7 +132,7 @@
             "label": "Install tests requirements",
             "type": "shell",
             // Installs functional tests python requirements in the docker container. 
-            "command":"docker exec -it -u 0 ${config:container_name} bash -c 'pip3 install -r tests/requirements.txt'",
+            "command":"docker exec -it -u 0 ${config:container_name} bash -c 'apk add gcc musl-dev python3-dev && pip install -r tests/requirements.txt'",
             "group": {
                 "kind": "build",
                 "isDefault": true
