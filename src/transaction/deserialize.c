@@ -14,11 +14,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *****************************************************************************/
+#include "buffer.h"
 
 #include "deserialize.h"
 #include "utils.h"
 #include "types.h"
-#include "../common/buffer.h"
 
 parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
     if (buf->size > MAX_TX_LEN) {

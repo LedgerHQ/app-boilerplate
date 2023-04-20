@@ -1,8 +1,7 @@
 #pragma once
 
 #include "os.h"
-
-#include "../common/macros.h"
+#include "macros.h"
 
 /**
  * Length of public key.

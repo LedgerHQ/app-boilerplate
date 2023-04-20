@@ -26,12 +26,8 @@
 #include "io.h"
 #include "sw.h"
 #include "ui/menu.h"
-#include "apdu/parser.h"
 #include "apdu/dispatcher.h"
 
-uint8_t G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
-ux_state_t G_ux;
-bolos_ux_params_t G_ux_params;
 global_ctx_t G_context;
 
 /**
@@ -44,6 +40,8 @@ void app_main() {
     command_t cmd;
 
     io_init();
+
+    ui_menu_main();
 
     // Reset context
     explicit_bzero(&G_context, sizeof(G_context));
@@ -94,67 +92,4 @@ void app_main() {
             END_TRY;
         }
     }
-}
-
-/**
- * Exit the application and go back to the dashboard.
- */
-void app_exit() {
-    BEGIN_TRY_L(exit) {
-        TRY_L(exit) {
-            os_sched_exit(-1);
-        }
-        FINALLY_L(exit) {
-        }
-    }
-    END_TRY_L(exit);
-}
-
-/**
- * Main loop to setup USB, Bluetooth, UI and launch app_main().
- */
-__attribute__((section(".boot"))) int main() {
-    __asm volatile("cpsie i");
-
-    os_boot();
-
-    for (;;) {
-        // Initialize the UX system
-        UX_INIT();
-
-        BEGIN_TRY {
-            TRY {
-                io_seproxyhal_init();
-
-#ifdef HAVE_BLE
-                G_io_app.plane_mode = os_setting_get(OS_SETTING_PLANEMODE, NULL, 0);
-#endif  // HAVE_BLE
-                USB_power(0);
-                USB_power(1);
-
-                ui_menu_main();
-
-#ifdef HAVE_BLE
-                BLE_power(0, NULL);
-                BLE_power(1, NULL);
-#endif  // HAVE_BLE
-                app_main();
-            }
-            CATCH(EXCEPTION_IO_RESET) {
-                CLOSE_TRY;
-                continue;
-            }
-            CATCH_ALL {
-                CLOSE_TRY;
-                break;
-            }
-            FINALLY {
-            }
-        }
-        END_TRY;
-    }
-
-    app_exit();
-
-    return 0;
 }
