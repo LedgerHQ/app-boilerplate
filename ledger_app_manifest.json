@@ -1,0 +1,36 @@
+{
+	"apps_version": "1.0.1",
+	"apps_build_path": ".",
+	"language": "C",
+	"variant_param": "COIN",
+	"variants": {
+		"BOL": {
+			"name": "Boilerplate",
+			"curve": ["secp256k1"],
+			"path": ["44'/1'"],
+			"devices": {
+				"nanos": {
+					"flags": [],
+					"icon": "icons/nanos_app_boilerplate.gif"
+				},
+				"nanox": {
+					"flags": ["APPLICATION_FLAG_BOLOS_SETTINGS"],
+					"icon": "icons/nanox_app_boilerplate.gif"
+				},
+				"nanosp": {
+					"flags": [],
+					"icon": "icons/nanox_app_boilerplate.gif"
+				},
+				"stax": {
+					"flags": ["APPLICATION_FLAG_BOLOS_SETTINGS"],
+					"icon": "icons/stax_app_boilerplate_32px.gif"
+				}
+			},
+			"settings": [
+				"ENABLE_BLUETOOTH",
+				"ENABLE_NBGL_QRCODE",
+			],
+			"src_folders": ["src"]
+		}
+	}
+}
