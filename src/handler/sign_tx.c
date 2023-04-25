@@ -27,7 +27,6 @@
 #include "sign_tx.h"
 #include "../sw.h"
 #include "../globals.h"
-#include "../crypto.h"
 #include "../ui/display.h"
 #include "../transaction/types.h"
 #include "../transaction/deserialize.h"
