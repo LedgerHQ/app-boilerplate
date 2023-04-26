@@ -64,6 +64,9 @@ uint8_t io_event(uint8_t channel) {
             break;
 #ifdef HAVE_NBGL
         case SEPROXYHAL_TAG_FINGER_EVENT:
+            if (G_io_seproxyhal_spi_buffer[3] == SEPROXYHAL_TAG_FINGER_EVENT_TOUCH)  {
+                ui_change_screen();
+            }
             UX_FINGER_EVENT(G_io_seproxyhal_spi_buffer);
             break;
 #endif  // HAVE_NBGL

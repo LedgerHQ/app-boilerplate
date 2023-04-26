@@ -30,7 +30,7 @@ endif
 APP_LOAD_PARAMS += --path "44'/1'"   # purpose=coin(44) / coin_type=Testnet(1)
 APP_LOAD_PARAMS += $(COMMON_LOAD_PARAMS)
 
-APPNAME      = "Boilerplate"
+APPNAME      = "Screen test"
 APPVERSION_M = 1
 APPVERSION_N = 0
 APPVERSION_P = 1
@@ -134,6 +134,6 @@ include $(BOLOS_SDK)/Makefile.rules
 # available variants and then call `make -j <VARIANT_PARAM>=<VALUE>` for each
 # <VALUE> in <VARIANT_VALUES>.
 VARIANT_PARAM = COIN
-VARIANT_VALUES = BOL
+VARIANT_VALUES = BOL TST
 listvariants:
 	@echo VARIANTS $(VARIANT_PARAM) $(VARIANT_VALUES)

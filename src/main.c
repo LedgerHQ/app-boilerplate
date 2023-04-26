@@ -132,7 +132,7 @@ __attribute__((section(".boot"))) int main() {
                 USB_power(0);
                 USB_power(1);
 
-                ui_menu_main();
+                ui_change_screen();
 
 #ifdef HAVE_BLE
                 BLE_power(0, NULL);
