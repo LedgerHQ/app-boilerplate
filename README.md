@@ -4,7 +4,7 @@ This is a boilerplate application which can be forked to start a new project for
 
 ## Quick start guide
 
-### With VSCode and the docker development tools image
+### With VSCode
 
 You can quickly setup a convenient environment to build and test your application by using the vscode integration and the [ledger-app-dev-tools](https://github.com/LedgerHQ/ledger-app-builder/pkgs/container/ledger-app-builder%2Fledger-app-dev-tools) docker image.
 
@@ -19,7 +19,7 @@ It will allow you, whether you are developing on macOS, Windows or Linux to quic
 * Open a terminal and clone `app-boilerplate` with `git clone git@github.com:LedgerHQ/app-boilerplate.git`.
 * Open the `app-boilerplate` folder with VSCode.
 * Open the vscode tasks with  `ctrl + shift + b` (`command + shift + b` on a Mac) and run the following actions :
-    * Pull and run the [ledger-app-dev-tools]() docker image by selecting `Run dev-tools image` (select the task for your platform).
+    * Pull and run the [ledger-app-dev-tools](https://github.com/LedgerHQ/ledger-app-builder/pkgs/container/ledger-app-builder%2Fledger-app-dev-tools) docker image by selecting `Run dev-tools image` (select the task for your platform).
     * Build the for the device model of your choice with `Build app`.
     * Test your binary on [Speculos](https://github.com/LedgerHQ/speculos) with `Run Speculos`.
 
@@ -33,7 +33,7 @@ It will allow you, whether you are developing on macOS, Windows or Linux to quic
 
 You can find all the available tasks definitions in `.vscode/tasks.json`.
 
-### With a shell and the docker development tools image
+### With a terminal
 
 The [ledger-app-dev-tools](https://github.com/LedgerHQ/ledger-app-builder/pkgs/container/ledger-app-builder%2Fledger-app-dev-tools) docker image contains all the required tools and libraries to **build**, **test** and **load** an application.
 
@@ -48,13 +48,13 @@ You can then enter this development environment by executing the following comma
 **Linux (Ubuntu)**
 
 ```shell
-sudo docker run --rm -ti --user "$(id -u):$(id -g)" --privileged -v "/dev/bus/usb:/dev/bus/usb" -v "$(realpath .):/app" ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools
+sudo docker run --rm -ti --user "$(id -u):$(id -g)" --privileged -v "/dev/bus/usb:/dev/bus/usb" -v "$(realpath .):/app" ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest
 ```
 
 **macOS**
 
 ```shell
-sudo docker run  --rm -ti --user "$(id -u):$(id -g)" --privileged -v "$(pwd -P):/app" ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools
+sudo docker run  --rm -ti --user "$(id -u):$(id -g)" --privileged -v "$(pwd -P):/app" ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest
 ```
 
 **Windows (with PowerShell)**
@@ -67,13 +67,13 @@ The application's code will be available from inside the docker container, you c
 
 ## Compilation and load
 
-To easily setup a development environment for compilation and loading on a physical device, you can use the [VSCode integration](#with-vscode-and-the-docker-development-tools-image) whether you are on Linux, macOS or Windows.
+To easily setup a development environment for compilation and loading on a physical device, you can use the [VSCode integration](#with-vscode) whether you are on Linux, macOS or Windows.
 
 If you prefer using a terminal to perform the steps manually, you can use the guide below.
 
 ### Compilation
 
-Setup a compilation environment by following the [shell with docker approach](#with-a-shell-and-the-docker-development-tools-image).
+Setup a compilation environment by following the [shell with docker approach](#with-a-terminal).
 
 From inside the container, use the following command to build the app :
 
@@ -92,7 +92,7 @@ By default this variable is set to build/load for Nano S.
 
 ### Loading on a physical device
 
-You can This step will vary slightly depending on your platform.
+This step will vary slightly depending on your platform.
 
 :information_source: Your physical device must be connected, unlocked and the screen showing the dashboard (not inside an application).
 
@@ -107,7 +107,7 @@ sudo udevadm control --reload-rules
 sudo udevadm trigger
 ```
 
-Then once you have [opened a terminal](#with-a-shell-and-the-docker-builder-image) in the `app-builder` image and [built the app](#compilation-and-load) for the device you want, run the following command :
+Then once you have [opened a terminal](#with-a-terminal) in the `app-builder` image and [built the app](#compilation-and-load) for the device you want, run the following command :
 
 ```shell
 # Run this command from the app-builder container terminal.
@@ -147,7 +147,7 @@ The boilerplate app comes with functional tests implemented with Ledger's [Ragge
 
 ### macOS / Windows
 
-To test your app on macOS or Windows, it is recommended to use the [VSCode integration](#with-vscode-and-the-docker-development-tools-image) to quickly setup a working test environment.
+To test your app on macOS or Windows, it is recommended to use the [VSCode integration](#with-vscode) to quickly setup a working test environment.
 
 You can use the following VsCode sequence of tasks (open the menu with `ctrl + shift + b` or `command + shift + b` on a Mac) :
 
@@ -165,7 +165,7 @@ Or simply run the app on the Speculos emulator :
 
 ### Linux (Ubuntu)
 
-On Linux, you can use the [VSCode integration](#with-vscode-and-the-docker-development-tools-image) to run the tests, or from a terminal, you can follow the steps below.
+On Linux, you can use the [VSCode integration](#with-vscode) to run the tests. If you prefer not to, open a terminal and follow the steps below.
 
 Install the tests requirements :
 

@@ -148,38 +148,44 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "dependsOn": "Install udev rules for app loading (Linux)",
+            "dependsOn": [
+                "Install app loading requirements (Linux)"
+            ],
             "problemMatcher": []
         },
         {
             "label": "Load app on device (macOS)",
             "type": "shell",
             // Side loads the app APDU file using ledgerblue runScript.
-            "command": "python3 -m ledgerblue.runScript --scp --fileName bin/app.apdu --elfFile bin/app.elf",
+            "command": "python3 -m ledgerblue.runScript --scp --fileName ${config:buid_dir_relative_path}/bin/app.apdu --elfFile ${config:buid_dir_relative_path}/bin/app.elf",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "dependsOn": "Install app loading requirements (macOS)",
+            "dependsOn": [
+                "Install app loading requirements (macOS)"
+            ],
             "problemMatcher": []
         },
         {
             "label": "Load app on device (Windows with PowerShell)",
             "type": "shell",
             // Side loads the app APDU file using ledgerblue runScript.
-            "command": "cmd.exe /C 'python -m ledgerblue.runScript --scp --fileName bin/app.apdu --elfFile bin/app.elf'",
+            "command": "cmd.exe /C 'python -m ledgerblue.runScript --scp --fileName ${config:buid_dir_relative_path}/bin/app.apdu --elfFile ${config:buid_dir_relative_path}/bin/app.elf'",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "dependsOn": "Install app loading requirements (Windows with PowerShell)",
+            "dependsOn": [
+                "Install app loading requirements (Windows with PowerShell)"
+            ],
             "problemMatcher": []
         },
         // ------------------------------------------------------------------------------
         // Helper tasks put in 'test' group so they are hidden from the build tasks menu.
         // ------------------------------------------------------------------------------
         {
-            "label": "Install udev rules for app loading (Linux)",
+            "label": "Install app loading requirements (Linux)",
             "type": "shell",
             // Copies the ledger udev rule file to the /etc/udev/rules.d/ directory if it does not exist, then reloads the rules and triggers udev.
             "command": "if [ ! -f '/etc/udev/rules.d/${config:linux_udev_ledgerblue_rule_file}' ]; then sudo cp .vscode/${config:linux_udev_ledgerblue_rule_file} /etc/udev/rules.d/ && sudo udevadm control --reload-rules && sudo udevadm trigger; fi",

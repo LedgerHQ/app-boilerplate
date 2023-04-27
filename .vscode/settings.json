@@ -4,6 +4,7 @@
     },
     "C_Cpp.clang_format_path": "/usr/bin/clang-format",
     "editor.formatOnSave": false,
+    "buid_dir_relative_path":".",
     "linux_udev_ledgerblue_rule_file":"20-ledger.ledgerblue.rules",
     "docker_image": "ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest",
     "container_name": "dev-tools-container"
