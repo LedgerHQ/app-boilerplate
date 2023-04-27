@@ -28,5 +28,5 @@ __pycache__/
 doc/html
 doc/latex
 
-# Virtual env for sideload
+# Virtual env for sideload (macOS and Windows)
 ledger/
