@@ -209,7 +209,7 @@ The flow processed in [GitHub Actions](https://github.com/features/actions) is t
 - Code coverage with [gcov](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html)/[lcov](http://ltp.sourceforge.net/coverage/lcov.php) and upload to [codecov.io](https://about.codecov.io)
 - Documentation generation with [doxygen](https://www.doxygen.nl)
 
-It outputs 4 artifacts:
+It outputs 5 artifacts:
 - `compiled_app_binaries` within binary files of the build process for each device
 - `boilerplate-app-debug` within output files of the compilation process in debug mode
 - `speculos-log` within APDU command/response when executing end-to-end tests
