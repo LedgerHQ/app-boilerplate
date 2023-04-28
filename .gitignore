@@ -27,3 +27,6 @@ __pycache__/
 # Doxygen
 doc/html
 doc/latex
+
+# Virtual env for sideload (macOS and Windows)
+ledger/
