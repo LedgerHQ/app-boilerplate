@@ -201,7 +201,7 @@ the process outputs HTML and LaTeX documentations in `doc/html` and `doc/latex` 
 
 The flow processed in [GitHub Actions](https://github.com/features/actions) is the following:
 
-- Ledger guidelines enforcer which verfies that an app is compliant with Ledger guidelines. The successful completion of this reusable workflow is a mandatory step for an app to be available on the Ledger application store. More information on the guidelines can be found in the repository [ledger-app-workflow](https://github.com/LedgerHQ/ledger-app-workflows)
+- Ledger guidelines enforcer which verifies that an app is compliant with Ledger guidelines. The successful completion of this reusable workflow is a mandatory step for an app to be available on the Ledger application store. More information on the guidelines can be found in the repository [ledger-app-workflow](https://github.com/LedgerHQ/ledger-app-workflows)
 - Code formatting with [clang-format](http://clang.llvm.org/docs/ClangFormat.html)
 - Compilation of the application for all Ledger hardware in [ledger-app-builder](https://github.com/LedgerHQ/ledger-app-builder)
 - Unit tests of C functions with [cmocka](https://cmocka.org/) (see [unit-tests/](unit-tests/))
@@ -209,10 +209,8 @@ The flow processed in [GitHub Actions](https://github.com/features/actions) is t
 - Code coverage with [gcov](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html)/[lcov](http://ltp.sourceforge.net/coverage/lcov.php) and upload to [codecov.io](https://about.codecov.io)
 - Documentation generation with [doxygen](https://www.doxygen.nl)
 
-It outputs 5 artifacts:
+It outputs 3 artifacts:
 - `compiled_app_binaries` within binary files of the build process for each device
-- `boilerplate-app-debug` within output files of the compilation process in debug mode
-- `speculos-log` within APDU command/response when executing end-to-end tests
 - `code-coverage` within HTML details of code coverage
 - `documentation` within HTML auto-generated documentation
 
