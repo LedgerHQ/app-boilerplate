@@ -157,7 +157,7 @@
             "label": "Load app on device (macOS)",
             "type": "shell",
             // Side loads the app APDU file using ledgerblue runScript.
-            "command": "python3 -m ledgerblue.runScript --scp --fileName ${config:buid_dir_relative_path}/bin/app.apdu --elfFile ${config:buid_dir_relative_path}/bin/app.elf",
+            "command": "source ledger/bin/activate && python3 -m ledgerblue.runScript --scp --fileName ${config:buid_dir_relative_path}/bin/app.apdu --elfFile ${config:buid_dir_relative_path}/bin/app.elf",
             "group": {
                 "kind": "build",
                 "isDefault": true
