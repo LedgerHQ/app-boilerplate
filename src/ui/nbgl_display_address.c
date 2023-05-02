@@ -37,7 +37,7 @@
 #include "../address.h"
 #include "action/validate.h"
 #include "../transaction/types.h"
-#include "../menu.h"
+#include "menu.h"
 
 static char g_address[43];
 static char g_bip32_path[60];
