@@ -1,0 +1,14 @@
+{
+    "sdk" : {
+        "nanos" : "$NANOS_SDK",
+        "nanox" : "$NANOX_SDK",
+        "nanos2" : "$NANOSP_SDK",
+        "stax": "$STAX_SDK"
+    },
+    "model" : {
+        "nanos" : "nanos",
+        "nanox" : "nanox",
+        "nanos2" : "nanosp",
+        "stax": "stax"
+    }
+}
