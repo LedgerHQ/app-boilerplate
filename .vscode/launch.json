@@ -8,19 +8,37 @@
             "type": "gdb",
             "request": "attach",
             "name": "Attach to gdbserver",
-            "executable": "${workspaceFolder}/bin/app.elf",
-            "target": ":1234",
+            "executable": "${workspaceFolder}/build/${input:target}/bin/app.elf",
+            "target": "localhost:6000",
             "remote": true,
             "cwd": "${workspaceFolder}",
             "valuesFormatting": "parseText",
             "gdbpath": "gdb-multiarch",
+            "stopAtConnect":true,
+            "pathSubstitutions": {
+                "/app": "${workspaceFolder}",
+                "/opt/nanos-secure-sdk":"${config:nanos-secure-sdk-home",
+                "/opt/ledger-secure-sdk":"${config:ledger-secure-sdk-home"
+            },
             "autorun": [
                 "set architecture arm",
                 "handle SIGILL nostop pass noprint",
-                "add-symbol-file ${workspaceFolder}/bin/app.elf 0x40000000",
+                "add-symbol-file ${workspaceFolder}/build/${input:target}/bin/app.elf 0x40000000",
                 "b *0x40000000",
                 "c"
             ]
+        }
+    ],
+    "inputs": [
+        {
+            "id": "target",
+            "type": "command",
+            "command": "shellCommand.execute",
+            "args": {
+                
+                "command" : "python ${workspaceFolder}/.vscode/config_picker.py ${workspaceFolder}/.vscode/targets.json model ${command:cpptools.activeConfigName}",
+                "useFirstResult" : true
+            }
         }
     ]
 }

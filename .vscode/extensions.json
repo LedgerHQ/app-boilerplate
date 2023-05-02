@@ -1,5 +1,7 @@
 {
-	"recommendations": [
-        "ms-vscode.cpptools",
-	]
+    "recommendations": [ 
+        "ms-vscode.cpptools-extension-pack", 
+        "augustocdias.tasks-shell-input",  
+        "webfreak.debug" 
+    ]
 }
