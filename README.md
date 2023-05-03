@@ -21,7 +21,7 @@ It will allow you, whether you are developing on macOS, Windows or Linux to quic
 * Install the recommended extensions
 * Open the vscode tasks with  `ctrl + shift + b` (`command + shift + b` on a Mac) and run the following actions :
     * Pull and run the [ledger-app-dev-tools](https://github.com/LedgerHQ/ledger-app-builder/pkgs/container/ledger-app-builder%2Fledger-app-dev-tools) docker image by selecting `[setup] Run dev-tools image`.
-    * Select a target (either when editing a C file, from the bottom right of the status bar, or with `command + shift + p` and `C/C++: Select a configuration...`)
+    * Select a target (either when editing a C file, from the bottom right of the status bar, or with `ctrl + shift + p` (`command + shift + p` on a Mac) and `C/C++: Select a configuration...`)
     * Build the app for the device model previously selected of your choice with `[build] Build app`.
     * Test your binary on [Speculos](https://github.com/LedgerHQ/speculos) with `[run] Run Speculos`.
 
