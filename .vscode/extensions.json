@@ -1,7 +1,7 @@
 {
     "recommendations": [ 
         "ms-vscode.cpptools-extension-pack", 
-        "augustocdias.tasks-shell-input",  
+        "rioj7.command-variable",  
         "webfreak.debug" 
     ]
 }

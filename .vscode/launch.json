@@ -23,7 +23,7 @@
             "autorun": [
                 "set architecture arm",
                 "handle SIGILL nostop pass noprint",
-                "add-symbol-file ${workspaceFolder}/build/${input:target}/bin/app.elf 0x40000000",
+                "add-symbol-file ${workspaceFolder}/build/${input:model}/bin/app.elf 0x40000000",
                 "b *0x40000000",
                 "c"
             ]
@@ -31,13 +31,14 @@
     ],
     "inputs": [
         {
-            "id": "target",
+            "id": "model",
             "type": "command",
-            "command": "shellCommand.execute",
+            "command": "extension.commandvariable.file.content",
             "args": {
-                
-                "command" : "python ${workspaceFolder}/.vscode/config_picker.py ${workspaceFolder}/.vscode/targets.json model ${command:cpptools.activeConfigName}",
-                "useFirstResult" : true
+                "fileName": "${workspaceFolder}/.vscode/targets.json",
+                "json": "content.model.${command:cpptools.activeConfigName}",
+                "default": "nanos",
+                "keyRemember":"model"
             }
         }
     ]

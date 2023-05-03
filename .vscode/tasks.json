@@ -37,7 +37,7 @@
             "label": "[build] Build app",
             "type": "shell",
             // Builds the app in release mode using the make command, inside the docker container.
-            "command": "docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=$(echo ${input:sdk}) && make -j'",
+            "command": "echo docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=${input:sdk} && make -j'",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -191,7 +191,7 @@
             "label": "[setup] Install vscode requirements",
             "type": "shell",
             // Installs functional tests python requirements in the docker container. 
-            "command":"docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=$(echo ${input:sdk}) && make configure'",
+            "command":"docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=$(echo ${input:sdk}) && make -f.vscode/Makefile configure'",
             "group": {
                 "kind": "test",
                 "isDefault": true
@@ -214,21 +214,23 @@
         {
             "id": "model",
             "type": "command",
-            "command": "shellCommand.execute",
+            "command": "extension.commandvariable.file.content",
             "args": {
-                
-                "command" : "python ${workspaceFolder}/.vscode/config_picker.py ${workspaceFolder}/.vscode/targets.json model ${command:cpptools.activeConfigName}",
-                "useFirstResult" : true
+                "fileName": "${workspaceFolder}/.vscode/targets.json",
+                "json": "content.model.${command:cpptools.activeConfigName}",
+                "default": "nanos",
+                "keyRemember":"model"
             }
         }, 
         {
             "id": "sdk",
             "type": "command",
-            "command": "shellCommand.execute",
+            "command": "extension.commandvariable.file.content",
             "args": {
-                
-                "command" : "python ${workspaceFolder}/.vscode/config_picker.py ${workspaceFolder}/.vscode/targets.json sdk ${command:cpptools.activeConfigName}",
-                "useFirstResult" : true
+                "fileName": "${workspaceFolder}/.vscode/targets.json",
+                "json": "content.sdk.${command:cpptools.activeConfigName}",
+                "default": "$NANOS_SDK",
+                "keyRemember":"sdk"
             }
         }
     ]
