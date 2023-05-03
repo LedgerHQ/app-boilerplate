@@ -41,8 +41,7 @@ You can find all the available tasks definitions in `.vscode/tasks.json`.
 
 * Clone a local version of the Ledger SDK (`git clone git@github.com:LedgerHQ/ledger-secure-sdk.git`) or the Nano S sdk (`git clone git@github.com:LedgerHQ/nanos-secure-sdk.git`)
 * Modify `.vscode/c_cpp_properties.json` to point env variables NANOS_SDK and LEDGER_SDK to those local clones.
-* Modify `.vscode/settings.json` properties `ledger-secure-sdk-home` and `nanos-secure-sdk-home` to also point to these local clones.
-* Generate the defines required for correct parsing of the code by running the task `[setup] Install vscode requirements`
+* Generate the defines required for correct parsing of the code by running the task `[setup] Install vscode requirements` (`ctrl + shift + p` and `Tasks: Run Tasks` or `command + shift + p` and `Tasks: Run Tasks` on Mac)
 
 ### With a terminal
 

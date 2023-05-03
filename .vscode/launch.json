@@ -8,7 +8,7 @@
             "type": "gdb",
             "request": "attach",
             "name": "Attach to gdbserver",
-            "executable": "${workspaceFolder}/build/${input:target}/bin/app.elf",
+            "executable": "${workspaceFolder}/build/${input:model}/bin/app.elf",
             "target": "localhost:6000",
             "remote": true,
             "cwd": "${workspaceFolder}",
@@ -17,8 +17,8 @@
             "stopAtConnect":true,
             "pathSubstitutions": {
                 "/app": "${workspaceFolder}",
-                "/opt/nanos-secure-sdk":"${config:nanos-secure-sdk-home",
-                "/opt/ledger-secure-sdk":"${config:ledger-secure-sdk-home"
+                "/opt/nanos-secure-sdk":"${input:local-nanos-sdk}",
+                "/opt/ledger-secure-sdk":"${input:local-ledger-sdk}"
             },
             "autorun": [
                 "set architecture arm",
@@ -40,6 +40,29 @@
                 "default": "nanos",
                 "keyRemember":"model"
             }
+        },
+        {
+            "id": "local-nanos-sdk",
+            "type": "command",
+            "command": "extension.commandvariable.file.content",
+            "args": {
+                "fileName": "${workspaceFolder}/.vscode/c_cpp_properties.json",
+                "json": "content.env.NANOS_SDK",
+                "default": "/opt/nanos-secure-sdk",
+                "keyRemember":"local-nanos-sdk"
+            }
+        },
+        {
+            "id": "local-ledger-sdk",
+            "type": "command",
+            "command": "extension.commandvariable.file.content",
+            "args": {
+                "fileName": "${workspaceFolder}/.vscode/c_cpp_properties.json",
+                "json": "content.env.LEDGER_SDK",
+                "default": "/opt/ledger-secure-sdk",
+                "keyRemember":"local-ledger-sdk"
+            }
         }
+
     ]
 }

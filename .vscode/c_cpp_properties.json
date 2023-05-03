@@ -1,8 +1,7 @@
 {
     "env": {
-        // Change to point to local copy of the two ledger sdks
         "LEDGER_SDK": "~/workspaces/ledger-secure-sdk",
-        "NANOS_SDK":"~/workspaces/nanosledger-secure-sdk"
+        "NANOS_SDK":"~/workspaces/nanos-secure-sdk"
     },
     "configurations": [
         {
