@@ -68,6 +68,3 @@ APP_SOURCE_PATH += src
 #DISABLE_STANDARD_BAGL_UX_FLOW = 1
 
 include $(BOLOS_SDK)/Makefile.standard_app
-
-configure:
-	@./configure_bolos.sh ${DEFINES}

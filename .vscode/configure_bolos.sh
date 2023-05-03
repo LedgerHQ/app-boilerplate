@@ -4,7 +4,7 @@
 IFS=' ' read -ra name_value_pairs <<< "$@"
 
 # Define the output file name
-output_file="src/bolos_config.h"
+output_file=".vscode/bolos_config.h"
 
 # Open the output file for writing
 echo "#ifndef BOLOS_CONFIG_H" > "$output_file"
