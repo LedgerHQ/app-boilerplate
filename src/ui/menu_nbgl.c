@@ -26,6 +26,8 @@
 #include "../globals.h"
 #include "menu.h"
 
+#define EXCLUDE_BORDER 8
+
 void app_quit(void) {
     // exit app here
     os_sched_exit(-1);
@@ -33,33 +35,42 @@ void app_quit(void) {
 
 enum {
     BLACK_SCREEN,
+    DARK_GRAY_SCREEN,
+    LIGHT_GRAY_SCREEN,
     WHITE_SCREEN,
     CHECKER_BOARD,
     GATELINES,
     SOURCELINES,
+    RANDPIX,
+    RANDPIX_INV,
     MAX_SCREENS
 } test_screens_e;
 
-void draw_black(void) {
+void draw_full_screen(color_t color) {
     nbgl_area_t rectArea;
     rectArea.y0 = 0;
     rectArea.x0 = 0;
     rectArea.width = SCREEN_WIDTH;
     rectArea.height = SCREEN_HEIGHT;
-    rectArea.backgroundColor = BLACK;
+    rectArea.backgroundColor = color;
     nbgl_frontDrawRect(&rectArea);
     nbgl_frontRefreshArea(&rectArea, FULL_COLOR_CLEAN_REFRESH);
 }
 
+void draw_black(void) {
+    draw_full_screen(BLACK);
+}
+
+void draw_dark_gray(void) {
+    draw_full_screen(DARK_GRAY);
+}
+
+void draw_light_gray(void) {
+    draw_full_screen(LIGHT_GRAY);
+}
+
 void draw_white(void) {
-    nbgl_area_t rectArea;
-    rectArea.y0 = 0;
-    rectArea.x0 = 0;
-    rectArea.width = SCREEN_WIDTH;
-    rectArea.height = SCREEN_HEIGHT;
-    rectArea.backgroundColor = WHITE;
-    nbgl_frontDrawRect(&rectArea);
-    nbgl_frontRefreshArea(&rectArea, FULL_COLOR_CLEAN_REFRESH);
+    draw_full_screen(WHITE);
 }
 
 void draw_checkerboard(void) {
@@ -131,6 +142,48 @@ void draw_sources(void) {
     nbgl_frontRefreshArea(&rectArea, FULL_COLOR_CLEAN_REFRESH);
 }
 
+void draw_randpix(color_t background, color_t forground, uint8_t nb_randpix) {
+    uint16_t random;
+    uint8_t mask;
+    // Draw background
+    nbgl_area_t backArea;
+    nbgl_area_t pixArea;
+    backArea.y0 = 0;
+    backArea.x0 = 0;
+    backArea.width = SCREEN_WIDTH;
+    backArea.height = SCREEN_HEIGHT;
+    backArea.backgroundColor = background;
+    nbgl_frontDrawRect(&backArea);
+    #if 0
+    mask = 1;
+    pixArea.width = 0;
+    pixArea.x0 = 0;
+    for (uint8_t i=0; i<4; i++) {
+        pixArea.y0 = 40;
+        pixArea.x0 += 40;
+        pixArea.width = 1;
+        pixArea.height = 4;
+        pixArea.backgroundColor = background;
+        nbgl_frontDrawHorizontalLine(&pixArea, mask, forground);
+        mask = mask << 1;
+    }
+    #else
+    // Draw random pixels
+    for (uint8_t i=0; i<nb_randpix; i++) {
+        cx_get_random_bytes(&random, 2);
+        pixArea.y0 = random%(SCREEN_HEIGHT-EXCLUDE_BORDER) - (random%(SCREEN_HEIGHT-EXCLUDE_BORDER))%4;
+        mask = 1 << (random%(SCREEN_HEIGHT-EXCLUDE_BORDER))%4;
+        cx_get_random_bytes(&random, 2);
+        pixArea.x0 = random%(SCREEN_WIDTH-EXCLUDE_BORDER);        
+        pixArea.width = 1;
+        pixArea.height = 4;
+        pixArea.backgroundColor = background;
+        nbgl_frontDrawHorizontalLine(&pixArea, mask, forground);
+    }
+    #endif
+    nbgl_frontRefreshArea(&backArea, FULL_COLOR_CLEAN_REFRESH);
+}
+
 
 
 uint8_t current_screen = 0;
@@ -144,6 +197,12 @@ void ui_change_screen(void) {
         case BLACK_SCREEN:
             draw_black();
             break;
+        case DARK_GRAY_SCREEN:
+            draw_dark_gray();
+            break;
+        case LIGHT_GRAY_SCREEN:
+            draw_light_gray();
+            break;
         case WHITE_SCREEN:
             draw_white();
             break;
@@ -155,6 +214,12 @@ void ui_change_screen(void) {
             break;
         case SOURCELINES:
             draw_sources();
+            break;
+        case RANDPIX:
+            draw_randpix(WHITE, BLACK, 5);
+            break;
+        case RANDPIX_INV:
+            draw_randpix(BLACK, WHITE, 5);
             break;
     }
     current_screen++;
