@@ -37,7 +37,7 @@
             "label": "[build] Build app",
             "type": "shell",
             // Builds the app in release mode using the make command, inside the docker container.
-            "command": "echo docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=${input:sdk} && make -j'",
+            "command": "docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=${input:sdk} && make -j'",
             "group": {
                 "kind": "build",
                 "isDefault": true
