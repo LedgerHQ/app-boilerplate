@@ -1,7 +1,9 @@
+import pytest
+
 from application_client.boilerplate_transaction import Transaction
 from application_client.boilerplate_command_sender import BoilerplateCommandSender, Errors
 from application_client.boilerplate_response_unpacker import unpack_get_public_key_response, unpack_sign_tx_response
-from ragger.backend import RaisePolicy
+from ragger.error import ExceptionRAPDU
 from ragger.navigator import NavInsID
 from utils import ROOT_SCREENSHOT_PATH, check_signature_validity
 
@@ -112,25 +114,28 @@ def test_sign_tx_refused(firmware, backend, navigator, test_name):
     ).serialize()
 
     if firmware.device.startswith("nano"):
-        with client.sign_tx(path=path, transaction=transaction):
-            # Disable raising when trying to unpack an error APDU
-            backend.raise_policy = RaisePolicy.RAISE_NOTHING
-            navigator.navigate_until_text_and_compare(NavInsID.RIGHT_CLICK,
-                                                      [NavInsID.BOTH_CLICK],
-                                                      "Reject",
-                                                      ROOT_SCREENSHOT_PATH,
-                                                      test_name)
+        with pytest.raises(ExceptionRAPDU) as e:
+            with client.sign_tx(path=path, transaction=transaction):
+                navigator.navigate_until_text_and_compare(NavInsID.RIGHT_CLICK,
+                                                          [NavInsID.BOTH_CLICK],
+                                                          "Reject",
+                                                          ROOT_SCREENSHOT_PATH,
+                                                          test_name)
 
-        assert client.get_async_response().status == Errors.SW_DENY
+        # Assert that we have received a refusal
+        assert e.value.status == Errors.SW_DENY
+        assert len(e.value.data) == 0
     else:
         for i in range(3):
             instructions = [NavInsID.USE_CASE_REVIEW_TAP] * i
             instructions += [NavInsID.USE_CASE_REVIEW_REJECT,
                              NavInsID.USE_CASE_CHOICE_CONFIRM,
                              NavInsID.USE_CASE_STATUS_DISMISS]
-            with client.sign_tx(path=path, transaction=transaction):
-                backend.raise_policy = RaisePolicy.RAISE_NOTHING
-                navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH,
-                                               test_name + f"/part{i}",
-                                               instructions)
-            assert client.get_async_response().status == Errors.SW_DENY
+            with pytest.raises(ExceptionRAPDU) as e:
+                with client.sign_tx(path=path, transaction=transaction):
+                    navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH,
+                                                   test_name + f"/part{i}",
+                                                   instructions)
+            # Assert that we have received a refusal
+            assert e.value.status == Errors.SW_DENY
+            assert len(e.value.data) == 0
