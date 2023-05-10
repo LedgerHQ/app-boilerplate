@@ -35,16 +35,13 @@ APPVERSION   = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 VARIANT_PARAM = COIN
 VARIANT_VALUES = BOL
 
-APP_LOAD_PARAMS += --curve secp256k1
-APP_LOAD_PARAMS += --path "44'/1'"   # purpose=coin(44) / coin_type=Testnet(1)
+CURVE_APP_LOAD_PARAMS = secp256k1
+PATH_APP_LOAD_PARAMS = "44'/1'"   # purpose=coin(44) / coin_type=Testnet(1)
 
-ifeq ($(TARGET_NAME),TARGET_NANOS)
-    ICONNAME=icons/nanos_app_boilerplate.gif
-else ifeq ($(TARGET_NAME),TARGET_STAX)
-    ICONNAME=icons/stax_app_boilerplate_32px.gif
-else
-    ICONNAME=icons/nanox_app_boilerplate.gif
-endif
+ICON_NANOS = icons/nanos_app_boilerplate.gif
+ICON_NANOX = icons/nanox_app_boilerplate.gif
+ICON_NANOSP = icons/nanox_app_boilerplate.gif
+ICON_STAX = icons/stax_app_boilerplate_32px.gif
 
 ENABLE_BLUETOOTH = 1
 
