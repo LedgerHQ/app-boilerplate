@@ -54,7 +54,7 @@ void draw_full_screen(color_t color) {
     rectArea.height = SCREEN_HEIGHT;
     rectArea.backgroundColor = color;
     nbgl_frontDrawRect(&rectArea);
-    nbgl_frontRefreshArea(&rectArea, FULL_COLOR_CLEAN_REFRESH);
+    nbgl_frontRefreshArea(&rectArea, FULL_COLOR_CLEAN_REFRESH, POST_REFRESH_KEEP_POWER_STATE);
 }
 
 void draw_black(void) {
@@ -96,7 +96,7 @@ void draw_checkerboard(void) {
     rectArea.y0 = 0;
     rectArea.width = SCREEN_WIDTH;
     rectArea.height = SCREEN_HEIGHT;
-    nbgl_frontRefreshArea(&rectArea, FULL_COLOR_CLEAN_REFRESH);
+    nbgl_frontRefreshArea(&rectArea, FULL_COLOR_CLEAN_REFRESH, POST_REFRESH_KEEP_POWER_STATE);
 }
 
 void draw_gates(void) {
@@ -118,7 +118,7 @@ void draw_gates(void) {
     rectArea.y0 = 0;
     rectArea.width = SCREEN_WIDTH;
     rectArea.height = SCREEN_HEIGHT;
-    nbgl_frontRefreshArea(&rectArea, FULL_COLOR_CLEAN_REFRESH);
+    nbgl_frontRefreshArea(&rectArea, FULL_COLOR_CLEAN_REFRESH, POST_REFRESH_KEEP_POWER_STATE);
 }
 
 
@@ -139,7 +139,7 @@ void draw_sources(void) {
     rectArea.x0 = 0;
     rectArea.width = SCREEN_WIDTH;
     rectArea.height = SCREEN_HEIGHT;
-    nbgl_frontRefreshArea(&rectArea, FULL_COLOR_CLEAN_REFRESH);
+    nbgl_frontRefreshArea(&rectArea, FULL_COLOR_CLEAN_REFRESH, POST_REFRESH_KEEP_POWER_STATE);
 }
 
 void draw_randpix(color_t background, color_t forground, uint8_t nb_randpix) {
@@ -174,14 +174,14 @@ void draw_randpix(color_t background, color_t forground, uint8_t nb_randpix) {
         pixArea.y0 = random%(SCREEN_HEIGHT-EXCLUDE_BORDER) - (random%(SCREEN_HEIGHT-EXCLUDE_BORDER))%4;
         mask = 1 << (random%(SCREEN_HEIGHT-EXCLUDE_BORDER))%4;
         cx_get_random_bytes(&random, 2);
-        pixArea.x0 = random%(SCREEN_WIDTH-EXCLUDE_BORDER);        
+        pixArea.x0 = random%(SCREEN_WIDTH-EXCLUDE_BORDER);
         pixArea.width = 1;
         pixArea.height = 4;
         pixArea.backgroundColor = background;
         nbgl_frontDrawHorizontalLine(&pixArea, mask, forground);
     }
     #endif
-    nbgl_frontRefreshArea(&backArea, FULL_COLOR_CLEAN_REFRESH);
+    nbgl_frontRefreshArea(&backArea, FULL_COLOR_CLEAN_REFRESH, POST_REFRESH_KEEP_POWER_STATE);
 }
 
 
