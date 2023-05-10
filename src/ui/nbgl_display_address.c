@@ -97,7 +97,7 @@ int ui_display_address() {
     }
     snprintf(g_address, sizeof(g_address), "0x%.*H", sizeof(address), address);
 
-    nbgl_useCaseReviewStart(&C_stax_app_boilerplate_64px,
+    nbgl_useCaseReviewStart(&C_app_boilerplate_64px,
                             "Verify BOL address",
                             NULL,
                             "Cancel",
