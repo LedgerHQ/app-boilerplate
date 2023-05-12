@@ -11,9 +11,5 @@
     "linux_udev_ledgerblue_rule_file":"20-ledger.ledgerblue.rules",
 
     "docker_image": "ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest",
-    "container_name": "${workspaceFolderBasename}-container",
-    
-    // Change to point to local copy of the two ledger sdks
-    "ledger-secure-sdk-home": "~/workspaces/nanos-secure-sdk",
-    "nanos-secure-sdk-home":"~/workspaces/ledger-secure-sdk"
+    "container_name": "${workspaceFolderBasename}-container"
 }

@@ -191,7 +191,7 @@
             "label": "[setup] Install vscode requirements",
             "type": "shell",
             // Installs functional tests python requirements in the docker container. 
-            "command":"docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=$(echo ${input:sdk}) && make -f.vscode/Makefile configure'",
+            "command":"docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=$(echo ${input:sdk}) && make -f.vscode/bolos_config.make configure'",
             "group": {
                 "kind": "test",
                 "isDefault": true
