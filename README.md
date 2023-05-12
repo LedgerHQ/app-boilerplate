@@ -18,20 +18,30 @@ It will allow you, whether you are developing on macOS, Windows or Linux to quic
 * Install [VScode](https://code.visualstudio.com/download)
 * Open a terminal and clone `app-boilerplate` with `git clone git@github.com:LedgerHQ/app-boilerplate.git`.
 * Open the `app-boilerplate` folder with VSCode.
+* Install the recommended extensions
 * Open the vscode tasks with  `ctrl + shift + b` (`command + shift + b` on a Mac) and run the following actions :
-    * Pull and run the [ledger-app-dev-tools](https://github.com/LedgerHQ/ledger-app-builder/pkgs/container/ledger-app-builder%2Fledger-app-dev-tools) docker image by selecting `Run dev-tools image` (select the task for your platform).
-    * Build the for the device model of your choice with `Build app`.
-    * Test your binary on [Speculos](https://github.com/LedgerHQ/speculos) with `Run Speculos`.
+    * Pull and run the [ledger-app-dev-tools](https://github.com/LedgerHQ/ledger-app-builder/pkgs/container/ledger-app-builder%2Fledger-app-dev-tools) docker image by selecting `[setup] Run dev-tools image`.
+    * Select a target (either when editing a C file, from the bottom right of the status bar, or with `ctrl + shift + p` (`command + shift + p` on a Mac) and `C/C++: Select a configuration...`)
+    * Build the app for the device model previously selected of your choice with `[build] Build app`.
+    * Test your binary on [Speculos](https://github.com/LedgerHQ/speculos) with `[run] Run Speculos`.
 
 :information_source: The VsCode tasks also allow you to perform the following actions :
 
 * Install functional tests Python requirements (mandatory before executing functional tests),
 * [Execute functional tests](#test),
+* Run [unit-tests/](unit-tests/)
 * Open a terminal in your docker container,
 * Clean build files,
-* Load the app on a physical device.
+* Load the app on a physical device,
+* Debug your application directly in vscode using gdb.
 
 You can find all the available tasks definitions in `.vscode/tasks.json`.
+
+:information_source: The VsCode integration can be configured to integrate well with intelliSense, to benefit from autocompletion and code processing directly in the editor.
+
+* Clone a local version of the Ledger SDK (`git clone git@github.com:LedgerHQ/ledger-secure-sdk.git`) or the Nano S sdk (`git clone git@github.com:LedgerHQ/nanos-secure-sdk.git`)
+* Modify `.vscode/c_cpp_properties.json` to point env variables NANOS_SDK and LEDGER_SDK to those local clones.
+* Generate the defines required for correct parsing of the code by running the task `[setup] Install vscode requirements` (`ctrl + shift + p` and `Tasks: Run Tasks` or `command + shift + p` and `Tasks: Run Tasks` on Mac)
 
 ### With a terminal
 
