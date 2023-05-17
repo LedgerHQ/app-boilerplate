@@ -11,5 +11,7 @@ def test_get_app_and_version(backend, backend_name):
     # Use an helper to parse the response, assert the values
     app_name, version = unpack_get_app_and_version_response(response.data)
 
-    assert app_name == "Boilerplate"
-    assert version == "1.0.1"
+    # assert app_name == "Boilerplate"
+    # assert version == "1.0.1"
+    assert app_name == "Station"
+    assert version == "1.3.0"

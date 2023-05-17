@@ -25,12 +25,12 @@ include $(BOLOS_SDK)/Makefile.defines
 #        Mandatory configuration       #
 ########################################
 # Application name
-APPNAME = "Boilerplate"
+APPNAME = "Station"
 
 # Application version
 APPVERSION_M = 1
-APPVERSION_N = 0
-APPVERSION_P = 1
+APPVERSION_N = 3
+APPVERSION_P = 0
 APPVERSION = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 
 # Application source files
@@ -38,10 +38,10 @@ APP_SOURCE_PATH += src
 
 # Application icons following guidelines:
 # https://developers.ledger.com/docs/embedded-app/design-requirements/#device-icon
-ICON_NANOS = icons/app_boilerplate_16px.gif
-ICON_NANOX = icons/app_boilerplate_14px.gif
-ICON_NANOSP = icons/app_boilerplate_14px.gif
-ICON_STAX = icons/app_boilerplate_32px.gif
+ICON_NANOS = icons/nanos_icon.gif
+ICON_NANOX = icons/nanox_icon.gif
+ICON_NANOSP = icons/nanox_icon.gif
+ICON_STAX = icons/stax_icon32.gif
 
 # Application allowed derivation curves.
 # Possibles curves are: secp256k1, secp256r1, ed25519 and bls12381g1
