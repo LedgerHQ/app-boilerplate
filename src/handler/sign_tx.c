@@ -82,13 +82,19 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
             G_context.state = STATE_PARSED;
 
             cx_sha3_t keccak256;
-            cx_keccak_init(&keccak256, 256);
-            cx_hash((cx_hash_t *) &keccak256,
-                    CX_LAST,
-                    G_context.tx_info.raw_tx,
-                    G_context.tx_info.raw_tx_len,
-                    G_context.tx_info.m_hash,
-                    sizeof(G_context.tx_info.m_hash));
+
+            if (cx_keccak_init_no_throw(&keccak256, 256) != CX_OK) {
+                return io_send_sw(SW_TX_HASH_FAIL);
+            }
+
+            if (cx_hash_no_throw((cx_hash_t *) &keccak256,
+                                 CX_LAST,
+                                 G_context.tx_info.raw_tx,
+                                 G_context.tx_info.raw_tx_len,
+                                 G_context.tx_info.m_hash,
+                                 sizeof(G_context.tx_info.m_hash)) != CX_OK) {
+                return io_send_sw(SW_TX_HASH_FAIL);
+            }
 
             PRINTF("Hash: %.*H\n", sizeof(G_context.tx_info.m_hash), G_context.tx_info.m_hash);
 
