@@ -88,11 +88,11 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
             }
 
             if (cx_hash_no_throw((cx_hash_t *) &keccak256,
-                                CX_LAST,
-                                G_context.tx_info.raw_tx,
-                                G_context.tx_info.raw_tx_len,
-                                G_context.tx_info.m_hash,
-                                sizeof(G_context.tx_info.m_hash)) != CX_OK) {
+                                 CX_LAST,
+                                 G_context.tx_info.raw_tx,
+                                 G_context.tx_info.raw_tx_len,
+                                 G_context.tx_info.m_hash,
+                                 sizeof(G_context.tx_info.m_hash)) != CX_OK) {
                 return io_send_sw(SW_TX_HASH_FAIL);
             } 
 
