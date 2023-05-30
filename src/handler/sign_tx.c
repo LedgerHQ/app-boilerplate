@@ -83,11 +83,11 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
 
             cx_sha3_t keccak256;
 
-            if(cx_keccak_init_no_throw(&keccak256, 256) != CX_OK) {
+            if (cx_keccak_init_no_throw(&keccak256, 256) != CX_OK) {
                 return io_send_sw(SW_TX_HASH_FAIL);
             }
 
-            if(cx_hash_no_throw((cx_hash_t *) &keccak256,
+            if (cx_hash_no_throw((cx_hash_t *) &keccak256,
                                 CX_LAST,
                                 G_context.tx_info.raw_tx,
                                 G_context.tx_info.raw_tx_len,
