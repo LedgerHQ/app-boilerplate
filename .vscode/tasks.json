@@ -16,7 +16,7 @@
             "label": "Run dev-tools image (on macOS)",
             "type": "shell",
             // Checks if a container with the name ${config:container_name} exists, and if it does, it is stopped and removed before a new container is created using the same name and other specified configuration parameters.
-            "command": "docker ps -a --format '{{.Names}}' | grep -q ${config:container_name} && (docker container stop ${config:container_name} && docker container rm ${config:container_name}) ; docker pull ${config:docker_image} && docker run --user $(id -u):$(id -g) --privileged -e DISPLAY='host.docker.internal:0' -v '/tmp/.X11-unix:/tmp/.X11-unix' -v '${workspaceFolder}:/app' -t -d --name ${config:container_name} ${config:docker_image}",
+            "command": "xhost + ; docker ps -a --format '{{.Names}}' | grep -q ${config:container_name} && (docker container stop ${config:container_name} && docker container rm ${config:container_name}) ; docker pull ${config:docker_image} && docker run --user $(id -u):$(id -g) --privileged -e DISPLAY='host.docker.internal:0' -v '/tmp/.X11-unix:/tmp/.X11-unix' -v '${workspaceFolder}:/app' -t -d --name ${config:container_name} ${config:docker_image}",
             "group": {
                 "kind": "build",
                 "isDefault": true
