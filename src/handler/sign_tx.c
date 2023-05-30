@@ -94,7 +94,7 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
                                  G_context.tx_info.m_hash,
                                  sizeof(G_context.tx_info.m_hash)) != CX_OK) {
                 return io_send_sw(SW_TX_HASH_FAIL);
-            } 
+            }
 
             PRINTF("Hash: %.*H\n", sizeof(G_context.tx_info.m_hash), G_context.tx_info.m_hash);
 
