@@ -2,9 +2,67 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "make",
+            "label": "Run dev-tools image (on Windows with PowerShell)",
             "type": "shell",
-            "command": "make clean && make",
+            //Checks if a container with the name ${config:container_name} exists, and if it does, it is stopped and removed before a new container is created using the same name and other specified configuration parameters
+            "command": "if (docker ps -a --format '{{.Names}}' | Select-String -Quiet ${config:container_name}) { docker container stop ${config:container_name}; docker container rm ${config:container_name} }; docker pull ${config:docker_image}; docker run --privileged -e DISPLAY='host.docker.internal:0' -v '${workspaceFolder}:/app' -t -d --name ${config:container_name} ${config:docker_image} ",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run dev-tools image (on macOS)",
+            "type": "shell",
+            // Checks if a container with the name ${config:container_name} exists, and if it does, it is stopped and removed before a new container is created using the same name and other specified configuration parameters.
+            "command": "docker ps -a --format '{{.Names}}' | grep -q ${config:container_name} && (docker container stop ${config:container_name} && docker container rm ${config:container_name}) ; docker pull ${config:docker_image} && docker run --user $(id -u):$(id -g) --privileged -e DISPLAY='host.docker.internal:0' -v '/tmp/.X11-unix:/tmp/.X11-unix' -v '${workspaceFolder}:/app' -t -d --name ${config:container_name} ${config:docker_image}",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run dev-tools image (on Linux)",
+            "type": "shell",
+            // Checks if a container with the name ${config:container_name} exists, and if it does, it is stopped and removed before a new container is created using the same name and other specified configuration parameters.
+            "command": "docker ps -a --format '{{.Names}}' | grep -q ${config:container_name} && (docker container stop ${config:container_name} && docker container rm ${config:container_name}) ; docker pull ${config:docker_image} && docker run --user $(id -u):$(id -g) --privileged -e DISPLAY=$DISPLAY -v '/dev/bus/usb:/dev/bus/usb' -v '/tmp/.X11-unix:/tmp/.X11-unix' -v '${workspaceFolder}:/app' -t -d --name ${config:container_name} ${config:docker_image}",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Open dev-tools container terminal",
+            "type": "shell",
+            // Opens a terminal of the dev-tools container.
+            "command": "docker exec -it ${config:container_name} bash",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Build app",
+            "type": "shell",
+            // Builds the app in release mode using the make command, inside the docker container.
+            "command": "docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=$(echo ${input:sdk}) && make -j'",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }, 
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "Build app [debug]",
+            "type": "shell",
+            // Builds the app with debug mode enabled using the make command, inside the docker container.
+            "command": "docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=$(echo ${input:sdk}) && make -j DEBUG=1'",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -14,9 +72,10 @@
             ]
         },
         {
-            "label": "[debug] make",
+            "label": "Clean build files",
             "type": "shell",
-            "command": "make clean && make DEBUG=1",
+            // Cleans all app build files (for all device models).
+            "command": "docker exec -it ${config:container_name} bash -c 'make clean'",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -26,86 +85,161 @@
             ]
         },
         {
-            "label": "make clean",
+            "label": "Test app with Speculos",
             "type": "shell",
-            "command": "make clean",
+            // Runs the app on the speculos emulator for the selected device model, in the docker container.
+            "command":"docker exec -it ${config:container_name} bash -c 'speculos --model ${input:model} build/${input:model}/bin/app.elf'",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "problemMatcher": [
-                "$gcc"
-            ]
+            "problemMatcher": []
         },
         {
-            "label": "make load",
+            "label": "Kill Speculos",
             "type": "shell",
-            "command": "make load",
+            // Kills speculos emulator in the docker container.
+            "command": "docker exec -it ${config:container_name} bash -c 'pkill -f speculos'",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "problemMatcher": [
-                "$gcc"
-            ]
+            "problemMatcher": []
         },
         {
-            "label": "run unit tests",
+            "label": "Run functional tests",
             "type": "shell",
-            "command": "cd unit-tests && rm -rf  build && cmake -Bbuild -H. && make -C build && CTEST_OUTPUT_ON_FAILURE=1 make -C build test",
+            // Runs functional tests inside the docker container (with Qt display disabled).
+            "command": "docker exec -it ${config:container_name} bash -c 'pytest tests/ --tb=short -v --device ${input:model}'",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "problemMatcher": [
-                "$gcc"
-            ]
+            "problemMatcher": []
         },
         {
-            "label": "run Speculos",
+            "label": "Run functional tests (with display)",
             "type": "shell",
-            "command": "python /path/to/speculos/speculos.py ${workspaceFolder}/bin/app.elf --ontop --sdk 1.6 --apdu-port 9999 --button-port 42000 --automation-port 43000",
+            // Runs functional tests inside the docker container (with Qt display enabled).
+            "command": "docker exec -it ${config:container_name} bash -c 'pytest tests/ --tb=short -v --device ${input:model} --display'",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Install tests requirements",
+            "type": "shell",
+            // Installs functional tests python requirements in the docker container. 
+            "command":"docker exec -it -u 0 ${config:container_name} bash -c 'apk add gcc musl-dev python3-dev && pip install -r tests/requirements.txt'",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Load app on device (Linux)",
+            "type": "shell",
+            // Executes make load in the container to load the app on a physical device.
+            "command": "docker exec -it ${config:container_name} bash -c 'export BOLOS_SDK=$(echo ${input:sdk}) && make load'",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
             "dependsOn": [
-                "make debug"
+                "Install app loading requirements (Linux)"
             ],
             "problemMatcher": []
         },
         {
-            "label": "[debug] run Speculos",
+            "label": "Load app on device (macOS)",
             "type": "shell",
-            "command": "python /path/to/speculos/speculos.py -d ${workspaceFolder}/bin/app.elf --ontop --sdk 1.6 --apdu-port 9999 --button-port 42000 --automation-port 43000",
+            // Side loads the app APDU file using ledgerblue runScript.
+            "command": "source ledger/bin/activate && python3 -m ledgerblue.runScript --scp --fileName ${config:buid_dir_relative_path}/bin/app.apdu --elfFile ${config:buid_dir_relative_path}/bin/app.elf",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
             "dependsOn": [
-                "make debug"
+                "Install app loading requirements (macOS)"
             ],
             "problemMatcher": []
         },
         {
-            "label": "run tests",
+            "label": "Load app on device (Windows with PowerShell)",
             "type": "shell",
-            "command": "cd tests && pytest",
+            // Side loads the app APDU file using ledgerblue runScript.
+            "command": "cmd.exe /C '.\\ledger\\Scripts\\activate.bat && python -m ledgerblue.runScript --scp --fileName ${config:buid_dir_relative_path}/bin/app.apdu --elfFile ${config:buid_dir_relative_path}/bin/app.elf'",
             "group": {
                 "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": [
+                "Install app loading requirements (Windows with PowerShell)"
+            ],
+            "problemMatcher": []
+        },
+        // ------------------------------------------------------------------------------
+        // Helper tasks put in 'test' group so they are hidden from the build tasks menu.
+        // ------------------------------------------------------------------------------
+        {
+            "label": "Install app loading requirements (Linux)",
+            "type": "shell",
+            // Copies the ledger udev rule file to the /etc/udev/rules.d/ directory if it does not exist, then reloads the rules and triggers udev.
+            "command": "if [ ! -f '/etc/udev/rules.d/${config:linux_udev_ledgerblue_rule_file}' ]; then sudo cp .vscode/${config:linux_udev_ledgerblue_rule_file} /etc/udev/rules.d/ && sudo udevadm control --reload-rules && sudo udevadm trigger; fi",
+            "group": {
+                "kind": "test",
                 "isDefault": true
             },
             "problemMatcher": []
         },
         {
-            "label": "kill Speculos",
+            "label": "Install app loading requirements (macOS)",
             "type": "shell",
-            "command": "pkill -f speculos.py",
+            // Checks that virtual env is installed, otherwise installs it. Then installs ledgerblue in a virtualenv.
+            "command": "[ -n '$VIRTUAL_ENV' ] || if ! python3 -m virtualenv --version >/dev/null 2>&1; then python3 -m pip install virtualenv; fi && [ -d 'ledger' ] || python3 -m virtualenv ledger && source ledger/bin/activate && python3 -m pip show ledgerblue >/dev/null 2>&1 || python3 -m pip install ledgerblue",
             "group": {
-                "kind": "build",
+                "kind": "test",
                 "isDefault": true
             },
             "problemMatcher": []
+        },
+        {
+            "label": "Install app loading requirements (Windows with PowerShell)",
+            "type": "shell",
+            // Checks that virtual env is installed, otherwise installs it. Then installs ledgerblue in a virtualenv.
+            "command": "cmd.exe /C 'if not exist ledger (python -m pip install virtualenv && python -m venv ledger && call ledger\\Scripts\\activate.bat && python -m pip install ledgerblue)'",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+    ],
+    "inputs": [
+        {
+            "id" : "sdk",
+            "type": "pickString",
+            "description": "Choose a SDK to build with",
+            "options": [
+                "$NANOS_SDK",
+                "$NANOX_SDK",
+                "$NANOSP_SDK",
+                "$STAX_SDK",
+            ]
+        },
+        {
+            "id" : "model",
+            "type": "pickString",
+            "description": "Which model to run speculos for ?",
+            "options": [
+                "nanos",
+                "nanox",
+                "nanosp",
+                "stax",
+            ]
         }
     ]
 }

@@ -1,6 +1,6 @@
 # ****************************************************************************
 #    Ledger App Boilerplate
-#    (c) 2020 Ledger SAS.
+#    (c) 2023 Ledger SAS.
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -21,111 +21,88 @@ endif
 
 include $(BOLOS_SDK)/Makefile.defines
 
-APP_LOAD_PARAMS  = --curve secp256k1
-ifeq ($(TARGET_NAME), TARGET_NANOX)
-APP_LOAD_PARAMS=--appFlags 0x200  # APPLICATION_FLAG_BOLOS_SETTINGS
-else
-APP_LOAD_PARAMS=--appFlags 0x000
-endif
-APP_LOAD_PARAMS += --path "44'"
-APP_LOAD_PARAMS += $(COMMON_LOAD_PARAMS)
+########################################
+#        Mandatory configuration       #
+########################################
+# Application name
+APPNAME = "Boilerplate"
 
-APPNAME      = "Boilerplate"
+# Application version
 APPVERSION_M = 1
 APPVERSION_N = 0
 APPVERSION_P = 1
-APPVERSION   = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
+APPVERSION = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 
-ifeq ($(TARGET_NAME),TARGET_NANOS)
-    ICONNAME=icons/nanos_app_boilerplate.gif
-else
-    ICONNAME=icons/nanox_app_boilerplate.gif
-endif
-
-all: default
-
-DEFINES += $(DEFINES_LIB)
-DEFINES += APPNAME=\"$(APPNAME)\"
-DEFINES += APPVERSION=\"$(APPVERSION)\"
-DEFINES += MAJOR_VERSION=$(APPVERSION_M) MINOR_VERSION=$(APPVERSION_N) PATCH_VERSION=$(APPVERSION_P)
-DEFINES += OS_IO_SEPROXYHAL
-DEFINES += HAVE_BAGL HAVE_UX_FLOW HAVE_SPRINTF
-DEFINES += HAVE_IO_USB HAVE_L4_USBLIB IO_USB_MAX_ENDPOINTS=6 IO_HID_EP_LENGTH=64 HAVE_USB_APDU
-DEFINES += USB_SEGMENT_SIZE=64
-DEFINES += BLE_SEGMENT_SIZE=32
-DEFINES += HAVE_WEBUSB WEBUSB_URL_SIZE_B=0 WEBUSB_URL=""
-DEFINES += UNUSED\(x\)=\(void\)x
-
-ifeq ($(TARGET_NAME),TARGET_NANOX)
-    DEFINES += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000 HAVE_BLE_APDU
-endif
-
-ifeq ($(TARGET_NAME),TARGET_NANOS)
-    DEFINES += IO_SEPROXYHAL_BUFFER_SIZE_B=128
-else
-    DEFINES += IO_SEPROXYHAL_BUFFER_SIZE_B=300
-    DEFINES += HAVE_GLO096
-    DEFINES += BAGL_WIDTH=128 BAGL_HEIGHT=64
-    DEFINES += HAVE_BAGL_ELLIPSIS
-    DEFINES += HAVE_BAGL_FONT_OPEN_SANS_REGULAR_11PX
-    DEFINES += HAVE_BAGL_FONT_OPEN_SANS_EXTRABOLD_11PX
-    DEFINES += HAVE_BAGL_FONT_OPEN_SANS_LIGHT_16PX
-endif
-
-DEBUG = 0
-ifneq ($(DEBUG),0)
-    DEFINES += HAVE_PRINTF
-    ifeq ($(TARGET_NAME),TARGET_NANOS)
-        DEFINES += PRINTF=screen_printf
-    else
-        DEFINES += PRINTF=mcu_usb_printf
-    endif
-else
-        DEFINES += PRINTF\(...\)=
-endif
-
-ifneq ($(BOLOS_ENV),)
-$(info BOLOS_ENV=$(BOLOS_ENV))
-CLANGPATH := $(BOLOS_ENV)/clang-arm-fropi/bin/
-GCCPATH   := $(BOLOS_ENV)/gcc-arm-none-eabi-5_3-2016q1/bin/
-else
-$(info BOLOS_ENV is not set: falling back to CLANGPATH and GCCPATH)
-endif
-ifeq ($(CLANGPATH),)
-$(info CLANGPATH is not set: clang will be used from PATH)
-endif
-ifeq ($(GCCPATH),)
-$(info GCCPATH is not set: arm-none-eabi-* will be used from PATH)
-endif
-
-CC      := $(CLANGPATH)clang
-CFLAGS  += -O3 -Os
-AS      := $(GCCPATH)arm-none-eabi-gcc
-LD      := $(GCCPATH)arm-none-eabi-gcc
-LDFLAGS += -O3 -Os
-LDLIBS  += -lm -lgcc -lc
-
-include $(BOLOS_SDK)/Makefile.glyphs
-
+# Application source files
 APP_SOURCE_PATH += src
-SDK_SOURCE_PATH += lib_stusb lib_stusb_impl lib_ux
 
-ifeq ($(TARGET_NAME),TARGET_NANOX)
-    SDK_SOURCE_PATH += lib_blewbxx lib_blewbxx_impl
-endif
+# Application icons following guidelines:
+# https://developers.ledger.com/docs/embedded-app/design-requirements/#device-icon
+ICON_NANOS = icons/app_boilerplate_16px.gif
+ICON_NANOX = icons/app_boilerplate_14px.gif
+ICON_NANOSP = icons/app_boilerplate_14px.gif
+ICON_STAX = icons/app_boilerplate_32px.gif
 
-load: all
-	python3 -m ledgerblue.loadApp $(APP_LOAD_PARAMS)
+# Application allowed derivation curves.
+# Possibles curves are: secp256k1, secp256r1, ed25519 and bls12381g1
+# If your app needs it, you can specify multiple curves by using:
+# `CURVE_APP_LOAD_PARAMS = <curve1> <curve2>`
+CURVE_APP_LOAD_PARAMS = secp256k1
 
-load-offline: all
-	python3 -m ledgerblue.loadApp $(APP_LOAD_PARAMS) --offline
+# Application allowed derivation paths.
+# You should request a specific path for your app.
+# This serve as an isolation mechanism.
+# Most application will have to request a path according to the BIP-0044
+# and SLIP-0044 standards.
+# If your app needs it, you can specify multiple path by using:
+# `PATH_APP_LOAD_PARAMS = "44'/1'" "45'/1'"`
+PATH_APP_LOAD_PARAMS = "44'/1'"   # purpose=coin(44) / coin_type=Testnet(1)
 
-delete:
-	python3 -m ledgerblue.deleteApp $(COMMON_DELETE_PARAMS)
+# Setting to allow building variant applications
+# - <VARIANT_PARAM> is the name of the parameter which should be set
+#   to specify the variant that should be build.
+# - <VARIANT_VALUES> a list of variant that can be build using this app code.
+#   * It must at least contains one value.
+#   * Values can be the app ticker or anything else but should be unique.
+VARIANT_PARAM = COIN
+VARIANT_VALUES = BOL
 
-include $(BOLOS_SDK)/Makefile.rules
+# Enabling DEBUG flag will enable PRINTF and disable optimizations
+#DEBUG = 1
 
-dep/%.d: %.c Makefile
+########################################
+#     Application custom permissions   #
+########################################
+# See SDK `include/appflags.h` for the purpose of each permission
+#HAVE_APPLICATION_FLAG_DERIVE_MASTER = 1
+#HAVE_APPLICATION_FLAG_GLOBAL_PIN = 1
+#HAVE_APPLICATION_FLAG_BOLOS_SETTINGS = 1
+#HAVE_APPLICATION_FLAG_LIBRARY = 1
 
-listvariants:
-	@echo VARIANTS COIN BOL
+########################################
+# Application communication interfaces #
+########################################
+ENABLE_BLUETOOTH = 1
+#ENABLE_NFC = 1
+
+########################################
+#         NBGL custom features         #
+########################################
+ENABLE_NBGL_QRCODE = 1
+#ENABLE_NBGL_KEYBOARD = 1
+#ENABLE_NBGL_KEYPAD = 1
+
+########################################
+#          Features disablers          #
+########################################
+# These advanced settings allow to disable some feature that are by
+# default enabled in the SDK `Makefile.standard_app`.
+#DISABLE_STANDARD_APP_FILES = 1 
+#DISABLE_DEFAULT_IO_SEPROXY_BUFFER_SIZE = 1 # To allow custom size declaration
+#DISABLE_STANDARD_APP_DEFINES = 1 # Will set all the following disablers
+#DISABLE_STANDARD_SNPRINTF = 1
+#DISABLE_STANDARD_USB = 1
+#DISABLE_STANDARD_WEBUSB = 1
+#DISABLE_STANDARD_BAGL_UX_FLOW = 1
+
+include $(BOLOS_SDK)/Makefile.standard_app

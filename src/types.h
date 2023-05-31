@@ -3,18 +3,10 @@
 #include <stddef.h>  // size_t
 #include <stdint.h>  // uint*_t
 
+#include "bip32.h"
+
 #include "constants.h"
 #include "transaction/types.h"
-#include "common/bip32.h"
-
-/**
- * Enumeration for the status of IO.
- */
-typedef enum {
-    READY,     /// ready for new event
-    RECEIVED,  /// data received
-    WAITING    /// waiting
-} io_state_e;
 
 /**
  * Enumeration with expected INS of APDU commands.
@@ -25,19 +17,6 @@ typedef enum {
     GET_PUBLIC_KEY = 0x05,  /// public key of corresponding BIP32 path
     SIGN_TX = 0x06          /// sign transaction with BIP32 path
 } command_e;
-
-/**
- * Structure with fields of APDU command.
- */
-typedef struct {
-    uint8_t cla;    /// Instruction class
-    command_e ins;  /// Instruction code
-    uint8_t p1;     /// Instruction parameter 1
-    uint8_t p2;     /// Instruction parameter 2
-    uint8_t lc;     /// Lenght of command data
-    uint8_t *data;  /// Command data
-} command_t;
-
 /**
  * Enumeration with parsing state.
  */
@@ -59,7 +38,7 @@ typedef enum {
  * Structure for public key context information.
  */
 typedef struct {
-    uint8_t raw_public_key[64];  /// x-coordinate (32), y-coodinate (32)
+    uint8_t raw_public_key[65];  /// format (1), x-coordinate (32), y-coodinate (32)
     uint8_t chain_code[32];      /// for public key derivation
 } pubkey_ctx_t;
 
@@ -87,5 +66,5 @@ typedef struct {
     };
     request_type_e req_type;              /// user request
     uint32_t bip32_path[MAX_BIP32_PATH];  /// BIP32 path
-    uint8_t bip32_path_len;               /// lenght of BIP32 path
+    uint8_t bip32_path_len;               /// length of BIP32 path
 } global_ctx_t;
