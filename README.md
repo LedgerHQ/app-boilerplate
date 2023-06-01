@@ -19,7 +19,7 @@ It will allow you, whether you are developing on macOS, Windows or Linux to quic
 * Open a terminal and clone `app-boilerplate` with `git clone git@github.com:LedgerHQ/app-boilerplate.git`.
 * Open the `app-boilerplate` folder with VSCode.
 * Open the vscode tasks with  `ctrl + shift + b` (`command + shift + b` on a Mac) and run the following actions :
-    * Pull and run the [ledger-app-dev-tools](https://github.com/LedgerHQ/ledger-app-builder/pkgs/container/ledger-app-builder%2Fledger-app-dev-tools) docker image by selecting `Run dev-tools image` (select the task for your platform).
+    * Pull and run the [ledger-app-dev-tools](https://github.com/LedgerHQ/ledger-app-builder/pkgs/container/ledger-app-builder%2Fledger-app-dev-tools) docker image by selecting `Run dev-tools image`.
     * Build the for the device model of your choice with `Build app`.
     * Test your binary on [Speculos](https://github.com/LedgerHQ/speculos) with `Run Speculos`.
 
@@ -151,7 +151,7 @@ To test your app on macOS or Windows, it is recommended to use the [VSCode integ
 
 You can use the following VsCode sequence of tasks (open the menu with `ctrl + shift + b` or `command + shift + b` on a Mac) :
 
-* `Run dev-tools image` and select the task for your platform,
+* `Run dev-tools image`,
 * `Build app` and select a device model.
 
 Then you can choose to execute the functional tests :
