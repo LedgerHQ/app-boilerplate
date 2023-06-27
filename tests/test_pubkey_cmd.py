@@ -36,7 +36,6 @@ def test_get_public_key_confirm_accepted(firmware, backend, navigator, test_name
                 NavInsID.USE_CASE_REVIEW_TAP,
                 NavIns(NavInsID.TOUCH, (200, 335)),
                 NavInsID.USE_CASE_ADDRESS_CONFIRMATION_EXIT_QR,
-                NavInsID.USE_CASE_ADDRESS_CONFIRMATION_TAP,
                 NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CONFIRM,
                 NavInsID.USE_CASE_STATUS_DISMISS
             ]
