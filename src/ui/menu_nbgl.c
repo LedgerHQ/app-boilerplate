@@ -31,7 +31,7 @@ void app_quit(void) {
 }
 
 void ui_menu_main(void) {
-    #define SETTINGS_BUTTON_DISABLED (false)
+ #define SETTINGS_BUTTON_DISABLED (false)
     nbgl_useCaseHome(APPNAME, &C_app_boilerplate_64px, NULL, SETTINGS_BUTTON_DISABLED, ui_menu_about, app_quit);
 }
 
@@ -50,9 +50,9 @@ static bool nav_callback(uint8_t page, nbgl_pageContent_t* content) {
 }
 
 void ui_menu_about() {
-    #define TOTAL_PAGE_NB        (1)
-    #define INIT_PAGE_INDEX      (0)
-    #define DISABLE_SUB_SETTINGS (false)
+#define TOTAL_PAGE_NB        (1)
+#define INIT_PAGE_INDEX      (0)
+#define DISABLE_SUB_SETTINGS (false)
     nbgl_useCaseSettings(APPNAME, INIT_PAGE_INDEX, TOTAL_PAGE_NB, DISABLE_SUB_SETTINGS, ui_menu_main, nav_callback, NULL);
 }
 
