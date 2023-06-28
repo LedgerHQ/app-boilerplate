@@ -41,7 +41,6 @@
 
 static action_validate_cb g_validate_callback;
 static char g_amount[30];
-static char g_bip32_path[60];
 static char g_address[43];
 
 // Validate/Invalidate public key and go back to home
@@ -58,13 +57,6 @@ static void ui_action_validate_transaction(bool choice) {
 
 // Step with icon and text
 UX_STEP_NOCB(ux_display_confirm_addr_step, pn, {&C_icon_eye, "Confirm Address"});
-// Step with title/text for BIP32 path
-UX_STEP_NOCB(ux_display_path_step,
-             bnnn_paging,
-             {
-                 .title = "Path",
-                 .text = g_bip32_path,
-             });
 // Step with title/text for address
 UX_STEP_NOCB(ux_display_address_step,
              bnnn_paging,
@@ -89,15 +81,13 @@ UX_STEP_CB(ux_display_reject_step,
                "Reject",
            });
 
-// FLOW to display address and BIP32 path:
+// FLOW to display address:
 // #1 screen: eye icon + "Confirm Address"
-// #2 screen: display BIP32 Path
-// #3 screen: display address
-// #4 screen: approve button
-// #5 screen: reject button
+// #2 screen: display address
+// #3 screen: approve button
+// #4 screen: reject button
 UX_FLOW(ux_display_pubkey_flow,
         &ux_display_confirm_addr_step,
-        &ux_display_path_step,
         &ux_display_address_step,
         &ux_display_approve_step,
         &ux_display_reject_step);
@@ -108,11 +98,11 @@ int ui_display_address() {
         return io_send_sw(SW_BAD_STATE);
     }
 
-    memset(g_bip32_path, 0, sizeof(g_bip32_path));
+    char bip32_path[60] = {0};
     if (!bip32_path_format(G_context.bip32_path,
                            G_context.bip32_path_len,
-                           g_bip32_path,
-                           sizeof(g_bip32_path))) {
+                           bip32_path,
+                           sizeof(bip32_path))) {
         return io_send_sw(SW_DISPLAY_BIP32_PATH_FAIL);
     }
 

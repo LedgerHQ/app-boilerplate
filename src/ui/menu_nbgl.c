@@ -31,7 +31,13 @@ void app_quit(void) {
 }
 
 void ui_menu_main(void) {
-    nbgl_useCaseHome(APPNAME, &C_app_boilerplate_64px, NULL, false, ui_menu_about, app_quit);
+#define SETTINGS_BUTTON_DISABLED (false)
+    nbgl_useCaseHome(APPNAME,
+                     &C_app_boilerplate_64px,
+                     NULL,
+                     SETTINGS_BUTTON_DISABLED,
+                     ui_menu_about,
+                     app_quit);
 }
 
 // 'About' menu
@@ -49,7 +55,16 @@ static bool nav_callback(uint8_t page, nbgl_pageContent_t* content) {
 }
 
 void ui_menu_about() {
-    nbgl_useCaseSettings(APPNAME, 0, 1, false, ui_menu_main, nav_callback, NULL);
+#define TOTAL_PAGE_NB        (1)
+#define INIT_PAGE_INDEX      (0)
+#define DISABLE_SUB_SETTINGS (false)
+    nbgl_useCaseSettings(APPNAME,
+                         INIT_PAGE_INDEX,
+                         TOTAL_PAGE_NB,
+                         DISABLE_SUB_SETTINGS,
+                         ui_menu_main,
+                         nav_callback,
+                         NULL);
 }
 
 #endif
