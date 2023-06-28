@@ -31,8 +31,13 @@ void app_quit(void) {
 }
 
 void ui_menu_main(void) {
- #define SETTINGS_BUTTON_DISABLED (false)
-    nbgl_useCaseHome(APPNAME, &C_app_boilerplate_64px, NULL, SETTINGS_BUTTON_DISABLED, ui_menu_about, app_quit);
+#define SETTINGS_BUTTON_DISABLED (false)
+    nbgl_useCaseHome(APPNAME,
+                     &C_app_boilerplate_64px,
+                     NULL,
+                     SETTINGS_BUTTON_DISABLED,
+                     ui_menu_about,
+                     app_quit);
 }
 
 // 'About' menu
@@ -53,7 +58,13 @@ void ui_menu_about() {
 #define TOTAL_PAGE_NB        (1)
 #define INIT_PAGE_INDEX      (0)
 #define DISABLE_SUB_SETTINGS (false)
-    nbgl_useCaseSettings(APPNAME, INIT_PAGE_INDEX, TOTAL_PAGE_NB, DISABLE_SUB_SETTINGS, ui_menu_main, nav_callback, NULL);
+    nbgl_useCaseSettings(APPNAME,
+                         INIT_PAGE_INDEX,
+                         TOTAL_PAGE_NB,
+                         DISABLE_SUB_SETTINGS,
+                         ui_menu_main,
+                         nav_callback,
+                         NULL);
 }
 
 #endif
