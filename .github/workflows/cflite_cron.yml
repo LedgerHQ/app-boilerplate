@@ -1,9 +1,38 @@
 name: ClusterFuzzLite cron tasks
 on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main  # Use your actual default branch here.
   schedule:
     - cron: '0 13 * * 6'  # At 01:00 PM, only on Saturday
 permissions: read-all
 jobs:
+  BatchFuzzing:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address, undefined, memory] # Override this with the sanitizers you want.
+    steps:
+    - name: Build Fuzzers (${{ matrix.sanitizer }})
+      id: build
+      uses: google/clusterfuzzlite/actions/build_fuzzers@v1
+      with:
+        language: c # Change this to the language you are fuzzing.
+        sanitizer: ${{ matrix.sanitizer }}
+    - name: Run Fuzzers (${{ matrix.sanitizer }})
+      id: run
+      uses: google/clusterfuzzlite/actions/run_fuzzers@v1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        fuzz-seconds: 300 # 5 minutes
+        mode: 'batch'
+        sanitizer: ${{ matrix.sanitizer }}
+        # Optional but recommended: For storing certain artifacts from fuzzing.
+        # storage-repo: https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/OWNER/STORAGE-REPO-NAME.git
+        # storage-repo-branch: main   # Optional. Defaults to "main"
+        # storage-repo-branch-coverage: gh-pages  # Optional. Defaults to "gh-pages".
   Pruning:
     runs-on: ubuntu-latest
     steps:
@@ -20,9 +49,9 @@ jobs:
         fuzz-seconds: 300 # 5 minutes
         mode: 'prune'
         # Optional but recommended.
-        storage-repo: https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/LedgerHQ/app-boilerplate-fuzz-storage.git
-        storage-repo-branch: main   # Optional. Defaults to "main"
-        storage-repo-branch-coverage: gh-pages  # Optional. Defaults to "gh-pages".
+        # storage-repo: https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/OWNER/STORAGE-REPO-NAME.git
+        # storage-repo-branch: main   # Optional. Defaults to "main"
+        # storage-repo-branch-coverage: gh-pages  # Optional. Defaults to "gh-pages".
   Coverage:
     runs-on: ubuntu-latest
     steps:
@@ -41,7 +70,7 @@ jobs:
         mode: 'coverage'
         sanitizer: 'coverage'
         # Optional but recommended.
-        storage-repo: https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/LedgerHQ/app-boilerplate-fuzz-storage.git
-        storage-repo-branch: main   # Optional. Defaults to "main"
-        storage-repo-branch-coverage: gh-pages  # Optional. Defaults to "gh-pages".
+        # storage-repo: https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/OWNER/STORAGE-REPO-NAME.git
+        # storage-repo-branch: main   # Optional. Defaults to "main"
+        # storage-repo-branch-coverage: gh-pages  # Optional. Defaults to "gh-pages".
 
