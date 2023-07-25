@@ -6,7 +6,7 @@ This is a boilerplate application which can be forked to start a new project for
 
 ### With VSCode
 
-You can quickly setup a convenient environment to build and test your application by using the vscode integration and the [ledger-app-dev-tools](https://github.com/LedgerHQ/ledger-app-builder/pkgs/container/ledger-app-builder%2Fledger-app-dev-tools) docker image.
+You can quickly setup a convenient environment to build and test your application by using [Ledger's VSCode developer tools extension](https://marketplace.visualstudio.com/items?itemName=LedgerHQ.ledger-dev-tools) which leverages the [ledger-app-dev-tools](https://github.com/LedgerHQ/ledger-app-builder/pkgs/container/ledger-app-builder%2Fledger-app-dev-tools) docker image.
 
 It will allow you, whether you are developing on macOS, Windows or Linux to quickly **build** your apps, **test** them on **Speculos** and **load** them on any supported device.
 
@@ -15,23 +15,15 @@ It will allow you, whether you are developing on macOS, Windows or Linux to quic
     * On Ubuntu Linux, it should be running by default.
     * On macOS, install and launch [XQuartz](https://www.xquartz.org/) (make sure to go to XQuartz > Preferences > Security and check "Allow client connections").
     * On Windows, install and launch [VcXsrv](https://sourceforge.net/projects/vcxsrv/) (make sure to configure it to disable access control).
-* Install [VScode](https://code.visualstudio.com/download)
+* Install [VScode](https://code.visualstudio.com/download) and add [Ledger's extension](https://marketplace.visualstudio.com/items?itemName=LedgerHQ.ledger-dev-tools).
 * Open a terminal and clone `app-boilerplate` with `git clone git@github.com:LedgerHQ/app-boilerplate.git`.
 * Open the `app-boilerplate` folder with VSCode.
-* Open the vscode tasks with  `ctrl + shift + b` (`command + shift + b` on a Mac) and run the following actions :
-    * Pull and run the [ledger-app-dev-tools](https://github.com/LedgerHQ/ledger-app-builder/pkgs/container/ledger-app-builder%2Fledger-app-dev-tools) docker image by selecting `Run dev-tools image`.
-    * Build the for the device model of your choice with `Build app`.
-    * Test your binary on [Speculos](https://github.com/LedgerHQ/speculos) with `Run Speculos`.
+* Use Ledger extension's sidebar menu or open the tasks menu with `ctrl + shift + b` (`command + shift + b` on a Mac) to conveniently execute actions :
+    * Build the app for the device model of your choice with `Build`.
+    * Test your binary on [Speculos](https://github.com/LedgerHQ/speculos) with `Run with Speculos`.
+    * You can also run functional tests, load the app on a physical device, and more.
 
-:information_source: The VsCode tasks also allow you to perform the following actions :
-
-* Install functional tests Python requirements (mandatory before executing functional tests),
-* [Execute functional tests](#test),
-* Open a terminal in your docker container,
-* Clean build files,
-* Load the app on a physical device.
-
-You can find all the available tasks definitions in `.vscode/tasks.json`.
+:information_source: The terminal tab of VSCode will show you what commands the extension runs behind the scene.
 
 ### With a terminal
 
@@ -147,25 +139,24 @@ The boilerplate app comes with functional tests implemented with Ledger's [Ragge
 
 ### macOS / Windows
 
-To test your app on macOS or Windows, it is recommended to use the [VSCode integration](#with-vscode) to quickly setup a working test environment.
+To test your app on macOS or Windows, it is recommended to use [Ledger's VS Code extension](#with-vscode) to quickly setup a working test environment.
 
-You can use the following VsCode sequence of tasks (open the menu with `ctrl + shift + b` or `command + shift + b` on a Mac) :
+You can use the following sequence of tasks and commands (all accessible in the **extension sidebar menu**) :
 
-* `Run dev-tools image`,
-* `Build app` and select a device model.
+* `Select build target`
+* `Build app`
 
 Then you can choose to execute the functional tests :
 
-* `Install tests requirements` to be executed once after you have run the dev-tools image, followed by,
-* `Run functional tests` and select the model you just built the app for.
+* Use `Run tests`.
 
 Or simply run the app on the Speculos emulator :
 
-* `Test app with Speculos` and select the correct device model.
+* `Run with Speculos`.
 
 ### Linux (Ubuntu)
 
-On Linux, you can use the [VSCode integration](#with-vscode) to run the tests. If you prefer not to, open a terminal and follow the steps below.
+On Linux, you can use [Ledger's VS Code extension](#with-vscode) to run the tests. If you prefer not to, open a terminal and follow the steps below.
 
 Install the tests requirements :
 
