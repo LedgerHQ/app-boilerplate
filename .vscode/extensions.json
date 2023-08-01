@@ -1,5 +1,6 @@
 {
 	"recommendations": [
         "ms-vscode.cpptools",
+        "LedgerHQ.ledger-dev-tools",
 	]
 }
