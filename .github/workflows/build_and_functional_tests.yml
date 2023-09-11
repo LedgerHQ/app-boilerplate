@@ -20,7 +20,7 @@ on:
 jobs:
   build_application:
     name: Build application using the reusable workflow
-    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@v1
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@xch/rust-ci
     with:
       upload_app_binaries_artifact: "compiled_app_binaries"
 
