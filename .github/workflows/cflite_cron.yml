@@ -20,6 +20,7 @@ jobs:
       uses: google/clusterfuzzlite/actions/build_fuzzers@v1
       with:
         language: c # Change this to the language you are fuzzing.
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         sanitizer: ${{ matrix.sanitizer }}
     - name: Run Fuzzers (${{ matrix.sanitizer }})
       id: run
