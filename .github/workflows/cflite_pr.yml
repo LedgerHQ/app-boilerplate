@@ -35,6 +35,7 @@ jobs:
         fuzz-seconds: 300 # 5 minutes
         mode: 'code-change'
         sanitizer: ${{ matrix.sanitizer }}
+        output-sarif: true
         # Optional but recommended: used to download the corpus produced by
         # batch fuzzing.
         # storage-repo: https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/OWNER/STORAGE-REPO-NAME.git
