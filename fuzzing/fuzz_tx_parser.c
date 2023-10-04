@@ -3,15 +3,12 @@
 #include <string.h>
 #include <sys/types.h>
 
-extern "C" {
-#include "common/buffer.h"
-#include "common/format.h"
 #include "transaction/deserialize.h"
 #include "transaction/utils.h"
 #include "transaction/types.h"
-}
+#include "format.h"
 
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
+int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     buffer_t buf = {.ptr = data, .size = size, .offset = 0};
     transaction_t tx;
     parser_status_e status;
