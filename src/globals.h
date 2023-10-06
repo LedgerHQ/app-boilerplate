@@ -27,3 +27,15 @@ extern bolos_ux_params_t G_ux_params;
  * Global context for user requests.
  */
 extern global_ctx_t G_context;
+
+/**
+ * Global structure for NVM data storage.
+ */
+typedef struct internalStorage_t {
+    uint8_t dummy1Allowed;
+    uint8_t dummy2Allowed;
+    uint8_t initialized;
+} internalStorage_t;
+
+extern const internalStorage_t N_storage_real;
+#define N_storage (*( volatile internalStorage_t *)PIC(&N_storage_real))

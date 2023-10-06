@@ -30,6 +30,8 @@
 
 global_ctx_t G_context;
 
+const internalStorage_t N_storage_real;
+
 /**
  * Handle APDU command received and send back APDU response using handlers.
  */
@@ -45,6 +47,15 @@ void app_main() {
 
     // Reset context
     explicit_bzero(&G_context, sizeof(G_context));
+
+    // Initialize the NVM data if required
+    if (N_storage.initialized != 0x01) {
+        internalStorage_t storage;
+        storage.dummy1Allowed = 0x00;
+        storage.dummy2Allowed = 0x00;
+        storage.initialized = 0x01;
+        nvm_write((void *)&N_storage, &storage, sizeof(internalStorage_t));
+    }
 
     for (;;) {
         // Receive command bytes in G_io_apdu_buffer
