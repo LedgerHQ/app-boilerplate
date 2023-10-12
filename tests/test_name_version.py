@@ -12,4 +12,4 @@ def test_get_app_and_version(backend, backend_name):
     app_name, version = unpack_get_app_and_version_response(response.data)
 
     assert app_name == "Boilerplate"
-    assert version == "2.0.0"
+    assert version == "2.1.0"

@@ -1,4 +1,4 @@
-from ragger.navigator import NavInsID
+from ragger.navigator import NavInsID, NavIns
 
 from utils import ROOT_SCREENSHOT_PATH
 
@@ -14,8 +14,16 @@ def test_app_mainmenu(firmware, navigator, test_name):
         ]
     else:
         instructions = [
-            NavInsID.USE_CASE_HOME_INFO,
-            NavInsID.USE_CASE_SETTINGS_SINGLE_PAGE_EXIT
+            NavInsID.USE_CASE_HOME_SETTINGS,
+            NavInsID.USE_CASE_SETTINGS_NEXT,
+            NavIns(NavInsID.TOUCH, (200, 113)),
+            NavIns(NavInsID.TOUCH, (200, 261)),
+            NavInsID.USE_CASE_CHOICE_CONFIRM,
+            NavInsID.USE_CASE_SETTINGS_NEXT,
+            NavIns(NavInsID.TOUCH, (200, 261)),
+            NavIns(NavInsID.TOUCH, (200, 261)),
+            NavInsID.USE_CASE_CHOICE_REJECT,
+            NavInsID.USE_CASE_SETTINGS_MULTI_PAGE_EXIT
         ]
     navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name, instructions,
                                    screen_change_before_first_instruction=False)
