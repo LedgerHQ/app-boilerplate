@@ -97,15 +97,6 @@ int ui_display_address() {
         G_context.state = STATE_NONE;
         return io_send_sw(SW_BAD_STATE);
     }
-
-    char bip32_path[60] = {0};
-    if (!bip32_path_format(G_context.bip32_path,
-                           G_context.bip32_path_len,
-                           bip32_path,
-                           sizeof(bip32_path))) {
-        return io_send_sw(SW_DISPLAY_BIP32_PATH_FAIL);
-    }
-
     memset(g_address, 0, sizeof(g_address));
     uint8_t address[ADDRESS_LEN] = {0};
     if (!address_from_pubkey(G_context.pk_info.raw_public_key, address, sizeof(address))) {
