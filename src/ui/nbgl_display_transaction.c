@@ -17,9 +17,6 @@
 
 #ifdef HAVE_NBGL
 
-#pragma GCC diagnostic ignored "-Wformat-invalid-specifier"  // snprintf
-#pragma GCC diagnostic ignored "-Wformat-extra-args"         // snprintf
-
 #include <stdbool.h>  // bool
 #include <string.h>   // memset
 
@@ -116,7 +113,11 @@ int ui_display_transaction() {
     }
     snprintf(g_amount, sizeof(g_amount), "BOL %.*s", sizeof(amount), amount);
     memset(g_address, 0, sizeof(g_address));
-    snprintf(g_address, sizeof(g_address), "0x%.*H", ADDRESS_LEN, G_context.tx_info.transaction.to);
+
+    if (format_hex(G_context.tx_info.transaction.to, ADDRESS_LEN, g_address, sizeof(g_address)) ==
+        -1) {
+        return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
+    }
 
     // Start review
     nbgl_useCaseReviewStart(&C_app_boilerplate_64px,

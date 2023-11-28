@@ -17,9 +17,6 @@
 
 #ifdef HAVE_BAGL
 
-#pragma GCC diagnostic ignored "-Wformat-invalid-specifier"  // snprintf
-#pragma GCC diagnostic ignored "-Wformat-extra-args"         // snprintf
-
 #include <stdbool.h>  // bool
 #include <string.h>   // memset
 
@@ -102,7 +99,10 @@ int ui_display_address() {
     if (!address_from_pubkey(G_context.pk_info.raw_public_key, address, sizeof(address))) {
         return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
     }
-    snprintf(g_address, sizeof(g_address), "0x%.*H", sizeof(address), address);
+
+    if (format_hex(address, sizeof(address), g_address, sizeof(g_address)) == -1) {
+        return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
+    }
 
     g_validate_callback = &ui_action_validate_pubkey;
 
@@ -157,7 +157,11 @@ int ui_display_transaction() {
     PRINTF("Amount: %s\n", g_amount);
 
     memset(g_address, 0, sizeof(g_address));
-    snprintf(g_address, sizeof(g_address), "0x%.*H", ADDRESS_LEN, G_context.tx_info.transaction.to);
+
+    if (format_hex(G_context.tx_info.transaction.to, ADDRESS_LEN, g_address, sizeof(g_address)) ==
+        -1) {
+        return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
+    }
 
     g_validate_callback = &ui_action_validate_transaction;
 
