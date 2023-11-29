@@ -17,9 +17,6 @@
 
 #ifdef HAVE_NBGL
 
-#pragma GCC diagnostic ignored "-Wformat-invalid-specifier"  // snprintf
-#pragma GCC diagnostic ignored "-Wformat-extra-args"         // snprintf
-
 #include <stdbool.h>  // bool
 #include <string.h>   // memset
 
@@ -75,7 +72,10 @@ int ui_display_address() {
     if (!address_from_pubkey(G_context.pk_info.raw_public_key, address, sizeof(address))) {
         return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
     }
-    snprintf(g_address, sizeof(g_address), "0x%.*H", sizeof(address), address);
+
+    if (format_hex(address, sizeof(address), g_address, sizeof(g_address)) == -1) {
+        return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
+    }
 
     nbgl_useCaseReviewStart(&C_app_boilerplate_64px,
                             "Verify BOL address",
