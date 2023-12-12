@@ -25,8 +25,18 @@
 
 #include "serialize.h"
 
+#if defined(TEST) || defined(FUZZ)
+#include "assert.h"
+#define LEDGER_ASSERT(x, y) assert(x)
+#else
+#include "ledger_assert.h"
+#endif
+
 int transaction_serialize(const transaction_t *tx, uint8_t *out, size_t out_len) {
     size_t offset = 0;
+
+    LEDGER_ASSERT(tx != NULL, "NULL tx");
+    LEDGER_ASSERT(out != NULL, "NULL out");
 
     if (8 + ADDRESS_LEN + 8 + varint_size(tx->memo_len) + tx->memo_len > out_len) {
         return -1;

@@ -20,7 +20,17 @@
 #include "utils.h"
 #include "types.h"
 
+#if defined(TEST) || defined(FUZZ)
+#include "assert.h"
+#define LEDGER_ASSERT(x, y) assert(x)
+#else
+#include "ledger_assert.h"
+#endif
+
 parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
+    LEDGER_ASSERT(buf != NULL, "NULL buf");
+    LEDGER_ASSERT(tx != NULL, "NULL tx");
+
     if (buf->size > MAX_TX_LEN) {
         return WRONG_LENGTH_ERROR;
     }

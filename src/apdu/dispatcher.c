@@ -20,6 +20,7 @@
 
 #include "buffer.h"
 #include "io.h"
+#include "ledger_assert.h"
 
 #include "dispatcher.h"
 #include "../constants.h"
@@ -32,6 +33,8 @@
 #include "../handler/sign_tx.h"
 
 int apdu_dispatcher(const command_t *cmd) {
+    LEDGER_ASSERT(cmd != NULL, "NULL cmd");
+
     if (cmd->cla != CLA) {
         return io_send_sw(SW_CLA_NOT_SUPPORTED);
     }
