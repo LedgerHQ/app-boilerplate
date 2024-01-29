@@ -22,29 +22,20 @@
 
 #include "os.h"
 #include "glyphs.h"
+#include "nbgl_use_case.h"
 #include "nbgl_sync.h"
-#include "io.h"
-#include "bip32.h"
 #include "format.h"
 
-#include "display.h"
 #include "constants.h"
-#include "../globals.h"
-#include "../sw.h"
-#include "../address.h"
-#include "action/validate.h"
-#include "../transaction/types.h"
-#include "../menu.h"
+#include "display.h"
+#include "address.h"
+#include "menu.h"
 
 // Public function to start the transaction review
 // - Check if the app is in the right state for transaction review
 // - Format the amount and address strings in amount_str and address_str buffers
 // - Display the first screen of the transaction review
-int ui_display_transaction() {
-    if (G_context.req_type != CONFIRM_TRANSACTION || G_context.state != STATE_PARSED) {
-        G_context.state = STATE_NONE;
-        return io_send_sw(SW_BAD_STATE);
-    }
+ui_ret_e ui_display_transaction(const transaction_t *transaction) {
 
     // Buffer where the transaction amount string is written
     char amount_str[30] = {0};
@@ -55,15 +46,15 @@ int ui_display_transaction() {
     char amount_bin[30] = {0};
     if (!format_fpu64(amount_bin,
                       sizeof(amount_bin),
-                      G_context.tx_info.transaction.value,
+                      transaction->value,
                       EXPONENT_SMALLEST_UNIT)) {
-        return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+        return UI_RET_FAILURE;
     }
     snprintf(amount_str, sizeof(amount_str), "BOL %.*s", sizeof(amount_bin), amount_bin);
 
-    if (format_hex(G_context.tx_info.transaction.to, ADDRESS_LEN, address_str, sizeof(address_str)) ==
+    if (format_hex(transaction->to, ADDRESS_LEN, address_str, sizeof(address_str)) ==
         -1) {
-        return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
+        return UI_RET_FAILURE;
     }
 
     nbgl_layoutTagValue_t pairs[2] = {0};
@@ -89,24 +80,29 @@ int ui_display_transaction() {
         "Sign transaction\nto send BOL");
 
     if (ret == NBGL_SYNC_RET_SUCCESS) {
-        // display a status page and go back to main
-        validate_transaction(true);
-        sync_nbgl_useCaseStatus("TRANSACTION\nSIGNED", true);
+        return UI_RET_APPROVED;
     } else if (ret == NBGL_SYNC_RET_REJECTED) {
-        // display a status page and go back to main
-        validate_transaction(false);
-        sync_nbgl_useCaseStatus("Transaction rejected", false);
+        return UI_RET_REJECTED;
     } else {
-        io_send_sw(SW_BAD_STATE);
-        sync_nbgl_useCaseStatus("Transaction issue", false);
+        return UI_RET_FAILURE;
     }
+}
 
-    // Here we used sync version of nbgl_useCaseStatus
+void ui_display_transaction_status(ui_ret_e ret) {
+    // Here we use sync version of nbgl_useCaseStatus
     // This means that upon reception of any APDU during
     // sync_nbgl_useCaseStatus, we will stop the status display even if the
     // received APDU doesn't need an UX flow to be answered.
+
+    if (ret == UI_RET_APPROVED) {
+        sync_nbgl_useCaseStatus("TRANSACTION\nSIGNED", true);
+    } else if (ret == UI_RET_REJECTED) {
+        sync_nbgl_useCaseStatus("Transaction rejected", false);
+    } else {
+        sync_nbgl_useCaseStatus("Transaction issue", false);
+    }
+
     ui_menu_main();
-    return 0;
 }
 
 #endif
