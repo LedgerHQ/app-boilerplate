@@ -25,38 +25,65 @@
 #include "io.h"
 #include "buffer.h"
 #include "crypto_helpers.h"
+#include "bip32.h"
 
 #include "get_public_key.h"
-#include "../globals.h"
-#include "../types.h"
-#include "../sw.h"
-#include "../ui/display.h"
-#include "../helper/send_response.h"
+#include "sw.h"
+#include "ui/display.h"
+
+static void send_response_pubkey(const uint8_t raw_public_key[static PUBKEY_LEN], const uint8_t chain_code[static CHAINCODE_LEN]) {
+    uint8_t pubkey_len[1] = {PUBKEY_LEN};
+    uint8_t chain_code_len[1] = {CHAINCODE_LEN};
+
+    buffer_t buffers[4] = {
+        {.ptr = pubkey_len, .size = sizeof(pubkey_len), .offset = 0},
+        {.ptr = raw_public_key, .size = PUBKEY_LEN, .offset = 0},
+        {.ptr = chain_code_len, .size = sizeof(chain_code_len), .offset = 0},
+        {.ptr = chain_code, .size = CHAINCODE_LEN, .offset = 0},
+    };
+
+    io_send_response_buffers(buffers, 4, SW_OK);
+}
 
 int handler_get_public_key(buffer_t *cdata, bool display) {
-    explicit_bzero(&G_context, sizeof(G_context));
-    G_context.req_type = CONFIRM_ADDRESS;
-    G_context.state = STATE_NONE;
-
-    if (!buffer_read_u8(cdata, &G_context.bip32_path_len) ||
-        !buffer_read_bip32_path(cdata, G_context.bip32_path, (size_t) G_context.bip32_path_len)) {
+    uint8_t bip32_path_len;
+    uint32_t bip32_path[MAX_BIP32_PATH] = {0};
+    if (!buffer_read_u8(cdata, &bip32_path_len) ||
+        !buffer_read_bip32_path(cdata, bip32_path, (size_t) bip32_path_len)) {
         return io_send_sw(SW_WRONG_DATA_LENGTH);
     }
 
+
+    uint8_t raw_public_key[PUBKEY_LEN] = {0};
+    uint8_t chain_code[CHAINCODE_LEN] = {0};
     cx_err_t error = bip32_derive_get_pubkey_256(CX_CURVE_256K1,
-                                                 G_context.bip32_path,
-                                                 G_context.bip32_path_len,
-                                                 G_context.pk_info.raw_public_key,
-                                                 G_context.pk_info.chain_code,
+                                                 bip32_path,
+                                                 bip32_path_len,
+                                                 raw_public_key,
+                                                 chain_code,
                                                  CX_SHA512);
 
     if (error != CX_OK) {
         return io_send_sw(error);
     }
 
+    ui_ret_e ret = UI_RET_APPROVED;
     if (display) {
-        return ui_display_address();
+        ret = ui_display_address(raw_public_key);
     }
 
-    return helper_send_response_pubkey();
+    if (ret == UI_RET_APPROVED) {
+        send_response_pubkey(raw_public_key, chain_code);
+    } else if (ret == UI_RET_REJECTED) {
+        io_send_sw(SW_DENY);
+    } else {
+        io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
+    }
+
+
+    if (display) {
+        ui_display_address_status(ret);
+    }
+
+    return 0;
 }

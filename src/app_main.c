@@ -21,14 +21,11 @@
 #include "os.h"
 #include "ux.h"
 
-#include "types.h"
 #include "globals.h"
 #include "io.h"
 #include "sw.h"
 #include "ui/menu.h"
 #include "apdu/dispatcher.h"
-
-global_ctx_t G_context;
 
 const internal_storage_t N_storage_real;
 
@@ -44,9 +41,6 @@ void app_main() {
     io_init();
 
     ui_menu_main();
-
-    // Reset context
-    explicit_bzero(&G_context, sizeof(G_context));
 
     // Initialize the NVM data if required
     if (N_storage.initialized != 0x01) {
