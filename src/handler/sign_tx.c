@@ -146,7 +146,7 @@ static cx_err_t crypto_sign_message(const uint32_t *bip32_path,
         return error;
     }
 
-    PRINTF("Signature: %.*H\n", sig_len, G_context.tx_info.signature);
+    PRINTF("Signature: %.*H\n", sig_len, signature);
 
     *signature_len = sig_len;
     *v = (uint8_t)(info & CX_ECCINFO_PARITY_ODD);
