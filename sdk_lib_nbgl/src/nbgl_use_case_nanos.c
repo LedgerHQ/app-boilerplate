@@ -82,8 +82,11 @@ static UseCaseContext_t context;
 /**********************
  *  STATIC FUNCTIONS
  **********************/
-
+#ifndef TARGET_NANOS
 static void buttonCallback(nbgl_step_t stepCtx, nbgl_buttonEvent_t event);
+#else
+static void buttonCallback(nbgl_buttonEvent_t event);
+#endif
 static void displayReviewPage(nbgl_stepPosition_t pos);
 static void displayHomePage(nbgl_stepPosition_t pos);
 
@@ -120,6 +123,7 @@ static void drawStep(nbgl_stepPosition_t        pos,
         pos |= GET_POS_OF_STEP(context.currentPage, context.nbPages);
     }
 
+#ifndef TARGET_NANOS
     if (icon == NULL) {
         context.stepCtx
             = nbgl_stepDrawText(pos, buttonCallback, NULL, txt, subTxt, BOLD_TEXT1_INFO, false);
@@ -133,13 +137,22 @@ static void drawStep(nbgl_stepPosition_t        pos,
         info.style      = BOLD_TEXT1_INFO;
         context.stepCtx = nbgl_stepDrawCenteredInfo(pos, buttonCallback, NULL, &info, false);
     }
+#else
+    nbgl_screenDraw(pos, buttonCallback, NULL, txt, subTxt, icon, true, true, true);
+#endif
 }
 
+#ifndef TARGET_NANOS
 static void buttonCallback(nbgl_step_t stepCtx, nbgl_buttonEvent_t event)
+#else
+static void buttonCallback(nbgl_buttonEvent_t event)
+#endif
 {
     nbgl_stepPosition_t pos;
 
+#ifndef TARGET_NANOS
     UNUSED(stepCtx);
+#endif
     // create text_area for main text
     if (event == BUTTON_LEFT_PRESSED) {
         if (context.currentPage > 0) {
@@ -306,7 +319,7 @@ void nbgl_useCaseHome(const char                *appName,
     context.home.quitCallback  = quitCallback;
 
     if (tagline == NULL) {
-        snprintf(appDescription, APP_DESCRIPTION_MAX_LEN, "%s\nis ready", appName);
+        snprintf(appDescription, APP_DESCRIPTION_MAX_LEN, "%s", appName);
         context.home.tagline = appDescription;
     }
     else {
@@ -503,7 +516,18 @@ void nbgl_useCaseSpinner(const char *text)
     // pageContext = nbgl_pageDrawSpinner(NULL, (const char*)text);
     UNUSED(text);
     nbgl_refresh();
+    // TODO
 }
+
+void nbgl_useCaseStatus(const char *message, bool isSuccess, nbgl_callback_t quitCallback)
+{
+    UNUSED(message);
+    UNUSED(isSuccess);
+    UNUSED(quitCallback);
+    quitCallback();
+    // TODO
+}
+
 
 #endif  // HAVE_SE_TOUCH
 #endif  // NBGL_USE_CASE

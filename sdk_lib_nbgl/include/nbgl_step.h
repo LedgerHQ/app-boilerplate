@@ -84,7 +84,7 @@ typedef uint8_t nbgl_stepPosition_t;
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-
+#ifndef TARGET_NANOS
 nbgl_step_t nbgl_stepDrawText(nbgl_stepPosition_t               pos,
                               nbgl_stepButtonCallback_t         onActionCallback,
                               nbgl_screenTickerConfiguration_t *ticker,
@@ -103,7 +103,17 @@ nbgl_step_t nbgl_stepDrawMenuList(nbgl_stepMenuListCallback_t       onActionCall
                                   bool                              modal);
 uint8_t     nbgl_stepGetMenuListCurrent(nbgl_step_t step);
 int         nbgl_stepRelease(nbgl_step_t step);
-
+#else
+void nbgl_screenDraw(nbgl_stepPosition_t               pos,
+                     nbgl_stepButtonCallback_t         onActionCallback,
+                     nbgl_screenTickerConfiguration_t *ticker,
+                     const char                       *text,
+                     const char                       *subText,
+                     const nbgl_icon_details_t        *icon, // TODO change for bagl_icon_details_t
+                     bool                              centered,
+                     bool                              text_bold,
+                     bool                              horizontal_nav);
+#endif
 /**********************
  *      MACROS
  **********************/

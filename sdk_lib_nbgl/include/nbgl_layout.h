@@ -61,7 +61,11 @@ typedef void (*nbgl_layoutTouchCallback_t)(int token, uint8_t index);
  * @param layout layout concerned by the event
  * @param event type of button event
  */
+#ifndef TARGET_NANOS
 typedef void (*nbgl_layoutButtonCallback_t)(nbgl_layout_t *layout, nbgl_buttonEvent_t event);
+#else
+typedef void (*nbgl_layoutButtonCallback_t)(nbgl_buttonEvent_t event);
+#endif
 
 /**
  * @brief This structure contains info to build a navigation bar at the bottom of the screen
@@ -392,6 +396,7 @@ typedef struct {
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
+#ifndef TARGET_NANOS
 nbgl_layout_t *nbgl_layoutGet(const nbgl_layoutDescription_t *description);
 int nbgl_layoutAddCenteredInfo(nbgl_layout_t *layout, const nbgl_layoutCenteredInfo_t *info);
 int nbgl_layoutAddProgressBar(nbgl_layout_t *layout, const nbgl_layoutProgressBar_t *barLayout);
@@ -525,7 +530,19 @@ int nbgl_layoutUpdateHiddenDigits(nbgl_layout_t *layout, uint8_t index, uint8_t 
 /* generic functions */
 int nbgl_layoutDraw(nbgl_layout_t *layout);
 int nbgl_layoutRelease(nbgl_layout_t *layout);
-
+#else // TARGET_NANOS
+void nbgl_screenHandler(uint32_t intervaleMs);
+void nbgl_refresh(void);
+void nbgl_layoutGet(const nbgl_layoutDescription_t *description);
+void nbgl_layoutAddNavigation(nbgl_layoutNavigation_t *info);
+void nbgl_layoutAddText(const char *text,
+                        int         line,
+                        bool        bold,
+                        bool        centered);
+void nbgl_layoutAddCenteredInfo(const nbgl_layoutCenteredInfo_t *info);
+void nbgl_layoutDraw(void);
+void nbgl_layoutRelease(void);
+#endif
 /**********************
  *      MACROS
  **********************/

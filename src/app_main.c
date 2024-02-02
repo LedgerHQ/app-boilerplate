@@ -40,6 +40,15 @@ void app_main() {
 
     io_init();
 
+    //for (int i = 0; i < 3; i++) {
+    //    // - Looping on os_io_seph_recv_and_process(0);
+    //    // - This will send a general_status and then wait for an event.
+    //    // - Upon event reception this will call io_seproxyhal_handle_event()
+    //    //   - On some case this will call io_event() which usually forward the
+    //    //     event to the UX lib.
+    //    os_io_seph_recv_and_process(0);
+    //}
+
     ui_menu_main();
 
     // Initialize the NVM data if required

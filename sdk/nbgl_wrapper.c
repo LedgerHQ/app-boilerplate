@@ -5,7 +5,7 @@
 #include "os.h"
 #include "glyphs.h"
 
-
+#ifndef TARGET_NANOS
 static nbgl_pageInfoLongPress_t infoLongPress;
 
 static const nbgl_layoutTagValueList_t *review_tagValueList;
@@ -46,6 +46,7 @@ static void tx_review_continue(void) {
 
     nbgl_useCaseStaticReview(review_tagValueList, &infoLongPress, "Reject transaction", tx_review_choice);
 }
+#endif
 
 void nbgl_useCaseTransactionReview(
     const nbgl_layoutTagValueList_t *tagValueList,
@@ -55,6 +56,7 @@ void nbgl_useCaseTransactionReview(
     const char *finish_page_text, /*unused on Nano*/
     nbgl_choiceCallback_t choice_callback)
 {
+#ifndef TARGET_NANOS
     review_tagValueList = tagValueList;
     review_icon = icon;
     review_finish_page_text = finish_page_text;
@@ -66,8 +68,15 @@ void nbgl_useCaseTransactionReview(
                             "Reject transaction",
                             tx_review_continue,
                             tx_ask_transaction_rejection_confirmation);
+#else
+    UNUSED(reviewSubTitle);
+    UNUSED(finish_page_text);
+    nbgl_useCaseStaticReview(tagValueList, icon, reviewTitle, "Approve", "Reject", choice_callback);
+#endif
+
 }
 
+#ifndef TARGET_NANOS
 static void addr_review_continue(void) {
     nbgl_useCaseAddressConfirmation(review_address, review_choice_callback);
 }
@@ -75,6 +84,7 @@ static void addr_review_continue(void) {
 static void addr_review_rejection(void) {
     review_choice_callback(false);
 }
+#endif
 
 void nbgl_useCaseAddressReview(
     const char *address,
@@ -83,6 +93,7 @@ void nbgl_useCaseAddressReview(
     const char *reviewSubTitle,
     nbgl_choiceCallback_t choice_callback)
 {
+#ifndef TARGET_NANOS
     review_address = address;
     review_choice_callback = choice_callback;
 
@@ -92,4 +103,8 @@ void nbgl_useCaseAddressReview(
                             "Cancel",
                             addr_review_continue,
                             addr_review_rejection);
+#else
+    UNUSED(reviewSubTitle);
+    nbgl_useCaseAddressConfirmation(icon, reviewTitle, address, choice_callback);
+#endif
 }

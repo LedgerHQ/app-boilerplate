@@ -3,7 +3,7 @@
  * @brief Implementation of predefined pages management for Applications
  */
 
-#ifdef NBGL_STEP
+#ifdef NBGL_STEP2
 /*********************
  *      INCLUDES
  *********************/
@@ -21,7 +21,13 @@
 #define TMP_STRING_MAX_LEN 24
 
 ///< Maximum number of layers for steps, cannot be greater than max number of layout layers
+#ifdef TARGET_NANOS
+#undef NB_MAX_LINES
+#define NB_MAX_LINES 2
+#define NB_MAX_LAYERS 1
+#else
 #define NB_MAX_LAYERS 3
+#endif
 
 /**********************
  *      TYPEDEFS
@@ -83,14 +89,22 @@ static StepContext_t contexts[NB_MAX_LAYERS];
  *  STATIC PROTOTYPES
  **********************/
 
+#ifdef TARGET_NANOS
+static void actionCallback(nbgl_buttonEvent_t event);
+static void menuListActionCallback(nbgl_buttonEvent_t event);
+#else
 static void actionCallback(nbgl_layout_t *layout, nbgl_buttonEvent_t event);
 static void menuListActionCallback(nbgl_layout_t *layout, nbgl_buttonEvent_t event);
+#endif
 
 // returns a non-used step context from the contexts[] array, or NULL if not found
 static StepContext_t *getFreeContext(StepStype_t type, bool modal)
 {
     StepContext_t *ctx = NULL;
 
+#ifdef TARGET_NANOS
+    ctx = &contexts[0];
+#else
     if (!modal) {
         // Index 0 is reserved for background
         ctx = &contexts[0];
@@ -105,6 +119,7 @@ static StepContext_t *getFreeContext(StepStype_t type, bool modal)
             i++;
         }
     }
+#endif
     if (ctx == NULL) {
         LOG_FATAL(STEP_LOGGER, "getFreeContext(): no available context\n");
     }
@@ -116,6 +131,7 @@ static StepContext_t *getFreeContext(StepStype_t type, bool modal)
     return ctx;
 }
 
+#ifndef TARGET_NANOS
 // returns the step context from the contexts[] array matching with the given layout handler, or
 // NULL if not found
 static StepContext_t *getContextFromLayout(nbgl_layout_t layout)
@@ -134,6 +150,7 @@ static StepContext_t *getContextFromLayout(nbgl_layout_t layout)
     }
     return ctx;
 }
+#endif
 
 // from the current details context, return a pointer on the details at the given page
 static const char *getTextPageAt(StepContext_t *ctx, uint8_t textPage)
@@ -247,10 +264,12 @@ static void displayTextPage(StepContext_t *ctx, uint8_t textPage)
     layoutDescription.ticker.tickerCallback  = ctx->ticker.tickerCallback;
     layoutDescription.ticker.tickerIntervale = ctx->ticker.tickerIntervale;
     layoutDescription.ticker.tickerValue     = ctx->ticker.tickerValue;
-    ctx->layout                              = nbgl_layoutGet(&layoutDescription);
 
     navInfo.indication = getNavigationInfo(
         ctx->textContext.pos, ctx->textContext.nbPages, ctx->textContext.currentPage);
+
+#ifndef TARGET_NANOS
+    ctx->layout = nbgl_layoutGet(&layoutDescription);
 
     if (ctx->textContext.subTxtStart == NULL) {
         nbgl_layoutAddText(ctx->layout, txt, NULL, ctx->textContext.style);
@@ -270,16 +289,54 @@ static void displayTextPage(StepContext_t *ctx, uint8_t textPage)
         }
     }
     if (navInfo.indication != NO_ARROWS) {
-        nbgl_layoutAddNavigation(ctx->layout, &navInfo);
+        nbgl_layoutAddNavigation(&navInfo);
     }
     nbgl_layoutDraw(ctx->layout);
     nbgl_refresh();
+#else
+    nbgl_layoutGet(&layoutDescription);
+
+    if (ctx->textContext.subTxtStart == NULL) {
+        // TODO handle multiples lines
+        nbgl_layoutAddText(txt, 1, ctx->textContext.style == BOLD_TEXT1_INFO, true);
+    }
+    else {
+        if (ctx->textContext.nbPages == 1) {
+            nbgl_layoutAddText(ctx->textContext.txtStart, 1, ctx->textContext.style == BOLD_TEXT1_INFO, true);
+            nbgl_layoutAddText(txt, 1, ctx->textContext.style == BOLD_TEXT1_INFO, true);
+        }
+        else {
+            SPRINTF(ctx->textContext.tmpString,
+                    "%s (%d/%d)",
+                    ctx->textContext.txtStart,
+                    ctx->textContext.currentPage + 1,
+                    ctx->textContext.nbPages);
+            nbgl_layoutAddText(ctx->textContext.tmpString, 1, ctx->textContext.style == BOLD_TEXT1_INFO, true);
+            nbgl_layoutAddText(txt, 1, ctx->textContext.style == BOLD_TEXT1_INFO, true);
+        }
+    }
+    if (navInfo.indication != NO_ARROWS) {
+        nbgl_layoutAddNavigation(&navInfo);
+    }
+    nbgl_layoutDraw();
+    nbgl_refresh();
+#endif
 }
 
 // callback on key touch
+#ifdef TARGET_NANOS
+static void actionCallback(nbgl_buttonEvent_t event)
+#else
 static void actionCallback(nbgl_layout_t *layout, nbgl_buttonEvent_t event)
+#endif
 {
-    StepContext_t *ctx = getContextFromLayout(layout);
+    StepContext_t *ctx;
+
+#ifdef TARGET_NANOS
+    ctx = &contexts[0];
+#else
+    ctx = getContextFromLayout(layout);
+#endif
 
     if (!ctx) {
         return;
@@ -319,7 +376,13 @@ static void displayMenuList(StepContext_t *ctx)
     layoutDescription.ticker.tickerIntervale = ctx->ticker.tickerIntervale;
     layoutDescription.ticker.tickerValue     = ctx->ticker.tickerValue;
 
+#ifdef TARGET_NANOS
+    nbgl_layoutGet(&layoutDescription);
+#else
     ctx->layout = nbgl_layoutGet(&layoutDescription);
+#endif
+
+#if 0
     nbgl_layoutAddMenuList(ctx->layout, list);
     if (list->nbChoices > 1) {
         nbgl_layoutNavigation_t navInfo = {.direction = VERTICAL_NAV};
@@ -337,12 +400,24 @@ static void displayMenuList(StepContext_t *ctx)
     }
     nbgl_layoutDraw(ctx->layout);
     nbgl_refresh();
+#endif
 }
 
 // callback on key touch
+#ifdef TARGET_NANOS
+static void menuListActionCallback(nbgl_buttonEvent_t event)
+#else
 static void menuListActionCallback(nbgl_layout_t *layout, nbgl_buttonEvent_t event)
+#endif
 {
-    StepContext_t *ctx = getContextFromLayout(layout);
+    StepContext_t *ctx;
+
+#ifdef TARGET_NANOS
+    ctx = &contexts[0];
+#else
+    ctx = getContextFromLayout(layout);
+#endif
+
     if (!ctx) {
         return;
     }
@@ -367,6 +442,8 @@ static void menuListActionCallback(nbgl_layout_t *layout, nbgl_buttonEvent_t eve
 /**********************
  *   GLOBAL FUNCTIONS
  **********************/
+
+
 
 /**
  * @brief draws a text type step, that can be multi-pages, depending of the length of text and
@@ -437,7 +514,7 @@ nbgl_step_t nbgl_stepDrawText(nbgl_stepPosition_t               pos,
  * @param pos position of this step in the flow (first, last, single, not_first_nor_last)
  * @param onActionCallback common callback for all actions on this page
  * @param ticker ticker configuration, set to NULL to disable it
- * @param info all information about the cenetered info to be displayed
+ * @param info all information about the centered info to be displayed
  * @param modal if true, means this step shall be displayed on top of existing one
  * @return the step context (or NULL if error)
  */
@@ -471,6 +548,15 @@ nbgl_step_t nbgl_stepDrawCenteredInfo(nbgl_stepPosition_t               pos,
     navInfo.indication   = getNavigationInfo(
         ctx->textContext.pos, ctx->textContext.nbPages, ctx->textContext.currentPage);
 
+#ifdef TARGET_NANOS
+    nbgl_layoutGet(&layoutDescription);
+    nbgl_layoutAddCenteredInfo(info);
+    if (navInfo.indication != NO_ARROWS) {
+        nbgl_layoutAddNavigation(&navInfo);
+    }
+    nbgl_layoutDraw();
+    nbgl_refresh();
+#else
     ctx->layout = nbgl_layoutGet(&layoutDescription);
     nbgl_layoutAddCenteredInfo(ctx->layout, info);
     if (navInfo.indication != NO_ARROWS) {
@@ -478,6 +564,7 @@ nbgl_step_t nbgl_stepDrawCenteredInfo(nbgl_stepPosition_t               pos,
     }
     nbgl_layoutDraw(ctx->layout);
     nbgl_refresh();
+#endif
 
     LOG_DEBUG(STEP_LOGGER, "nbgl_stepDrawCenteredInfo(): step = %p\n", ctx);
     return (nbgl_step_t) ctx;
@@ -552,9 +639,14 @@ int nbgl_stepRelease(nbgl_step_t step)
     if (!ctx) {
         return -1;
     }
-    ret = nbgl_layoutRelease((nbgl_layout_t *) ctx->layout);
 
+#ifdef TARGET_NANOS
+    nbgl_layoutRelease();
+    ret = 0;
+#else
+    ret = nbgl_layoutRelease((nbgl_layout_t *) ctx->layout);
     ctx->layout = NULL;
+#endif
 
     return ret;
 }

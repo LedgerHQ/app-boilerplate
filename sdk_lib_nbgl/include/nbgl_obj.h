@@ -13,7 +13,9 @@ extern "C" {
 
 #include "nbgl_types.h"
 #include "nbgl_fonts.h"
+#ifndef TARGET_NANOS
 #include "ux_loc.h"
+#endif
 
 /*********************
  *      INCLUDES

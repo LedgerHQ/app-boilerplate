@@ -64,7 +64,6 @@ void ui_display_address_status(ui_ret_e ret) {
     // If an APDU is received before the timer ends, a new UX might be shown on
     // the screen, and therefore the modal will be dismissed and its callback
     // will never be called.
-
     if (ret == UI_RET_APPROVED) {
         nbgl_useCaseStatus("ADDRESS\nVERIFIED", true, ui_menu_main);
     } else if (ret == UI_RET_REJECTED) {

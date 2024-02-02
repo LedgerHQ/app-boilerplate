@@ -132,6 +132,7 @@ void nbgl_buttonsHandler(uint8_t buttonState, uint32_t currentTimeMs)
         button_mask &= ~RELEASED_MASK;
     }
 
+#ifndef TARGET_NANOS
     nbgl_screen_t *topScreen = (nbgl_screen_t *) nbgl_screenGetTop();
     if ((topScreen != NULL) && (topScreen->buttonCallback != NULL)) {
         nbgl_buttonEvent_t event = maskToEvent(button_mask);
@@ -139,6 +140,10 @@ void nbgl_buttonsHandler(uint8_t buttonState, uint32_t currentTimeMs)
             topScreen->buttonCallback(topScreen, event);
         }
     }
+#else
+    nbgl_buttonEvent_t event = maskToEvent(button_mask);
+    layout_buttonCallback(event);
+#endif
 }
 
 void nbgl_buttonsReset(void)

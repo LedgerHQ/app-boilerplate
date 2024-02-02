@@ -18,7 +18,7 @@
 ifeq ($(BOLOS_SDK),)
 $(error Environment variable BOLOS_SDK is not set)
 endif
-
+DISABLE_UI = 1
 include $(BOLOS_SDK)/Makefile.defines
 
 ########################################
@@ -35,6 +35,18 @@ APPVERSION = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 
 # Application source files
 APP_SOURCE_PATH += src sdk
+ifeq ($(TARGET_NAME),TARGET_NANOS)
+DEFINES += HAVE_NBGL NBGL_USE_CASE NBGL_STEP
+DEFINES += TARGET_NANOS=1
+DEFINES += HAVE_BAGL
+DEFINES += BAGL_WIDTH=128 BAGL_HEIGHT=32
+DISABLE_STANDARD_BAGL_UX_FLOW = 1
+SDK_SOURCE_PATH += lib_bagl
+APP_SOURCE_PATH += sdk_lib_nbgl/src sdk_lib_ux_stax
+
+INCLUDES_PATH += sdk_lib_nbgl/include sdk_lib_ux_stax
+CFLAGS += -Wno-macro-redefined
+endif
 
 # Application icons following guidelines:
 # https://developers.ledger.com/docs/embedded-app/design-requirements/#device-icon

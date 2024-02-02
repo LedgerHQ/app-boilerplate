@@ -133,7 +133,9 @@ typedef enum {
     BAGL_FONT_INTER_REGULAR_28px_1bpp       = 14u,
     BAGL_FONT_INTER_SEMIBOLD_28px_1bpp      = 15u,
     BAGL_FONT_INTER_MEDIUM_36px_1bpp        = 16u,
+#ifndef TARGET_NANOS
     BAGL_FONT_LAST  // MUST ALWAYS BE THE LAST, FOR AUTOMATED INVALID VALUE CHECKS
+#endif
 } nbgl_font_id_e;
 
 typedef struct nbgl_unicode_ctx_s {
