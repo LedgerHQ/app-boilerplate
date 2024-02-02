@@ -44,7 +44,7 @@ BOLOS_SDK = ./public_sdk
 include $(BOLOS_SDK)/Makefile.defines
 
 APP_LOAD_PARAMS  = --curve secp256k1
-ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
+ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX TARGET_EUROPA))
 APP_LOAD_PARAMS += --appFlags 0x200  # APPLICATION_FLAG_BOLOS_SETTINGS
 else
 APP_LOAD_PARAMS += --appFlags 0x000
@@ -62,6 +62,8 @@ ifeq ($(TARGET_NAME),TARGET_NANOS)
     ICONNAME=icons/nanos_app_boilerplate.gif
 else ifeq ($(TARGET_NAME),TARGET_STAX)
     ICONNAME=icons/stax_app_boilerplate_32px.gif
+else ifeq ($(TARGET_NAME),TARGET_EUROPA)
+    ICONNAME=icons/stax_app_boilerplate_32px.gif
 else
     ICONNAME=icons/nanox_app_boilerplate.gif
 endif
@@ -78,7 +80,7 @@ DEFINES += BLE_SEGMENT_SIZE=32
 DEFINES += HAVE_WEBUSB WEBUSB_URL_SIZE_B=0 WEBUSB_URL=""
 DEFINES += UNUSED\(x\)=\(void\)x
 
-ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
+ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX TARGET_EUROPA))
     DEFINES += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000 HAVE_BLE_APDU
 endif
 
@@ -88,7 +90,7 @@ else
     DEFINES += IO_SEPROXYHAL_BUFFER_SIZE_B=300
 endif
 
-ifeq ($(TARGET_NAME),TARGET_STAX)
+ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME), TARGET_STAX TARGET_EUROPA))
     # DEFINES += NBGL_QRCODE
 else
     DEFINES += HAVE_BAGL HAVE_UX_FLOW
@@ -124,11 +126,11 @@ include $(BOLOS_SDK)/Makefile.glyphs
 APP_SOURCE_PATH += src
 SDK_SOURCE_PATH += lib_usb protocol
 
-ifneq ($(TARGET_NAME),TARGET_STAX)
+ifneq ($(TARGET_NAME),$(filter $(TARGET_NAME), TARGET_STAX TARGET_EUROPA))
 SDK_SOURCE_PATH += lib_ux
 endif
 
-ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
+ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX TARGET_EUROPA))
     SDK_SOURCE_PATH += lib_ble
 endif
 
