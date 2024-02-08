@@ -22,6 +22,7 @@
 #define USBD_NANOX_PRODUCT_STRING      ("Nano X")
 #define USBD_NANOS_PLUS_PRODUCT_STRING ("Nano S+")
 #define USBD_STAX_PRODUCT_STRING       ("Stax")
+#define USBD_EUROPA_PRODUCT_STRING     ("Europa")
 
 /* Private types, structures, unions -----------------------------------------*/
 typedef struct {
@@ -391,6 +392,9 @@ void USBD_LEDGER_start(uint16_t pid,
 #if defined(TARGET_FATSTACKS) || defined (TARGET_STAX)
 	usbd_ledger_data.product = USBD_LEDGER_PRODUCT_STAX;
 #endif // TARGET_FATSTACKS || TARGET_STAX
+#if defined(TARGET_EUROPA)
+	usbd_ledger_data.product = USBD_LEDGER_PRODUCT_EUROPA;
+#endif // TARGET_EUROPA
 
 	if (   (usbd_ledger_data.classes != class_mask)
 	     ||(usbd_ledger_data.pid != pid)
@@ -434,6 +438,10 @@ void USBD_LEDGER_start(uint16_t pid,
 
 			case USBD_LEDGER_PRODUCT_STAX:
 				strlcpy(usbd_ledger_data.name, USBD_STAX_PRODUCT_STRING, sizeof(usbd_ledger_data.name));
+				break;
+
+			case USBD_LEDGER_PRODUCT_EUROPA:
+				strlcpy(usbd_ledger_data.name, USBD_EUROPA_PRODUCT_STRING, sizeof(usbd_ledger_data.name));
 				break;
 
 			default:
