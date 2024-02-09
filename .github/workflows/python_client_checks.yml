@@ -24,7 +24,7 @@ jobs:
     - name: Installing PIP dependencies
       run: |
         pip install pylint
-        pip install --extra-index-url https://test.pypi.org/simple/ -r tests/requirements.txt
+        pip install -r tests/requirements.txt
     - name: Lint Python code
       run: |
         pylint --rc tests/setup.cfg tests/application_client/
@@ -38,7 +38,7 @@ jobs:
     - name: Installing PIP dependencies
       run: |
         pip install mypy
-        pip install --extra-index-url https://test.pypi.org/simple/ -r tests/requirements.txt
+        pip install -r tests/requirements.txt
     - name: Mypy type checking
       run: |
         mypy tests/application_client/
