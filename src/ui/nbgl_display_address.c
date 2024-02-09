@@ -23,67 +23,54 @@
 #include "os.h"
 #include "glyphs.h"
 #include "nbgl_use_case.h"
-#include "io.h"
-#include "bip32.h"
+#include "nbgl_sync.h"
 #include "format.h"
 
-#include "display.h"
 #include "constants.h"
-#include "../globals.h"
-#include "../sw.h"
-#include "../address.h"
-#include "action/validate.h"
-#include "../transaction/types.h"
-#include "../menu.h"
+#include "display.h"
+#include "address.h"
+#include "menu.h"
 
-static char g_address[43];
+ui_ret_e ui_display_address(const uint8_t raw_public_key[PUBKEY_LEN]) {
+    char address_str[43] = {0};
+    uint8_t address_bin[ADDRESS_LEN] = {0};
 
-static void confirm_address_rejection(void) {
-    // display a status page and go back to main
-    validate_pubkey(false);
-    nbgl_useCaseStatus("Address verification\ncancelled", false, ui_menu_main);
-}
+    if (!address_from_pubkey(raw_public_key, address_bin, sizeof(address_bin))) {
+        return UI_RET_FAILURE;
+    }
 
-static void confirm_address_approval(void) {
-    // display a success status page and go back to main
-    validate_pubkey(true);
-    nbgl_useCaseStatus("ADDRESS\nVERIFIED", true, ui_menu_main);
-}
+    if (format_hex(address_bin, sizeof(address_bin), address_str, sizeof(address_str)) == -1) {
+        return UI_RET_FAILURE;
+    }
 
-static void review_choice(bool confirm) {
-    if (confirm) {
-        confirm_address_approval();
+    sync_nbgl_ret_t ret = sync_nbgl_useCaseAddressReview(address_str,
+                                                         &C_app_boilerplate_64px,
+                                                         "Verify BOL address",
+                                                         NULL);
+
+    if (ret == NBGL_SYNC_RET_SUCCESS) {
+        return UI_RET_APPROVED;
+    } else if (ret == NBGL_SYNC_RET_REJECTED) {
+        return UI_RET_REJECTED;
     } else {
-        confirm_address_rejection();
+        return UI_RET_FAILURE;
     }
 }
 
-static void continue_review(void) {
-    nbgl_useCaseAddressConfirmation(g_address, review_choice);
-}
-
-int ui_display_address() {
-    if (G_context.req_type != CONFIRM_ADDRESS || G_context.state != STATE_NONE) {
-        G_context.state = STATE_NONE;
-        return io_send_sw(SW_BAD_STATE);
+void ui_display_address_status(ui_ret_e ret) {
+    // Here we use async version of nbgl_useCaseStatus
+    // This means that upon end of timer or touch ui_menu_main will be called
+    // but in the meantime we return to app_main to process APDU.
+    // If an APDU is received before the timer ends, a new UX might be shown on
+    // the screen, and therefore the modal will be dismissed and its callback
+    // will never be called.
+    if (ret == UI_RET_APPROVED) {
+        nbgl_useCaseStatus("ADDRESS\nVERIFIED", true, ui_menu_main);
+    } else if (ret == UI_RET_REJECTED) {
+        nbgl_useCaseStatus("Address verification\ncancelled", false, ui_menu_main);
+    } else {
+        nbgl_useCaseStatus("Address verification\nissue", false, ui_menu_main);
     }
-    memset(g_address, 0, sizeof(g_address));
-    uint8_t address[ADDRESS_LEN] = {0};
-    if (!address_from_pubkey(G_context.pk_info.raw_public_key, address, sizeof(address))) {
-        return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
-    }
-
-    if (format_hex(address, sizeof(address), g_address, sizeof(g_address)) == -1) {
-        return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
-    }
-
-    nbgl_useCaseReviewStart(&C_app_boilerplate_64px,
-                            "Verify BOL address",
-                            NULL,
-                            "Cancel",
-                            continue_review,
-                            confirm_address_rejection);
-    return 0;
 }
 
 #endif

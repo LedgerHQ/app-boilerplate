@@ -21,14 +21,11 @@
 #include "os.h"
 #include "ux.h"
 
-#include "types.h"
 #include "globals.h"
 #include "io.h"
 #include "sw.h"
 #include "ui/menu.h"
 #include "apdu/dispatcher.h"
-
-global_ctx_t G_context;
 
 const internal_storage_t N_storage_real;
 
@@ -43,10 +40,16 @@ void app_main() {
 
     io_init();
 
-    ui_menu_main();
+    //for (int i = 0; i < 3; i++) {
+    //    // - Looping on os_io_seph_recv_and_process(0);
+    //    // - This will send a general_status and then wait for an event.
+    //    // - Upon event reception this will call io_seproxyhal_handle_event()
+    //    //   - On some case this will call io_event() which usually forward the
+    //    //     event to the UX lib.
+    //    os_io_seph_recv_and_process(0);
+    //}
 
-    // Reset context
-    explicit_bzero(&G_context, sizeof(G_context));
+    ui_menu_main();
 
     // Initialize the NVM data if required
     if (N_storage.initialized != 0x01) {

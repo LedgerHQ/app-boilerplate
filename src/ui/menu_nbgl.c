@@ -34,6 +34,7 @@ void app_quit(void) {
     os_sched_exit(-1);
 }
 
+#ifndef TARGET_NANOS
 // home page definition
 void ui_menu_main(void) {
 // This parameter shall be set to false if the settings page contains only information
@@ -156,5 +157,24 @@ void ui_menu_settings() {
                          nav_callback,
                          controls_callback);
 }
+
+#else
+// home page definition
+void ui_menu_main(void) {
+// This parameter shall be set to false if the settings page contains only information
+// about the application (version , developer name, ...). It shall be set to
+// true if the settings page also contains user configurable parameters related to the
+// operation of the application.
+#define SETTINGS_BUTTON_ENABLED (true)
+
+    nbgl_useCaseHome(APPNAME,
+                     &C_app_boilerplate_16px,
+                     APPVERSION,
+                     NULL,
+                     NULL,
+                     app_quit);
+}
+
+#endif
 
 #endif
