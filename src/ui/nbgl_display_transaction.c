@@ -44,52 +44,16 @@ static char g_address[43];
 
 static nbgl_layoutTagValue_t pairs[2];
 static nbgl_layoutTagValueList_t pairList;
-static nbgl_pageInfoLongPress_t infoLongPress;
-
-static void confirm_transaction_rejection(void) {
-    // display a status page and go back to main
-    validate_transaction(false);
-    nbgl_useCaseStatus("Transaction rejected", false, ui_menu_main);
-}
-
-static void ask_transaction_rejection_confirmation(void) {
-    // display a choice to confirm/cancel rejection
-    nbgl_useCaseConfirm("Reject transaction?",
-                        NULL,
-                        "Yes, Reject",
-                        "Go back to transaction",
-                        confirm_transaction_rejection);
-}
 
 // called when long press button on 3rd page is long-touched or when reject footer is touched
 static void review_choice(bool confirm) {
+    // Answer, display a status page and go back to main
+    validate_transaction(confirm);
     if (confirm) {
-        // display a status page and go back to main
-        validate_transaction(true);
-        nbgl_useCaseStatus("TRANSACTION\nSIGNED", true, ui_menu_main);
+        nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main);
     } else {
-        ask_transaction_rejection_confirmation();
+        nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_REJECTED, ui_menu_main);
     }
-}
-
-static void review_continue(void) {
-    // Setup data to display
-    pairs[0].item = "Amount";
-    pairs[0].value = g_amount;
-    pairs[1].item = "Address";
-    pairs[1].value = g_address;
-
-    // Setup list
-    pairList.nbMaxLinesForValue = 0;
-    pairList.nbPairs = 2;
-    pairList.pairs = pairs;
-
-    // Info long press
-    infoLongPress.icon = &C_app_boilerplate_64px;
-    infoLongPress.text = "Sign transaction\nto send BOL";
-    infoLongPress.longPressText = "Hold to sign";
-
-    nbgl_useCaseStaticReview(&pairList, &infoLongPress, "Reject transaction", review_choice);
 }
 
 // Public function to start the transaction review
@@ -119,13 +83,25 @@ int ui_display_transaction() {
         return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
     }
 
+    // Setup data to display
+    pairs[0].item = "Amount";
+    pairs[0].value = g_amount;
+    pairs[1].item = "Address";
+    pairs[1].value = g_address;
+
+    // Setup list
+    pairList.nbMaxLinesForValue = 0;
+    pairList.nbPairs = 2;
+    pairList.pairs = pairs;
+
     // Start review
-    nbgl_useCaseReviewStart(&C_app_boilerplate_64px,
-                            "Review transaction\nto send BOL",
-                            NULL,
-                            "Reject transaction",
-                            review_continue,
-                            ask_transaction_rejection_confirmation);
+    nbgl_useCaseReview(TYPE_TRANSACTION,
+                       &pairList,
+                       &C_app_boilerplate_64px,
+                       "Review transaction\nto send BOL",
+                       NULL,
+                       "Sign transaction\nto send BOL",
+                       review_choice);
     return 0;
 }
 
