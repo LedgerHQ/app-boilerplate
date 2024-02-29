@@ -1,0 +1,30 @@
+name: List Repositories
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  list_repos:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      
+      - name: List repositories
+        id: list_repos
+        uses: repo-sync/list-repos@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: LedgerHQ
+          archived: false
+          prefix: app-
+          file: ledger.toml
+      
+      - name: Display repository names
+        run: echo "${{ steps.list_repos.outputs.repos }}"
