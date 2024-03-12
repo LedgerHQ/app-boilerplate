@@ -20,13 +20,13 @@ on:
 jobs:
   build_application:
     name: Build application using the reusable workflow
-    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@v1
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@fbe/fix_setup_script_in_ragger_reusable_workflows
     with:
       upload_app_binaries_artifact: "compiled_app_binaries"
 
   ragger_tests:
     name: Run ragger tests using the reusable workflow
     needs: build_application
-    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_ragger_tests.yml@v1
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_ragger_tests.yml@fbe/fix_setup_script_in_ragger_reusable_workflows
     with:
       download_app_binaries_artifact: "compiled_app_binaries"
