@@ -143,8 +143,73 @@ static void controls_callback(int token, uint8_t index) {
     }
 }
 
+static void choice_approved() {
+    ui_menu_main();
+}
+
+static void choice_rejected() {
+    nbgl_useCaseStatus("Message signing\ncancelled", false, ui_menu_main);
+}
+
+static void choice_reject() {
+    nbgl_useCaseConfirm("Reject",
+                        NULL,
+                        "Yes!",
+                        "Maybe not...",
+                        choice_rejected);
+}
+
+static void review_choice(bool confirm) {
+    if (confirm) {
+        nbgl_useCaseStatus("MESSAGE\nSIGNED", true, choice_approved);
+    } else {
+        choice_reject();
+    }
+}
+
+static nbgl_layoutTagValue_t pairs[2];
+
+static bool callback(uint8_t page, nbgl_pageContent_t *content) {
+    switch (page) {
+        case 0:
+            content->type = TAG_VALUE_LIST;
+            content->tagValueList.nbPairs = ARRAYLEN(pairs);
+            content->tagValueList.pairs = pairs;
+            pairs[0].item = "First Key 1";
+            pairs[0].value = "First Value 1";
+            pairs[1].item = "Second Key 1";
+            pairs[1].value = "Second Value 1";
+            break;
+        case 1:
+            content->type = TAG_VALUE_LIST;
+            content->tagValueList.nbPairs = ARRAYLEN(pairs);
+            content->tagValueList.pairs = pairs;
+            pairs[0].item = "First Key 2";
+            pairs[0].value = "First Value 2";
+            pairs[1].item = "Second Key 2";
+            pairs[1].value = "Second Value 2";
+            break;
+        case 2:
+        case LAST_PAGE_FOR_REVIEW:
+            content->type = INFO_LONG_PRESS;
+            content->infoLongPress.icon = &C_app_boilerplate_64px;
+            content->infoLongPress.text = "Sign";
+            content->infoLongPress.longPressText = "Sign button";
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+
 // settings menu definition
 void ui_menu_settings() {
+    nbgl_useCaseForwardOnlyReview("Reject",
+                                  NULL,
+                                  callback,
+                                  review_choice);
+    return;
 #define TOTAL_SETTINGS_PAGE  (2)
 #define INIT_SETTINGS_PAGE   (0)
 #define DISABLE_SUB_SETTINGS (false)
