@@ -34,6 +34,10 @@ void app_quit(void) {
     os_sched_exit(-1);
 }
 
+#if (NVRAM_STRUCT_VERSION == 2)
+    nbgl_useCaseHome((const char *)N_nvram.data.string,
+#elif (NVRAM_STRUCT_VERSION == 1)
+#endif
 //  -----------------------------------------------------------
 //  --------------------- SETTINGS MENU -----------------------
 //  -----------------------------------------------------------
@@ -74,10 +78,12 @@ static void review_warning_choice(bool confirm) {
     uint8_t switch_value;
     if (confirm) {
         // toggle the switch value
-        switch_value = !N_storage.dummy2_allowed;
+        switch_value = !N_nvram.data.dummy2_allowed;
         switches[DUMMY_SWITCH_2_ID].initState = (nbgl_state_t) switch_value;
         // store the new setting value in NVM
-        nvm_write((void*) &N_storage.dummy2_allowed, &switch_value, 1);
+        nvm_write((void*) &N_nvram.data.dummy2_allowed, &switch_value, 1);
+        // increment data version (not really mandatory for settings)
+        nvram_set_data_version(nvram_get_data_version() + 1);
     }
 
     // Reset setting menu to the right page
@@ -100,16 +106,18 @@ static void controls_callback(int token, uint8_t index, int page) {
     if (token == DUMMY_SWITCH_1_TOKEN) {
         // Dummy 1 switch touched
         // toggle the switch value
-        switch_value = !N_storage.dummy1_allowed;
+        switch_value = !N_nvram.data.dummy1_allowed;
         switches[DUMMY_SWITCH_1_ID].initState = (nbgl_state_t) switch_value;
         // store the new setting value in NVM
-        nvm_write((void*) &N_storage.dummy1_allowed, &switch_value, 1);
+        nvm_write((void*) &N_nvram.data.dummy1_allowed, &switch_value, 1);
+        // increment data version (not really mandatory for settings)
+        nvram_set_data_version(nvram_get_data_version() + 1);
     } else if (token == DUMMY_SWITCH_2_TOKEN) {
         // Dummy 2 switch touched
 
         // in this example we display a warning when the user wants
         // to activate the dummy 2 setting
-        if (!N_storage.dummy2_allowed) {
+        if (!N_nvram.data.dummy2_allowed) {
             // Display the warning message and ask the user to confirm
             nbgl_useCaseChoice(&C_Warning_64px,
                                "Dummy 2",
@@ -119,10 +127,12 @@ static void controls_callback(int token, uint8_t index, int page) {
                                review_warning_choice);
         } else {
             // toggle the switch value
-            switch_value = !N_storage.dummy2_allowed;
+            switch_value = !N_nvram.data.dummy2_allowed;
             switches[DUMMY_SWITCH_2_ID].initState = (nbgl_state_t) switch_value;
             // store the new setting value in NVM
-            nvm_write((void*) &N_storage.dummy2_allowed, &switch_value, 1);
+            nvm_write((void*) &N_nvram.data.dummy2_allowed, &switch_value, 1);
+            // increment data version (not really mandatory for settings)
+            nvram_set_data_version(nvram_get_data_version() + 1);
         }
     }
 }

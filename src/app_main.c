@@ -30,7 +30,41 @@
 
 global_ctx_t G_context;
 
-const internal_storage_t N_storage_real;
+static void init_nvram(void) {
+  Nvram_data_t storage = {0};
+
+  // If the NVRAM content is not initialized or of a too old version, let's init it from scratch
+  if (!nvram_is_initalized() || (nvram_get_struct_version() < NVRAM_FIRST_SUPPORTED_VERSION)) {
+    // start at version 1 if it has never been updated
+    nvram_init(1);
+#if (NVRAM_STRUCT_VERSION == 2)
+    strcpy(storage.string, "Boiler V2");
+#endif
+    storage.dummy1_allowed = 0x00;
+    storage.dummy2_allowed = 0x00;
+    storage.initialized = 0x01;
+    nvm_write((void *) &N_nvram.data, (void *) &storage, sizeof(Nvram_data_t));
+  }
+  else if (nvram_get_struct_version() < NVRAM_STRUCT_VERSION) {
+#if (NVRAM_STRUCT_VERSION == 2)
+    // if the version is supported and not current, let's convert it
+    // In this example, only version 1 is supported as old one
+    // The previous nvram data struct was:
+    // typedef struct Nvram_data_s {
+    //     uint8_t dummy1_allowed;
+    //     uint8_t dummy2_allowed;
+    //     uint8_t initialized;
+    // } Nvram_data_t;
+    if (nvram_get_struct_version() ==  1) {
+      // update header with new struct version, but reuse the data version
+      nvram_init(nvram_get_data_version());
+      // keep storage.string but add an initial value for storage.string
+      strcpy(storage.string, "Boiler From V1");
+      nvm_write((void *) &N_nvram.data.string, (void *) &storage.string, sizeof(storage.string));
+    }
+#endif // (NVRAM_STRUCT_VERSION == 2)
+  }
+}
 
 /**
  * Handle APDU command received and send back APDU response using handlers.
@@ -43,19 +77,12 @@ void app_main() {
 
     io_init();
 
+    init_nvram();
+
     ui_menu_main();
 
     // Reset context
     explicit_bzero(&G_context, sizeof(G_context));
-
-    // Initialize the NVM data if required
-    if (N_storage.initialized != 0x01) {
-        internal_storage_t storage;
-        storage.dummy1_allowed = 0x00;
-        storage.dummy2_allowed = 0x00;
-        storage.initialized = 0x01;
-        nvm_write((void *) &N_storage, &storage, sizeof(internal_storage_t));
-    }
 
     for (;;) {
         // Receive command bytes in G_io_apdu_buffer
