@@ -38,28 +38,14 @@
 
 static char g_address[43];
 
-static void confirm_address_rejection(void) {
-    // display a status page and go back to main
-    validate_pubkey(false);
-    nbgl_useCaseStatus("Address verification\ncancelled", false, ui_menu_main);
-}
-
-static void confirm_address_approval(void) {
-    // display a success status page and go back to main
-    validate_pubkey(true);
-    nbgl_useCaseStatus("ADDRESS\nVERIFIED", true, ui_menu_main);
-}
-
 static void review_choice(bool confirm) {
+    // Answer, display a status page and go back to main
+    validate_pubkey(confirm);
     if (confirm) {
-        confirm_address_approval();
+        nbgl_useCaseReviewStatus(STATUS_TYPE_ADDRESS_VERIFIED, ui_menu_main);
     } else {
-        confirm_address_rejection();
+        nbgl_useCaseReviewStatus(STATUS_TYPE_ADDRESS_REJECTED, ui_menu_main);
     }
-}
-
-static void continue_review(void) {
-    nbgl_useCaseAddressConfirmation(g_address, review_choice);
 }
 
 int ui_display_address() {
@@ -67,6 +53,7 @@ int ui_display_address() {
         G_context.state = STATE_NONE;
         return io_send_sw(SW_BAD_STATE);
     }
+
     memset(g_address, 0, sizeof(g_address));
     uint8_t address[ADDRESS_LEN] = {0};
     if (!address_from_pubkey(G_context.pk_info.raw_public_key, address, sizeof(address))) {
@@ -77,12 +64,12 @@ int ui_display_address() {
         return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
     }
 
-    nbgl_useCaseReviewStart(&C_app_boilerplate_64px,
-                            "Verify BOL address",
-                            NULL,
-                            "Cancel",
-                            continue_review,
-                            confirm_address_rejection);
+    nbgl_useCaseAddressReview(g_address,
+                              NULL,
+                              &C_app_boilerplate_64px,
+                              "Verify BOL address",
+                              NULL,
+                              review_choice);
     return 0;
 }
 
