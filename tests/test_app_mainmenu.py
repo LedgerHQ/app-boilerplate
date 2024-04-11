@@ -1,10 +1,8 @@
 from ragger.navigator import NavInsID, NavIns
 
-from utils import ROOT_SCREENSHOT_PATH
-
 
 # In this test we check the behavior of the device main menu
-def test_app_mainmenu(firmware, navigator, test_name):
+def test_app_mainmenu(firmware, navigator, test_name, default_screenshot_path):
     # Navigate in the main menu
     if firmware.device.startswith("nano"):
         instructions = [
@@ -22,5 +20,5 @@ def test_app_mainmenu(firmware, navigator, test_name):
             NavInsID.USE_CASE_SETTINGS_NEXT,
             NavInsID.USE_CASE_SETTINGS_MULTI_PAGE_EXIT
         ]
-    navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name, instructions,
+    navigator.navigate_and_compare(default_screenshot_path, test_name, instructions,
                                    screen_change_before_first_instruction=False)
