@@ -22,72 +22,47 @@
 
 #include "os.h"
 #include "glyphs.h"
-#include "os_io_seproxyhal.h"
-#include "nbgl_use_case.h"
-#include "io.h"
-#include "bip32.h"
+#include "ux_sync.h"
 #include "format.h"
 
-#include "display.h"
 #include "constants.h"
-#include "../globals.h"
-#include "../sw.h"
-#include "../address.h"
-#include "action/validate.h"
-#include "../transaction/types.h"
-#include "../menu.h"
-
-// Buffer where the transaction amount string is written
-static char g_amount[30];
-// Buffer where the transaction address string is written
-static char g_address[43];
-
-static nbgl_contentTagValue_t pairs[2];
-static nbgl_contentTagValueList_t pairList;
-
-// called when long press button on 3rd page is long-touched or when reject footer is touched
-static void review_choice(bool confirm) {
-    // Answer, display a status page and go back to main
-    validate_transaction(confirm);
-    if (confirm) {
-        nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main);
-    } else {
-        nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_REJECTED, ui_menu_main);
-    }
-}
+#include "display.h"
+#include "address.h"
+#include "menu.h"
 
 // Public function to start the transaction review
 // - Check if the app is in the right state for transaction review
-// - Format the amount and address strings in g_amount and g_address buffers
+// - Format the amount and address strings in amount_str and address_str buffers
 // - Display the first screen of the transaction review
-int ui_display_transaction() {
-    if (G_context.req_type != CONFIRM_TRANSACTION || G_context.state != STATE_PARSED) {
-        G_context.state = STATE_NONE;
-        return io_send_sw(SW_BAD_STATE);
-    }
+ui_ret_e ui_display_transaction(const transaction_t *transaction) {
+    // Buffer where the transaction amount string is written
+    char amount_str[30] = {0};
+    // Buffer where the transaction address string is written
+    char address_str[43] = {0};
 
-    // Format amount and address to g_amount and g_address buffers
-    memset(g_amount, 0, sizeof(g_amount));
-    char amount[30] = {0};
-    if (!format_fpu64(amount,
-                      sizeof(amount),
-                      G_context.tx_info.transaction.value,
+    // Format amount and address to amount_str and address_str buffers
+    char amount_bin[30] = {0};
+    if (!format_fpu64(amount_bin,
+                      sizeof(amount_bin),
+                      transaction->value,
                       EXPONENT_SMALLEST_UNIT)) {
-        return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+        return UI_RET_FAILURE;
     }
-    snprintf(g_amount, sizeof(g_amount), "BOL %.*s", sizeof(amount), amount);
-    memset(g_address, 0, sizeof(g_address));
+    snprintf(amount_str, sizeof(amount_str), "BOL %.*s", sizeof(amount_bin), amount_bin);
 
-    if (format_hex(G_context.tx_info.transaction.to, ADDRESS_LEN, g_address, sizeof(g_address)) ==
+    if (format_hex(transaction->to, ADDRESS_LEN, address_str, sizeof(address_str)) ==
         -1) {
-        return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
+        return UI_RET_FAILURE;
     }
+
+    nbgl_layoutTagValue_t pairs[2] = {0};
+    nbgl_layoutTagValueList_t pairList = {0};
 
     // Setup data to display
     pairs[0].item = "Amount";
-    pairs[0].value = g_amount;
+    pairs[0].value = amount_str;
     pairs[1].item = "Address";
-    pairs[1].value = g_address;
+    pairs[1].value = address_str;
 
     // Setup list
     pairList.nbMaxLinesForValue = 0;
@@ -95,18 +70,35 @@ int ui_display_transaction() {
     pairList.pairs = pairs;
 
     // Start review
-    nbgl_useCaseReview(TYPE_TRANSACTION,
-                       &pairList,
-                       &ICON_APP_BOILERPLATE,
-                       "Review transaction"
+    ux_sync_ret_t ret = ux_sync_review(
+        TYPE_TRANSACTION,
+        &pairList,
+        &ICON_APP_BOILERPLATE,
+        "Review transaction"
 #ifndef TARGET_NANOS
-                       "\nto send BOL"
+        "\nto send BOL"
 #endif
-                       ,
-                       NULL,
-                       "Sign transaction\nto send BOL",
-                       review_choice);
-    return 0;
+        ,
+        NULL,
+        "Sign transaction\nto send BOL");
+
+    if (ret == UX_SYNC_RET_APPROVED) {
+        return UI_RET_APPROVED;
+    } else if (ret == UX_SYNC_RET_REJECTED) {
+        return UI_RET_REJECTED;
+    } else {
+        return UI_RET_FAILURE;
+    }
+}
+
+void ui_display_transaction_status(ui_ret_e ret) {
+    if (ret == UI_RET_APPROVED) {
+        ux_sync_reviewStatus(STATUS_TYPE_TRANSACTION_SIGNED);
+    } else {
+        ux_sync_reviewStatus(STATUS_TYPE_TRANSACTION_REJECTED);
+    }
+
+    ui_menu_main();
 }
 
 #endif
