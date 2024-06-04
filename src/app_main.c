@@ -30,40 +30,41 @@
 
 global_ctx_t G_context;
 
-static void init_nvram(void) {
-  Nvram_data_t storage = {0};
+static void init_app_storage(void) {
+    app_storage_data_t storage_data = {0};
 
-  // If the NVRAM content is not initialized or of a too old version, let's init it from scratch
-  if (!nvram_is_initalized() || (nvram_get_struct_version() < NVRAM_FIRST_SUPPORTED_VERSION)) {
-    // start at version 1 if it has never been updated
-    nvram_init(1);
-#if (NVRAM_STRUCT_VERSION == 2)
-    strcpy(storage.string, "Boiler V2");
+    // If the Application storage content is not initialized or of a too old version, let's init it from scratch
+    if (!app_storage_is_initalized() || (app_storage_get_struct_version() < APP_STORAGE_DATA_STRUCT_FIRST_SUPPORTED_VERSION)) {
+        // start at version 1 if it has never been updated
+        PRINTF("HERE\n");
+        app_storage_init(1);
+#if (APP_STORAGE_DATA_STRUCT_VERSION == 2)
+        strcpy(storage_data.string, "Boiler V2");
 #endif
-    storage.dummy1_allowed = 0x00;
-    storage.dummy2_allowed = 0x00;
-    storage.initialized = 0x01;
-    nvm_write((void *) &N_nvram.data, (void *) &storage, sizeof(Nvram_data_t));
-  }
-  else if (nvram_get_struct_version() < NVRAM_STRUCT_VERSION) {
-#if (NVRAM_STRUCT_VERSION == 2)
-    // if the version is supported and not current, let's convert it
-    // In this example, only version 1 is supported as old one
-    // The previous nvram data struct was:
-    // typedef struct Nvram_data_s {
-    //     uint8_t dummy1_allowed;
-    //     uint8_t dummy2_allowed;
-    //     uint8_t initialized;
-    // } Nvram_data_t;
-    if (nvram_get_struct_version() ==  1) {
-      // update header with new struct version, but reuse the data version
-      nvram_init(nvram_get_data_version());
-      // keep storage.string but add an initial value for storage.string
-      strcpy(storage.string, "Boiler From V1");
-      nvm_write((void *) &N_nvram.data.string, (void *) &storage.string, sizeof(storage.string));
+        storage_data.dummy1_allowed = 0x00;
+        storage_data.dummy2_allowed = 0x00;
+        storage_data.initialized = 0x01;
+        nvm_write((void *) &N_app_storage.data, (void *) &storage_data, sizeof(storage_data));
     }
-#endif // (NVRAM_STRUCT_VERSION == 2)
-  }
+    else if (app_storage_get_struct_version() < APP_STORAGE_DATA_STRUCT_VERSION) {
+#if (APP_STORAGE_DATA_STRUCT_VERSION == 2)
+        // if the version is supported and not current, let's convert it
+        // In this example, only version 1 is supported as old one
+        // The previous app storage data struct was:
+        // typedef struct app_storage_data_s {
+        //     uint8_t dummy1_allowed;
+        //     uint8_t dummy2_allowed;
+        //     uint8_t initialized;
+        // } app_storage_data_t;
+        if (app_storage_get_struct_version() ==  1) {
+            // update header with new struct version, but reuse the data version
+            app_storage_init(app_storage_get_data_version());
+            // keep storage.string but add an initial value for storage.string
+            strcpy(storage_data.string, "Boiler From V1");
+            nvm_write((void *) &N_app_storage.data.string, (void *) &storage_data.string, sizeof(storage_data.string));
+        }
+#endif // (APP_STORAGE_DATA_STRUCT_VERSION == 2)
+    }
 }
 
 /**
@@ -77,7 +78,7 @@ void app_main() {
 
     io_init();
 
-    init_nvram();
+    init_app_storage();
 
     ui_menu_main();
 

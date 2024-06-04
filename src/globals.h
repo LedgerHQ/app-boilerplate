@@ -7,7 +7,7 @@
 #include "io.h"
 #include "types.h"
 #include "constants.h"
-#include "nvram_struct.h"
+#include "app_storage.h"
 
 /**
  * Global buffer for interactions between SE and MCU.
