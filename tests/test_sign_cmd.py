@@ -4,12 +4,13 @@ from application_client.boilerplate_transaction import Transaction
 from application_client.boilerplate_command_sender import BoilerplateCommandSender, Errors
 from application_client.boilerplate_response_unpacker import unpack_get_public_key_response, unpack_sign_tx_response
 from ragger.error import ExceptionRAPDU
+from ragger.navigator import NavInsID
 from utils import check_signature_validity
 
 # In this tests we check the behavior of the device when asked to sign a transaction
 
 
-# In this test se send to the device a transaction to sign and validate it on screen
+# In this test we send to the device a transaction to sign and validate it on screen
 # The transaction is short and will be sent in one chunk
 # We will ensure that the displayed information is correct by using screenshots comparison
 def test_sign_tx_short_tx(backend, scenario_navigator):
@@ -42,6 +43,45 @@ def test_sign_tx_short_tx(backend, scenario_navigator):
     _, der_sig, _ = unpack_sign_tx_response(response)
     assert check_signature_validity(public_key, der_sig, transaction)
 
+
+# In this test we send to the device a transaction to trig a blind-signing flow
+# The transaction is short and will be sent in one chunk
+# We will ensure that the displayed information is correct by using screenshots comparison
+def test_sign_tx_short_tx_blind_sign(firmware, navigator, backend, scenario_navigator, test_name, default_screenshot_path):
+    if not firmware.is_nano:
+        # Use the app interface instead of raw interface
+        client = BoilerplateCommandSender(backend)
+        # The path used for this entire test
+        path: str = "m/44'/1'/0'/0/0"
+
+        # First we need to get the public key of the device in order to build the transaction
+        rapdu = client.get_public_key(path=path)
+        _, public_key, _, _ = unpack_get_public_key_response(rapdu.data)
+
+        # Create the transaction that will be sent to the device for signing
+        transaction = Transaction(
+            nonce=1,
+            to="0x0000000000000000000000000000000000000000",
+            value=0,
+            memo="Blind-sign"
+        ).serialize()
+
+        # Send the sign device instruction.
+        # As it requires on-screen validation, the function is asynchronous.
+        # It will yield the result when the navigation is done
+        with client.sign_tx(path=path, transaction=transaction):
+            navigator.navigate_and_compare(default_screenshot_path,
+                                            test_name+"/part1",
+                                            [NavInsID.USE_CASE_CHOICE_REJECT],
+                                            screen_change_after_last_instruction=False)
+
+            # Validate the on-screen request by performing the navigation appropriate for this device
+            scenario_navigator.review_approve()
+
+        # The device as yielded the result, parse it and ensure that the signature is correct
+        response = client.get_async_response().data
+        _, der_sig, _ = unpack_sign_tx_response(response)
+        assert check_signature_validity(public_key, der_sig, transaction)
 
 # In this test se send to the device a transaction to sign and validate it on screen
 # This test is mostly the same as the previous one but with different values.
