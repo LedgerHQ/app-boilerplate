@@ -2,7 +2,7 @@
 
 # Ledger Boilerplate Application
 
-This is a boilerplate application which can be forked to start a new project for the Ledger Nano S/X/SP and Stax.
+This is a boilerplate application which can be forked to start a new project for the Ledger Nano X/SP, Stax and Flex.
 
 ## Quick start guide
 
@@ -77,12 +77,11 @@ make DEBUG=1  # compile optionally with PRINTF
 
 You can choose which device to compile and load for by setting the `BOLOS_SDK` environment variable to the following values :
 
-* `BOLOS_SDK=$NANOS_SDK`
 * `BOLOS_SDK=$NANOX_SDK`
 * `BOLOS_SDK=$NANOSP_SDK`
 * `BOLOS_SDK=$STAX_SDK`
 
-By default this variable is set to build/load for Nano S.
+By default this variable is set to build/load for Nano S+.
 
 ### Loading on a physical device
 
@@ -105,7 +104,7 @@ Then once you have [opened a terminal](#with-a-terminal) in the `app-builder` im
 
 ```shell
 # Run this command from the app-builder container terminal.
-make load    # load the app on a Nano S by default
+make load    # load the app on a Nano S+ by default
 ```
 
 [Setting the BOLOS_SDK environment variable](#compilation-and-load) will allow you to load on whichever supported device you want.
@@ -168,16 +167,16 @@ pip install -r tests/requirements.txt
 
 Then you can :
 
-Run the functional tests (here for nanos but available for any device once you have built the binaries) :
+Run the functional tests (here for nanos+ but available for any device once you have built the binaries) :
 
 ```shell
-pytest tests/ --tb=short -v --device nanos
+pytest tests/ --tb=short -v --device nanosp
 ```
 
 Or run your app directly with Speculos
 
 ```shell
-speculos --model nanos build/nanos/bin/app.elf
+speculos --model nanosp build/nanos2/bin/app.elf
 ```
 
 ## Documentation
@@ -207,7 +206,7 @@ It outputs 3 artifacts:
 - `code-coverage` within HTML details of code coverage
 - `documentation` within HTML auto-generated documentation
 
-## Are you developing a Nano S, S Plus, X application?
+## Are you developing an application for Ledger devices?
 
 If so, This boilerplate will help you get started.
 
