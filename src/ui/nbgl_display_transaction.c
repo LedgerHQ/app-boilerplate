@@ -60,7 +60,8 @@ static void review_choice(bool confirm) {
 // - Check if the app is in the right state for transaction review
 // - Format the amount and address strings in g_amount and g_address buffers
 // - Display the first screen of the transaction review
-int ui_display_transaction() {
+// - Display a warning if the transaction is blind-signed
+int ui_display_transaction_bs_choice(bool is_blind_signed) {
     if (G_context.req_type != CONFIRM_TRANSACTION || G_context.state != STATE_PARSED) {
         G_context.state = STATE_NONE;
         return io_send_sw(SW_BAD_STATE);
@@ -83,6 +84,13 @@ int ui_display_transaction() {
         return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
     }
 
+    nbgl_operationType_t tx_operation = TYPE_TRANSACTION;
+
+    // Set the blind operation flag to trig the blind-sign flow
+    if (is_blind_signed) {
+        tx_operation |= BLIND_OPERATION;
+    }
+
     // Setup data to display
     pairs[0].item = "Amount";
     pairs[0].value = g_amount;
@@ -95,7 +103,7 @@ int ui_display_transaction() {
     pairList.pairs = pairs;
 
     // Start review
-    nbgl_useCaseReview(TYPE_TRANSACTION,
+    nbgl_useCaseReview(tx_operation,
                        &pairList,
                        &C_app_boilerplate_64px,
                        "Review transaction\nto send BOL",
@@ -104,5 +112,54 @@ int ui_display_transaction() {
                        review_choice);
     return 0;
 }
+
+// ---------- Flow used to display a blind-signed transaction  ------
+static void ui_warning_blind_sign_choice2(bool confirm) {
+    if (confirm) {
+        ui_display_transaction_bs_choice(true);
+    } else {
+        ui_menu_main();
+    }
+}
+
+static void ui_warning_blind_sign_choice1(bool confirm) {
+    if (confirm) {
+        ui_menu_main();
+    } else {
+        nbgl_useCaseChoice(
+            NULL,
+            "The transaction cannot be trusted",
+            "Your Ledger cannot decode this transaction. If you sign it, you could be authorizing "
+            "malicious actions that can drain your wallet.\n\nLearn more: ledger.com/e8",
+            "I accept the risk",
+            "Reject transaction",
+            ui_warning_blind_sign_choice2);
+    }
+}
+
+int ui_display_blind_signed_transaction(void) {
+    nbgl_useCaseChoice(
+        &C_Warning_64px,
+        "Security risk detected",
+        "It may not be safe to sign this transaction. To continue, you'll need to review the risk.",
+        "Back to safety",
+        "Review risk",
+        ui_warning_blind_sign_choice1);
+    return 0;
+}
+
+// -----------------------------------------------------------------------------------------
+
+// ---------- Flow used to display a clear-signed transaction  ------
+
+// Public function to start the transaction review
+// - Check if the app is in the right state for transaction review
+// - Format the amount and address strings in g_amount and g_address buffers
+// - Display the first screen of the transaction review
+int ui_display_transaction() {
+    return ui_display_transaction_bs_choice(false);
+}
+
+// -----------------------------------------------------------------------------------------
 
 #endif
