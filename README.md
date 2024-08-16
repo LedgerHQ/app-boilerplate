@@ -1,6 +1,6 @@
 [![Ensure compliance with Ledger guidelines](https://github.com/LedgerHQ/app-boilerplate/actions/workflows/guidelines_enforcer.yml/badge.svg)](https://github.com/LedgerHQ/app-boilerplate/actions/workflows/guidelines_enforcer.yml) [![Build and run functional tests using ragger through reusable workflow](https://github.com/LedgerHQ/app-boilerplate/actions/workflows/build_and_functional_tests.yml/badge.svg?branch=master)](https://github.com/LedgerHQ/app-boilerplate/actions/workflows/build_and_functional_tests.yml)
 
-# Ledger Boilerplate Application
+# Ledger NBGL_Tests Application
 
 This is a boilerplate application which can be forked to start a new project for the Ledger Nano X/SP, Stax and Flex.
 
@@ -96,7 +96,7 @@ First make sure you have the proper udev rules added on your host :
 ```shell
 # Run these commands on your host, from the app's source folder.
 sudo cp .vscode/20-ledger.ledgerblue.rules /etc/udev/rules.d/
-sudo udevadm control --reload-rules 
+sudo udevadm control --reload-rules
 sudo udevadm trigger
 ```
 
@@ -117,7 +117,7 @@ Run these commands on your host from the app's source folder once you have [buil
 
 ```shell
 # Install Python virtualenv
-python3 -m pip install virtualenv 
+python3 -m pip install virtualenv
 # Create the 'ledger' virtualenv
 python3 -m virtualenv ledger
 ```
@@ -129,7 +129,7 @@ Enter the Python virtual environment
 
 ```shell
 # Install Ledgerblue (tool to load the app)
-python3 -m pip install ledgerblue 
+python3 -m pip install ledgerblue
 # Load the app.
 python3 -m ledgerblue.runScript --scp --fileName bin/app.apdu --elfFile bin/app.elf
 ```
@@ -162,7 +162,7 @@ On Linux, you can use [Ledger's VS Code extension](#with-vscode) to run the test
 Install the tests requirements :
 
 ```shell
-pip install -r tests/requirements.txt 
+pip install -r tests/requirements.txt
 ```
 
 Then you can :

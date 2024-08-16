@@ -1,5 +1,5 @@
 /*****************************************************************************
- *   Ledger App Boilerplate.
+ *   Ledger App NBGL_Tests.
  *   (c) 2020 Ledger SAS.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,7 +66,7 @@ int ui_display_address() {
 
     nbgl_useCaseAddressReview(g_address,
                               NULL,
-                              &C_app_boilerplate_64px,
+                              &C_app_nbgl_tests_64px,
                               "Verify BOL address",
                               NULL,
                               review_choice);

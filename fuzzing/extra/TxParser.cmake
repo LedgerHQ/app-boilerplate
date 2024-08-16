@@ -1,7 +1,7 @@
 # project information
 project(TxParser
         VERSION 1.0
-        DESCRIPTION "Transaction parser of Boilerplate app"
+        DESCRIPTION "Transaction parser of NBGL_Tests app"
         LANGUAGES C)
 
 # specify C standard

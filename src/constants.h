@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * Instruction class of the Boilerplate application.
+ * Instruction class of the NBGL_Tests application.
  */
 #define CLA 0xE0
 

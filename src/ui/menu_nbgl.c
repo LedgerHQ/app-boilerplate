@@ -1,6 +1,6 @@
 
 /*****************************************************************************
- *   Ledger App Boilerplate.
+ *   Ledger App NBGL_Tests.
  *   (c) 2020 Ledger SAS.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -82,7 +82,7 @@ static void review_warning_choice(bool confirm) {
 
     // Reset setting menu to the right page
     nbgl_useCaseHomeAndSettings(APPNAME,
-                                &C_app_boilerplate_64px,
+                                &C_app_nbgl_tests_64px,
                                 NULL,
                                 initSettingPage,
                                 &settingContents,
@@ -143,7 +143,7 @@ void ui_menu_main(void) {
     switches[DUMMY_SWITCH_2_ID].tuneId = TUNE_TAP_CASUAL;
 
     nbgl_useCaseHomeAndSettings(APPNAME,
-                                &C_app_boilerplate_64px,
+                                &C_app_nbgl_tests_64px,
                                 NULL,
                                 INIT_HOME_PAGE,
                                 &settingContents,

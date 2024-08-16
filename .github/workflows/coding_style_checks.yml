@@ -4,7 +4,7 @@ name: Run coding style check through reusable workflow
 #
 # The presence of this workflow is mandatory as a minimal level of linting is required.
 # You are however free to modify the content of the .clang-format file and thus the coding style of your application.
-# We simply ask you to not diverge too much from the linting of the Boilerplate application.
+# We simply ask you to not diverge too much from the linting of the NBGL_Tests application.
 
 on:
   workflow_dispatch:

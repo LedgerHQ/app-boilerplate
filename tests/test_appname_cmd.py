@@ -9,4 +9,4 @@ def test_app_name(backend):
     # Send the GET_APP_NAME instruction to the app
     response = client.get_app_name()
     # Assert that we have received the correct appname
-    assert unpack_get_app_name_response(response.data) == "Boilerplate"
+    assert unpack_get_app_name_response(response.data) == "NBGL_Tests"
