@@ -97,7 +97,7 @@ int ui_display_transaction() {
     // Start review
     nbgl_useCaseReview(TYPE_TRANSACTION,
                        &pairList,
-                       &C_app_nbgl_tests_64px,
+                       &LARGE_ICON,
                        "Review transaction\nto send BOL",
                        NULL,
                        "Sign transaction\nto send BOL",

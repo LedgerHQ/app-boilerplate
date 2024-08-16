@@ -15,7 +15,7 @@
             "defines": [
                 "TARGET_NANOS2",
                 "OS_IO_SEPROXYHAL",
-                "HAVE_BAGL",
+                "HAVE_NBGL",
                 "HAVE_SPRINTF",
                 "HAVE_IO_USB",
                 "HAVE_L4_USBLIB",
@@ -30,7 +30,6 @@
                 "MINOR_VERSION=0",
                 "PATCH_VERSION=0",
                 "IO_SEPROXYHAL_BUFFER_SIZE_B=128",
-                "HAVE_UX_FLOW",
                 "DEBUG=1",
                 "HAVE_PRINTF",
                 "PRINTF=screen_printf"

@@ -82,7 +82,7 @@ static void review_warning_choice(bool confirm) {
 
     // Reset setting menu to the right page
     nbgl_useCaseHomeAndSettings(APPNAME,
-                                &C_app_nbgl_tests_64px,
+                                &LARGE_ICON,
                                 NULL,
                                 initSettingPage,
                                 &settingContents,
@@ -111,7 +111,7 @@ static void controls_callback(int token, uint8_t index, int page) {
         // to activate the dummy 2 setting
         if (!N_storage.dummy2_allowed) {
             // Display the warning message and ask the user to confirm
-            nbgl_useCaseChoice(&C_Warning_64px,
+            nbgl_useCaseChoice(&LARGE_WARNING_ICON,
                                "Dummy 2",
                                "Are you sure to\nallow dummy 2\nin transactions?",
                                "I understand, confirm",
@@ -134,16 +134,20 @@ void ui_menu_main(void) {
     switches[DUMMY_SWITCH_1_ID].text = "Dummy 1";
     switches[DUMMY_SWITCH_1_ID].subText = "Allow dummy 1\nin transactions";
     switches[DUMMY_SWITCH_1_ID].token = DUMMY_SWITCH_1_TOKEN;
+#ifdef HAVE_PIEZO_SOUND
     switches[DUMMY_SWITCH_1_ID].tuneId = TUNE_TAP_CASUAL;
+#endif
 
     switches[DUMMY_SWITCH_2_ID].initState = (nbgl_state_t) N_storage.dummy2_allowed;
     switches[DUMMY_SWITCH_2_ID].text = "Dummy 2";
     switches[DUMMY_SWITCH_2_ID].subText = "Allow dummy 2\nin transactions";
     switches[DUMMY_SWITCH_2_ID].token = DUMMY_SWITCH_2_TOKEN;
+#ifdef HAVE_PIEZO_SOUND
     switches[DUMMY_SWITCH_2_ID].tuneId = TUNE_TAP_CASUAL;
+#endif
 
     nbgl_useCaseHomeAndSettings(APPNAME,
-                                &C_app_nbgl_tests_64px,
+                                &LARGE_ICON,
                                 NULL,
                                 INIT_HOME_PAGE,
                                 &settingContents,

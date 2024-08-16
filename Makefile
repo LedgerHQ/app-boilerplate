@@ -19,6 +19,9 @@ ifeq ($(BOLOS_SDK),)
 $(error Environment variable BOLOS_SDK is not set)
 endif
 
+USE_NBGL:=1
+ENABLE_NBGL_FOR_NANO_DEVICES := 1
+
 include $(BOLOS_SDK)/Makefile.defines
 
 ########################################
