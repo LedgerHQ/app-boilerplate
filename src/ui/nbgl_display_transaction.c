@@ -33,7 +33,6 @@
 #include "../globals.h"
 #include "../sw.h"
 #include "action/validate.h"
-#include "../transaction/types.h"
 #include "../menu.h"
 
 // Buffer where the transaction amount string is written
@@ -64,7 +63,7 @@ int ui_display_transaction() {
     memset(g_amount, 0, sizeof(g_amount));
     snprintf(g_amount, sizeof(g_amount), "BOL 0.99");
     memset(g_address, 0, sizeof(g_address));
-    snprintf(g_amount, sizeof(g_amount), "0x1234567890");
+    snprintf(g_address, sizeof(g_amount), "0x1234567890");
 
     // Setup data to display
     pairs[0].item = "Amount";

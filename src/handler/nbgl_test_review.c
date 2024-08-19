@@ -26,8 +26,6 @@
 #include "../sw.h"
 #include "../globals.h"
 #include "../ui/display.h"
-#include "../transaction/types.h"
-#include "../transaction/deserialize.h"
 
 int handler_test_transaction_review(uint8_t test_num, uint8_t sub_test_num) {
     // at the time-being, only 1 test

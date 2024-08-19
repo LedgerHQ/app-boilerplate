@@ -32,7 +32,6 @@
 #include "../globals.h"
 #include "../sw.h"
 #include "action/validate.h"
-#include "../transaction/types.h"
 #include "../menu.h"
 
 static void review_choice(bool confirm) {
