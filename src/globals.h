@@ -24,11 +24,6 @@ extern ux_state_t G_ux;
 extern bolos_ux_params_t G_ux_params;
 
 /**
- * Global context for user requests.
- */
-extern global_ctx_t G_context;
-
-/**
  * Global structure for NVM data storage.
  */
 typedef struct internal_storage_t {
