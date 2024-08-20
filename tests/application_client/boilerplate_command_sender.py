@@ -3,8 +3,6 @@ from typing import Generator, List, Optional
 from contextlib import contextmanager
 
 from ragger.backend.interface import BackendInterface, RAPDU
-from ragger.bip import pack_derivation_path
-
 
 MAX_APDU_LEN: int = 255
 
@@ -27,8 +25,8 @@ class P2(IntEnum):
 class InsType(IntEnum):
     GET_VERSION    = 0x03
     GET_APP_NAME   = 0x04
-    GET_PUBLIC_KEY = 0x05
-    SIGN_TX        = 0x06
+    TEST_REVIEW1   = 0x05
+    TEST_REVIEW2   = 0x06
 
 class Errors(IntEnum):
     SW_DENY                    = 0x6985
@@ -79,48 +77,22 @@ class BoilerplateCommandSender:
                                      p2=P2.P2_LAST,
                                      data=b"")
 
-
-    def get_public_key(self, path: str) -> RAPDU:
-        return self.backend.exchange(cla=CLA,
-                                     ins=InsType.GET_PUBLIC_KEY,
-                                     p1=P1.P1_START,
-                                     p2=P2.P2_LAST,
-                                     data=pack_derivation_path(path))
-
-
     @contextmanager
-    def get_public_key_with_confirmation(self, path: str) -> Generator[None, None, None]:
+    def test_review1(self,) -> Generator[None, None, None]:
         with self.backend.exchange_async(cla=CLA,
-                                         ins=InsType.GET_PUBLIC_KEY,
-                                         p1=P1.P1_CONFIRM,
+                                         ins=InsType.TEST_REVIEW1,
+                                         p1=P1.P1_START,
                                          p2=P2.P2_LAST,
-                                         data=pack_derivation_path(path)) as response:
+                                         data=b"") as response:
             yield response
 
-
     @contextmanager
-    def sign_tx(self, path: str, transaction: bytes) -> Generator[None, None, None]:
-        self.backend.exchange(cla=CLA,
-                              ins=InsType.SIGN_TX,
-                              p1=P1.P1_START,
-                              p2=P2.P2_MORE,
-                              data=pack_derivation_path(path))
-        messages = split_message(transaction, MAX_APDU_LEN)
-        idx: int = P1.P1_START + 1
-
-        for msg in messages[:-1]:
-            self.backend.exchange(cla=CLA,
-                                  ins=InsType.SIGN_TX,
-                                  p1=idx,
-                                  p2=P2.P2_MORE,
-                                  data=msg)
-            idx += 1
-
+    def test_review2(self,) -> Generator[None, None, None]:
         with self.backend.exchange_async(cla=CLA,
-                                         ins=InsType.SIGN_TX,
-                                         p1=idx,
+                                         ins=InsType.TEST_REVIEW2,
+                                         p1=P1.P1_START,
                                          p2=P2.P2_LAST,
-                                         data=messages[-1]) as response:
+                                         data=b"") as response:
             yield response
 
     def get_async_response(self) -> Optional[RAPDU]:
