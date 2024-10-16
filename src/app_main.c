@@ -36,6 +36,7 @@ const internal_storage_t N_storage_real;
  * Handle APDU command received and send back APDU response using handlers.
  */
 void app_main() {
+    uint8_t psm;
     // Length of APDU command received in G_io_apdu_buffer
     int input_len = 0;
     // Structured APDU command
