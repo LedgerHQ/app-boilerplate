@@ -6,7 +6,7 @@ This is a boilerplate application which can be forked to start a new project for
 
 ## Quick start guide
 
-### With VSCode
+### With VSCodexxxx
 
 You can quickly setup a convenient environment to build and test your application by using [Ledger's VSCode developer tools extension](https://marketplace.visualstudio.com/items?itemName=LedgerHQ.ledger-dev-tools) which leverages the [ledger-app-dev-tools](https://github.com/LedgerHQ/ledger-app-builder/pkgs/container/ledger-app-builder%2Fledger-app-dev-tools) docker image.
 
