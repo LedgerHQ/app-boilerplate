@@ -46,10 +46,14 @@ jobs:
           name: code-coverage
           path: unit-tests/coverage
 
+      - name: Install codecov dependencies
+        run: apk update && apk add curl gpg
+
       - name: Upload to codecov.io
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./unit-tests/coverage.info
           flags: unittests
           name: codecov-app-boilerplate
