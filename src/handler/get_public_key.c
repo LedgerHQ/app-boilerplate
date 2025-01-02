@@ -27,11 +27,11 @@
 #include "crypto_helpers.h"
 
 #include "get_public_key.h"
-#include "../globals.h"
-#include "../types.h"
-#include "../sw.h"
-#include "../ui/display.h"
-#include "../helper/send_response.h"
+#include "globals.h"
+#include "types.h"
+#include "sw.h"
+#include "display.h"
+#include "send_response.h"
 
 int handler_get_public_key(buffer_t *cdata, bool display) {
     explicit_bzero(&G_context, sizeof(G_context));

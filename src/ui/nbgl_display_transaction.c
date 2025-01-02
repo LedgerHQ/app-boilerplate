@@ -30,12 +30,12 @@
 
 #include "display.h"
 #include "constants.h"
-#include "../globals.h"
-#include "../sw.h"
-#include "../address.h"
-#include "action/validate.h"
-#include "../transaction/types.h"
-#include "../menu.h"
+#include "globals.h"
+#include "sw.h"
+#include "address.h"
+#include "validate.h"
+#include "tx_types.h"
+#include "menu.h"
 
 // Buffer where the transaction amount string is written
 static char g_amount[30];

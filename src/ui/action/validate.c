@@ -20,10 +20,10 @@
 #include "crypto_helpers.h"
 
 #include "validate.h"
-#include "../menu.h"
-#include "../../sw.h"
-#include "../../globals.h"
-#include "../../helper/send_response.h"
+#include "menu.h"
+#include "sw.h"
+#include "globals.h"
+#include "send_response.h"
 
 void validate_pubkey(bool choice) {
     if (choice) {
