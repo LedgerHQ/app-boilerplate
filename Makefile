@@ -19,8 +19,6 @@ ifeq ($(BOLOS_SDK),)
 $(error Environment variable BOLOS_SDK is not set)
 endif
 
-include $(BOLOS_SDK)/Makefile.defines
-
 ########################################
 #        Mandatory configuration       #
 ########################################
@@ -84,6 +82,7 @@ VARIANT_VALUES = BOL
 ########################################
 ENABLE_BLUETOOTH = 1
 #ENABLE_NFC = 1
+ENABLE_NBGL_FOR_NANO_DEVICES = 1
 
 ########################################
 #         NBGL custom features         #
@@ -103,7 +102,6 @@ ENABLE_NBGL_QRCODE = 1
 #DISABLE_STANDARD_SNPRINTF = 1
 #DISABLE_STANDARD_USB = 1
 #DISABLE_STANDARD_WEBUSB = 1
-#DISABLE_STANDARD_BAGL_UX_FLOW = 1
 #DISABLE_DEBUG_LEDGER_ASSERT = 1
 #DISABLE_DEBUG_THROW = 1
 

@@ -42,8 +42,8 @@ static char g_amount[30];
 // Buffer where the transaction address string is written
 static char g_address[43];
 
-static nbgl_layoutTagValue_t pairs[2];
-static nbgl_layoutTagValueList_t pairList;
+static nbgl_contentTagValue_t pairs[2];
+static nbgl_contentTagValueList_t pairList;
 
 // called when long press button on 3rd page is long-touched or when reject footer is touched
 static void review_choice(bool confirm) {
@@ -99,7 +99,7 @@ int ui_display_transaction_bs_choice(bool is_blind_signed) {
         // Start blind-signing review flow
         nbgl_useCaseReviewBlindSigning(TYPE_TRANSACTION,
                                        &pairList,
-                                       &C_app_boilerplate_64px,
+                                       &ICON_APP_BOILERPLATE,
                                        "Review transaction\nto send BOL",
                                        NULL,
                                        "Sign transaction\nto send BOL",
@@ -109,13 +109,12 @@ int ui_display_transaction_bs_choice(bool is_blind_signed) {
         // Start review flow
         nbgl_useCaseReview(TYPE_TRANSACTION,
                            &pairList,
-                           &C_app_boilerplate_64px,
+                           &ICON_APP_BOILERPLATE,
                            "Review transaction\nto send BOL",
                            NULL,
                            "Sign transaction\nto send BOL",
                            review_choice);
     }
-
     return 0;
 }
 
