@@ -66,7 +66,7 @@ int ui_display_address() {
 
     nbgl_useCaseAddressReview(g_address,
                               NULL,
-                              &C_app_boilerplate_64px,
+                              &ICON_APP_BOILERPLATE,
                               "Verify BOL address",
                               NULL,
                               review_choice);
