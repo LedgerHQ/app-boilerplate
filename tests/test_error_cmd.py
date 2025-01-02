@@ -1,25 +1,27 @@
 import pytest
 
 from ragger.error import ExceptionRAPDU
+from ragger.backend.interface import BackendInterface
+
 from application_client.boilerplate_command_sender import CLA, InsType, P1, P2, Errors
 
 
 # Ensure the app returns an error when a bad CLA is used
-def test_bad_cla(backend):
+def test_bad_cla(backend: BackendInterface) -> None:
     with pytest.raises(ExceptionRAPDU) as e:
         backend.exchange(cla=CLA + 1, ins=InsType.GET_VERSION)
     assert e.value.status == Errors.SW_CLA_NOT_SUPPORTED
 
 
 # Ensure the app returns an error when a bad INS is used
-def test_bad_ins(backend):
+def test_bad_ins(backend: BackendInterface) -> None:
     with pytest.raises(ExceptionRAPDU) as e:
         backend.exchange(cla=CLA, ins=0xff)
     assert e.value.status == Errors.SW_INS_NOT_SUPPORTED
 
 
 # Ensure the app returns an error when a bad P1 or P2 is used
-def test_wrong_p1p2(backend):
+def test_wrong_p1p2(backend: BackendInterface) -> None:
     with pytest.raises(ExceptionRAPDU) as e:
         backend.exchange(cla=CLA, ins=InsType.GET_VERSION, p1=P1.P1_START + 1, p2=P2.P2_LAST)
     assert e.value.status == Errors.SW_WRONG_P1P2
@@ -35,7 +37,7 @@ def test_wrong_p1p2(backend):
 
 
 # Ensure the app returns an error when a bad data length is used
-def test_wrong_data_length(backend):
+def test_wrong_data_length(backend: BackendInterface) -> None:
     # APDUs must be at least 4 bytes: CLA, INS, P1, P2.
     with pytest.raises(ExceptionRAPDU) as e:
         backend.exchange_raw(bytes.fromhex("E00300"))
@@ -47,7 +49,7 @@ def test_wrong_data_length(backend):
 
 
 # Ensure there is no state confusion when trying wrong APDU sequences
-def test_invalid_state(backend):
+def test_invalid_state(backend: BackendInterface) -> None:
     with pytest.raises(ExceptionRAPDU) as e:
         backend.exchange(cla=CLA,
                          ins=InsType.SIGN_TX,
