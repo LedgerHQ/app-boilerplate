@@ -1,8 +1,7 @@
 #pragma once
 
 #include "parser.h"
-
-#include "../types.h"
+#include "types.h"
 
 /**
  * Parameter 2 for last APDU to receive.

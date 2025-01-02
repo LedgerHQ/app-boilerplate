@@ -25,11 +25,11 @@
 #include "buffer.h"
 
 #include "sign_tx.h"
-#include "../sw.h"
-#include "../globals.h"
-#include "../ui/display.h"
-#include "../transaction/types.h"
-#include "../transaction/deserialize.h"
+#include "sw.h"
+#include "globals.h"
+#include "display.h"
+#include "tx_types.h"
+#include "deserialize.h"
 
 int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
     if (chunk == 0) {  // first APDU, parse BIP32 path

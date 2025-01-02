@@ -22,7 +22,7 @@
 #include "glyphs.h"
 #include "nbgl_use_case.h"
 
-#include "../globals.h"
+#include "globals.h"
 #include "menu.h"
 
 //  -----------------------------------------------------------
