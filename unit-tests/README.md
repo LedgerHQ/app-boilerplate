@@ -15,13 +15,13 @@ and for code coverage generation:
 
 In `unit-tests` folder, compile with
 
-```
+```shell
 cmake -Bbuild -H. && make -C build
 ```
 
 and run tests with
 
-```
+```shell
 CTEST_OUTPUT_ON_FAILURE=1 make -C build test
 ```
 
@@ -29,7 +29,7 @@ CTEST_OUTPUT_ON_FAILURE=1 make -C build test
 
 Just execute in `unit-tests` folder
 
-```
+```shell
 ./gen_coverage.sh
 ```
 
