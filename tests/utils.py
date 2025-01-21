@@ -1,8 +1,7 @@
 from pathlib import Path
 from typing import List
 import re
-from hashlib import sha256
-from sha3 import keccak_256
+from Crypto.Hash import keccak
 
 from ecdsa.curves import SECP256k1
 from ecdsa.keys import VerifyingKey
@@ -14,11 +13,15 @@ def check_signature_validity(public_key: bytes, signature: bytes, message: bytes
     pk: VerifyingKey = VerifyingKey.from_string(
         public_key,
         curve=SECP256k1,
-        hashfunc=sha256
+        hashfunc=None
     )
-    return pk.verify(signature=signature,
-                     data=message,
-                     hashfunc=keccak_256,
+    # Compute message hash (keccak_256)
+    k = keccak.new(digest_bits=256)
+    k.update(message)
+    message_hash = k.digest()
+
+    return pk.verify_digest(signature=signature,
+                     digest=message_hash,
                      sigdecode=sigdecode_der)
 
 
