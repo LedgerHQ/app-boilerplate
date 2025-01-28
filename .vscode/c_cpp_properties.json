@@ -1,21 +1,18 @@
 {
     "env": {
-        "BOLOS_SDK": "/opt/nanosplus-secure-sdk",
-        "BOLOS_ENV": "/opt/bolos-devenv"
+        "BOLOS_SDK": "/opt/ledger-secure-sdk"
     },
     "configurations": [
         {
             "name": "Nano S+",
             "includePath": [
-                "/usr/include",
-                "${workspaceFolder}/src",
-                "${env:BOLOS_SDK}/include/*",
-                "${env:BOLOS_SDK}/lib_ux/include/*"
+                "${workspaceFolder}/src/**",
+                "${env:BOLOS_SDK}/**"
             ],
             "defines": [
                 "TARGET_NANOS2",
                 "OS_IO_SEPROXYHAL",
-                "HAVE_BAGL",
+                "HAVE_NBGL",
                 "HAVE_SPRINTF",
                 "HAVE_IO_USB",
                 "HAVE_L4_USBLIB",
@@ -30,12 +27,11 @@
                 "MINOR_VERSION=0",
                 "PATCH_VERSION=0",
                 "IO_SEPROXYHAL_BUFFER_SIZE_B=128",
-                "HAVE_UX_FLOW",
                 "DEBUG=1",
+                "HAVE_PIEZO_SOUND",
                 "HAVE_PRINTF",
                 "PRINTF=screen_printf"
             ],
-            "compilerPath": "${env:BOLOS_ENV}/gcc-arm-none-eabi-5_3-2016q1/bin/arm-none-eabi-gcc",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "gcc-arm",

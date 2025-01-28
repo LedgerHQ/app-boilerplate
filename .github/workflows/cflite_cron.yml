@@ -23,19 +23,18 @@ jobs:
           - mode: coverage
             sanitizer: coverage
     steps:
-    - name: Build Fuzzers (${{ matrix.mode }} - ${{ matrix.sanitizer }})
-      id: build
-      uses: google/clusterfuzzlite/actions/build_fuzzers@v1
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        language: c # Change this to the language you are fuzzing.
-        sanitizer: ${{ matrix.sanitizer }}
-    - name: Run Fuzzers (${{ matrix.mode }} - ${{ matrix.sanitizer }})
-      id: run
-      uses: google/clusterfuzzlite/actions/run_fuzzers@v1
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        fuzz-seconds: 300 # 5 minutes
-        mode: ${{ matrix.mode }}
-        sanitizer: ${{ matrix.sanitizer }}
-     
+      - name: Build Fuzzers (${{ matrix.mode }} - ${{ matrix.sanitizer }})
+        id: build
+        uses: google/clusterfuzzlite/actions/build_fuzzers@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          language: c # Change this to the language you are fuzzing.
+          sanitizer: ${{ matrix.sanitizer }}
+      - name: Run Fuzzers (${{ matrix.mode }} - ${{ matrix.sanitizer }})
+        id: run
+        uses: google/clusterfuzzlite/actions/run_fuzzers@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          fuzz-seconds: 300 # 5 minutes
+          mode: ${{ matrix.mode }}
+          sanitizer: ${{ matrix.sanitizer }}

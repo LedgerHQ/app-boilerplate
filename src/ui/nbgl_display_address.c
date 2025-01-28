@@ -29,12 +29,12 @@
 
 #include "display.h"
 #include "constants.h"
-#include "../globals.h"
-#include "../sw.h"
-#include "../address.h"
-#include "action/validate.h"
-#include "../transaction/types.h"
-#include "../menu.h"
+#include "globals.h"
+#include "sw.h"
+#include "address.h"
+#include "validate.h"
+#include "tx_types.h"
+#include "menu.h"
 
 static char g_address[43];
 
@@ -66,7 +66,7 @@ int ui_display_address() {
 
     nbgl_useCaseAddressReview(g_address,
                               NULL,
-                              &C_app_boilerplate_64px,
+                              &ICON_APP_BOILERPLATE,
                               "Verify BOL address",
                               NULL,
                               review_choice);

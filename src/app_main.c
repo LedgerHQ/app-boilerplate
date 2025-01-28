@@ -25,8 +25,8 @@
 #include "globals.h"
 #include "io.h"
 #include "sw.h"
-#include "ui/menu.h"
-#include "apdu/dispatcher.h"
+#include "menu.h"
+#include "dispatcher.h"
 
 global_ctx_t G_context;
 
