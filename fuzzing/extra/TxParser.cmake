@@ -26,5 +26,6 @@ set_target_properties(txparser PROPERTIES SOVERSION 1)
 
 target_include_directories(txparser PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/transaction
     ${BOLOS_SDK}/lib_standard_app
 )

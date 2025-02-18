@@ -3,9 +3,9 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "transaction/deserialize.h"
-#include "transaction/utils.h"
-#include "transaction/types.h"
+#include "deserialize.h"
+#include "utils.h"
+#include "tx_types.h"
 #include "format.h"
 
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {

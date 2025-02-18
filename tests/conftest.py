@@ -1,4 +1,3 @@
-from ragger.conftest import configuration
 
 ###########################
 ### CONFIGURATION START ###

@@ -13,22 +13,20 @@ class Transaction:
                  nonce: int,
                  to: Union[str, bytes],
                  value: int,
-                 memo: str,
-                 do_check: bool = True) -> None:
+                 memo: str) -> None:
         self.nonce: int = nonce
         self.to: bytes = bytes.fromhex(to[2:]) if isinstance(to, str) else to
         self.value: int = value
         self.memo: bytes = memo.encode("ascii")
 
-        if do_check:
-            if not 0 <= self.nonce <= UINT64_MAX:
-                raise TransactionError(f"Bad nonce: '{self.nonce}'!")
+        if not 0 <= self.nonce <= UINT64_MAX:
+            raise TransactionError(f"Bad nonce: '{self.nonce}'!")
 
-            if not 0 <= self.value <= UINT64_MAX:
-                raise TransactionError(f"Bad value: '{self.value}'!")
+        if not 0 <= self.value <= UINT64_MAX:
+            raise TransactionError(f"Bad value: '{self.value}'!")
 
-            if len(self.to) != 20:
-                raise TransactionError(f"Bad address: '{self.to.hex()}'!")
+        if len(self.to) != 20:
+            raise TransactionError(f"Bad address: '{self.to.hex()}'!")
 
     def serialize(self) -> bytes:
         return b"".join([

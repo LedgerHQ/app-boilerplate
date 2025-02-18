@@ -22,4 +22,4 @@ jobs:
     with:
       source: './src'
       extensions: 'h,c'
-      version: 11
+      version: 12

@@ -23,14 +23,14 @@
 #include "ledger_assert.h"
 
 #include "dispatcher.h"
-#include "../constants.h"
-#include "../globals.h"
-#include "../types.h"
-#include "../sw.h"
-#include "../handler/get_version.h"
-#include "../handler/get_app_name.h"
-#include "../handler/get_public_key.h"
-#include "../handler/sign_tx.h"
+#include "constants.h"
+#include "globals.h"
+#include "types.h"
+#include "sw.h"
+#include "get_version.h"
+#include "get_app_name.h"
+#include "get_public_key.h"
+#include "sign_tx.h"
 
 int apdu_dispatcher(const command_t *cmd) {
     LEDGER_ASSERT(cmd != NULL, "NULL cmd");

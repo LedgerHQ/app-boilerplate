@@ -36,6 +36,7 @@ endif()
 add_compile_definitions(TEST)
 
 include_directories(../src)
+include_directories(../src/transaction)
 include_directories($ENV{BOLOS_SDK}/lib_standard_app)
 
 add_executable(test_tx_parser test_tx_parser.c)

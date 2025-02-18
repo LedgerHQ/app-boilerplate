@@ -6,7 +6,7 @@
 
 #include "buffer.h"
 
-#include "../types.h"
+#include "types.h"
 
 /**
  * Handler for GET_PUBLIC_KEY command. If successfully parse BIP32 path,

@@ -19,8 +19,6 @@ ifeq ($(BOLOS_SDK),)
 $(error Environment variable BOLOS_SDK is not set)
 endif
 
-include $(BOLOS_SDK)/Makefile.defines
-
 ########################################
 #        Mandatory configuration       #
 ########################################
@@ -29,7 +27,7 @@ APPNAME = "Boilerplate"
 
 # Application version
 APPVERSION_M = 2
-APPVERSION_N = 1
+APPVERSION_N = 2
 APPVERSION_P = 0
 APPVERSION = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 
@@ -38,7 +36,6 @@ APP_SOURCE_PATH += src
 
 # Application icons following guidelines:
 # https://developers.ledger.com/docs/embedded-app/design-requirements/#device-icon
-ICON_NANOS = icons/app_boilerplate_16px.gif
 ICON_NANOX = icons/app_boilerplate_14px.gif
 ICON_NANOSP = icons/app_boilerplate_14px.gif
 ICON_STAX = icons/app_boilerplate_32px.gif
@@ -85,6 +82,7 @@ VARIANT_VALUES = BOL
 ########################################
 ENABLE_BLUETOOTH = 1
 #ENABLE_NFC = 1
+ENABLE_NBGL_FOR_NANO_DEVICES = 1
 
 ########################################
 #         NBGL custom features         #
@@ -112,7 +110,6 @@ ENABLE_APP_STORAGE_PROP_DATA = 1
 #DISABLE_STANDARD_SNPRINTF = 1
 #DISABLE_STANDARD_USB = 1
 #DISABLE_STANDARD_WEBUSB = 1
-#DISABLE_STANDARD_BAGL_UX_FLOW = 1
 #DISABLE_DEBUG_LEDGER_ASSERT = 1
 #DISABLE_DEBUG_THROW = 1
 

@@ -2,8 +2,27 @@
     "files.associations": {
         "*.h": "c"
     },
-    "C_Cpp.clang_format_path": "/usr/bin/clang-format",
-    "editor.formatOnSave": false,
-    "python.terminal.activateEnvironment": false,
-    "git.ignoreLimitWarning": true,
+    "ledgerDevTools.appSettings": {
+        "selectedUseCase": "release",
+        "selectedDevice": "Nano X",
+        "selectedVariant": "BOL",
+        "testsList": [
+            "test_app_mainmenu",
+            "test_app_name",
+            "test_bad_cla",
+            "test_bad_ins",
+            "test_wrong_p1p2",
+            "test_wrong_data_length",
+            "test_invalid_state",
+            "test_get_app_and_version",
+            "test_get_public_key_no_confirm",
+            "test_get_public_key_confirm_accepted",
+            "test_get_public_key_confirm_refused",
+            "test_sign_tx_short_tx",
+            "test_sign_tx_short_tx_blind_sign",
+            "test_sign_tx_long_tx",
+            "test_sign_tx_refused",
+            "test_version"
+        ]
+    }
 }
