@@ -4,10 +4,10 @@
 
 /**
  * @brief Oldest supported version of the application storage data structure
- * (for conversion).
+ * (for conversion). v1 is not anymore supported
  *
  */
-#define APP_STORAGE_DATA_STRUCT_FIRST_SUPPORTED_VERSION 1
+#define APP_STORAGE_DATA_STRUCT_FIRST_SUPPORTED_VERSION 2
 
 /**
  * @brief Current version of the application storage data structure
@@ -17,7 +17,7 @@
  * backed up data after a first launch.
  *
  */
-#define APP_STORAGE_DATA_STRUCT_VERSION 2
+#define APP_STORAGE_DATA_STRUCT_VERSION 3
 
 /**
  * @brief Definition of the application storage properties of this App
@@ -30,10 +30,22 @@
  *
  */
 typedef struct app_storage_data_s {
-  uint8_t dummy1_allowed;
-  uint8_t dummy2_allowed;
-  uint8_t initialized;
-#if (APP_STORAGE_DATA_STRUCT_VERSION == 2)
-  char string[30]; // added in v2
+    uint32_t struct_version;
+    uint8_t dummy1_allowed;
+    uint8_t dummy2_allowed;
+#if (APP_STORAGE_DATA_STRUCT_VERSION == 3)
+    char string[30];  // added in v3
 #endif
 } app_storage_data_t;
+
+/**
+ * App storage accessors
+ */
+#define APP_STORAGE_WRITE_ALL(src_buf) app_storage_pwrite(src_buf, sizeof(app_storage_data_t), 0)
+
+#define APP_STORAGE_WRITE_F(field, src_buf)                       \
+    app_storage_pwrite(src_buf,                                   \
+                       sizeof(((app_storage_data_t *) 0)->field), \
+                       offsetof(app_storage_data_t, field))
+
+#define APP_STORAGE_READ_F(field) ((app_storage_data_t *) app_storage_get())->field

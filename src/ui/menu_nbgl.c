@@ -1,7 +1,6 @@
-
 /*****************************************************************************
  *   Ledger App Boilerplate.
- *   (c) 2020 Ledger SAS.
+ *   (c) 2020-2025 Ledger SAS.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,8 +37,8 @@ void app_quit(void) {
 //  --------------------- SETTINGS MENU -----------------------
 //  -----------------------------------------------------------
 #define SETTING_INFO_NB 2
-static const char* const INFO_TYPES[SETTING_INFO_NB] = {"Version", "Developer"};
-static const char* const INFO_CONTENTS[SETTING_INFO_NB] = {APPVERSION, "Ledger"};
+static const char *const INFO_TYPES[SETTING_INFO_NB] = {"Version", "Developer"};
+static const char *const INFO_CONTENTS[SETTING_INFO_NB] = {APPVERSION, "Ledger"};
 
 // settings switches definitions
 enum { DUMMY_SWITCH_1_TOKEN = FIRST_USER_TOKEN, DUMMY_SWITCH_2_TOKEN };
@@ -74,16 +73,20 @@ static void review_warning_choice(bool confirm) {
     uint8_t switch_value;
     if (confirm) {
         // toggle the switch value
-        switch_value = !N_app_storage.data.dummy2_allowed;
+        switch_value = !APP_STORAGE_READ_F(dummy2_allowed);
         switches[DUMMY_SWITCH_2_ID].initState = (nbgl_state_t) switch_value;
         // store the new setting value in NVM
-        nvm_write((void*) &N_app_storage.data.dummy2_allowed, &switch_value, 1);
+        APP_STORAGE_WRITE_F(dummy2_allowed, (void *) &switch_value);
         // increment data version (not really mandatory for settings)
-        app_storage_set_data_version(app_storage_get_data_version() + 1);
+        app_storage_increment_data_version();
     }
 
     // Reset setting menu to the right page
+#if (APP_STORAGE_DATA_STRUCT_VERSION == 3)
+    nbgl_useCaseHomeAndSettings((const char *) APP_STORAGE_READ_F(string),
+#elif (APP_STORAGE_DATA_STRUCT_VERSION == 2)
     nbgl_useCaseHomeAndSettings(APPNAME,
+#endif
                                 &C_app_boilerplate_64px,
                                 NULL,
                                 initSettingPage,
@@ -102,18 +105,18 @@ static void controls_callback(int token, uint8_t index, int page) {
     if (token == DUMMY_SWITCH_1_TOKEN) {
         // Dummy 1 switch touched
         // toggle the switch value
-        switch_value = !N_app_storage.data.dummy1_allowed;
+        switch_value = !APP_STORAGE_READ_F(dummy1_allowed);
         switches[DUMMY_SWITCH_1_ID].initState = (nbgl_state_t) switch_value;
         // store the new setting value in NVM
-        nvm_write((void*) &N_app_storage.data.dummy1_allowed, &switch_value, 1);
+        APP_STORAGE_WRITE_F(dummy1_allowed, (void *) &switch_value);
         // increment data version (not really mandatory for settings)
-        app_storage_set_data_version(app_storage_get_data_version() + 1);
+        app_storage_increment_data_version();
     } else if (token == DUMMY_SWITCH_2_TOKEN) {
         // Dummy 2 switch touched
 
         // in this example we display a warning when the user wants
         // to activate the dummy 2 setting
-        if (!N_app_storage.data.dummy2_allowed) {
+        if (!APP_STORAGE_READ_F(dummy2_allowed)) {
             // Display the warning message and ask the user to confirm
             nbgl_useCaseChoice(&C_Warning_64px,
                                "Dummy 2",
@@ -123,12 +126,12 @@ static void controls_callback(int token, uint8_t index, int page) {
                                review_warning_choice);
         } else {
             // toggle the switch value
-            switch_value = !N_app_storage.data.dummy2_allowed;
+            switch_value = !APP_STORAGE_READ_F(dummy2_allowed);
             switches[DUMMY_SWITCH_2_ID].initState = (nbgl_state_t) switch_value;
             // store the new setting value in NVM
-            nvm_write((void*) &N_app_storage.data.dummy2_allowed, &switch_value, 1);
+            APP_STORAGE_WRITE_F(dummy2_allowed, (void *) &switch_value);
             // increment data version (not really mandatory for settings)
-            app_storage_set_data_version(app_storage_get_data_version() + 1);
+            app_storage_increment_data_version();
         }
     }
 }
@@ -136,21 +139,21 @@ static void controls_callback(int token, uint8_t index, int page) {
 // home page definition
 void ui_menu_main(void) {
     // Initialize switches data
-    switches[DUMMY_SWITCH_1_ID].initState = (nbgl_state_t) N_app_storage.data.dummy1_allowed;
+    switches[DUMMY_SWITCH_1_ID].initState = (nbgl_state_t) APP_STORAGE_READ_F(dummy1_allowed);
     switches[DUMMY_SWITCH_1_ID].text = "Dummy 1";
     switches[DUMMY_SWITCH_1_ID].subText = "Allow dummy 1\nin transactions";
     switches[DUMMY_SWITCH_1_ID].token = DUMMY_SWITCH_1_TOKEN;
     switches[DUMMY_SWITCH_1_ID].tuneId = TUNE_TAP_CASUAL;
 
-    switches[DUMMY_SWITCH_2_ID].initState = (nbgl_state_t) N_app_storage.data.dummy2_allowed;
+    switches[DUMMY_SWITCH_2_ID].initState = (nbgl_state_t) APP_STORAGE_READ_F(dummy2_allowed);
     switches[DUMMY_SWITCH_2_ID].text = "Dummy 2";
     switches[DUMMY_SWITCH_2_ID].subText = "Allow dummy 2\nin transactions";
     switches[DUMMY_SWITCH_2_ID].token = DUMMY_SWITCH_2_TOKEN;
     switches[DUMMY_SWITCH_2_ID].tuneId = TUNE_TAP_CASUAL;
 
-#if (APP_STORAGE_DATA_STRUCT_VERSION == 2)
-    nbgl_useCaseHomeAndSettings((const char*)N_app_storage.data.string,
-#elif (APP_STORAGE_DATA_STRUCT_VERSION == 1)
+#if (APP_STORAGE_DATA_STRUCT_VERSION == 3)
+    nbgl_useCaseHomeAndSettings((const char *) APP_STORAGE_READ_F(string),
+#elif (APP_STORAGE_DATA_STRUCT_VERSION == 2)
     nbgl_useCaseHomeAndSettings(APPNAME,
 #endif
                                 &C_app_boilerplate_64px,

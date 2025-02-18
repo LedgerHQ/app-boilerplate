@@ -1,6 +1,6 @@
 /*****************************************************************************
  *   Ledger App Boilerplate.
- *   (c) 2020 Ledger SAS.
+ *   (c) 2020-2025 Ledger SAS.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,41 +30,45 @@
 
 global_ctx_t G_context;
 
-static void init_app_storage(void) {
+static bool init_app_storage(void) {
     app_storage_data_t storage_data = {0};
 
-    // If the Application storage content is not initialized or of a too old version, let's init it from scratch
-    if (!app_storage_is_initalized() || (app_storage_get_struct_version() < APP_STORAGE_DATA_STRUCT_FIRST_SUPPORTED_VERSION)) {
-        // start at version 1 if it has never been updated
-        PRINTF("HERE\n");
-        app_storage_init(1);
-#if (APP_STORAGE_DATA_STRUCT_VERSION == 2)
-        strcpy(storage_data.string, "Boiler V2");
-#endif
+    // If the Application storage content is not initialized or of a too old version, let's init it
+    // from scratch
+    if ((app_storage_get_size() == 0) ||
+        (APP_STORAGE_READ_F(struct_version) < APP_STORAGE_DATA_STRUCT_FIRST_SUPPORTED_VERSION)) {
+        // start from scratch
+        storage_data.struct_version = APP_STORAGE_DATA_STRUCT_VERSION;
+#if (APP_STORAGE_DATA_STRUCT_VERSION == 3)
+        strcpy(storage_data.string, "Boiler V3");
+#endif  // (APP_STORAGE_DATA_STRUCT_VERSION == 3)
         storage_data.dummy1_allowed = 0x00;
         storage_data.dummy2_allowed = 0x00;
-        storage_data.initialized = 0x01;
-        nvm_write((void *) &N_app_storage.data, (void *) &storage_data, sizeof(storage_data));
-    }
-    else if (app_storage_get_struct_version() < APP_STORAGE_DATA_STRUCT_VERSION) {
-#if (APP_STORAGE_DATA_STRUCT_VERSION == 2)
+        if (APP_STORAGE_WRITE_ALL((void *) &storage_data) != sizeof(storage_data)) {
+            PRINTF("=> storage write failure\n");
+            return false;
+        }
+    } else if (APP_STORAGE_READ_F(struct_version) < APP_STORAGE_DATA_STRUCT_VERSION) {
+#if (APP_STORAGE_DATA_STRUCT_VERSION == 3)
         // if the version is supported and not current, let's convert it
         // In this example, only version 1 is supported as old one
         // The previous app storage data struct was:
         // typedef struct app_storage_data_s {
         //     uint8_t dummy1_allowed;
         //     uint8_t dummy2_allowed;
-        //     uint8_t initialized;
         // } app_storage_data_t;
-        if (app_storage_get_struct_version() ==  1) {
-            // update header with new struct version, but reuse the data version
-            app_storage_init(app_storage_get_data_version());
+        if (APP_STORAGE_READ_F(struct_version) == 2) {
+            // update with new data struct version, but reuse the data version
+            uint32_t version = APP_STORAGE_DATA_STRUCT_VERSION;
+            APP_STORAGE_WRITE_F(struct_version, (void *) &version);
             // keep storage.string but add an initial value for storage.string
-            strcpy(storage_data.string, "Boiler From V1");
-            nvm_write((void *) &N_app_storage.data.string, (void *) &storage_data.string, sizeof(storage_data.string));
+            strcpy(storage_data.string, "Boiler From V3");
+            APP_STORAGE_WRITE_F(string, (void *) &storage_data.string);
         }
-#endif // (APP_STORAGE_DATA_STRUCT_VERSION == 2)
+#endif  // (APP_STORAGE_DATA_STRUCT_VERSION == 3)
     }
+
+    return true;
 }
 
 /**
@@ -78,7 +82,10 @@ void app_main() {
 
     io_init();
 
-    init_app_storage();
+    if (!init_app_storage()) {
+        PRINTF("Error while configuring the storage - aborting\n");
+        return;
+    }
 
     ui_menu_main();
 

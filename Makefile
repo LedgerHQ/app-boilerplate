@@ -1,6 +1,6 @@
 # ****************************************************************************
 #    Ledger App Boilerplate
-#    (c) 2023 Ledger SAS.
+#    (c) 2023-2025 Ledger SAS.
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -93,14 +93,20 @@ ENABLE_NBGL_QRCODE = 1
 #ENABLE_NBGL_KEYBOARD = 1
 #ENABLE_NBGL_KEYPAD = 1
 
+# Enabling app storage feature
 ENABLE_APP_STORAGE = 1
+# Setting its maximal size
+APP_STORAGE_SIZE  = 128
+# and its properties
+ENABLE_APP_STORAGE_PROP_SETTINGS = 1
+ENABLE_APP_STORAGE_PROP_DATA = 1
 
 ########################################
 #          Features disablers          #
 ########################################
 # These advanced settings allow to disable some feature that are by
 # default enabled in the SDK `Makefile.standard_app`.
-#DISABLE_STANDARD_APP_FILES = 1 
+#DISABLE_STANDARD_APP_FILES = 1
 #DISABLE_DEFAULT_IO_SEPROXY_BUFFER_SIZE = 1 # To allow custom size declaration
 #DISABLE_STANDARD_APP_DEFINES = 1 # Will set all the following disablers
 #DISABLE_STANDARD_SNPRINTF = 1
