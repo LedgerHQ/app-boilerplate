@@ -92,6 +92,11 @@ ENABLE_NBGL_QRCODE = 1
 #ENABLE_NBGL_KEYPAD = 1
 
 ########################################
+#       SWAP FEATURE      			   #
+########################################
+ENABLE_SWAP = 1
+
+########################################
 #          Features disablers          #
 ########################################
 # These advanced settings allow to disable some feature that are by
