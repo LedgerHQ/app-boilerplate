@@ -93,8 +93,7 @@ ENABLE_NBGL_QRCODE = 1
 
 # Enabling app storage feature
 ENABLE_APP_STORAGE = 1
-# Setting its maximal size
-APP_STORAGE_SIZE  = 128
+# will use default app storage size (~1 page)
 # and its properties
 ENABLE_APP_STORAGE_PROP_SETTINGS = 1
 ENABLE_APP_STORAGE_PROP_DATA = 1
