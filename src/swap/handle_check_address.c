@@ -10,9 +10,8 @@
 #include "format.h"
 #include "address.h"
 
+#include "handle_swap.h"
 #include <string.h>
-
-#define ADDRESS_LENGTH 20
 
 void swap_handle_check_address(check_address_parameters_t *params) {
     PRINTF("Inside swap_handle_check_address\n");
@@ -51,12 +50,13 @@ void swap_handle_check_address(check_address_parameters_t *params) {
     buffer_read_u8(&buf, &bip32_path_len);
     buffer_read_bip32_path(&buf, bip32_path, (size_t) bip32_path_len);
 
-    cx_err_t error = bip32_derive_get_pubkey_256(CX_CURVE_256K1,
-                                                 bip32_path,
-                                                 bip32_path_len,
-                                                 pk_info.raw_public_key,
-                                                 pk_info.chain_code,
-                                                 CX_SHA512);
+    bip32_derive_get_pubkey_256(
+        CX_CURVE_256K1,
+        bip32_path,
+        bip32_path_len,
+        pk_info.raw_public_key,
+        pk_info.chain_code,
+        CX_SHA512);
     
     uint8_t address[ADDRESS_LEN] = {0};
     address_from_pubkey(pk_info.raw_public_key, address, sizeof(address));
