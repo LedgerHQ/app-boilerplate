@@ -23,6 +23,7 @@
 #include "os.h"
 #include "cx.h"
 #include "buffer.h"
+#include "swap.h"
 
 #include "sign_tx.h"
 #include "sw.h"
@@ -30,6 +31,8 @@
 #include "display.h"
 #include "tx_types.h"
 #include "deserialize.h"
+#include "handle_swap.h"
+#include "validate.h"
 
 int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
     if (chunk == 0) {  // first APDU, parse BIP32 path
@@ -98,10 +101,31 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
                 return ui_display_transaction();
 #endif
             } else {
-                return ui_display_transaction();
+                // If we are in swap context, do not redisplay the message data
+                // Instead, ensure they are identical with what was previously displayed
+                if (G_called_from_swap) {
+                    if (G_swap_response_ready) {
+                        // Safety against trying to make the app sign multiple TX
+                        // This code should never be triggered as the app is supposed to exit after
+                        // sending the signed transaction
+                        PRINTF("Safety against double signing triggered\n");
+                        os_sched_exit(-1);
+                    } else {
+                        // We will quit the app after this transaction, whether it succeeds or fails
+                        PRINTF("Swap response is ready, the app will quit after the next send\n");
+                        // This boolean will make the io_send_sw family instant reply + return to exchange
+                        G_swap_response_ready = true;
+                    }
+                    if (swap_check_validity()) {
+                        PRINTF("Swap response validated\n");
+                        validate_transaction(true);
+                    } 
+                    return 0;
+                } else {
+                        return ui_display_transaction();
+                }
             }
         }
-    }
-
+    }    
     return 0;
 }

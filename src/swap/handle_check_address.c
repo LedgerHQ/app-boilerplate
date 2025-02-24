@@ -9,8 +9,8 @@
 #include "types.h"
 #include "format.h"
 #include "address.h"
+#include "tx_types.h"
 
-#include "handle_swap.h"
 #include <string.h>
 
 void swap_handle_check_address(check_address_parameters_t *params) {
@@ -30,9 +30,9 @@ void swap_handle_check_address(check_address_parameters_t *params) {
         return;
     }
     PRINTF("Address to check %s\n", params->address_to_check);
-    if (strlen(params->address_to_check) != (ADDRESS_LENGTH * 2)) {
+    if (strlen(params->address_to_check) != (ADDRESS_LEN * 2)) {
         PRINTF("Address to check expected length %d, not %d\n",
-               ADDRESS_LENGTH * 2,
+            ADDRESS_LEN * 2,
                strlen(params->address_to_check));
         return;
     }

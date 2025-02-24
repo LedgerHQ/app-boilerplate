@@ -20,6 +20,7 @@
 
 #include "os.h"
 #include "ux.h"
+#include "swap.h"
 
 #include "types.h"
 #include "globals.h"
@@ -43,7 +44,9 @@ void app_main() {
 
     io_init();
 
-    ui_menu_main();
+    if (!G_called_from_swap) {
+        ui_menu_main();
+    }
 
     // Reset context
     explicit_bzero(&G_context, sizeof(G_context));
