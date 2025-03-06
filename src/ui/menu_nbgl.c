@@ -82,11 +82,7 @@ static void review_warning_choice(bool confirm) {
     }
 
     // Reset setting menu to the right page
-#if (APP_STORAGE_DATA_STRUCT_VERSION == 3)
     nbgl_useCaseHomeAndSettings((const char *) sd_cache.string,
-#elif (APP_STORAGE_DATA_STRUCT_VERSION == 2)
-    nbgl_useCaseHomeAndSettings(APPNAME,
-#endif
                                 &ICON_APP_BOILERPLATE,
                                 NULL,
                                 initSettingPage,
@@ -154,11 +150,7 @@ void ui_menu_main(void) {
     switches[DUMMY_SWITCH_2_ID].tuneId = TUNE_TAP_CASUAL;
 #endif
 
-#if (APP_STORAGE_DATA_STRUCT_VERSION == 3)
     nbgl_useCaseHomeAndSettings((const char *) sd_cache.string,
-#elif (APP_STORAGE_DATA_STRUCT_VERSION == 2)
-    nbgl_useCaseHomeAndSettings(APPNAME,
-#endif
                                 &ICON_APP_BOILERPLATE,
                                 NULL,
                                 INIT_HOME_PAGE,

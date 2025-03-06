@@ -29,57 +29,103 @@
 #include "dispatcher.h"
 
 global_ctx_t G_context;
-app_storage_data_t sd_cache;
+APP_STORAGE_DATA_TYPE sd_cache;
 
+#if (APP_STORAGE_DATA_STRUCT_VERSION == 2)
+/* Only for demonstration purposes:
+ * to be able to create a persistent data structure of previous version,
+ * which is bigger and with a different order of fields.
+ */
 static bool init_app_storage(void) {
-
-    // If the Application storage content is not initialized or of a too old version, let's init it
-    // from scratch
-    bool need_reinit = true;
+    bool app_data_exists = false;
+    bool version_supported = false;
     if (app_storage_get_size() > 0) {
+        app_data_exists = true;
         APP_STORAGE_READ_F(version, &sd_cache.version);
         if (sd_cache.version  >= APP_STORAGE_DATA_STRUCT_FIRST_SUPPORTED_VERSION) {
-            need_reinit = false;
+            version_supported = true;
         }
     }
 
-    if (need_reinit) {
-        // start from scratch
-        sd_cache.version = APP_STORAGE_DATA_STRUCT_VERSION;
-#if (APP_STORAGE_DATA_STRUCT_VERSION == 3)
-        strcpy(sd_cache.string, "Boiler V3");
-#endif  // (APP_STORAGE_DATA_STRUCT_VERSION == 3)
-        sd_cache.dummy1_allowed = 0x00;
-        sd_cache.dummy2_allowed = 0x00;
-        if (APP_STORAGE_WRITE_ALL((void *) &sd_cache) != sizeof(app_storage_data_t)) {
-            PRINTF("=> storage write failure\n");
-            return false;
+    bool need_write = false;
+    if ((!app_data_exists) || (!version_supported)) {
+        /* If version is not supported let's erase all potential garbage in case the structure was bigger */
+        if ((app_data_exists) && (!version_supported)) {
+            app_storage_reset();
         }
+        /* Start from scratch, dummy_allowed fields are already zero in the global variable */
+        sd_cache.version = APP_STORAGE_DATA_STRUCT_VERSION;
+        strcpy(sd_cache.string, "Boiler V2");
+        need_write = true;
     } else {
         APP_STORAGE_READ_ALL(&sd_cache);
-        if (sd_cache.version < APP_STORAGE_DATA_STRUCT_VERSION) {
-#if (APP_STORAGE_DATA_STRUCT_VERSION == 3)
-            // if the version is supported and not current, let's convert it
-            // In this example, only version 1 is supported as old one
-            // The previous app storage data struct was:
-            // typedef struct app_sd_cache_s {
-            //     uint8_t dummy1_allowed;
-            //     uint8_t dummy2_allowed;
-            // } app_sd_cache_t;
-            if (sd_cache.version == 2) {
-                // update with new data struct version, but reuse the data version
-                uint32_t version = APP_STORAGE_DATA_STRUCT_VERSION;
-                APP_STORAGE_WRITE_F(version, (void *) &version);
-                // keep storage.string but add an initial value for storage.string
-                strcpy(sd_cache.string, "Boiler From V3");
-                APP_STORAGE_WRITE_F(string, (void *) &sd_cache.string);
-            }
-#endif  // (APP_STORAGE_DATA_STRUCT_VERSION == 3)
+    }
+    if (need_write) {
+        if (APP_STORAGE_WRITE_ALL((void *) &sd_cache) != sizeof(APP_STORAGE_DATA_TYPE)) {
+            PRINTF("=> storage write failure\n");
+            return false;
         }
     }
 
     return true;
 }
+#endif /* #if (APP_STORAGE_DATA_STRUCT_VERSION == 2) */
+
+#if (APP_STORAGE_DATA_STRUCT_VERSION == 3)
+static bool init_app_storage(void) {
+
+    bool app_data_exists = false;
+    bool version_supported = false;
+    bool conversion_needed = false;
+    if (app_storage_get_size() > 0) {
+        app_data_exists = true;
+        APP_STORAGE_READ_F(version, &sd_cache.version);
+        if (sd_cache.version  >= APP_STORAGE_DATA_STRUCT_FIRST_SUPPORTED_VERSION) {
+            version_supported = true;
+            if (sd_cache.version < APP_STORAGE_DATA_STRUCT_VERSION) {
+                conversion_needed = true;
+            }
+        }
+    }
+
+    bool need_write = false;
+    if ((!app_data_exists) || (!version_supported)) {
+        /* If version is not supported let's erase all potential garbage in case the structure was bigger */
+        if ((app_data_exists) && (!version_supported)) {
+            app_storage_reset();
+        }
+        /* Start from scratch, dummy_allowed fields are already zero in the global variable */
+        sd_cache.version = APP_STORAGE_DATA_STRUCT_VERSION;
+        strcpy(sd_cache.string, "Boiler V3");
+        need_write = true;
+    } else {
+        if (conversion_needed) {
+            /* Reading previous version structure */
+            app_storage_data_prev_t sd_cache_prev;
+            APP_STORAGE_READ_ALL(&sd_cache_prev);
+            /* Let's erase previous version data as it is bigger */
+            app_storage_reset();
+
+            sd_cache.version = APP_STORAGE_DATA_STRUCT_VERSION;
+            sd_cache.dummy1_allowed = sd_cache_prev.dummy1_allowed;
+            sd_cache.dummy2_allowed = sd_cache_prev.dummy2_allowed;
+            strcpy(sd_cache.string, "Boiler From V2");
+            need_write = true;
+        }
+        else {
+            APP_STORAGE_READ_ALL(&sd_cache);
+        }
+    }
+    if (need_write) {
+        if (APP_STORAGE_WRITE_ALL((void *) &sd_cache) != sizeof(APP_STORAGE_DATA_TYPE)) {
+            PRINTF("=> storage write failure\n");
+            return false;
+        }
+    }
+
+    return true;
+}
+#endif /* #if (APP_STORAGE_DATA_STRUCT_VERSION == 3) */
 
 /**
  * Handle APDU command received and send back APDU response using handlers.
