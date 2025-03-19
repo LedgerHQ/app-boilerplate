@@ -8,6 +8,7 @@
 #include "types.h"
 #include "constants.h"
 #include "app_storage.h"
+#include "app_storage_data.h"
 
 /**
  * Global context for user requests.
