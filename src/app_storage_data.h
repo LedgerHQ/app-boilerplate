@@ -39,7 +39,8 @@ typedef struct app_storage_data_prev_s {
     uint8_t dummy1_allowed;
     uint8_t dummy2_allowed;
 } app_storage_data_prev_t;
-_Static_assert(sizeof(app_storage_data_prev_t) <= APP_STORAGE_SIZE, "The application storage size requested in Makefile is not sufficient");
+_Static_assert(sizeof(app_storage_data_prev_t) <= APP_STORAGE_SIZE,
+               "The application storage size requested in Makefile is not sufficient");
 
 typedef struct app_storage_data_s {
     uint32_t version;
@@ -47,7 +48,8 @@ typedef struct app_storage_data_s {
     uint8_t dummy2_allowed;
     char string[30];
 } app_storage_data_t;
-_Static_assert(sizeof(app_storage_data_t) <= APP_STORAGE_SIZE, "The application storage size requested in Makefile is not sufficient");
+_Static_assert(sizeof(app_storage_data_t) <= APP_STORAGE_SIZE,
+               "The application storage size requested in Makefile is not sufficient");
 
 #if (APP_STORAGE_DATA_STRUCT_VERSION == 2)
 #define APP_STORAGE_DATA_TYPE app_storage_data_prev_t
@@ -63,16 +65,16 @@ extern APP_STORAGE_DATA_TYPE sd_cache;
 /**
  * App storage accessors
  */
-#define APP_STORAGE_WRITE_ALL(src_buf) app_storage_pwrite(src_buf, sizeof(APP_STORAGE_DATA_TYPE), 0)
+#define APP_STORAGE_WRITE_ALL(src_buf) app_storage_write(src_buf, sizeof(APP_STORAGE_DATA_TYPE), 0)
 
-#define APP_STORAGE_WRITE_F(field, src_buf)                       \
-    app_storage_pwrite(src_buf,                                   \
-                       sizeof(((APP_STORAGE_DATA_TYPE *) 0)->field), \
-                       offsetof(APP_STORAGE_DATA_TYPE, field))
-
-#define APP_STORAGE_READ_ALL(dst_buf) app_storage_pread(dst_buf, sizeof(APP_STORAGE_DATA_TYPE), 0)
-
-#define APP_STORAGE_READ_F(field, dst_buf)                       \
-    app_storage_pread(dst_buf,                                   \
+#define APP_STORAGE_WRITE_F(field, src_buf)                         \
+    app_storage_write(src_buf,                                      \
                       sizeof(((APP_STORAGE_DATA_TYPE *) 0)->field), \
                       offsetof(APP_STORAGE_DATA_TYPE, field))
+
+#define APP_STORAGE_READ_ALL(dst_buf) app_storage_read(dst_buf, sizeof(APP_STORAGE_DATA_TYPE), 0)
+
+#define APP_STORAGE_READ_F(field, dst_buf)                         \
+    app_storage_read(dst_buf,                                      \
+                     sizeof(((APP_STORAGE_DATA_TYPE *) 0)->field), \
+                     offsetof(APP_STORAGE_DATA_TYPE, field))
