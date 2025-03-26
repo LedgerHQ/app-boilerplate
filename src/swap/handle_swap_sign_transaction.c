@@ -21,7 +21,7 @@ typedef struct swap_validated_s {
 static swap_validated_t G_swap_validated;
 
 
-bool swap_copy_transaction_parameters(create_transaction_parameters_t* params){
+bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
     PRINTF("Inside swap_copy_transaction_parameters %s\n", params->destination_address);
 
     if (params->destination_address == NULL) {
@@ -62,13 +62,9 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t* params){
         PRINTF("Amount too big\n");
         return false;
     } else {
-        buffer_t buf = {
-            .ptr = params->amount,
-            .size = params->amount_length,
-            .offset = 0
-        };
+        buffer_t buf = { .ptr = params->amount, .size = params->amount_length, .offset = 0};
         uint8_t byte;
-        while (buf.offset < buf.size) {    
+        while (buf.offset < buf.size) {
             buffer_read_u8(&buf, &byte);
             swap_validated.amount = (swap_validated.amount << 8) | byte;
         }
@@ -79,13 +75,9 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t* params){
         PRINTF("Fee too big\n");
         return false;
     } else {
-        buffer_t buf = {
-            .ptr = params->fee_amount,
-            .size = params->fee_amount_length,
-            .offset = 0
-        };
+        buffer_t buf = { .ptr = params->fee_amount, .size = params->fee_amount_length, .offset = 0};
         uint8_t byte;
-        while (buf.offset < buf.size) {    
+        while (buf.offset < buf.size) {
             buffer_read_u8(&buf, &byte);
             swap_validated.fee = (swap_validated.fee << 8) | byte;
         }
@@ -130,7 +122,7 @@ bool swap_check_validity() {
     if (strcmp(G_swap_validated.recipient, to) != 0) {
         PRINTF("Destination does not match\n");
         PRINTF("Validated: %s\n", G_swap_validated.recipient);
-        PRINTF("Received: %s \n", to);       
+        PRINTF("Received: %s \n", to);
         send_swap_error_simple(SW_SWAP_FAIL, SWAP_EC_ERROR_WRONG_DESTINATION, SWAP_ERROR_CODE);
         // unreachable
         os_sched_exit(0);
@@ -139,5 +131,4 @@ bool swap_check_validity() {
     }
     return true;
 }
-
-#endif // HAVE_SWAP
+#endif  // HAVE_SWAP

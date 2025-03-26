@@ -63,8 +63,8 @@
 /**
  * Status word for swap failure
  */
- #define SW_SWAP_FAIL 0xC000
+#define SW_SWAP_FAIL 0xC000
 /**
  * Application specific swap error code
  */
-#define SWAP_ERROR_CODE 0x00 
+#define SWAP_ERROR_CODE 0x00

@@ -16,7 +16,7 @@
 void swap_handle_check_address(check_address_parameters_t *params) {
     PRINTF("Inside swap_handle_check_address\n");
     params->result = 0;
-    
+
     if (params->address_parameters == NULL) {
         PRINTF("derivation path expected\n");
         return;
@@ -32,31 +32,30 @@ void swap_handle_check_address(check_address_parameters_t *params) {
     PRINTF("Address to check %s\n", params->address_to_check);
     if (strlen(params->address_to_check) != (ADDRESS_LEN * 2)) {
         PRINTF("Address to check expected length %d, not %d\n",
-            ADDRESS_LEN * 2,
+                ADDRESS_LEN * 2,
                strlen(params->address_to_check));
         return;
     }
 
-    buffer_t buf = {
-        .ptr = params->address_parameters,
-        .size = params->address_parameters_length,
-        .offset = 0
-    };
+    buffer_t buf = {.ptr = params->address_parameters, .size = params->address_parameters_length, .offset = 0};
 
     uint8_t bip32_path_len;
     uint32_t bip32_path[MAX_BIP32_PATH];
-    pubkey_ctx_t pk_info = {0}; 
+    pubkey_ctx_t pk_info = {0};
 
     buffer_read_u8(&buf, &bip32_path_len);
     buffer_read_bip32_path(&buf, bip32_path, (size_t) bip32_path_len);
 
-    bip32_derive_get_pubkey_256(
-        CX_CURVE_256K1,
-        bip32_path,
-        bip32_path_len,
-        pk_info.raw_public_key,
-        pk_info.chain_code,
-        CX_SHA512);
+    cx_err_t ret = bip32_derive_get_pubkey_256(CX_CURVE_256K1,
+                                               bip32_path,
+                                               bip32_path_len,
+                                               pk_info.raw_public_key,
+                                               pk_info.chain_code,
+                                               CX_SHA512);
+    if (ret != CX_OK) {
+        PRINTF("Failed to derive public key\n");
+        return;
+    }
     
     uint8_t address[ADDRESS_LEN] = {0};
     address_from_pubkey(pk_info.raw_public_key, address, sizeof(address));
@@ -66,13 +65,11 @@ void swap_handle_check_address(check_address_parameters_t *params) {
     format_hex(address, sizeof(address), derived_address, sizeof(derived_address));
     PRINTF("Derived address %s\n", derived_address);
 
-     
     PRINTF("Checked address %s\n", params->address_to_check);
 
     if (strcmp(derived_address, params->address_to_check) != 0) {
         PRINTF("Addresses do not match\n");
-    }
-    else {
+    } else {
         PRINTF("Addresses match\n");
         params->result = 1;
     }

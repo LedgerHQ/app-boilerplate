@@ -113,16 +113,17 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
                     } else {
                         // We will quit the app after this transaction, whether it succeeds or fails
                         PRINTF("Swap response is ready, the app will quit after the next send\n");
-                        // This boolean will make the io_send_sw family instant reply + return to exchange
+                        // This boolean will make the io_send_sw family instant reply + 
+                        // return to exchange
                         G_swap_response_ready = true;
                     }
                     if (swap_check_validity()) {
                         PRINTF("Swap response validated\n");
                         validate_transaction(true);
-                    } 
+                    }
                     return 0;
                 } else {
-                        return ui_display_transaction();
+                    return ui_display_transaction();
                 }
             }
         }
