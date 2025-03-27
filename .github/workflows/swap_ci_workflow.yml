@@ -14,4 +14,4 @@ jobs:
       uses: LedgerHQ/app-exchange/.github/workflows/reusable_swap_functional_tests.yml@y333/swap_support_bol
       with:
         branch_for_bol: ${{ github.ref }}
-        test_filter: '"boilerplate"'
+        test_filter: '"BOILERPLATE or boilerplate or Boilerplate"'
