@@ -13,6 +13,22 @@
 
 #include <string.h>
 
+/* Check that the address used to receive funds is owned by the device
+ * check_address_parameters_t is defined in C SDK as:
+ * struct {
+ *   // IN
+ *   uint8_t *coin_configuration;
+ *   uint8_t  coin_configuration_length;
+ *   // serialized path, segwit, version prefix, hash used, dictionary etc.
+ *   // fields and serialization format depends on specific coin app
+ *   uint8_t *address_parameters;
+ *   uint8_t  address_parameters_length;
+ *   char    *address_to_check;
+ *   char    *extra_id_to_check;
+ *   // OUT
+ *   int result;
+ * } check_address_parameters_t;
+ */
 void swap_handle_check_address(check_address_parameters_t *params) {
     PRINTF("Inside swap_handle_check_address\n");
     params->result = 0;
