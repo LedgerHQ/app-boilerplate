@@ -20,7 +20,6 @@ typedef struct swap_validated_s {
 
 static swap_validated_t G_swap_validated;
 
-
 bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
     PRINTF("Inside swap_copy_transaction_parameters %s\n", params->destination_address);
 
@@ -62,7 +61,7 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
         PRINTF("Amount too big\n");
         return false;
     } else {
-        buffer_t buf = { .ptr = params->amount, .size = params->amount_length, .offset = 0};
+        buffer_t buf = {.ptr = params->amount, .size = params->amount_length, .offset = 0};
         uint8_t byte;
         while (buf.offset < buf.size) {
             buffer_read_u8(&buf, &byte);
@@ -75,7 +74,7 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
         PRINTF("Fee too big\n");
         return false;
     } else {
-        buffer_t buf = { .ptr = params->fee_amount, .size = params->fee_amount_length, .offset = 0};
+        buffer_t buf = {.ptr = params->fee_amount, .size = params->fee_amount_length, .offset = 0};
         uint8_t byte;
         while (buf.offset < buf.size) {
             buffer_read_u8(&buf, &byte);
