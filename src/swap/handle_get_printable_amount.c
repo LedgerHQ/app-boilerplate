@@ -18,8 +18,8 @@ void swap_handle_get_printable_amount(get_printable_amount_parameters_t* params)
     /// Convert params->amount into uint64_t
     uint64_t value = 0;
     memcpy(((uint8_t*) &value) + sizeof(value) - params->amount_length,
-               params->amount,
-               params->amount_length);
+           params->amount,
+           params->amount_length);
     value = __builtin_bswap64(value);
 
     format_fpu64(amount, sizeof(amount), value, EXPONENT_SMALLEST_UNIT);
