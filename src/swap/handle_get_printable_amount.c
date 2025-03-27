@@ -13,17 +13,14 @@ void swap_handle_get_printable_amount(get_printable_amount_parameters_t* params)
 
     PRINTF("Amount: %.*H\n", params->amount_length, params->amount);
 
-    uint64_t value = 0;
     char amount[30] = {0};
 
-    buffer_t buf = {.ptr = params->amount, .size = params->amount_length, .offset = 0};
-
-    /* convert the buffer params->amount into a integer */
-    uint8_t byte;
-    while (buf.offset < buf.size) {
-        buffer_read_u8(&buf, &byte);
-        value = (value << 8) | byte;
-    }
+    /// Convert params->amount into uint64_t
+    uint64_t value = 0;
+    memcpy(((uint8_t*) &value) + sizeof(value) - params->amount_length,
+               params->amount,
+               params->amount_length);
+    value = __builtin_bswap64(value);
 
     format_fpu64(amount, sizeof(amount), value, EXPONENT_SMALLEST_UNIT);
 

@@ -48,7 +48,7 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
     memset(&swap_validated, 0, sizeof(swap_validated));
 
     // Save recipient as an uppercase string
-    for (int i = 0; i < ADDRESS_LENGTH * 2; i++) {
+    for (int i = 0; i < ADDRESS_LEN * 2; i++) {
         if (params->destination_address[i] >= 'a' && params->destination_address[i] <= 'z') {
             swap_validated.recipient[i] = params->destination_address[i] - 'a' + 'A';
         } else {
@@ -61,12 +61,13 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
         PRINTF("Amount too big\n");
         return false;
     } else {
-        buffer_t buf = {.ptr = params->amount, .size = params->amount_length, .offset = 0};
-        uint8_t byte;
-        while (buf.offset < buf.size) {
-            buffer_read_u8(&buf, &byte);
-            swap_validated.amount = (swap_validated.amount << 8) | byte;
-        }
+
+        // Convert params->amount to uint64_t
+        swap_validated.amount = 0;
+        memcpy(((uint8_t*) &swap_validated.amount) + sizeof(swap_validated.amount) - params->amount_length,
+               params->amount,
+               params->amount_length);
+        swap_validated.amount = __builtin_bswap64(swap_validated.amount);
     }
 
     // Save fee
@@ -74,12 +75,13 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
         PRINTF("Fee too big\n");
         return false;
     } else {
-        buffer_t buf = {.ptr = params->fee_amount, .size = params->fee_amount_length, .offset = 0};
-        uint8_t byte;
-        while (buf.offset < buf.size) {
-            buffer_read_u8(&buf, &byte);
-            swap_validated.fee = (swap_validated.fee << 8) | byte;
-        }
+
+        // Convert params->fee_amount to uint64_t
+        swap_validated.fee = 0;
+        memcpy(((uint8_t*) &swap_validated.fee) + sizeof(swap_validated.fee) - params->fee_amount_length,
+               params->fee_amount,
+               params->fee_amount_length);
+        swap_validated.fee = __builtin_bswap64(swap_validated.fee);
     }
 
     swap_validated.initialized = true;

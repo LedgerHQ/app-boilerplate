@@ -69,7 +69,7 @@ void swap_handle_check_address(check_address_parameters_t *params) {
 
     PRINTF("Checked address %s\n", params->address_to_check);
 
-    if (strcmp(derived_address, params->address_to_check) != 0) {
+    if (strncmp(derived_address, params->address_to_check, sizeof(derived_address)) != 0) {
         PRINTF("Addresses do not match\n");
     } else {
         PRINTF("Addresses match\n");
