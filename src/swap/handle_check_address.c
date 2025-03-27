@@ -32,12 +32,14 @@ void swap_handle_check_address(check_address_parameters_t *params) {
     PRINTF("Address to check %s\n", params->address_to_check);
     if (strlen(params->address_to_check) != (ADDRESS_LEN * 2)) {
         PRINTF("Address to check expected length %d, not %d\n",
-                ADDRESS_LEN * 2,
+               ADDRESS_LEN * 2,
                strlen(params->address_to_check));
         return;
     }
 
-    buffer_t buf = {.ptr = params->address_parameters, .size = params->address_parameters_length, .offset = 0};
+    buffer_t buf = {.ptr = params->address_parameters,
+                    .size = params->address_parameters_length,
+                    .offset = 0};
 
     uint8_t bip32_path_len;
     uint32_t bip32_path[MAX_BIP32_PATH];
@@ -56,7 +58,7 @@ void swap_handle_check_address(check_address_parameters_t *params) {
         PRINTF("Failed to derive public key\n");
         return;
     }
-    
+
     uint8_t address[ADDRESS_LEN] = {0};
     address_from_pubkey(pk_info.raw_public_key, address, sizeof(address));
 
@@ -74,4 +76,4 @@ void swap_handle_check_address(check_address_parameters_t *params) {
         params->result = 1;
     }
 }
-#endif // HAVE_SWAP
+#endif  // HAVE_SWAP
