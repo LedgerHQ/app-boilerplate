@@ -92,7 +92,9 @@ ENABLE_NBGL_QRCODE = 1
 #ENABLE_NBGL_KEYPAD = 1
 
 ########################################
-#       SWAP FEATURE      			   #
+#       SWAP FEATURE FLAG      		   #
+# This flag enables the swap feature   #
+# in the application.                  #
 ########################################
 ENABLE_SWAP = 1
 

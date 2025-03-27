@@ -18,6 +18,7 @@ typedef struct swap_validated_s {
     char recipient[ADDRESS_LEN * 2 + 1];
 } swap_validated_t;
 
+/* Global variable used to store swap validation status */
 static swap_validated_t G_swap_validated;
 
 bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
@@ -97,6 +98,7 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
     return true;
 }
 
+/* Check if the Tx to sign have the same parameters as the ones previously validated */
 bool swap_check_validity() {
     PRINTF("Inside swap_check_validity\n");
 

@@ -8,6 +8,21 @@
 #include <string.h>
 #include <stdio.h>
 
+/* Format printable amount including the ticker from specified parameters.
+ *
+ * Must set empty printable_amount on error, printable amount otherwise
+ * get_printable_amount_parameters_t is defined in C SDK as:
+ * struct {
+ *   // IN
+ *   uint8_t *coin_configuration;
+ *   uint8_t  coin_configuration_length;
+ *   uint8_t *amount;
+ *   uint8_t  amount_length;
+ *   bool     is_fee;
+ *   // OUT
+ *   char printable_amount[MAX_PRINTABLE_AMOUNT_SIZE];
+ * } get_printable_amount_parameters_t;
+ */
 void swap_handle_get_printable_amount(get_printable_amount_parameters_t* params) {
     PRINTF("Inside swap_handle_get_printable_amount\n");
 
