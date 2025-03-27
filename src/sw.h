@@ -60,3 +60,11 @@
  * Status word for signature fail.
  */
 #define SW_SIGNATURE_FAIL 0xB008
+/**
+ * Status word for swap failure
+ */
+#define SW_SWAP_FAIL 0xC000
+/**
+ * Application specific swap error code
+ */
+#define SWAP_ERROR_CODE 0x00
