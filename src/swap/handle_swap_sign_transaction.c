@@ -61,10 +61,10 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
         PRINTF("Amount too big\n");
         return false;
     } else {
-
         // Convert params->amount to uint64_t
         swap_validated.amount = 0;
-        memcpy(((uint8_t*) &swap_validated.amount) + sizeof(swap_validated.amount) - params->amount_length,
+        memcpy(((uint8_t*) &swap_validated.amount) + sizeof(swap_validated.amount) -
+                   params->amount_length,
                params->amount,
                params->amount_length);
         swap_validated.amount = __builtin_bswap64(swap_validated.amount);
@@ -75,10 +75,10 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
         PRINTF("Fee too big\n");
         return false;
     } else {
-
         // Convert params->fee_amount to uint64_t
         swap_validated.fee = 0;
-        memcpy(((uint8_t*) &swap_validated.fee) + sizeof(swap_validated.fee) - params->fee_amount_length,
+        memcpy(((uint8_t*) &swap_validated.fee) + sizeof(swap_validated.fee) -
+                   params->fee_amount_length,
                params->fee_amount,
                params->fee_amount_length);
         swap_validated.fee = __builtin_bswap64(swap_validated.fee);
