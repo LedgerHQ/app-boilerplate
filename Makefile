@@ -1,6 +1,6 @@
 # ****************************************************************************
 #    Ledger App Boilerplate
-#    (c) 2023 Ledger SAS.
+#    (c) 2023-2025 Ledger SAS.
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -90,6 +90,13 @@ ENABLE_NBGL_FOR_NANO_DEVICES = 1
 ENABLE_NBGL_QRCODE = 1
 #ENABLE_NBGL_KEYBOARD = 1
 #ENABLE_NBGL_KEYPAD = 1
+
+# Enabling app storage feature
+ENABLE_APP_STORAGE = 1
+# will use default app storage size (~1 page)
+# and its properties
+ENABLE_APP_STORAGE_PROP_SETTINGS = 1
+ENABLE_APP_STORAGE_PROP_DATA = 1
 
 ########################################
 #          Features disablers          #

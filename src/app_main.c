@@ -1,6 +1,6 @@
 /*****************************************************************************
  *   Ledger App Boilerplate.
- *   (c) 2020 Ledger SAS.
+ *   (c) 2020-2025 Ledger SAS.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,8 +29,103 @@
 #include "dispatcher.h"
 
 global_ctx_t G_context;
+APP_STORAGE_DATA_TYPE sd_cache;
 
-const internal_storage_t N_storage_real;
+#if (APP_STORAGE_DATA_STRUCT_VERSION == 2)
+/* Only for demonstration purposes:
+ * to be able to create a persistent data structure of previous version,
+ * which is bigger and with a different order of fields.
+ */
+static bool init_app_storage(void) {
+    bool app_data_exists = false;
+    bool version_supported = false;
+    if (app_storage_get_size() > 0) {
+        app_data_exists = true;
+        APP_STORAGE_READ_F(version, &sd_cache.version);
+        if (sd_cache.version  >= APP_STORAGE_DATA_STRUCT_FIRST_SUPPORTED_VERSION) {
+            version_supported = true;
+        }
+    }
+
+    bool need_write = false;
+    if ((!app_data_exists) || (!version_supported)) {
+        /* If version is not supported let's erase all potential garbage in case the structure was bigger */
+        if ((app_data_exists) && (!version_supported)) {
+            app_storage_reset();
+        }
+        /* Start from scratch, dummy_allowed fields are already zero in the global variable */
+        sd_cache.version = APP_STORAGE_DATA_STRUCT_VERSION;
+        strcpy(sd_cache.string, "Boiler V2");
+        need_write = true;
+    } else {
+        APP_STORAGE_READ_ALL(&sd_cache);
+    }
+    if (need_write) {
+        if (APP_STORAGE_WRITE_ALL((void *) &sd_cache) != sizeof(APP_STORAGE_DATA_TYPE)) {
+            PRINTF("=> storage write failure\n");
+            return false;
+        }
+    }
+
+    return true;
+}
+#endif /* #if (APP_STORAGE_DATA_STRUCT_VERSION == 2) */
+
+#if (APP_STORAGE_DATA_STRUCT_VERSION == 3)
+static bool init_app_storage(void) {
+
+    bool app_data_exists = false;
+    bool version_supported = false;
+    bool conversion_needed = false;
+    if (app_storage_get_size() > 0) {
+        app_data_exists = true;
+        APP_STORAGE_READ_F(version, &sd_cache.version);
+        if (sd_cache.version  >= APP_STORAGE_DATA_STRUCT_FIRST_SUPPORTED_VERSION) {
+            version_supported = true;
+            if (sd_cache.version < APP_STORAGE_DATA_STRUCT_VERSION) {
+                conversion_needed = true;
+            }
+        }
+    }
+
+    bool need_write = false;
+    if ((!app_data_exists) || (!version_supported)) {
+        /* If version is not supported let's erase all potential garbage in case the structure was bigger */
+        if ((app_data_exists) && (!version_supported)) {
+            app_storage_reset();
+        }
+        /* Start from scratch, dummy_allowed fields are already zero in the global variable */
+        sd_cache.version = APP_STORAGE_DATA_STRUCT_VERSION;
+        strcpy(sd_cache.string, "Boiler V3");
+        need_write = true;
+    } else {
+        if (conversion_needed) {
+            /* Reading previous version structure */
+            app_storage_data_prev_t sd_cache_prev;
+            APP_STORAGE_READ_ALL(&sd_cache_prev);
+            /* Let's erase previous version data as it is bigger */
+            app_storage_reset();
+
+            sd_cache.version = APP_STORAGE_DATA_STRUCT_VERSION;
+            sd_cache.dummy1_allowed = sd_cache_prev.dummy1_allowed;
+            sd_cache.dummy2_allowed = sd_cache_prev.dummy2_allowed;
+            strcpy(sd_cache.string, "Boiler From V2");
+            need_write = true;
+        }
+        else {
+            APP_STORAGE_READ_ALL(&sd_cache);
+        }
+    }
+    if (need_write) {
+        if (APP_STORAGE_WRITE_ALL((void *) &sd_cache) != sizeof(APP_STORAGE_DATA_TYPE)) {
+            PRINTF("=> storage write failure\n");
+            return false;
+        }
+    }
+
+    return true;
+}
+#endif /* #if (APP_STORAGE_DATA_STRUCT_VERSION == 3) */
 
 /**
  * Handle APDU command received and send back APDU response using handlers.
@@ -43,19 +138,15 @@ void app_main() {
 
     io_init();
 
+    if (!init_app_storage()) {
+        PRINTF("Error while configuring the storage - aborting\n");
+        return;
+    }
+
     ui_menu_main();
 
     // Reset context
     explicit_bzero(&G_context, sizeof(G_context));
-
-    // Initialize the NVM data if required
-    if (N_storage.initialized != 0x01) {
-        internal_storage_t storage;
-        storage.dummy1_allowed = 0x00;
-        storage.dummy2_allowed = 0x00;
-        storage.initialized = 0x01;
-        nvm_write((void *) &N_storage, &storage, sizeof(internal_storage_t));
-    }
 
     for (;;) {
         // Receive command bytes in G_io_apdu_buffer
