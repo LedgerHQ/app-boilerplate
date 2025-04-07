@@ -34,6 +34,32 @@
 #include "handle_swap.h"
 #include "validate.h"
 
+#ifdef HAVE_SWAP
+static int sign_swap_tx() {
+    if (G_swap_response_ready) {
+        // Safety against trying to make the app sign multiple TX
+        // This code should never be triggered as the app is supposed to exit after
+        // sending the signed transaction
+        PRINTF("Safety against double signing triggered\n");
+        os_sched_exit(-1);
+    } else {
+        // We will quit the app after this transaction, whether it succeeds or fails
+        PRINTF("Swap response is ready, the app will quit after the next send\n");
+        // This boolean will make the io_send_sw family instant reply +
+        // return to exchange
+        G_swap_response_ready = true;
+    }
+    if (swap_check_validity(G_swap_validated.initialized,
+                            G_swap_validated.amount,
+                            G_swap_validated.fee,
+                            G_swap_validated.recipient)) {
+        PRINTF("Swap response validated\n");
+        validate_transaction(true);
+    }
+    return 0;
+}
+#endif  // HAVE_SWAP
+
 int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
     if (chunk == 0) {  // first APDU, parse BIP32 path
         explicit_bzero(&G_context, sizeof(G_context));
@@ -92,39 +118,19 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
 
             PRINTF("Hash: %.*H\n", sizeof(G_context.tx_info.m_hash), G_context.tx_info.m_hash);
 
+#ifdef HAVE_SWAP
+            // If we are in swap context, do not redisplay the message data
+            // Instead, ensure they are identical with what was previously displayed
+            if (G_called_from_swap) {
+                return sign_swap_tx();
+            }
+#endif  // HAVE_SWAP
+
             // Example to trig a blind-sign flow
             if (strcmp((char *) G_context.tx_info.transaction.memo, "Blind-sign") == 0) {
-// to remove when Nbgl will be available for Nanos
-#ifdef HAVE_NBGL
                 return ui_display_blind_signed_transaction();
-#else
-                return ui_display_transaction();
-#endif
             } else {
-                // If we are in swap context, do not redisplay the message data
-                // Instead, ensure they are identical with what was previously displayed
-                if (G_called_from_swap) {
-                    if (G_swap_response_ready) {
-                        // Safety against trying to make the app sign multiple TX
-                        // This code should never be triggered as the app is supposed to exit after
-                        // sending the signed transaction
-                        PRINTF("Safety against double signing triggered\n");
-                        os_sched_exit(-1);
-                    } else {
-                        // We will quit the app after this transaction, whether it succeeds or fails
-                        PRINTF("Swap response is ready, the app will quit after the next send\n");
-                        // This boolean will make the io_send_sw family instant reply +
-                        // return to exchange
-                        G_swap_response_ready = true;
-                    }
-                    if (swap_check_validity()) {
-                        PRINTF("Swap response validated\n");
-                        validate_transaction(true);
-                    }
-                    return 0;
-                } else {
-                    return ui_display_transaction();
-                }
+                return ui_display_transaction();
             }
         }
     }

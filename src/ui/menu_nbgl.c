@@ -16,7 +16,6 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#ifdef HAVE_NBGL
 
 #include "os.h"
 #include "glyphs.h"
@@ -157,4 +156,3 @@ void ui_menu_main(void) {
                                 app_quit);
 }
 
-#endif

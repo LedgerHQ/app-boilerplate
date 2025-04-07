@@ -15,7 +15,6 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#ifdef HAVE_NBGL
 
 #include <stdbool.h>  // bool
 #include <string.h>   // memset
@@ -73,4 +72,3 @@ int ui_display_address() {
     return 0;
 }
 
-#endif

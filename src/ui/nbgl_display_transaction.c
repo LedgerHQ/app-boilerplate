@@ -15,7 +15,6 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#ifdef HAVE_NBGL
 
 #include <stdbool.h>  // bool
 #include <string.h>   // memset
@@ -128,4 +127,3 @@ int ui_display_transaction() {
     return ui_display_transaction_bs_choice(false);
 }
 
-#endif

@@ -11,15 +11,8 @@
 
 #include <stdint.h>
 
-typedef struct swap_validated_s {
-    bool initialized;
-    uint64_t amount;
-    uint64_t fee;
-    char recipient[ADDRESS_LEN * 2 + 1];
-} swap_validated_t;
-
 /* Global variable used to store swap validation status */
-static swap_validated_t G_swap_validated;
+swap_validated_t G_swap_validated;
 
 bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
     PRINTF("Inside swap_copy_transaction_parameters %s\n", params->destination_address);
@@ -58,31 +51,15 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
     }
 
     // Save amount
-    if (params->amount_length > sizeof(swap_validated.amount)) {
-        PRINTF("Amount too big\n");
+    if (!swap_str_to_u64(params->amount, params->amount_length, &swap_validated.amount)) {
+        PRINTF("Failed to convert amount to uint64_t\n");
         return false;
-    } else {
-        // Convert params->amount to uint64_t
-        swap_validated.amount = 0;
-        memcpy(((uint8_t*) &swap_validated.amount) + sizeof(swap_validated.amount) -
-                   params->amount_length,
-               params->amount,
-               params->amount_length);
-        swap_validated.amount = __builtin_bswap64(swap_validated.amount);
     }
 
     // Save fee
-    if (params->fee_amount_length > sizeof(swap_validated.fee)) {
-        PRINTF("Fee too big\n");
+    if (!swap_str_to_u64(params->fee_amount, params->fee_amount_length, &swap_validated.fee)) {
+        PRINTF("Failed to convert fee to uint64_t\n");
         return false;
-    } else {
-        // Convert params->fee_amount to uint64_t
-        swap_validated.fee = 0;
-        memcpy(((uint8_t*) &swap_validated.fee) + sizeof(swap_validated.fee) -
-                   params->fee_amount_length,
-               params->fee_amount,
-               params->fee_amount_length);
-        swap_validated.fee = __builtin_bswap64(swap_validated.fee);
     }
 
     swap_validated.initialized = true;
@@ -99,19 +76,22 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
 }
 
 /* Check if the Tx to sign have the same parameters as the ones previously validated */
-bool swap_check_validity() {
+bool swap_check_validity(bool initialized,
+                         uint64_t amount,
+                         uint64_t fee,
+                         const char *recipient) {
     PRINTF("Inside swap_check_validity\n");
 
-    if (!G_swap_validated.initialized) {
+    if (!initialized) {
         PRINTF("Swap structure is not initialized\n");
         send_swap_error_simple(SW_SWAP_FAIL, SWAP_EC_ERROR_GENERIC, SWAP_ERROR_CODE);
         // unreachable
         os_sched_exit(0);
     }
 
-    if (G_swap_validated.amount != G_context.tx_info.transaction.value) {
+    if (amount != G_context.tx_info.transaction.value) {
         PRINTF("Amount does not match, promised %lld, received %lld\n",
-               G_swap_validated.amount,
+               amount,
                G_context.tx_info.transaction.value);
         send_swap_error_simple(SW_SWAP_FAIL, SWAP_EC_ERROR_WRONG_AMOUNT, SWAP_ERROR_CODE);
         // unreachable
@@ -122,9 +102,9 @@ bool swap_check_validity() {
 
     char to[ADDRESS_LEN * 2 + 1] = {0};
     format_hex(G_context.tx_info.transaction.to, ADDRESS_LEN, to, sizeof(to));
-    if (strcmp(G_swap_validated.recipient, to) != 0) {
+    if (strcmp(recipient, to) != 0) {
         PRINTF("Destination does not match\n");
-        PRINTF("Validated: %s\n", G_swap_validated.recipient);
+        PRINTF("Validated: %s\n", recipient);
         PRINTF("Received: %s \n", to);
         send_swap_error_simple(SW_SWAP_FAIL, SWAP_EC_ERROR_WRONG_DESTINATION, SWAP_ERROR_CODE);
         // unreachable
