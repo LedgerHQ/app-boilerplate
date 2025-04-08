@@ -49,9 +49,7 @@ static int sign_swap_tx(transaction_t *tx) {
         // return to exchange
         G_swap_response_ready = true;
     }
-    if (swap_check_validity(tx->value,
-                            tx->fee,
-                            tx->to)) {
+    if (swap_check_validity(tx->value, tx->fee, tx->to)) {
         PRINTF("Swap response validated\n");
         validate_transaction(true);
     }

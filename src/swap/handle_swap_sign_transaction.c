@@ -83,9 +83,7 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
 }
 
 /* Check if the Tx to sign have the same parameters as the ones previously validated */
-bool swap_check_validity(uint64_t amount,
-                         uint64_t fee,
-                         const uint8_t *destination) {
+bool swap_check_validity(uint64_t amount, uint64_t fee, const uint8_t* destination) {
     PRINTF("Inside swap_check_validity\n");
 
     if (!G_swap_validated.initialized) {
@@ -107,9 +105,7 @@ bool swap_check_validity(uint64_t amount,
     }
 
     if (G_swap_validated.fee != fee) {
-        PRINTF("Fee does not match, promised %lld, received %lld\n",
-               G_swap_validated.fee,
-               fee);
+        PRINTF("Fee does not match, promised %lld, received %lld\n", G_swap_validated.fee, fee);
         send_swap_error_simple(SW_SWAP_FAIL, SWAP_EC_ERROR_WRONG_FEES, SWAP_ERROR_CODE);
         // unreachable
         os_sched_exit(0);

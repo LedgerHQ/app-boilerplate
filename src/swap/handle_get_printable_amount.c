@@ -34,15 +34,14 @@ void swap_handle_get_printable_amount(get_printable_amount_parameters_t* params)
     /// Convert params->amount into uint64_t
     uint64_t value = 0;
     if (swap_str_to_u64(params->amount, params->amount_length, &value)) {
-       format_fpu64(amount, sizeof(amount), value, EXPONENT_SMALLEST_UNIT);
-       PRINTF("Formatted amount: %s\n", amount);
-       snprintf(params->printable_amount,
-                sizeof(params->printable_amount),
-                "BOL %.*s",
-                sizeof(amount),
-                amount);
-    }
-    else {
+        format_fpu64(amount, sizeof(amount), value, EXPONENT_SMALLEST_UNIT);
+        PRINTF("Formatted amount: %s\n", amount);
+        snprintf(params->printable_amount,
+                 sizeof(params->printable_amount),
+                 "BOL %.*s",
+                 sizeof(amount),
+                 amount);
+    } else {
         PRINTF("Failed to convert amount to uint64_t\n");
     }
 }
