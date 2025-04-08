@@ -11,8 +11,15 @@
 
 #include <stdint.h>
 
+typedef struct swap_validated_s {
+    bool initialized;
+    uint64_t amount;
+    uint64_t fee;
+    char recipient[ADDRESS_LEN * 2 + 1];
+} swap_validated_t;
+
 /* Global variable used to store swap validation status */
-swap_validated_t G_swap_validated;
+static swap_validated_t G_swap_validated;
 
 bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
     PRINTF("Inside swap_copy_transaction_parameters %s\n", params->destination_address);
@@ -76,23 +83,22 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
 }
 
 /* Check if the Tx to sign have the same parameters as the ones previously validated */
-bool swap_check_validity(bool initialized,
-                         uint64_t amount,
+bool swap_check_validity(uint64_t amount,
                          uint64_t fee,
-                         const char *recipient) {
+                         const uint8_t *destination) {
     PRINTF("Inside swap_check_validity\n");
 
-    if (!initialized) {
+    if (!G_swap_validated.initialized) {
         PRINTF("Swap structure is not initialized\n");
         send_swap_error_simple(SW_SWAP_FAIL, SWAP_EC_ERROR_GENERIC, SWAP_ERROR_CODE);
         // unreachable
         os_sched_exit(0);
     }
 
-    if (amount != G_context.tx_info.transaction.value) {
+    if (G_swap_validated.amount != amount) {
         PRINTF("Amount does not match, promised %lld, received %lld\n",
-               amount,
-               G_context.tx_info.transaction.value);
+               G_swap_validated.amount,
+               amount);
         send_swap_error_simple(SW_SWAP_FAIL, SWAP_EC_ERROR_WRONG_AMOUNT, SWAP_ERROR_CODE);
         // unreachable
         os_sched_exit(0);
@@ -100,11 +106,22 @@ bool swap_check_validity(bool initialized,
         PRINTF("Amounts match \n");
     }
 
+    if (G_swap_validated.fee != fee) {
+        PRINTF("Fee does not match, promised %lld, received %lld\n",
+               G_swap_validated.fee,
+               fee);
+        send_swap_error_simple(SW_SWAP_FAIL, SWAP_EC_ERROR_WRONG_FEES, SWAP_ERROR_CODE);
+        // unreachable
+        os_sched_exit(0);
+    } else {
+        PRINTF("Fees match \n");
+    }
+
     char to[ADDRESS_LEN * 2 + 1] = {0};
-    format_hex(G_context.tx_info.transaction.to, ADDRESS_LEN, to, sizeof(to));
-    if (strcmp(recipient, to) != 0) {
+    format_hex(destination, ADDRESS_LEN, to, sizeof(to));
+    if (strcmp(G_swap_validated.recipient, to) != 0) {
         PRINTF("Destination does not match\n");
-        PRINTF("Validated: %s\n", recipient);
+        PRINTF("Validated: %s\n", G_swap_validated.recipient);
         PRINTF("Received: %s \n", to);
         send_swap_error_simple(SW_SWAP_FAIL, SWAP_EC_ERROR_WRONG_DESTINATION, SWAP_ERROR_CODE);
         // unreachable

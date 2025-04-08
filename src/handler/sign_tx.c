@@ -35,7 +35,7 @@
 #include "validate.h"
 
 #ifdef HAVE_SWAP
-static int sign_swap_tx() {
+static int sign_swap_tx(transaction_t *tx) {
     if (G_swap_response_ready) {
         // Safety against trying to make the app sign multiple TX
         // This code should never be triggered as the app is supposed to exit after
@@ -49,10 +49,9 @@ static int sign_swap_tx() {
         // return to exchange
         G_swap_response_ready = true;
     }
-    if (swap_check_validity(G_swap_validated.initialized,
-                            G_swap_validated.amount,
-                            G_swap_validated.fee,
-                            G_swap_validated.recipient)) {
+    if (swap_check_validity(tx->value,
+                            tx->fee,
+                            tx->to)) {
         PRINTF("Swap response validated\n");
         validate_transaction(true);
     }
@@ -122,7 +121,7 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
             // If we are in swap context, do not redisplay the message data
             // Instead, ensure they are identical with what was previously displayed
             if (G_called_from_swap) {
-                return sign_swap_tx();
+                return sign_swap_tx(&G_context.tx_info.transaction);
             }
 #endif  // HAVE_SWAP
 
