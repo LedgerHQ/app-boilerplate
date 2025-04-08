@@ -52,6 +52,9 @@ parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
         return VALUE_PARSING_ERROR;
     }
 
+    // fee value
+    tx->fee = 0;  // default fee value
+
     // length of memo
     if (!buffer_read_varint(buf, &tx->memo_len) && tx->memo_len > MAX_MEMO_LEN) {
         return MEMO_LENGTH_ERROR;

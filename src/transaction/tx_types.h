@@ -21,6 +21,7 @@ typedef enum {
 typedef struct {
     uint64_t nonce;     /// nonce (8 bytes)
     uint64_t value;     /// amount value (8 bytes)
+    uint64_t fee;       /// fee (8 bytes)
     uint8_t *to;        /// pointer to address (20 bytes)
     uint8_t *memo;      /// memo (variable length)
     uint64_t memo_len;  /// length of memo (8 bytes)
