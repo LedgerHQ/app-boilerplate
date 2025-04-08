@@ -94,9 +94,11 @@ ENABLE_NBGL_QRCODE = 1
 ########################################
 #       SWAP FEATURE FLAG      		   #
 # This flag enables the swap feature   #
-# in the application.                  #
+# in the Boiler application.           #
 ########################################
-ENABLE_SWAP = 1
+ifeq ($(APPNAME), "Boilerplate")
+ENABLE_TESTING_SWAP = 1
+endif
 
 ########################################
 #          Features disablers          #
