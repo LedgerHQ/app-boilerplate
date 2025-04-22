@@ -2,8 +2,6 @@ import pytest
 
 from ragger.backend.interface import BackendInterface
 from ragger.error import ExceptionRAPDU
-from ragger.firmware import Firmware
-from ragger.navigator import Navigator, NavInsID
 from ragger.navigator.navigation_scenario import NavigateWithScenario
 
 from application_client.boilerplate_transaction import Transaction
@@ -51,12 +49,7 @@ def test_sign_tx_short_tx(backend: BackendInterface, scenario_navigator: Navigat
 # In this test we send to the device a transaction to trig a blind-signing flow
 # The transaction is short and will be sent in one chunk
 # We will ensure that the displayed information is correct by using screenshots comparison
-def test_sign_tx_short_tx_blind_sign(firmware: Firmware,
-                                     backend: BackendInterface,
-                                     navigator: Navigator,
-                                     scenario_navigator: NavigateWithScenario,
-                                     test_name: str,
-                                     default_screenshot_path: str) -> None:
+def test_sign_tx_short_tx_blind_sign(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
     # Use the app interface instead of raw interface
     client = BoilerplateCommandSender(backend)
     # The path used for this entire test
@@ -74,18 +67,11 @@ def test_sign_tx_short_tx_blind_sign(firmware: Firmware,
         memo="Blind-sign"
     ).serialize()
 
-    # Send the sign device instruction.
-    valid_instruction = [NavInsID.RIGHT_CLICK] if firmware.is_nano else [NavInsID.USE_CASE_CHOICE_REJECT]
     # As it requires on-screen validation, the function is asynchronous.
     # It will yield the result when the navigation is done
     with client.sign_tx(path=path, transaction=transaction):
-        navigator.navigate_and_compare(default_screenshot_path,
-                                        test_name+"/part1",
-                                        valid_instruction,
-                                        screen_change_after_last_instruction=False)
-
         # Validate the on-screen request by performing the navigation appropriate for this device
-        scenario_navigator.review_approve()
+        scenario_navigator.review_approve_with_warning(warning_path="part1")
 
     # The device as yielded the result, parse it and ensure that the signature is correct
     response = client.get_async_response().data
