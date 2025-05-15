@@ -1,4 +1,4 @@
-from ledgered.devices import Device, DeviceType
+from ledgered.devices import DeviceType, Device
 from ragger.navigator import Navigator, NavInsID, NavIns
 
 
@@ -28,7 +28,7 @@ def test_app_mainmenu(device: Device,
             NavInsID.BOTH_CLICK,
             NavInsID.RIGHT_CLICK,
         ]
-    elif device.type == DeviceType.STAX:
+    elif device.type is DeviceType.STAX:
         instructions += [
             NavInsID.USE_CASE_HOME_SETTINGS,
             NavIns(NavInsID.TOUCH, (200, 113)),
@@ -45,6 +45,16 @@ def test_app_mainmenu(device: Device,
             NavIns(NavInsID.TOUCH, (200, 300)),
             NavInsID.USE_CASE_CHOICE_CONFIRM,
             NavIns(NavInsID.TOUCH, (200, 300)),
+            NavInsID.USE_CASE_SETTINGS_NEXT,
+            NavInsID.USE_CASE_SETTINGS_MULTI_PAGE_EXIT
+        ]
+    elif device.type is DeviceType.APEX_P:
+        instructions += [
+            NavInsID.USE_CASE_HOME_SETTINGS,
+            NavIns(NavInsID.TOUCH, (243, 90)),
+            NavIns(NavInsID.TOUCH, (243, 211)),
+            NavInsID.USE_CASE_CHOICE_CONFIRM,
+            NavIns(NavInsID.TOUCH, (243, 211)),
             NavInsID.USE_CASE_SETTINGS_NEXT,
             NavInsID.USE_CASE_SETTINGS_MULTI_PAGE_EXIT
         ]
