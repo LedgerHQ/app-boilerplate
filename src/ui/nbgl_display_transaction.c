@@ -100,7 +100,11 @@ int ui_display_transaction_bs_choice(bool is_blind_signed) {
                                        &ICON_APP_BOILERPLATE,
                                        "Review transaction\nto send BOL",
                                        NULL,
+#ifdef SCREEN_SIZE_WALLET
                                        "Sign transaction\nto send BOL",
+#else
+                                       NULL,
+#endif
                                        NULL,
                                        review_choice);
     } else {
@@ -110,7 +114,11 @@ int ui_display_transaction_bs_choice(bool is_blind_signed) {
                            &ICON_APP_BOILERPLATE,
                            "Review transaction\nto send BOL",
                            NULL,
+#ifdef SCREEN_SIZE_WALLET
                            "Sign transaction\nto send BOL",
+#else
+                           NULL,
+#endif
                            review_choice);
     }
     return 0;
