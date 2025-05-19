@@ -1,15 +1,15 @@
-from ragger.firmware import Firmware
+from ledgered.devices import Device, DeviceType
 from ragger.navigator import Navigator, NavInsID, NavIns
 
 
 # In this test we check the behavior of the device main menu
-def test_app_mainmenu(firmware: Firmware,
+def test_app_mainmenu(device: Device,
                       navigator: Navigator,
                       test_name: str,
                       default_screenshot_path: str) -> None:
     # Navigate in the main menu
     instructions = []
-    if firmware.is_nano:
+    if device.is_nano:
         instructions += [
             NavInsID.RIGHT_CLICK,
             NavInsID.BOTH_CLICK,
@@ -28,7 +28,7 @@ def test_app_mainmenu(firmware: Firmware,
             NavInsID.BOTH_CLICK,
             NavInsID.RIGHT_CLICK,
         ]
-    elif firmware is Firmware.STAX:
+    elif device.type == DeviceType.STAX:
         instructions += [
             NavInsID.USE_CASE_HOME_SETTINGS,
             NavIns(NavInsID.TOUCH, (200, 113)),
@@ -38,7 +38,7 @@ def test_app_mainmenu(firmware: Firmware,
             NavInsID.USE_CASE_SETTINGS_NEXT,
             NavInsID.USE_CASE_SETTINGS_MULTI_PAGE_EXIT
         ]
-    elif firmware is Firmware.FLEX:
+    elif device.type is DeviceType.FLEX:
         instructions += [
             NavInsID.USE_CASE_HOME_SETTINGS,
             NavIns(NavInsID.TOUCH, (200, 113)),
