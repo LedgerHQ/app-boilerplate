@@ -6,3 +6,4 @@ devices = ["nanox", "nanos+", "stax", "flex"]
 [tests]
 unit_directory = "./unit-tests/"
 pytest_directory = "./tests/"
+swap_pytest_directory = "./swap_tests/"
