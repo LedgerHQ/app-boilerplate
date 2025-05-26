@@ -11,11 +11,7 @@ on:
 
 jobs:
   job_functional_tests:
-    # This CI job will only trigger on app-boilerplate by default.
-    # If you want to keep the SWAP functionality on your application after the fork from
-    # boilerplate, you need to remove the 'if' condition to enable the CI to run.
-    if: github.repository == 'LedgerHQ/app-boilerplate'
-    uses: LedgerHQ/app-exchange/.github/workflows/reusable_swap_functional_tests.yml@develop
+    uses: LedgerHQ/app-exchange/.github/workflows/reusable_swap_functional_tests_v2.yml@y333/exchange_client_package
     with:
-      branch_for_bol: ${{ github.ref }}
-      test_filter: '"Boilerplate or boilerplate"'
+      branch_for_app: ${{ github.ref }}
+      repo_for_app: ${{ github.repository }}
