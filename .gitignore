@@ -11,10 +11,12 @@ glyphs/home_boilerplate_14px.gif
 # Temporary directory with snapshots taken during test runs
 tests/snapshots-tmp/
 
-# Unit tests and code coverage
-unit-tests/build/
-unit-tests/coverage/
-unit-tests/coverage.info
+# Swap tests
+tests_swap/snapshots-tmp/
+tests_swap/app-ethereum/
+tests_swap/app-exchange/
+tests_swap/exchange_binaries/
+tests_swap/lib_binaries/
 
 # Fuzzing
 fuzzing/build/
