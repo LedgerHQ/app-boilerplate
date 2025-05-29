@@ -15,12 +15,12 @@ from ledger_app_clients.exchange.navigation_helper import ExchangeNavigationHelp
 
 configuration.OPTIONAL.BACKEND_SCOPE = "class"
 configuration.OPTIONAL.MAIN_APP_DIR = "./tests_swap/main_app"
-configuration.OPTIONAL.SIDELOADED_APPS = {
-        "ethereum": "Ethereum",
-        "boilerplate": "Boilerplate"
-    }
-configuration.OPTIONAL.SIDELOADED_APPS_DIR = "lib_binaries/"
 
+configuration.OPTIONAL.SIDELOADED_APPS = {
+    "ethereum": "Ethereum",
+#    "boilerplate": "Boilerplate"
+}
+configuration.OPTIONAL.SIDELOADED_APPS_DIR = "tests_swap/lib_binaries/"
 
 #########################
 ### CONFIGURATION END ###

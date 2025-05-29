@@ -84,7 +84,3 @@ if not os.path.exists("lib_binaries"):
         run_cmd("make -j BOLOS_SDK=$"+e["sdk"]+flags, Path(APP_ETHEREUM_DIR))
         run_cmd("cp "+e["bin_path"]+"app.elf ../lib_binaries/ethereum_"+e["name"]+".elf", Path(APP_ETHEREUM_DIR))
     run_cmd("rm -rf "+APP_ETHEREUM_DIR)
-
-# Copy the boilerplate app to the lib_binaries directory
-for e in DEVICES_CONF.values():
-    run_cmd("cp ../"+e["bin_path"]+"app.elf lib_binaries/boilerplate_"+e["name"]+".elf")
