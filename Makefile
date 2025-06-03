@@ -28,7 +28,7 @@ APPNAME = "Boilerplate"
 # Application version
 APPVERSION_M = 2
 APPVERSION_N = 2
-APPVERSION_P = 1
+APPVERSION_P = 2
 APPVERSION = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 
 # Application source files
