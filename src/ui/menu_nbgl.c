@@ -81,7 +81,7 @@ static void review_warning_choice(bool confirm) {
 
     // Reset setting menu to the right page
     nbgl_useCaseHomeAndSettings(APPNAME,
-                                &ICON_APP_BOILERPLATE,
+                                &ICON_APP_HOME,
                                 NULL,
                                 initSettingPage,
                                 &settingContents,
@@ -146,7 +146,7 @@ void ui_menu_main(void) {
 #endif
 
     nbgl_useCaseHomeAndSettings(APPNAME,
-                                &ICON_APP_BOILERPLATE,
+                                &ICON_APP_HOME,
                                 NULL,
                                 INIT_HOME_PAGE,
                                 &settingContents,

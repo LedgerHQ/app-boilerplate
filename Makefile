@@ -41,6 +41,12 @@ ICON_NANOSP = icons/app_boilerplate_14px.gif
 ICON_STAX = icons/app_boilerplate_32px.gif
 ICON_FLEX = icons/app_boilerplate_40px.gif
 
+# With the Nano NBGL Design, the Home Screen icon is the reverse of the App icon:
+# It should be on white background, with rounded corners.
+# This definition allows SDK Makefiles to automatically generate it based on the App icon.
+# Please note that the icon is dynamically generated, and declared in the .gitignore to avoid storing it.
+ICON_HOME_NANO = glyphs/home_boilerplate_14px.gif
+
 # Application allowed derivation curves.
 # Possibles curves are: secp256k1, secp256r1, ed25519 and bls12381g1
 # If your app needs it, you can specify multiple curves by using:
