@@ -25,9 +25,12 @@ function show_help() {
 }
 
 function gen_macros(){
+    cd ..
+    if ! [ -d ./fuzzing/macros/generated ]; then
+        mkdir fuzzing/macros/generated
+    fi
     # TODO -> remove those lines after installation in the docker image is done by default
     apt-get update && apt-get install -y bear
-    cd ..
     case "$TARGET_DEVICE" in
         flex)
             make clean BOLOS_SDK=/opt/flex-secure-sdk
