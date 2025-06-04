@@ -98,14 +98,16 @@ target_include_directories(
          ${CMAKE_SOURCE_DIR}/../src/ui/action/)
 
 target_link_libraries(code_lib PUBLIC extra)
-target_compile_definitions(code_lib PUBLIC ${DEFINES})
+target_compile_definitions(
+  code_lib PUBLIC ${DEFINES} FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1)
 target_link_options(code_lib PUBLIC ${LINK_FLAGS})
 target_compile_options(code_lib PUBLIC ${COMPILATION_FLAGS})
 
 # fuzz_dispatcher
 add_executable(fuzz_dispatcher "${CMAKE_SOURCE_DIR}/fuzz_dispatcher.c")
 
-target_compile_definitions(fuzz_dispatcher PUBLIC macros)
+target_compile_definitions(
+  fuzz_dispatcher PUBLIC macros FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1)
 target_compile_options(fuzz_dispatcher PUBLIC ${COMPILATION_FLAGS})
 target_link_options(fuzz_dispatcher PUBLIC ${LINK_FLAGS})
 target_link_libraries(fuzz_dispatcher PUBLIC extra code_lib)
@@ -113,7 +115,8 @@ target_link_libraries(fuzz_dispatcher PUBLIC extra code_lib)
 # fuzz_tx_parser
 add_executable(fuzz_tx_parser "${CMAKE_SOURCE_DIR}/fuzz_tx_parser.c")
 
-target_compile_definitions(fuzz_tx_parser PUBLIC macros)
+target_compile_definitions(
+  fuzz_tx_parser PUBLIC macros FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1)
 target_compile_options(fuzz_tx_parser PUBLIC ${COMPILATION_FLAGS})
 target_link_options(fuzz_tx_parser PUBLIC ${LINK_FLAGS})
 target_link_libraries(fuzz_tx_parser PUBLIC extra code_lib)
