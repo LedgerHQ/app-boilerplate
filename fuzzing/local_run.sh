@@ -17,7 +17,7 @@ function show_help() {
     echo "  --TARGET_DEVICE=[flex|stax] Whether it is a flex or stax device"
     echo "  --fuzzer=PATH               Path to the fuzzer binary (required)"
     echo "  --build=1|0                 Whether to build the project (default: 0)"
-    echo "  --re-generate-macros=0|1|2  Regenerate macros 1=outside a container, 2=inside a docker container or 0=don't generate (default: 0)"
+    echo "  --re-generate-macros=0|1    Whether to regenerate macros or not (default: 0)"
     echo "  --compute-coverage=1|0      Whether to compute coverage after fuzzing (default: 1)"
     echo "  --run-fuzzer=1|0            Whether to run or not the fuzzer (default: 1)"
     echo "  --help                      Show this help message"
@@ -25,43 +25,34 @@ function show_help() {
 }
 
 function gen_macros(){
-    cd macros/ || exit
-    if [ "$REGENERATE_MACROS" -eq 1 ]; then
-        ./generate_macros.sh "$TARGET_DEVICE"
-    else
-        case "$TARGET_DEVICE" in
-            flex)
-                SECURE_SDK=/opt/flex-secure-sdk
-                ;;
-            stax)
-                SECURE_SDK=/opt/stax-secure-sdk
-                ;;
-            *)
-                echo "Unsupported device: $TARGET_DEVICE"
-                exit 1
-                ;;
-        esac
-        echo " ==============================================="
-        echo " Running script for ${SECURE_SDK}"
-        echo " ==============================================="
-        cd src/ || exit
-
-        apt-get update && apt-get install -y bear
-        ./script.sh BOLOS_SDK=${SECURE_SDK}
-        cd ..
-    fi
+    # TODO -> remove those lines after installation in the docker image is done by default
+    apt-get update && apt-get install -y bear
+    cd ..
+    case "$TARGET_DEVICE" in
+        flex)
+            make clean BOLOS_SDK=/opt/flex-secure-sdk
+            bear --output fuzzing/macros/generated/used_macros.json -- make DEBUG=1 BOLOS_SDK=/opt/flex-secure-sdk
+            ;;
+        stax)
+            make clean BOLOS_SDK=/opt/stax-secure-sdk
+            bear --output fuzzing/macros/generated/used_macros.json -- make DEBUG=1 BOLOS_SDK=/opt/stax-secure-sdk
+            ;;
+        *)
+            echo "Unsupported device: $TARGET_DEVICE"
+            exit 1
+            ;;
+    esac
+    cd fuzzing/macros/ || exit
+    python3 extract_macros.py --file generated/used_macros.json --exclude exclude_macros.txt --add add_macros.txt --output generated/macros.txt
     cd ..
 }
 
 function build(){
     # TODO -> remove those lines after installation in the docker image is done by default
-    if  ! dpkg -s ninja-build libclang-rt-dev >/dev/null 2>&1; then
-        apt update
-        apt install -y libclang-rt-dev ninja-build
-    fi
-
+    apt update && apt install -y libclang-rt-dev ninja-build
+    
     rm -rf build
-    cmake -S . -B build -DCMAKE_C_COMPILER=clang -DSANITIZER=address -DTARGET_DEVICE="$TARGET_DEVICE" -DBOLOS_SDK="$BOLOS_SDK" -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1 -G Ninja
+    cmake -S . -B build -DCMAKE_C_COMPILER=clang -DSANITIZER=address -DTARGET_DEVICE="$TARGET_DEVICE" -DBOLOS_SDK="$BOLOS_SDK" -G Ninja
     cmake --build build
 }
 

@@ -56,7 +56,7 @@ Once inside the container, navigate to the ```fuzzing``` folder to compile the f
 ```console
 cd fuzzing
 
-./local_run.sh --build=1 --re-generate-macros=2 --TARGET_DEVICE=stax --BOLOS_SDK=/ledger-secure-sdk/ --fuzzer=build/fuzz_dispatcher --run-fuzzer=1 --compute-coverage=1
+./local_run.sh --build=1 --re-generate-macros=1 --TARGET_DEVICE=stax --BOLOS_SDK=/ledger-secure-sdk/ --fuzzer=build/fuzz_dispatcher --run-fuzzer=1 --compute-coverage=1
 ```
 
 ### About local_run.sh
@@ -65,7 +65,7 @@ cd fuzzing
 | :-------- | :------- | :------------------------- |
 | `--TARGET_DEVICE` | `flex or stax` | **Optional**. Whether it is a flex or stax device (default: flex) |
 | `--BOLOS_SDK` | `PATH TO BOLOS SDK` | **Required**. Path to the BOLOS SDK |
-| `--re-generate-macros` | `0,1,2` | **Optional**. Regenerate macros 1=outside a container, 2=inside a docker container or 0=don't generate (default: 0) |
+| `--re-generate-macros` | `bool` | **Optional**. Whether to regenerate macros or not (default: 0) |
 | `--build` | `bool` | **Optional**. Whether to build the project (default: 0) |
 | `--fuzzer` | `PATH` | **Required**. Path to the fuzzer binary |
 | `--compute-coverage` | `bool` | **Optional**. Whether to compute coverage after fuzzing (default: 0) |
