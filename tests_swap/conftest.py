@@ -18,7 +18,6 @@ configuration.OPTIONAL.MAIN_APP_DIR = "./tests_swap/main_app"
 
 configuration.OPTIONAL.SIDELOADED_APPS = {
     "ethereum": "Ethereum",
-#    "boilerplate": "Boilerplate"
 }
 configuration.OPTIONAL.SIDELOADED_APPS_DIR = "tests_swap/lib_binaries/"
 

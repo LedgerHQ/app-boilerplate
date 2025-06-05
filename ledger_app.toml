@@ -1,9 +1,16 @@
+[info]
+version = 2
+
 [app]
 build_directory = "./"
 sdk = "C"
 devices = ["nanox", "nanos+", "stax", "flex"]
 
-[tests]
-unit_directory = "./unit-tests/"
-pytest_directory = "./tests/"
-swap_pytest_directory = "./tests_swap/"
+[unit_tests]
+directory = "./unit-tests/"
+
+[pytest.standalone]
+directory = "./tests/"
+
+[pytest.swap]
+directory = "./tests_swap/"
