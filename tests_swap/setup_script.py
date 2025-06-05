@@ -64,7 +64,7 @@ if not os.path.exists("main_app"):
     if not os.path.exists(APP_EXCHANGE_DIR):
         Repo.clone_from(APP_EXCHANGE_URL, APP_EXCHANGE_DIR)
     os.makedirs("main_app/exchange", exist_ok=True)
-    flags = ' TESTING=1 TEST_PUBLIC_KEY=1 DEBUG=1'
+    flags = ' TESTING=1 TEST_PUBLIC_KEY=1 TRUSTED_NAME_TEST_KEY=1 DEBUG=1'
     run_cmd("make clean", Path(APP_EXCHANGE_DIR))
     for e in DEVICES_CONF.values():
         run_cmd("make -j BOLOS_SDK=$"+e["sdk"]+flags, Path(APP_EXCHANGE_DIR))
