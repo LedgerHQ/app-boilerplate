@@ -1,0 +1,20 @@
+name: Reusable Swap Functional tests
+
+on:
+  workflow_call:
+    inputs:
+      branch_for_app:
+        required: false
+        default: ${{ github.ref }}
+        type: string
+      repo_for_app:
+        required: false
+        default: ${{ github.repository }}
+        type: string
+
+jobs:
+  swap_functional_tests:
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_swap_ragger_tests.yml@y333/manage_swap_pytest_directory
+    with:
+      branch_for_app: ${{ inputs.branch_for_app }}
+      repo_for_app: ${{ inputs.repo_for_app }}

@@ -41,3 +41,11 @@ jobs:
     with:
       download_app_binaries_artifact: "compiled_app_binaries"
       regenerate_snapshots: ${{ inputs.golden_run == 'Open a PR' }}
+
+  ragger_swap_tests:
+    name: Run swap ragger tests using the reusable workflow
+    needs: build_application
+    uses: ./.github/workflows/reusable_swap_ragger_tests.yml
+    with:
+      branch_for_app: ${{ github.ref }}
+      repo_for_app: ${{ github.repository }}
