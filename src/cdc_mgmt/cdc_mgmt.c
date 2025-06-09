@@ -620,14 +620,29 @@ void nbgl_fullScreenClear(color_t color, bool refresh) {
     }
 }
 
+#ifndef TARGET_APEX
+static const color_t COLORS[] = {
+    BLACK,
+    DARK_GRAY,
+    LIGHT_GRAY,
+    WHITE,
+};
+#else
+static const color_t COLORS[] = {
+    BLACK,
+    WHITE,
+};
+#endif
+
 void cdc_mgmt_tick(void) {
+    const uint32_t nb_colors = sizeof(COLORS) / sizeof(color_t);
     ticker_value += 100;
     if (count % 10 == 0) {
         count = 0;
         // display sth
-        nbgl_fullScreenClear(color_index, true);
+        nbgl_fullScreenClear(COLORS[color_index], true);
         color_index++;
-        if (color_index % 4 == 0) {
+        if (color_index % nb_colors == 0) {
             color_index = 0;
         }
     }
