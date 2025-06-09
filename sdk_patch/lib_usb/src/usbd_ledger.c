@@ -392,9 +392,9 @@ void USBD_LEDGER_start(uint16_t pid,
 #if defined(TARGET_FATSTACKS) || defined (TARGET_STAX)
 	usbd_ledger_data.product = USBD_LEDGER_PRODUCT_STAX;
 #endif // TARGET_FATSTACKS || TARGET_STAX
-#if defined(TARGET_FLEX)
-	usbd_ledger_data.product = USBD_LEDGER_PRODUCT_FLEX;
-#endif // TARGET_FLEX
+#if defined(TARGET_APEX_P)
+	usbd_ledger_data.product = USBD_LEDGER_PRODUCT_APEX_P;
+#endif // TARGET_APEX_P
 
 	if (   (usbd_ledger_data.classes != class_mask)
 	     ||(usbd_ledger_data.pid != pid)
