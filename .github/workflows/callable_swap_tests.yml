@@ -1,0 +1,72 @@
+name: Callable Swap Functional tests
+
+on:
+  workflow_call:
+    inputs:
+      branch_for_app:
+        required: false
+        default: 'develop'
+        type: string
+      repo_for_app:
+        required: false
+        default: 'LedgerHQ/app-boilerplate'
+        type: string
+      branch_for_exchange:
+        required: false
+        default: 'develop'
+        type: string
+      repo_for_exchange:
+        required: false
+        default: 'LedgerHQ/app-exchange'
+        type: string
+      branch_for_ethereum:
+        required: false
+        default: 'develop'
+        type: string
+      repo_for_ethereum:
+        required: false
+        default: 'LedgerHQ/app-ethereum'
+        type: string
+
+jobs:
+
+  build_exchange:
+    name: Build Exchange app using the reusable workflow
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@v1
+    with:
+      app_repository: ${{ inputs.repo_for_exchange }}
+      app_branch: ${{ inputs.branch_for_exchange }}
+      upload_app_binaries_artifact: "compiled_exchange_binaries"
+      flags: 'TESTING=1 TEST_PUBLIC_KEY=1 TRUSTED_NAME_TEST_KEY=1 DEBUG=1'
+
+  build_ethereum:
+    name: Build Ethereum app using the reusable workflow
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@v1
+    with:
+      app_repository: ${{ inputs.repo_for_ethereum }}
+      app_branch: ${{ inputs.branch_for_ethereum }}
+      upload_app_binaries_artifact: "compiled_ethereum_binaries"
+      upload_as_lib_artifact: "ethereum_"
+      flags: 'COIN=ethereum CHAIN=ethereum CAL_TEST_KEY=1 DOMAIN_NAME_TEST_KEY=1 SET_PLUGIN_TEST_KEY=1 NFT_TEST_KEY=1 TRUSTED_NAME_TEST_KEY=1'
+
+  build_application:
+    name: Build application using the reusable workflow
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@v1
+    with:
+      app_repository: ${{ inputs.repo_for_app }}
+      app_branch: ${{ inputs.branch_for_app }}
+      upload_app_binaries_artifact: "compiled_app_binaries"
+
+
+  # This job runs the swap functional tests using the reusable workflow
+  swap_functional_tests:
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_ragger_tests_v2.yml@y333/manage_several_pytest_directories
+    with:
+      branch_for_app: ${{ inputs.branch_for_app }}
+      repo_for_app: ${{ inputs.repo_for_app }}
+      app_binaries_artifact: "compiled_app_binaries"
+      additional_app_binaries_artifact: "compiled_exchange_binaries"
+      additional_app_binaries_artifact_dir: "tests_swap/main_app/exchange"
+      lib_binaries_artifact: "compiled_ethereum_binaries"
+      standalone: false
+      swap: true

@@ -30,22 +30,36 @@ on:
 jobs:
   build_application:
     name: Build application using the reusable workflow
-    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@v1
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@y333/manage_several_pytest_directories
     with:
       upload_app_binaries_artifact: "compiled_app_binaries"
 
+  build_exchange:
+    name: Build Exchange app using the reusable workflow
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@y333/manage_several_pytest_directories
+    with:
+      app_repository: 'LedgerHQ/app-exchange'
+      app_branch_name: 'develop'
+      upload_app_binaries_artifact: "compiled_exchange_binaries"
+      flags: 'TESTING=1 TEST_PUBLIC_KEY=1 TRUSTED_NAME_TEST_KEY=1 DEBUG=1'
+
+  build_ethereum:
+    name: Build Ethereum app using the reusable workflow
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@y333/manage_several_pytest_directories
+    with:
+      app_repository: 'LedgerHQ/app-ethereum'
+      app_branch_name: 'develop'
+      upload_app_binaries_artifact: "compiled_ethereum_binaries"
+      upload_as_lib_artifact: "ethereum_"
+      flags: 'COIN=ethereum CHAIN=ethereum CAL_TEST_KEY=1 DOMAIN_NAME_TEST_KEY=1 SET_PLUGIN_TEST_KEY=1 NFT_TEST_KEY=1 TRUSTED_NAME_TEST_KEY=1'
+
   ragger_tests:
     name: Run ragger tests using the reusable workflow
-    needs: build_application
-    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_ragger_tests.yml@v1
+    needs: [build_application, build_exchange, build_ethereum]
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_ragger_tests_v2.yml@y333/manage_several_pytest_directories
     with:
-      download_app_binaries_artifact: "compiled_app_binaries"
-      regenerate_snapshots: ${{ inputs.golden_run == 'Open a PR' }}
-
-  ragger_swap_tests:
-    name: Run swap ragger tests using the reusable workflow
-    needs: build_application
-    uses: ./.github/workflows/reusable_swap_ragger_tests.yml
-    with:
-      branch_for_app: ${{ github.ref }}
-      repo_for_app: ${{ github.repository }}
+      app_binaries_artifact: "compiled_app_binaries"
+      additional_app_binaries_artifact: "compiled_exchange_binaries"
+      additional_app_binaries_artifact_dir: "tests/swap/main_app/exchange"
+      lib_binaries_artifact: "compiled_ethereum_binaries"
+      swap: true 
