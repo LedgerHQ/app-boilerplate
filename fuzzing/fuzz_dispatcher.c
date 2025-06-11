@@ -17,7 +17,7 @@ jmp_buf fuzz_exit_jump_buf;
 #endif
 // Fuzz entry point
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
-    if (setjmp(fuzz_exit_jump_buf) == 0 && size > 6) {
+    if (setjmp(fuzz_exit_jump_ctx.jmp_buf) == 0 && size > 6) {
         command_t cmd;
         cmd.cla = data[0];
         cmd.ins = data[1] % 8;

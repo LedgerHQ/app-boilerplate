@@ -8,8 +8,7 @@
 #include <stdint.h>
 
 // to simulate exiting makes a long_jump to fuzzer harness
-extern jmp_buf fuzz_exit_jump_buf;
-static try_context_t *G_exception_context = fuzz_exit_jump_buf;
+extern try_context_t fuzz_exit_jump_ctx;
 
 try_context_t *try_context_get(void);
 

@@ -11,7 +11,7 @@
 
 jmp_buf fuzz_exit_jump_buf;
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
-    if (setjmp(fuzz_exit_jump_buf) == 0) {
+    if (setjmp(fuzz_exit_jump_ctx.jmp_buf) == 0) {
         buffer_t buf = {.ptr = data, .size = size, .offset = 0};
         transaction_t tx;
         parser_status_e status;
