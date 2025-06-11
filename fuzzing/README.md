@@ -56,7 +56,7 @@ Once inside the container, navigate to the ```fuzzing``` folder to compile the f
 ```console
 cd fuzzing
 
-./local_run.sh --build=1 --re-generate-macros=1 --TARGET_DEVICE=stax --BOLOS_SDK=/ledger-secure-sdk/ --fuzzer=build/fuzz_dispatcher --run-fuzzer=1 --compute-coverage=1
+/ledger-secure-sdk/fuzzing/local_run.sh --build=1 --re-generate-macros=1 --TARGET_DEVICE=stax --BOLOS_SDK=/ledger-secure-sdk/ --fuzzer=build/fuzz_dispatcher --j=4 --run-fuzzer=1 --compute-coverage=1
 ```
 
 ### About local_run.sh
