@@ -12,54 +12,6 @@ project(
   DESCRIPTION "App Boilerplate example Fuzzer"
   LANGUAGES C)
 
-# compatible with ClusterFuzzLite
-if(NOT DEFINED ENV{LIB_FUZZING_ENGINE})
-  set(COMPILATION_FLAGS
-      -Wno-dev
-      -fno-common
-      -std=gnu99
-      -Wall
-      -Wextra
-      -Wno-main
-      -Wno-error=int-conversion
-      -Wimplicit-fallthrough
-      -Wvla
-      -Wundef
-      -Wshadow
-      -Wformat=2
-      -Wformat-security
-      -Wwrite-strings
-      -ffunction-sections
-      -fdata-sections
-      -fprofile-instr-generate
-      -fcoverage-mapping
-      -funsigned-char
-      -fshort-enums)
-
-  set(LINK_FLAGS -ffunction-sections -fdata-sections -fprofile-instr-generate
-                 -fcoverage-mapping -fuse-ld=lld)
-  if(SANITIZER MATCHES "address")
-    set(COMPILATION_FLAGS ${COMPILATION_FLAGS}
-                          -fsanitize=fuzzer,address,undefined)
-    set(LINK_FLAGS ${LINK_FLAGS} -fsanitize=fuzzer,address,undefined)
-  elseif(SANITIZER MATCHES "memory")
-    set(COMPILATION_FLAGS
-        ${COMPILATION_FLAGS} -fsanitize=fuzzer,memory,undefined
-        -fsanitize-memory-track-origins -fsanitize=fuzzer-no-link)
-    set(LINK_FLAGS ${LINK_FLAGS} -fsanitize=fuzzer,memory,undefined
-                   -fsanitize-memory-track-origins -fsanitize=fuzzer-no-link)
-  else()
-    message(
-      FATAL_ERROR
-        "Unknown sanitizer type. It must be set to `address` or `memory`.")
-  endif()
-else()
-  set(COMPILATION_FLAGS "$ENV{LIB_FUZZING_ENGINE} $ENV{CFLAGS}")
-  set(LINK_FLAGS "$ENV{LIB_FUZZING_ENGINE} $ENV{LDFLAGS}")
-  separate_arguments(COMPILATION_FLAGS)
-  separate_arguments(LINK_FLAGS)
-endif()
-
 set(DEFINES FUZZ APPNAME="Boilerplate")
 
 if(NOT DEFINED BOLOS_SDK)
@@ -69,19 +21,21 @@ else()
   message(${BOLOS_SDK})
 endif()
 
-add_subdirectory(${BOLOS_SDK}/fuzzing ${CMAKE_SOURCE_DIR}/build/sdk_build)
+add_subdirectory(${BOLOS_SDK}/fuzzing ${CMAKE_CURRENT_BINARY_DIR}/ledger-secure-sdk EXCLUDE_FROM_ALL)
 
 file(
   GLOB
   C_SOURCES
-  "${CMAKE_SOURCE_DIR}/../src/*.c",
-  "${CMAKE_SOURCE_DIR}/../src/apdu/*.c",
-  "${CMAKE_SOURCE_DIR}/../src/swap/*.c",
-  "${CMAKE_SOURCE_DIR}/../src/handler/*.c",
-  "${CMAKE_SOURCE_DIR}/../src/helper/*.c",
-  "${CMAKE_SOURCE_DIR}/../src/transaction/*.c",
-  "${CMAKE_SOURCE_DIR}/../src/ui/*.c",
-  "${CMAKE_SOURCE_DIR}/../src/ui/action/*.c",)
+  "${CMAKE_SOURCE_DIR}/../src/*.c"
+  "${CMAKE_SOURCE_DIR}/../src/apdu/*.c"
+  "${CMAKE_SOURCE_DIR}/../src/swap/*.c"
+  "${CMAKE_SOURCE_DIR}/../src/handler/*.c"
+  "${CMAKE_SOURCE_DIR}/../src/helper/*.c"
+  "${CMAKE_SOURCE_DIR}/../src/transaction/*.c"
+  "${CMAKE_SOURCE_DIR}/../src/ui/*.c"
+  "${CMAKE_SOURCE_DIR}/../src/ui/action/*.c"
+  "${CMAKE_SOURCE_DIR}/mock/*.c"
+  )
 list(REMOVE_ITEM C_SOURCES "${CMAKE_SOURCE_DIR}/../src/app_main.c")
 
 add_library(code_lib ${C_SOURCES})
@@ -98,25 +52,14 @@ target_include_directories(
          ${CMAKE_SOURCE_DIR}/../src/ui/action/)
 
 target_link_libraries(code_lib PUBLIC extra)
-target_compile_definitions(
-  code_lib PUBLIC ${DEFINES} FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1)
-target_link_options(code_lib PUBLIC ${LINK_FLAGS})
-target_compile_options(code_lib PUBLIC ${COMPILATION_FLAGS})
+target_compile_definitions(code_lib PUBLIC ${DEFINES} FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1)
 
 # fuzz_dispatcher
 add_executable(fuzz_dispatcher "${CMAKE_SOURCE_DIR}/fuzz_dispatcher.c")
-
-target_compile_definitions(
-  fuzz_dispatcher PUBLIC macros FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1)
-target_compile_options(fuzz_dispatcher PUBLIC ${COMPILATION_FLAGS})
-target_link_options(fuzz_dispatcher PUBLIC ${LINK_FLAGS})
+target_compile_definitions(fuzz_dispatcher PUBLIC macros FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1)
 target_link_libraries(fuzz_dispatcher PUBLIC extra code_lib)
 
 # fuzz_tx_parser
 add_executable(fuzz_tx_parser "${CMAKE_SOURCE_DIR}/fuzz_tx_parser.c")
-
-target_compile_definitions(
-  fuzz_tx_parser PUBLIC macros FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1)
-target_compile_options(fuzz_tx_parser PUBLIC ${COMPILATION_FLAGS})
-target_link_options(fuzz_tx_parser PUBLIC ${LINK_FLAGS})
+target_compile_definitions(fuzz_tx_parser PUBLIC macros FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1)
 target_link_libraries(fuzz_tx_parser PUBLIC extra code_lib)
