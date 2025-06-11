@@ -21,7 +21,8 @@ else()
   message(${BOLOS_SDK})
 endif()
 
-add_subdirectory(${BOLOS_SDK}/fuzzing ${CMAKE_CURRENT_BINARY_DIR}/ledger-secure-sdk EXCLUDE_FROM_ALL)
+add_subdirectory(${BOLOS_SDK}/fuzzing
+                 ${CMAKE_CURRENT_BINARY_DIR}/ledger-secure-sdk EXCLUDE_FROM_ALL)
 
 file(
   GLOB
@@ -34,8 +35,7 @@ file(
   "${CMAKE_SOURCE_DIR}/../src/transaction/*.c"
   "${CMAKE_SOURCE_DIR}/../src/ui/*.c"
   "${CMAKE_SOURCE_DIR}/../src/ui/action/*.c"
-  "${CMAKE_SOURCE_DIR}/mock/*.c"
-  )
+  "${CMAKE_SOURCE_DIR}/mock/*.c")
 list(REMOVE_ITEM C_SOURCES "${CMAKE_SOURCE_DIR}/../src/app_main.c")
 
 add_library(code_lib ${C_SOURCES})
@@ -52,14 +52,17 @@ target_include_directories(
          ${CMAKE_SOURCE_DIR}/../src/ui/action/)
 
 target_link_libraries(code_lib PUBLIC extra)
-target_compile_definitions(code_lib PUBLIC ${DEFINES} FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1)
+target_compile_definitions(
+  code_lib PUBLIC ${DEFINES} FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1)
 
 # fuzz_dispatcher
 add_executable(fuzz_dispatcher "${CMAKE_SOURCE_DIR}/fuzz_dispatcher.c")
-target_compile_definitions(fuzz_dispatcher PUBLIC macros FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1)
+target_compile_definitions(
+  fuzz_dispatcher PUBLIC macros FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1)
 target_link_libraries(fuzz_dispatcher PUBLIC extra code_lib)
 
 # fuzz_tx_parser
 add_executable(fuzz_tx_parser "${CMAKE_SOURCE_DIR}/fuzz_tx_parser.c")
-target_compile_definitions(fuzz_tx_parser PUBLIC macros FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1)
+target_compile_definitions(
+  fuzz_tx_parser PUBLIC macros FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1)
 target_link_libraries(fuzz_tx_parser PUBLIC extra code_lib)

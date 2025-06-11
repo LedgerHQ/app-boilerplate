@@ -28,7 +28,9 @@ docker run --rm -ti -v "$(realpath .):/app" ghcr.io/ledgerhq/ledger-app-builder/
 *Or use this one while we wait for the SDK_FUZZING_FRAMEWORK release* (setting the path/to/sdk)
 
 ```console
-docker run --rm -ti -v "$(realpath .):/app" -v "$(realpath /path/to/sdk):/ledger-secure-sdk" ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest
+export BOLOS_SDK=/path/to/ledger-secure-sdk/with/fuzzing/framework
+
+docker run --rm -ti -v "$(realpath .):/app" -v "$(realpath $BOLOS_SDK):/ledger-secure-sdk" ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest
 ```
 ### Writing your Harness
 When writing your harness, keep the following points in mind:
