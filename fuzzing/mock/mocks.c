@@ -29,9 +29,9 @@ try_context_t *try_context_set(try_context_t *context) {
 }
 
 void __attribute__((noreturn)) os_sched_exit(bolos_task_status_t exit_code) {
-    if (fuzz_exit_jump_ctx.jmp_buf != 0) longjmp(fuzz_exit_jump_ctx.jmp_buf, 1);
+    longjmp(fuzz_exit_jump_ctx.jmp_buf, 1);
 }
 
 void __attribute__((noreturn)) os_lib_end(void) {
-    if (fuzz_exit_jump_ctx.jmp_buf != NULL) longjmp(fuzz_exit_jump_ctx.jmp_buf, 1);
+    longjmp(fuzz_exit_jump_ctx.jmp_buf, 1);
 }

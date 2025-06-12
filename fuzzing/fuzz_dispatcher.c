@@ -5,12 +5,9 @@
 #include "globals.h"
 #include "dispatcher.h"
 #include "mock/mocks.h"
-#include <setjmp.h>
 
 global_ctx_t G_context;
 const internal_storage_t N_storage_real;
-
-jmp_buf fuzz_exit_jump_buf;
 
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 #message "Use this macro for code only needed in fuzz targets"
