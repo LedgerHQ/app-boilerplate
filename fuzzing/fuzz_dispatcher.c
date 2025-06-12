@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include "globals.h"
 #include "dispatcher.h"
-
+#include "mock/mocks.h"
 #include <setjmp.h>
 
 global_ctx_t G_context;
