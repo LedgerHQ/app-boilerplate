@@ -22,6 +22,7 @@
 #include "cdc_mgmt.h"
 #include "io.h"
 #include "ble_ledger.h"
+#include "nbgl_screen.h"
 #include "usbd_ledger.h"
 #include "nbgl_types.h"
 #include "nbgl_front.h"
@@ -639,6 +640,8 @@ void cdc_mgmt_tick(void) {
     ticker_value += 100;
     if (count % 10 == 0) {
         count = 0;
+        // Fix ESD
+        nbgl_screen_reinit();
         // display sth
         nbgl_fullScreenClear(COLORS[color_index], true);
         color_index++;
