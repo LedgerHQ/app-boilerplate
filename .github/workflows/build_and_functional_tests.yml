@@ -58,7 +58,7 @@ jobs:
     needs: build_application
     uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_ragger_tests.yml@y333/manage_several_pytest_directories
     with:
-      app_binaries_artifact: "compiled_app_binaries"
+      download_app_binaries_artifact: "compiled_app_binaries"
       regenerate_snapshots: ${{ inputs.golden_run == 'Open a PR' }}
 
   ragger_tests_swap:
@@ -66,7 +66,7 @@ jobs:
     needs: [build_application, build_exchange, build_ethereum]
     uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_ragger_tests.yml@y333/manage_several_pytest_directories
     with:
-      app_binaries_artifact: "compiled_app_binaries"
+      download_app_binaries_artifact: "compiled_app_binaries"
       additional_app_binaries_artifact: "compiled_exchange_binaries"
       additional_app_binaries_artifact_dir: "tests/swap/main_app/exchange"
       lib_binaries_artifact: "compiled_ethereum_binaries"
