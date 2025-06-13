@@ -60,6 +60,7 @@ jobs:
     with:
       download_app_binaries_artifact: "compiled_app_binaries"
       regenerate_snapshots: ${{ inputs.golden_run == 'Open a PR' }}
+      test_dir: "tests/standalone"
 
   ragger_tests_swap:
     name: Run swap ragger tests using the reusable workflow
@@ -70,3 +71,4 @@ jobs:
       additional_app_binaries_artifact: "compiled_exchange_binaries"
       additional_app_binaries_artifact_dir: "tests/swap/main_app/exchange"
       lib_binaries_artifact: "compiled_ethereum_binaries"
+      test_dir: "tests/swap"
