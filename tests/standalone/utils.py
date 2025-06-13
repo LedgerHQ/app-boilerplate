@@ -69,7 +69,7 @@ def verify_version(version: str) -> None:
 def _read_makefile() -> List[str]:
     """Read lines from the parent Makefile """
 
-    parent = Path(__file__).parent.parent.resolve()
+    parent = Path(__file__).parent.parent.parent.resolve()
     makefile = f"{parent}/Makefile"
     with open(makefile, "r", encoding="utf-8") as f_p:
         lines = f_p.readlines()
