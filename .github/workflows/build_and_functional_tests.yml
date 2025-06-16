@@ -34,26 +34,7 @@ jobs:
     with:
       upload_app_binaries_artifact: "compiled_app_binaries"
 
-  build_exchange:
-    name: Build Exchange app using the reusable workflow
-    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@y333/manage_several_pytest_directories
-    with:
-      app_repository: 'LedgerHQ/app-exchange'
-      app_branch_name: 'develop'
-      upload_app_binaries_artifact: "compiled_exchange_binaries"
-      flags: 'TESTING=1 TEST_PUBLIC_KEY=1 TRUSTED_NAME_TEST_KEY=1 DEBUG=1'
-
-  build_ethereum:
-    name: Build Ethereum app using the reusable workflow
-    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@y333/manage_several_pytest_directories
-    with:
-      app_repository: 'LedgerHQ/app-ethereum'
-      app_branch_name: 'develop'
-      upload_app_binaries_artifact: "compiled_ethereum_binaries"
-      upload_as_lib_artifact: "ethereum_"
-      flags: 'COIN=ethereum CHAIN=ethereum CAL_TEST_KEY=1 DOMAIN_NAME_TEST_KEY=1 SET_PLUGIN_TEST_KEY=1 NFT_TEST_KEY=1 TRUSTED_NAME_TEST_KEY=1'
-
-  ragger_tests_standalone:
+  tests_standalone:
     name: Run standalone ragger tests using the reusable workflow
     needs: build_application
     uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_ragger_tests.yml@y333/manage_several_pytest_directories
@@ -62,13 +43,10 @@ jobs:
       regenerate_snapshots: ${{ inputs.golden_run == 'Open a PR' }}
       test_dir: "tests/standalone"
 
-  ragger_tests_swap:
-    name: Run swap ragger tests using the reusable workflow
-    needs: [build_application, build_exchange, build_ethereum]
-    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_ragger_tests.yml@y333/manage_several_pytest_directories
+  tests_swap:
+    name: Run swap tests using the callable workflow
+    needs: build_application
+    uses: ./.github/workflows/callable_swap_tests.yml
     with:
-      download_app_binaries_artifact: "compiled_app_binaries"
-      additional_app_binaries_artifact: "compiled_exchange_binaries"
-      additional_app_binaries_artifact_dir: "tests/swap/main_app/exchange/build"
-      lib_binaries_artifact: "compiled_ethereum_binaries"
-      test_dir: "tests/swap"
+      is_app_compiled: true
+      regenerate_snapshots: ${{ inputs.golden_run == 'Open a PR' }}
