@@ -24,6 +24,10 @@ on:
         required: false
         default: 'LedgerHQ/app-exchange'
         type: string
+      is_exchange_compiled:
+        required: false
+        default: false
+        type: boolean
       branch_for_ethereum:
         required: false
         default: 'develop'
@@ -32,6 +36,10 @@ on:
         required: false
         default: 'LedgerHQ/app-ethereum'
         type: string
+      is_ethereum_compiled:
+        required: false
+        default: false
+        type: boolean
       regenerate_snapshots:
         required: false
         default: false
@@ -42,11 +50,14 @@ jobs:
     uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@y333/manage_several_pytest_directories
     if: ${{ inputs.is_app_compiled == false }} 
     with:
+      app_repository: ${{ inputs.repo_for_app }}
+      app_branch_name: '${{ inputs.branch_for_app }}'
       upload_app_binaries_artifact: "compiled_app_binaries"
 
   build_exchange:
     name: Build Exchange app using the reusable workflow
     uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@y333/manage_several_pytest_directories
+    if: ${{ inputs.is_exchange_compiled == false }}
     with:
       app_repository: ${{ inputs.repo_for_exchange }}
       app_branch_name: '${{ inputs.branch_for_exchange }}'
@@ -56,6 +67,7 @@ jobs:
   build_ethereum:
     name: Build Ethereum app using the reusable workflow
     uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@y333/manage_several_pytest_directories
+    if: ${{ inputs.is_ethereum_compiled == false }}
     with:
       app_repository: ${{ inputs.repo_for_ethereum }}
       app_branch_name: '${{ inputs.branch_for_ethereum }}'
