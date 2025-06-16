@@ -69,6 +69,6 @@ jobs:
     with:
       download_app_binaries_artifact: "compiled_app_binaries"
       additional_app_binaries_artifact: "compiled_exchange_binaries"
-      additional_app_binaries_artifact_dir: "tests/swap/main_app/exchange"
+      additional_app_binaries_artifact_dir: "tests/swap/main_app/exchange/build"
       lib_binaries_artifact: "compiled_ethereum_binaries"
       test_dir: "tests/swap"
