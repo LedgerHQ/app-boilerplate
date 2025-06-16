@@ -40,13 +40,12 @@ jobs:
     uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_ragger_tests.yml@y333/manage_several_pytest_directories
     with:
       download_app_binaries_artifact: "compiled_app_binaries"
-      regenerate_snapshots: ${{ inputs.golden_run == 'Open a PR' }}
+      regenerate_snapshots: ${{ github.event_name == 'workflow_dispatch' && inputs.golden_run == 'Open a PR' }}
       test_dir: "tests/standalone"
 
   tests_swap:
     name: Run swap tests using the callable workflow
-    needs: build_application
     uses: ./.github/workflows/callable_swap_tests.yml
     with:
-      is_app_compiled: true
-      regenerate_snapshots: ${{ inputs.golden_run == 'Open a PR' }}
+      branch_for_app: ${{ github.ref }}
+      regenerate_snapshots: ${{ github.event_name == 'workflow_dispatch' && inputs.golden_run == 'Open a PR' }}
