@@ -44,6 +44,8 @@ jobs:
 
   get_artifacts_names:
     name: Retrieve artifact names
+    needs: [build_exchange, build_ethereum]
+    if: ${{ always() }}
     outputs:
       exchange_build_artifact: ${{ steps.get_exchange_binaries.outputs.exchange_build_artifact }}
       ethereum_build_artifact: ${{ steps.get_ethereum_binaries.outputs.ethereum_build_artifact }}
@@ -54,16 +56,22 @@ jobs:
         run: |
           if needs.build_exchange.result == 'skipped'; then
             echo "exchange_build_artifact=${{ inputs.exchange_build_artifact }}" >> "$GITHUB_OUTPUT"
-          else
+          elif needs.build_exchange.result == 'success'; then
             echo "exchange_build_artifact=app_exchange_binaries" >> "$GITHUB_OUTPUT"
+          else
+            echo "Not able to retrieve Exchange binaries artifact name" >&2
+            exit 1
           fi
       - name: Get Ethereum binaries artifact name
         id: get_ethereum_binaries
         run: |
           if needs.build_ethereum.result == 'skipped'; then
             echo "ethereum_build_artifact=${{ inputs.ethereum_build_artifact }}" >> "$GITHUB_OUTPUT"
-          else
+          elif needs.build_ethereum.result == 'success'; then
             echo "ethereum_build_artifact=app_ethereum_binaries" >> "$GITHUB_OUTPUT"
+          else
+            echo "Not able to retrieve Ethereum binaries artifact name" >&2
+            exit 1
           fi
       - name: Show artifact names
         run: |
