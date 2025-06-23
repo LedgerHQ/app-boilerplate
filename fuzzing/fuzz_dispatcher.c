@@ -14,23 +14,23 @@ const internal_storage_t N_storage_real;
 #endif
 // Fuzz entry point
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
-    if (setjmp(fuzz_exit_jump_ctx.jmp_buf) == 0 && size > 6) {
-        command_t cmd;
-        cmd.cla = data[0];
-        cmd.ins = data[1] % 8;
-        cmd.p1 = data[2];
-        cmd.p2 = data[3];
-        cmd.lc = data[4];
+    if (sigsetjmp(fuzz_exit_jump_ctx.jmp_buf, 1)) return 0;
+    if (size < 6) return 0;
 
-        if (size > 5 && cmd.lc > 0) {
-            size_t data_len = size - 5;
-            if (cmd.lc > data_len) cmd.lc = data_len;
+    command_t cmd;
+    cmd.cla = data[0];
+    cmd.ins = data[1] % 8;
+    cmd.p1 = data[2];
+    cmd.p2 = data[3];
+    cmd.lc = data[4];
 
-            cmd.data = (uint8_t *) &data[5];
-        } else {
-            cmd.data = NULL;
-        }
-        apdu_dispatcher(&cmd);
+    if (size > 5 && cmd.lc > 0) {
+        size_t data_len = size - 5;
+        if (cmd.lc > data_len) cmd.lc = data_len;
+
+        cmd.data = (uint8_t *) &data[5];
+    } else {
+        cmd.data = NULL;
     }
-    return 0;
+    apdu_dispatcher(&cmd);
 }
