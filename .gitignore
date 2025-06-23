@@ -20,6 +20,7 @@ unit-tests/coverage.info
 fuzzing/build/
 fuzzing/corpus/
 fuzzing/out/
+fuzzing/macros/generated/
 
 # Python
 *.pyc[cod]
