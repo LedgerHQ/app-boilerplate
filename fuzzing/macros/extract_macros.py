@@ -25,6 +25,10 @@ def parse_args():
     default="../generated/macros.txt",
     help="Path to output file (default: ../generated/macros.txt)"
     )
+    parser.add_argument(
+        "-c", "--customsonly",
+        help="Only adds/excludes custom macros to output file, not regenerate it."
+    )
     return parser.parse_args()
 
 def load_list(path):
@@ -47,7 +51,6 @@ def extract_macros(file_path):
             for i in range(len(entry["arguments"])-1, 0, -1):
                 arg = entry["arguments"][i]
                 if arg.startswith("-D"):
-                #                    macros.add(arg[2:].replace('"', r'\"'))
                     macros.add(arg[2:])
     return macros
 
@@ -58,13 +61,19 @@ def write_macros(macros, output_path="../generated/macros.txt"):
 
 def main():
     args = parse_args()
-
-    extracted_macros = extract_macros(args.file)
     exclude_macros = load_list(args.exclude)
     add_macros = load_list(args.add)
 
-    final_macros = (extracted_macros - exclude_macros) | add_macros
+    if(args.customsonly):
+        extracted_macros = load_list(args.output)
+        final_macros = (extracted_macros - exclude_macros) | add_macros
+        write_macros(final_macros, args.output)
+        print(f" Wrote {len(final_macros)} macros to {args.output}")
+        return 0
 
+    extracted_macros = extract_macros(args.file)
+
+    final_macros = (extracted_macros - exclude_macros) | add_macros
     write_macros(final_macros, args.output)
 
     print(f" Wrote {len(final_macros)} macros to {args.output}")
