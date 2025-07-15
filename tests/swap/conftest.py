@@ -14,12 +14,8 @@ from ledger_app_clients.exchange.navigation_helper import ExchangeNavigationHelp
 # Please refer to ragger/conftest/configuration.py for their descriptions and accepted values
 
 configuration.OPTIONAL.BACKEND_SCOPE = "class"
-configuration.OPTIONAL.MAIN_APP_DIR = "./tests/swap/main_app"
-
-configuration.OPTIONAL.SIDELOADED_APPS = {
-    "ethereum": "Ethereum",
-}
-configuration.OPTIONAL.SIDELOADED_APPS_DIR = "tests/swap/lib_binaries/"
+configuration.OPTIONAL.MAIN_APP_DIR = "tests/swap/.test_dependencies/main"
+configuration.OPTIONAL.SIDELOADED_APPS_DIR = "tests/swap/.test_dependencies/libraries/"
 
 #########################
 ### CONFIGURATION END ###
