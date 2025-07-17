@@ -40,6 +40,7 @@ ICON_NANOX = icons/app_boilerplate_14px.gif
 ICON_NANOSP = icons/app_boilerplate_14px.gif
 ICON_STAX = icons/app_boilerplate_32px.gif
 ICON_FLEX = icons/app_boilerplate_40px.gif
+ICON_APEX_P = icons/app_boilerplate_32px_apex.png
 
 # With the Nano NBGL Design, the Home Screen icon is the reverse of the App icon:
 # It should be on white background, with rounded corners.

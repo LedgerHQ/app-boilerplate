@@ -4,7 +4,7 @@
 
 # Ledger Boilerplate Application
 
-This is a boilerplate application which can be forked to start a new project for the Ledger Nano X/SP, Stax and Flex.
+This is a boilerplate application which can be forked to start a new project for the Ledger devices.
 
 ## Quick start guide
 
@@ -95,6 +95,7 @@ to the following values :
 * `BOLOS_SDK=$NANOSP_SDK`
 * `BOLOS_SDK=$STAX_SDK`
 * `BOLOS_SDK=$FLEX_SDK`
+* `BOLOS_SDK=$APEX_SDK`
 
 By default this variable is set to build/load for Nano S+.
 

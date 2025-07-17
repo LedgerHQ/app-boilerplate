@@ -10,6 +10,9 @@
 #define ICON_APP_BOILERPLATE C_app_boilerplate_64px
 #define ICON_APP_HOME        ICON_APP_BOILERPLATE
 #define ICON_APP_WARNING     C_Warning_64px
+#elif defined(TARGET_APEX_P)
+#define ICON_APP_BOILERPLATE C_app_boilerplate_48px
+#define ICON_APP_WARNING     LARGE_WARNING_ICON
 #endif
 
 /**
