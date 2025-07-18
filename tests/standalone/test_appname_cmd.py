@@ -3,7 +3,7 @@ from ragger.backend.interface import BackendInterface
 from application_client.boilerplate_command_sender import BoilerplateCommandSender
 from application_client.boilerplate_response_unpacker import unpack_get_app_name_response
 
-from utils import verify_name
+from .utils import verify_name
 
 
 # In this test we check that the GET_APP_NAME replies the application name
