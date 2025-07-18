@@ -1,7 +1,7 @@
 
 from ledger_app_clients.exchange.cal_helper import CurrencyConfiguration
 
-from .boilerplate_application_client.boilerplate_currency_utils import BOL_PACKED_DERIVATION_PATH, BOL_CONF
+from application_client.boilerplate_currency_utils import BOL_PACKED_DERIVATION_PATH, BOL_CONF
 
 # Define a configuration for each currency used in our tests: native coins and tokens
 
