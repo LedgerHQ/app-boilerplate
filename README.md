@@ -184,7 +184,7 @@ If you prefer not to, open a terminal and follow the steps below.
 Install the tests requirements :
 
 ```shell
-pip install -r tests/requirements.txt
+pip install -r tests/standalone/requirements.txt
 ```
 
 Then you can :
@@ -192,7 +192,7 @@ Then you can :
 Run the functional tests (here for nanos+ but available for any device once you have built the binaries) :
 
 ```shell
-pytest tests/ --tb=short -v --device nanosp
+pytest tests/standalone/ --tb=short -v --device nanosp
 ```
 
 Or run your app directly with Speculos
@@ -200,6 +200,8 @@ Or run your app directly with Speculos
 ```shell
 speculos --model nanosp build/nanos2/bin/app.elf
 ```
+
+Please refer to the tests `README.md` for information on this topic.
 
 ## Documentation
 
