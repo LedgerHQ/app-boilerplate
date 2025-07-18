@@ -55,21 +55,21 @@ docker run --rm -ti -v "$(realpath .):/app" -v "$(realpath $BOLOS_SDK):/ledger-s
 
 When writing your harness, keep the following points in mind:
 
-- An SDK's interface for compilation is provided via the target `extra` in CMakeLists.txt
+- An SDK's interface for compilation is provided via the target `secure_sdk` in CMakeLists.txt
 - If you are running it for the first time, consider using the script `local_run` from inside the
-  Docker container using the flags build=1 and `re-generate-macros=2`, if you need to manually
+  Docker container using the flag build=1, if you need to manually
   add/remove macros you can then do it using the files macros/add_macros.txt or
-  macros/exclude_macros.txt and regenerate it, or directly change the macros/generated/macros.txt
-  and then using `re-generate-macros=0`.
+  macros/exclude_macros.txt and rerunning it, or directly change the macros/generated/macros.txt.
 - A typical harness looks like this:
 
   ```console
 
   int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
-      if (setjmp(fuzz_exit_jump_ctx.jmp_buf)){
-          ### harness code ###
-      }
-      return 0;
+    if (sigsetjmp(fuzz_exit_jump_ctx.jmp_buf, 1)) return 0;
+
+    ### harness code ###
+
+    return 0;
   }
 
   ```
@@ -88,7 +88,6 @@ Once inside the container, navigate to the `fuzzing` folder to compile the fuzze
 cd fuzzing
 
 /ledger-secure-sdk/fuzzing/local_run.sh --build=1
-                                        --re-generate-macros=1
                                         --TARGET_DEVICE=stax
                                         --BOLOS_SDK=/ledger-secure-sdk/
                                         --fuzzer=build/fuzz_dispatcher
@@ -107,17 +106,15 @@ cd fuzzing
 | `--build`              | `bool`              | **Optional**. Whether to build the project (default: 0)              |
 | `--fuzzer`             | `PATH`              | **Required**. Path to the fuzzer binary                              |
 | `--compute-coverage`   | `bool`              | **Optional**. Whether to compute coverage after fuzzing (default: 0) |
-| `--run-fuzzer`         | `bool`              | **Optional**. Whether to run or not the fuzzer (default: 1)          |
+| `--run-fuzzer`         | `bool`              | **Optional**. Whether to run or not the fuzzer (default: 0)          |
+| `--run-crash`          | `FILENAME`          | **Optional**. Run the on a specific crash input file (default: 0) |
+| `--sanitizer`          | `address or memory` | **Optional**. Compile with sanitizer (default: address)       |
+| `--j`                  | `int`               | **Optional**. N-parallel jobs for build and fuzzing (default: 1) |
 | `--help`               |                     | **Optional**. Display help message                                   |
 
 ### Visualizing code coverage
 
-After running your fuzzer, if `--compute-coverage=1` you will be prompted with the coverage, but you
-can also run the following code to have a web view of it.
-
-```console
-xdg-open out/index.html
-```
+After running your fuzzer, if `--compute-coverage=1` the coverage will be available in your browser.
 
 ## Full usage based on `clusterfuzzlite` container - TODO after SDK FUZZING RELEASE
 
