@@ -45,6 +45,8 @@ class Errors(IntEnum):
     SW_TX_HASH_FAIL            = 0xB006
     SW_BAD_STATE               = 0xB007
     SW_SIGNATURE_FAIL          = 0xB008
+    SW_WRONG_AMOUNT            = 0xC000
+    SW_WRONG_ADDRESS           = 0xC000
 
 
 def split_message(message: bytes, max_size: int) -> List[bytes]:
@@ -122,6 +124,10 @@ class BoilerplateCommandSender:
                                          p2=P2.P2_LAST,
                                          data=messages[-1]) as response:
             yield response
+
+    def sign_tx_sync(self, path: str, transaction: bytes) -> RAPDU:
+        with self.sign_tx(path, transaction) as response:
+            return response
 
     def get_async_response(self) -> Optional[RAPDU]:
         return self.backend.last_async_response
