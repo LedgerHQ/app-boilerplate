@@ -36,6 +36,7 @@ target_include_directories(
          ${CMAKE_SOURCE_DIR}/../src/transaction/
          ${CMAKE_SOURCE_DIR}/../src/ui/
          ${CMAKE_SOURCE_DIR}/../src/ui/action/
+         ${CMAKE_SOURCE_DIR}/mock/
          ${CMAKE_SOURCE_DIR}/)
 
 target_link_libraries(code_lib PUBLIC secure_sdk)
