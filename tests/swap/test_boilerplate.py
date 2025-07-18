@@ -1,10 +1,10 @@
 import pytest
 from ledger_app_clients.exchange.test_runner import ExchangeTestRunner, ALL_TESTS_EXCEPT_MEMO_THORSWAP_AND_FEES
-from .apps import cal as cal
 
-from .apps.boilerplate_application_client.boilerplate_currency_utils import BOL_PATH
-from .apps.boilerplate_application_client.boilerplate_command_sender import BoilerplateCommandSender, Errors as BoilerplateErrors
-from .apps.boilerplate_application_client.boilerplate_transaction import Transaction
+from . import cal_helper as cal
+from application_client.boilerplate_currency_utils import BOL_PATH
+from application_client.boilerplate_command_sender import BoilerplateCommandSender, Errors as BoilerplateErrors
+from application_client.boilerplate_transaction import Transaction
 
 # ExchangeTestRunner implementation for Near
 class BoilerplateTests(ExchangeTestRunner):
