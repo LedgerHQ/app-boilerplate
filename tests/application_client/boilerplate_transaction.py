@@ -19,9 +19,9 @@ class Transaction:
             if to.startswith("0x"):
                 self.to: bytes = bytes.fromhex(to[2:])
             else:
-                self.to: bytes = bytes.fromhex(to)
+                self.to = bytes.fromhex(to)
         else:
-            self.to: bytes = to
+            self.to = to
         self.value: int = value
         self.memo: bytes = memo.encode("ascii")
 

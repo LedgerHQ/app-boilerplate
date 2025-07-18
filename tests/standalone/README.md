@@ -31,6 +31,5 @@ standalone/
 ├── snapshots/               # Ragger UI snapshots
 ├── snapshots-tmp/           # Temporary snapshot diffs (not tracked in git)
 ├── requirements.txt         # Python dependencies
-├── setup.cfg                # Linter and type checker configuration (can be removed if you don't need it)
 └── utils.py                 # Local test helpers
 ```

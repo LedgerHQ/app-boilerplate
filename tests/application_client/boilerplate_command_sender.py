@@ -125,9 +125,12 @@ class BoilerplateCommandSender:
                                          data=messages[-1]) as response:
             yield response
 
-    def sign_tx_sync(self, path: str, transaction: bytes) -> RAPDU:
-        with self.sign_tx(path, transaction) as response:
-            return response
-
     def get_async_response(self) -> Optional[RAPDU]:
         return self.backend.last_async_response
+
+    def sign_tx_sync(self, path: str, transaction: bytes) -> Optional[RAPDU]:
+        with self.sign_tx(path, transaction):
+            pass
+        rapdu = self.get_async_response()
+        assert isinstance(rapdu, RAPDU)
+        return rapdu

@@ -1,7 +1,5 @@
-from enum import IntEnum
-
 from ragger.bip import pack_derivation_path
-from ragger.utils import create_currency_config, RAPDU
+from ragger.utils import create_currency_config
 
 # this file aims to define the 'BOL' currency
 # managed by the Boilerplate app
