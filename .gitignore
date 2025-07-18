@@ -27,6 +27,7 @@ tests_swap/lib_binaries/
 fuzzing/build/
 fuzzing/corpus/
 fuzzing/out/
+fuzzing/macros/generated/
 
 # Python
 *.pyc[cod]
