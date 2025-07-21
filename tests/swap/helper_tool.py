@@ -1,15 +1,16 @@
 import os
 import subprocess
-from git import Repo
 from pathlib import Path
 
+base = Path(__file__).parent.resolve() / ".test_dependencies"
+
 APP_EXCHANGE_URL = "git@github.com:LedgerHQ/app-exchange.git"
-APP_EXCHANGE_DIR = ".test_dependencies/main/app-exchange/"
-APP_EXCHANGE_CLONE_DIR = ".test_dependencies/app-exchange/"
+APP_EXCHANGE_DIR = base / "main/app-exchange/"
+APP_EXCHANGE_CLONE_DIR = base / "app-exchange/"
 
 APP_ETHEREUM_URL = "git@github.com:LedgerHQ/app-ethereum.git"
-APP_ETHEREUM_DIR = ".test_dependencies/libraries/app-ethereum/"
-APP_ETHEREUM_CLONE_DIR = ".test_dependencies/app-ethereum/"
+APP_ETHEREUM_DIR = base / "libraries/app-ethereum/"
+APP_ETHEREUM_CLONE_DIR = base / "app-ethereum/"
 
 DEVICES_CONF = {
     "nanos+": {
@@ -55,6 +56,9 @@ def run_cmd(cmd: str,
     return ret.stdout.strip()
 
 def clone_or_pull(repo_url: str, clone_dir: str):
+    # Only needed when cloning / pulling, not when building.
+    # By putting the import here we allow the script to be imported inside the docker image
+    from git import Repo
     git_dir = os.path.join(clone_dir, ".git")
     if not os.path.exists(git_dir):
         print(f"Cloning into {clone_dir}")
@@ -82,13 +86,16 @@ def copy_build_output(clone_dir: str, dest_dir: str):
     run_cmd(f"mkdir -p {dest_dir}")
     run_cmd(f"cp -rT {clone_dir}/build {dest_dir}/build")
 
-
 # ==== Build app-exchange ====
-clone_or_pull(APP_EXCHANGE_URL, APP_EXCHANGE_CLONE_DIR)
-build_app(APP_EXCHANGE_CLONE_DIR, flags="TESTING=1 TEST_PUBLIC_KEY=1 TRUSTED_NAME_TEST_KEY=1 DEBUG=1")
-copy_build_output(APP_EXCHANGE_CLONE_DIR, APP_EXCHANGE_DIR)
+def clone_and_pull_exchange():
+    clone_or_pull(APP_EXCHANGE_URL, APP_EXCHANGE_CLONE_DIR)
+def build_and_copy_exchange():
+    build_app(APP_EXCHANGE_CLONE_DIR, flags="TESTING=1 TEST_PUBLIC_KEY=1 TRUSTED_NAME_TEST_KEY=1 DEBUG=1")
+    copy_build_output(APP_EXCHANGE_CLONE_DIR, APP_EXCHANGE_DIR)
 
 # ==== Build app-ethereum ====
-clone_or_pull(APP_ETHEREUM_URL, APP_ETHEREUM_CLONE_DIR)
-build_app(APP_ETHEREUM_CLONE_DIR, flags="COIN=ethereum CHAIN=ethereum CAL_TEST_KEY=1 DOMAIN_NAME_TEST_KEY=1 SET_PLUGIN_TEST_KEY=1 NFT_TEST_KEY=1 TRUSTED_NAME_TEST_KEY=1")
-copy_build_output(APP_ETHEREUM_CLONE_DIR, APP_ETHEREUM_DIR)
+def clone_and_pull_ethereum():
+    clone_or_pull(APP_ETHEREUM_URL, APP_ETHEREUM_CLONE_DIR)
+def build_and_copy_ethereum():
+    build_app(APP_ETHEREUM_CLONE_DIR, flags="COIN=ethereum CHAIN=ethereum CAL_TEST_KEY=1 DOMAIN_NAME_TEST_KEY=1 SET_PLUGIN_TEST_KEY=1 NFT_TEST_KEY=1 TRUSTED_NAME_TEST_KEY=1")
+    copy_build_output(APP_ETHEREUM_CLONE_DIR, APP_ETHEREUM_DIR)
