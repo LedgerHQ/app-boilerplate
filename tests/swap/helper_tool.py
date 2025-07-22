@@ -36,7 +36,7 @@ def run_cmd(cmd: str,
             print_output: bool = False,
             no_throw: bool = False) -> str:
 
-    print(f"[run_cmd] Running: {cmd} from {cwd}")
+    print(f"[run_cmd] Running: '{cmd}'' inside '{cwd}'")
 
     ret = subprocess.run(cmd,
                          shell=True,
@@ -77,6 +77,8 @@ def clone_or_pull(repo_url: str, clone_dir: str):
         run_cmd("git submodule update --init --recursive", cwd=Path(clone_dir))
 
 def build_app(clone_dir: str, flags: str):
+    cmd = f"make clean"
+    run_cmd(cmd, cwd=Path(clone_dir))
     for d in DEVICES_CONF.values():
         sdk = d["sdk"]
         cmd = f"make -j BOLOS_SDK=${sdk} {flags}"
