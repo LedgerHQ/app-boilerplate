@@ -32,20 +32,20 @@ as it is done in `fuzz_dispatcher.c`.
 The fuzzer can be run using the Docker image `ledger-app-dev-tools`. You can download it from the
 `ghcr.io` docker repository:
 
-```console
+```bash
 docker pull ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest
 ```
 
 You can then enter this development environment by executing the following command from the
 repository root directory:
 
-```console
+```bash
 docker run --rm -ti -v "$(realpath .):/app" ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest
 ```
 
 _Or use this one while we wait for the SDK_FUZZING_FRAMEWORK release_ (setting the path/to/sdk)
 
-```console
+```bash
 export BOLOS_SDK=/path/to/ledger-secure-sdk/with/fuzzing/framework
 
 docker run --rm -ti -v "$(realpath .):/app" -v "$(realpath $BOLOS_SDK):/ledger-secure-sdk" ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest
@@ -62,7 +62,7 @@ When writing your harness, keep the following points in mind:
   macros/exclude_macros.txt and rerunning it, or directly change the macros/generated/macros.txt.
 - A typical harness looks like this:
 
-  ```console
+  ```C
 
   int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     if (sigsetjmp(fuzz_exit_jump_ctx.jmp_buf, 1)) return 0;
@@ -84,15 +84,15 @@ When writing your harness, keep the following points in mind:
 
 Once inside the container, navigate to the `fuzzing` folder to compile the fuzzer:
 
-```console
+```bash
 cd fuzzing
 
-/ledger-secure-sdk/fuzzing/local_run.sh --build=1
-                                        --TARGET_DEVICE=stax
-                                        --BOLOS_SDK=/ledger-secure-sdk/
-                                        --fuzzer=build/fuzz_dispatcher
-                                        --j=4
-                                        --run-fuzzer=1
+/ledger-secure-sdk/fuzzing/local_run.sh --build=1 \
+                                        --TARGET_DEVICE=stax \
+                                        --BOLOS_SDK=/ledger-secure-sdk/ \
+                                        --fuzzer=build/fuzz_dispatcher \
+                                        --j=4 \
+                                        --run-fuzzer=1 \
                                         --compute-coverage=1
 ```
 
@@ -129,7 +129,7 @@ The principle is to build the container, and run it to perform the fuzzing.
 > **Note**: The container contains a copy of the sources (they are not cloned), which means the
 > `docker build` command must be re-executed after each code modification.
 
-```console
+```bash
 # Prepare directory tree
 mkdir fuzzing/{corpus,out}
 # Container generation
@@ -138,13 +138,13 @@ docker build -t app-boilerplate --file .clusterfuzzlite/Dockerfile .
 
 ### Compilation
 
-```console
+```bash
 docker run --rm --privileged -e FUZZING_LANGUAGE=c -v "$(realpath .)/fuzzing/out:/out" -ti app-boilerplate
 ```
 
 ### Run
 
-```console
+```bash
 docker run --rm --privileged -e FUZZING_ENGINE=libfuzzer -e RUN_FUZZER_MODE=interactive -v
            "$(realpath .)/fuzzing/corpus:/tmp/fuzz_corpus" -v "$(realpath .)/fuzzing/out:/out"
            -ti gcr.io/oss-fuzz-base/base-runner run_fuzzer fuzz_tx_parser
