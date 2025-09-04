@@ -43,5 +43,5 @@ repos:
       - id: pylint
         language: system
         types: [python]
-        args: ['--jobs=0', '--rcfile=tests/setup.cfg']
+        args: ['--jobs=0', '--rcfile=tests/standalone/setup.cfg']
         files: '^tests/.*$'
