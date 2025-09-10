@@ -11,6 +11,9 @@
 
 #include <stdint.h>
 
+// This is a smart documentation inclusion. The full documentation is available at
+// https://ledgerhq.github.io/app-exchange/
+// --8<-- [start:swap_copy_transaction_parameters]
 typedef struct swap_validated_s {
     bool initialized;
     uint64_t amount;
@@ -81,7 +84,11 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
 
     return true;
 }
+// --8<-- [end:swap_copy_transaction_parameters]
 
+// This is a smart documentation inclusion. The full documentation is available at
+// https://ledgerhq.github.io/app-exchange/
+// --8<-- [start:swap_check_validity]
 /* Check if the Tx to sign have the same parameters as the ones previously validated */
 bool swap_check_validity(uint64_t amount, uint64_t fee, const uint8_t* destination) {
     PRINTF("Inside swap_check_validity\n");
@@ -127,4 +134,6 @@ bool swap_check_validity(uint64_t amount, uint64_t fee, const uint8_t* destinati
     }
     return true;
 }
+// --8<-- [end:swap_check_validity]
+
 #endif  // HAVE_SWAP
