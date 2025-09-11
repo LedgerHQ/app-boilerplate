@@ -34,6 +34,9 @@
 #include "handle_swap.h"
 #include "validate.h"
 
+// This is a smart documentation inclusion. The full documentation is available at
+// https://ledgerhq.github.io/app-exchange/
+// --8<-- [start:ui_bypass]
 #ifdef HAVE_SWAP
 static int check_and_sign_swap_tx(transaction_t *tx) {
     if (G_swap_response_ready) {
@@ -58,6 +61,7 @@ static int check_and_sign_swap_tx(transaction_t *tx) {
     return 0;
 }
 #endif  // HAVE_SWAP
+// --8<-- [end:ui_bypass]
 
 int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
     if (chunk == 0) {  // first APDU, parse BIP32 path
