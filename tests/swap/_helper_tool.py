@@ -69,7 +69,7 @@ def clone_or_pull(repo_url: str, clone_dir: str):
         repo = Repo(clone_dir)
         origin = repo.remotes.origin
         origin.fetch()
-        repo.git.reset('--hard', 'origin/master')
+        repo.git.reset('--hard', 'origin/develop')
 
         # Update submodules
         print(f"Updating submodules in {clone_dir}")
