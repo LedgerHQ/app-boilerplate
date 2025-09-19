@@ -20,6 +20,6 @@ jobs:
     with:
       run_linter: pylint
       run_type_check: true
-      src_directory: tests/application_client
+      src_directory: .
       setup_directory: tests/application_client
       req_directory: tests/standalone
