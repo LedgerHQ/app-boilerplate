@@ -29,6 +29,10 @@ DEVICES_CONF = {
         "sdk": "FLEX_SDK",
         "bin_path": "build/flex/bin/",
     },
+    "apex_p": {
+        "sdk": "APEX_P_SDK",
+        "bin_path": "build/apex_p/bin/",
+    },
 }
 
 def run_cmd(cmd: str,
