@@ -25,12 +25,12 @@ include $(BOLOS_SDK)/Makefile.target
 #        Mandatory configuration       #
 ########################################
 # Application name
-APPNAME = "Boilerplate"
+APPNAME = "Cardano"
 
 # Application version
-APPVERSION_M = 2
-APPVERSION_N = 2
-APPVERSION_P = 2
+APPVERSION_M = 8
+APPVERSION_N = 0
+APPVERSION_P = 0
 APPVERSION = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 
 # Application source files
@@ -38,11 +38,11 @@ APP_SOURCE_PATH += src
 
 # Application icons following guidelines:
 # https://developers.ledger.com/docs/embedded-app/design-requirements/#device-icon
-ICON_NANOX = icons/app_boilerplate_14px.gif
-ICON_NANOSP = icons/app_boilerplate_14px.gif
-ICON_STAX = icons/app_boilerplate_32px.gif
-ICON_FLEX = icons/app_boilerplate_40px.gif
-ICON_APEX_P = icons/app_boilerplate_32px_apex.png
+ICON_NANOX = icons/icon_ada_nanox.gif
+ICON_NANOSP = icons/icon_ada_nanox.gif
+ICON_STAX = icons/icon_ada_stax.gif
+ICON_FLEX = icons/icon_ada_flex.gif
+ICON_APEX = icons/icon_ada_apex.gif
 
 ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_NANOS2))
     # With the Nano NBGL Design, the Home Screen icon is the reverse of the App icon:
@@ -56,7 +56,7 @@ endif
 # Possibles curves are: secp256k1, secp256r1, ed25519 and bls12381g1
 # If your app needs it, you can specify multiple curves by using:
 # `CURVE_APP_LOAD_PARAMS = <curve1> <curve2>`
-CURVE_APP_LOAD_PARAMS = secp256k1
+CURVE_APP_LOAD_PARAMS = ed25519
 
 # Application allowed derivation paths.
 # You should request a specific path for your app.
@@ -65,7 +65,7 @@ CURVE_APP_LOAD_PARAMS = secp256k1
 # and SLIP-0044 standards.
 # If your app needs it, you can specify multiple path by using:
 # `PATH_APP_LOAD_PARAMS = "44'/1'" "45'/1'"`
-PATH_APP_LOAD_PARAMS = "44'/1'"   # purpose=coin(44) / coin_type=Testnet(1)
+PATH_APP_LOAD_PARAMS = "44'/1815'" "1852'/1815'" "1853'/1815'" "1854'/1815'" "1855'/1815'" "1694'/1815'"
 
 # Setting to allow building variant applications
 # - <VARIANT_PARAM> is the name of the parameter which should be set
@@ -74,7 +74,7 @@ PATH_APP_LOAD_PARAMS = "44'/1'"   # purpose=coin(44) / coin_type=Testnet(1)
 #   * It must at least contains one value.
 #   * Values can be the app ticker or anything else but should be unique.
 VARIANT_PARAM = COIN
-VARIANT_VALUES = BOL
+VARIANT_VALUES = cardano_ada
 
 # Enabling DEBUG flag will enable PRINTF and disable optimizations
 #DEBUG = 1
