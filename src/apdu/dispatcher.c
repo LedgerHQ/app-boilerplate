@@ -31,9 +31,12 @@
 #include "get_app_name.h"
 #include "get_public_key.h"
 #include "sign_tx.h"
+#include "sign_opcert.h"
 
 int apdu_dispatcher(const command_t *cmd) {
     LEDGER_ASSERT(cmd != NULL, "NULL cmd");
+    TRACE("G_context.req_type: %d", G_context.req_type);
+    TRACE("G_context.state: %d", G_context.state);
 
     if (cmd->cla != CLA) {
         return io_send_sw(SW_CLA_NOT_SUPPORTED);
@@ -42,33 +45,32 @@ int apdu_dispatcher(const command_t *cmd) {
     buffer_t buf = {0};
 
     switch (cmd->ins) {
-        case GET_VERSION:
-            if (cmd->p1 != 0 || cmd->p2 != 0) {
+        case INS_GET_VERSION:
+            if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
                 return io_send_sw(SW_WRONG_P1P2);
             }
 
             return handler_get_version();
-        case GET_APP_NAME:
-            if (cmd->p1 != 0 || cmd->p2 != 0) {
+
+        case INS_GET_APP_NAME:
+            if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
                 return io_send_sw(SW_WRONG_P1P2);
             }
 
             return handler_get_app_name();
-        case GET_PUBLIC_KEY:
-            if (cmd->p1 > 1 || cmd->p2 > 0) {
-                return io_send_sw(SW_WRONG_P1P2);
-            }
 
-            if (!cmd->data) {
-                return io_send_sw(SW_WRONG_DATA_LENGTH);
+        case INS_GET_PUBLIC_KEY:
+            if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
+                return io_send_sw(SW_WRONG_P1P2);
             }
 
             buf.ptr = cmd->data;
             buf.size = cmd->lc;
             buf.offset = 0;
 
-            return handler_get_public_key(&buf, (bool) cmd->p1);
-        case SIGN_TX:
+            return handler_get_public_key(&buf);
+
+        case INS_SIGN_TX:
             if ((cmd->p1 == P1_START && cmd->p2 != P2_MORE) ||  //
                 cmd->p1 > P1_MAX ||                             //
                 (cmd->p2 != P2_LAST && cmd->p2 != P2_MORE)) {
@@ -84,6 +86,17 @@ int apdu_dispatcher(const command_t *cmd) {
             buf.offset = 0;
 
             return handler_sign_tx(&buf, cmd->p1, (bool) (cmd->p2 & P2_MORE));
+
+        case INS_SIGN_OPCERT:
+            if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
+                return io_send_sw(SW_WRONG_P1P2);
+            }
+            buf.ptr = cmd->data;
+            buf.size = cmd->lc;
+            buf.offset = 0;
+
+            return handler_sign_opcert(&buf);
+
         default:
             return io_send_sw(SW_INS_NOT_SUPPORTED);
     }

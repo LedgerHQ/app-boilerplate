@@ -5,10 +5,13 @@ from contextlib import contextmanager
 from ragger.backend.interface import BackendInterface, RAPDU
 from ragger.bip import pack_derivation_path
 
+from standalone.input_files.signOpCert import OpCertTestCase
+from application_client.command_builder import CommandBuilder
+
 
 MAX_APDU_LEN: int = 255
 
-CLA: int = 0xE0
+CLA: int = 0xD7
 
 class P1(IntEnum):
     # Parameter 1 for first APDU number.
@@ -47,15 +50,55 @@ class Errors(IntEnum):
     SW_SIGNATURE_FAIL          = 0xB008
     SW_WRONG_AMOUNT            = 0xC000
     SW_WRONG_ADDRESS           = 0xC000
+    SW_SUCCESS                 = 0x9000
+    SW_REJECTED_BY_POLICY      = 0x6E10
 
 
 def split_message(message: bytes, max_size: int) -> List[bytes]:
     return [message[x:x + max_size] for x in range(0, len(message), max_size)]
 
 
-class BoilerplateCommandSender:
+class CommandSender:
     def __init__(self, backend: BackendInterface) -> None:
         self.backend = backend
+        self._cmd_builder = CommandBuilder()
+
+    def _exchange(self, payload: bytes) -> RAPDU:
+        """Synchronous APDU exchange with response
+
+        Args:
+            payload (bytes): APDU data to send
+
+        Returns:
+            Response APDU
+        """
+
+        return self.backend.exchange_raw(payload)
+
+
+    @contextmanager
+    def _exchange_async(self, payload: bytes) -> Generator[None, None, None]:
+        """Asynchronous APDU exchange with response
+
+        Args:
+            payload (bytes): APDU data to send
+
+        Returns:
+            Generator
+        """
+
+        with self.backend.exchange_async_raw(payload):
+            yield
+
+
+    def get_async_response(self) -> Optional[RAPDU]:
+        """Asynchronous APDU response
+
+        Returns:
+            Response APDU
+        """
+
+        return self.backend.last_async_response
 
 
     def get_app_and_version(self) -> RAPDU:
@@ -125,6 +168,7 @@ class BoilerplateCommandSender:
                                          data=messages[-1]) as response:
             yield response
 
+
     def get_async_response(self) -> Optional[RAPDU]:
         return self.backend.last_async_response
 
@@ -134,3 +178,24 @@ class BoilerplateCommandSender:
         rapdu = self.get_async_response()
         assert isinstance(rapdu, RAPDU)
         return rapdu
+
+    @contextmanager
+    def get_pubkey_async(self, path: str) -> Generator[None, None, None]:
+        with self._exchange_async(self._cmd_builder.get_pubkey_path(path)):
+            yield
+
+
+    @contextmanager
+    def sign_opCert(self, testCase: OpCertTestCase) -> Generator[None, None, None]:
+        """APDU Sign Operational Certificate
+
+        Args:
+            testCase (OpCertTestCase): Test parameters
+
+        Returns:
+            Generator
+        """
+
+        with self._exchange_async(self._cmd_builder.sign_opCert(testCase)):
+            yield
+

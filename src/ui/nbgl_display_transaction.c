@@ -60,7 +60,7 @@ static void review_choice(bool confirm) {
 // - Display the first screen of the transaction review
 // - Display a warning if the transaction is blind-signed
 int ui_display_transaction_bs_choice(bool is_blind_signed) {
-    if (G_context.req_type != CONFIRM_TRANSACTION || G_context.state != STATE_PARSED) {
+    if (G_context.req_type != REQUEST_CONFIRM_TRANSACTION || G_context.state != STATE_PARSED) {
         G_context.state = STATE_NONE;
         return io_send_sw(SW_BAD_STATE);
     }

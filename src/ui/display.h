@@ -2,6 +2,8 @@
 
 #include <stdbool.h>  // bool
 
+#include "securityPolicy.h"
+
 #if defined(TARGET_NANOX) || defined(TARGET_NANOS2)
 #define ICON_APP_BOILERPLATE C_app_boilerplate_14px
 #define ICON_APP_HOME        C_home_boilerplate_14px
@@ -22,14 +24,6 @@
 typedef void (*action_validate_cb)(bool);
 
 /**
- * Display address on the device and ask confirmation to export.
- *
- * @return 0 if success, negative integer otherwise.
- *
- */
-int ui_display_address(void);
-
-/**
  * Display transaction information on the device and ask confirmation to sign.
  *
  * @return 0 if success, negative integer otherwise.
@@ -44,3 +38,7 @@ int ui_display_transaction(void);
  *
  */
 int ui_display_blind_signed_transaction(void);
+
+// TODO this file is odd, not sure what exactly it tries to do, maybe move the declarations to more specific places
+int ui_display_opcert(security_policy_t securityPolicy);
+int ui_display_pubkey(security_policy_t securityPolicy);

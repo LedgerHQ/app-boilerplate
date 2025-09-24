@@ -1,4 +1,7 @@
 pytest
 ragger[speculos,ledgerwallet]>=1.36.1
-ecdsa>=0.16.1,<0.17.0
+ecdsa>=0.17.0
 pycryptodome
+base58
+bech32m
+cbor

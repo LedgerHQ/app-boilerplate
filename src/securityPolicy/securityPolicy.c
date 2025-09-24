@@ -126,12 +126,20 @@ static security_policy_t _policyForGetExtendedPublicKey_silent(const bip44_path_
         case PATH_DREP_KEY:
         case PATH_COMMITTEE_COLD_KEY:
         case PATH_COMMITTEE_HOT_KEY:
-        case PATH_MINT_KEY:
         case PATH_CVOTE_ACCOUNT:
         case PATH_CVOTE_KEY:
             WARN_UNLESS(bip44_isPathReasonable(path));
-            // we do not show these paths since there may be many of them
+            // TODO show Byron paths?
+            PROMPT_IF(bip44_hasByronPrefix(path));
+            // we do not show these if user turned on silent key export
             ALLOW();
+            break;
+
+        case PATH_MINT_KEY:
+            WARN_UNLESS(bip44_isPathReasonable(path));
+            // used rarely, so making the user aware of the export does not hamper him
+            // but could be relaxed to expert mode if needed
+            PROMPT();
             break;
 
         case PATH_POOL_COLD_KEY:
@@ -154,47 +162,10 @@ security_policy_t policyForGetExtendedPublicKey(const bip44_path_t* path) {
         return _policyForGetExtendedPublicKey_silent(path);
     }
 
+    // user turned off silent public key export
     switch (bip44_classifyPath(path)) {
         case PATH_ORDINARY_ACCOUNT:
-            WARN_UNLESS(bip44_isPathReasonable(path));
-            // show Byron paths
-            PROMPT_UNLESS(bip44_hasShelleyPrefix(path));
-
-            // in expert mode, do not export keys without permission
-            PROMPT_IF(is_expert_mode());
-            // do not bother the user with confirmation --- required by LedgerLive to improve UX
-            ALLOW();
-            break;
-
         case PATH_MULTISIG_ACCOUNT:
-            WARN_UNLESS(bip44_isPathReasonable(path));
-            // ask for confirmation, multisig users need high awareness of what keys are being used
-            PROMPT();
-            break;
-
-        case PATH_MINT_KEY:
-            WARN_UNLESS(bip44_isPathReasonable(path));
-            // used rarely, so making the user aware of the export does not hamper him
-            // but could be relaxed to expert mode if needed
-            PROMPT();
-            break;
-
-        case PATH_POOL_COLD_KEY:
-            WARN_UNLESS(bip44_isPathReasonable(path));
-            // used rarely, so making the user aware of the export does not hamper him
-            // but could be relaxed to expert mode if needed
-            PROMPT();
-            break;
-
-        case PATH_CVOTE_ACCOUNT:
-            WARN_UNLESS(bip44_isPathReasonable(path));
-
-            // in expert mode, do not export keys without permission
-            PROMPT_IF(is_expert_mode());
-            // do not bother the user with confirmation, similar to ordinary account
-            ALLOW();
-            break;
-
         case PATH_ORDINARY_PAYMENT_KEY:
         case PATH_ORDINARY_STAKING_KEY:
         case PATH_MULTISIG_PAYMENT_KEY:
@@ -202,9 +173,10 @@ security_policy_t policyForGetExtendedPublicKey(const bip44_path_t* path) {
         case PATH_DREP_KEY:
         case PATH_COMMITTEE_COLD_KEY:
         case PATH_COMMITTEE_HOT_KEY:
+        case PATH_CVOTE_ACCOUNT:
         case PATH_CVOTE_KEY:
+        case PATH_POOL_COLD_KEY:
             WARN_UNLESS(bip44_isPathReasonable(path));
-            // ask for permission (it is unusual if client asks this instead of the account key)
             PROMPT();
             break;
 

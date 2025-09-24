@@ -9,7 +9,7 @@
 #include "types.h"
 
 /**
- * Handler for GET_PUBLIC_KEY command. If successfully parse BIP32 path,
+ * Handler for INS_GET_PUBLIC_KEY command. If successfully parse BIP32 path,
  * derive public key/chain code and send APDU response.
  *
  * @see G_context.bip32_path, G_context.pk_info.raw_public_key and
@@ -23,4 +23,6 @@
  * @return zero or positive integer if success, negative integer otherwise.
  *
  */
-int handler_get_public_key(buffer_t *cdata, bool display);
+int handler_get_public_key(buffer_t *cdata);
+
+void finalize_pubkey_export(bool confirmed);

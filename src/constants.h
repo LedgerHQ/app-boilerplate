@@ -3,7 +3,7 @@
 /**
  * Instruction class of the Boilerplate application.
  */
-#define CLA 0xE0
+#define CLA 0xD7
 
 /**
  * Length of APPNAME variable in the Makefile.
@@ -34,3 +34,5 @@
  * Exponent used to convert mBOL to BOL unit (N BOL = N * 10^3 mBOL).
  */
 #define EXPONENT_SMALLEST_UNIT 3
+
+#define MAX_UINT64_STRING_SIZE 21

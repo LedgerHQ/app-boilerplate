@@ -3,6 +3,8 @@
 #include "parser.h"
 #include "types.h"
 
+enum { P1_UNUSED = 0, P2_UNUSED = 0 };
+
 /**
  * Parameter 2 for last APDU to receive.
  */
@@ -19,6 +21,7 @@
  * Parameter 1 for maximum APDU number.
  */
 #define P1_MAX 0x03
+
 
 /**
  * Dispatch APDU command received to the right handler.

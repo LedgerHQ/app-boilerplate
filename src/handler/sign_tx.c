@@ -66,7 +66,7 @@ static int check_and_sign_swap_tx(transaction_t *tx) {
 int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
     if (chunk == 0) {  // first APDU, parse BIP32 path
         explicit_bzero(&G_context, sizeof(G_context));
-        G_context.req_type = CONFIRM_TRANSACTION;
+        G_context.req_type = REQUEST_CONFIRM_TRANSACTION;
         G_context.state = STATE_NONE;
 
         if (!buffer_read_u8(cdata, &G_context.bip32_path_len) ||
@@ -80,7 +80,7 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
 
     } else {  // parse transaction
 
-        if (G_context.req_type != CONFIRM_TRANSACTION) {
+        if (G_context.req_type != REQUEST_CONFIRM_TRANSACTION) {
             return io_send_sw(SW_BAD_STATE);
         }
         if (G_context.tx_info.raw_tx_len + cdata->size > sizeof(G_context.tx_info.raw_tx)) {

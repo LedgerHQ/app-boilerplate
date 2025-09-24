@@ -5,7 +5,7 @@ from ragger.error import ExceptionRAPDU
 from ragger.navigator.navigation_scenario import NavigateWithScenario
 
 from application_client.boilerplate_transaction import Transaction
-from application_client.boilerplate_command_sender import BoilerplateCommandSender, Errors
+from application_client.command_sender import CommandSender, Errors
 from application_client.boilerplate_response_unpacker import unpack_get_public_key_response, unpack_sign_tx_response
 from .utils import check_signature_validity
 
@@ -17,7 +17,7 @@ from .utils import check_signature_validity
 # We will ensure that the displayed information is correct by using screenshots comparison
 def test_sign_tx_short_tx(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
     # Use the app interface instead of raw interface
-    client = BoilerplateCommandSender(backend)
+    client = CommandSender(backend)
     # The path used for this entire test
     path: str = "m/44'/1'/0'/0/0"
 
@@ -51,7 +51,7 @@ def test_sign_tx_short_tx(backend: BackendInterface, scenario_navigator: Navigat
 # We will ensure that the displayed information is correct by using screenshots comparison
 def test_sign_tx_short_tx_blind_sign(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
     # Use the app interface instead of raw interface
-    client = BoilerplateCommandSender(backend)
+    client = CommandSender(backend)
     # The path used for this entire test
     path: str = "m/44'/1'/0'/0/0"
 
@@ -83,7 +83,7 @@ def test_sign_tx_short_tx_blind_sign(backend: BackendInterface, scenario_navigat
 # In particular the long memo will force the transaction to be sent in multiple chunks
 def test_sign_tx_long_tx(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
     # Use the app interface instead of raw interface
-    client = BoilerplateCommandSender(backend)
+    client = CommandSender(backend)
     path: str = "m/44'/1'/0'/0/0"
 
     rapdu = client.get_public_key(path=path)
@@ -112,7 +112,7 @@ def test_sign_tx_long_tx(backend: BackendInterface, scenario_navigator: Navigate
 # The test will ask for a transaction signature that will be refused on screen
 def test_sign_tx_refused(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
     # Use the app interface instead of raw interface
-    client = BoilerplateCommandSender(backend)
+    client = CommandSender(backend)
     path: str = "m/44'/1'/0'/0/0"
 
     transaction = Transaction(

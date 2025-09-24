@@ -28,6 +28,7 @@
 #include "sw.h"
 #include "menu.h"
 #include "dispatcher.h"
+#include "settings.h"
 
 global_ctx_t G_context;
 
@@ -57,11 +58,11 @@ void app_main() {
     explicit_bzero(&G_context, sizeof(G_context));
 
     // Initialize the NVM data if required
-    if (N_storage.initialized != 0x01) {
+    if (N_storage.initialized != STORAGE_INITIALIZED) {
         internal_storage_t storage;
-        storage.dummy1_allowed = 0x00;
-        storage.dummy2_allowed = 0x00;
-        storage.initialized = 0x01;
+        storage.expert_mode_enabled = SETTINGS_NO;
+        storage.silent_pubkey_export_enabled = SETTINGS_YES;
+        storage.initialized = STORAGE_INITIALIZED;
         nvm_write((void *) &N_storage, &storage, sizeof(internal_storage_t));
     }
 

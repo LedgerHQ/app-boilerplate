@@ -3,7 +3,7 @@
 #include "os.h"
 
 /**
- * Handler for GET_APP_NAME command. Send APDU response with ASCII
+ * Handler for INS_GET_APP_NAME command. Send APDU response with ASCII
  * encoded name of the application.
  *
  * @see variable APPNAME in Makefile.
