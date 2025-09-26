@@ -182,7 +182,7 @@ int ui_display_opcert(security_policy_t securityPolicy) {
 
     nbgl_useCaseAdvancedReview(TYPE_OPERATION,
                         &pairList,
-                        &ICON_APP_BOILERPLATE,
+                        &ICON_APP_CARDANO,
                         "Sign operational\ncertificate",
                         NULL,
                         "Sign certificate",

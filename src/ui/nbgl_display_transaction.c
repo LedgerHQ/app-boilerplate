@@ -97,7 +97,7 @@ int ui_display_transaction_bs_choice(bool is_blind_signed) {
         // Start blind-signing review flow
         nbgl_useCaseReviewBlindSigning(TYPE_TRANSACTION,
                                        &pairList,
-                                       &ICON_APP_BOILERPLATE,
+                                       &ICON_APP_CARDANO,
                                        "Review transaction\nto send BOL",
                                        NULL,
 #ifdef SCREEN_SIZE_WALLET
@@ -111,7 +111,7 @@ int ui_display_transaction_bs_choice(bool is_blind_signed) {
         // Start review flow
         nbgl_useCaseReview(TYPE_TRANSACTION,
                            &pairList,
-                           &ICON_APP_BOILERPLATE,
+                           &ICON_APP_CARDANO,
                            "Review transaction\nto send BOL",
                            NULL,
 #ifdef SCREEN_SIZE_WALLET

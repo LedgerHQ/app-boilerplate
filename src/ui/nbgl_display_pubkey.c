@@ -105,7 +105,7 @@ int ui_display_pubkey(security_policy_t securityPolicy) {
         );
     } else {
         nbgl_useCaseChoice(
-                            &ICON_APP_BOILERPLATE,
+                            &ICON_APP_CARDANO,
                             "Export public key",
                             pubkeyPathStr,
                             "Export",
