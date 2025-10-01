@@ -16,7 +16,7 @@
  *****************************************************************************/
 
 #include <stdbool.h>  // bool
-#include <string.h>   // memset
+#include <string.h>   // explicit_bzero
 
 #include "os.h"
 #include "glyphs.h"
@@ -52,7 +52,7 @@ int ui_display_address() {
         return io_send_sw(SW_BAD_STATE);
     }
 
-    memset(g_address, 0, sizeof(g_address));
+    explicit_bzero(g_address, sizeof(g_address));
     uint8_t address[ADDRESS_LEN] = {0};
     if (!address_from_pubkey(G_context.pk_info.raw_public_key, address, sizeof(address))) {
         return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);

@@ -49,7 +49,7 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t* params) {
     // This is necessary as many part of the code expect bss variables to
     // initialized at 0.
     swap_validated_t swap_validated;
-    memset(&swap_validated, 0, sizeof(swap_validated));
+    explicit_bzero(&swap_validated, sizeof(swap_validated));
 
     // Save recipient as an uppercase string
     for (int i = 0; i < ADDRESS_LEN * 2; i++) {
