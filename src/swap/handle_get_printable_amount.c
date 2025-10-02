@@ -29,7 +29,7 @@ void swap_handle_get_printable_amount(get_printable_amount_parameters_t* params)
     PRINTF("Amount: %.*H\n", params->amount_length, params->amount);
 
     char amount[30] = {0};
-    memset(params->printable_amount, 0, sizeof(params->printable_amount));
+    explicit_bzero(params->printable_amount, sizeof(params->printable_amount));
 
     /// Convert params->amount into uint64_t
     uint64_t value = 0;
@@ -38,8 +38,8 @@ void swap_handle_get_printable_amount(get_printable_amount_parameters_t* params)
         PRINTF("Formatted amount: %s\n", amount);
         snprintf(params->printable_amount,
                  sizeof(params->printable_amount),
-                 "BOL %.*s",
-                 sizeof(amount),
+                 "%.*s BOL",
+                 (int) strlen(amount),
                  amount);
     } else {
         PRINTF("Failed to convert amount to uint64_t\n");

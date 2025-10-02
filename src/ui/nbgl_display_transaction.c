@@ -66,7 +66,7 @@ int ui_display_transaction_bs_choice(bool is_blind_signed) {
     }
 
     // Format amount and address to g_amount and g_address buffers
-    memset(g_amount, 0, sizeof(g_amount));
+    explicit_bzero(g_amount, sizeof(g_amount));
     char amount[30] = {0};
     if (!format_fpu64(amount,
                       sizeof(amount),
@@ -74,8 +74,8 @@ int ui_display_transaction_bs_choice(bool is_blind_signed) {
                       EXPONENT_SMALLEST_UNIT)) {
         return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
     }
-    snprintf(g_amount, sizeof(g_amount), "BOL %.*s", sizeof(amount), amount);
-    memset(g_address, 0, sizeof(g_address));
+    snprintf(g_amount, sizeof(g_amount), "%.*s BOL", (int) strlen(amount), amount);
+    explicit_bzero(g_address, sizeof(g_address));
 
     if (format_hex(G_context.tx_info.transaction.to, ADDRESS_LEN, g_address, sizeof(g_address)) ==
         -1) {
