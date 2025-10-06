@@ -43,14 +43,6 @@ repository root directory:
 docker run --rm -ti -v "$(realpath .):/app" ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest
 ```
 
-_Or use this one while we wait for the SDK_FUZZING_FRAMEWORK release_ (setting the path/to/sdk)
-
-```bash
-export BOLOS_SDK=/path/to/ledger-secure-sdk/with/fuzzing/framework
-
-docker run --rm -ti -v "$(realpath .):/app" -v "$(realpath $BOLOS_SDK):/ledger-secure-sdk" ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest
-```
-
 ### Writing your Harness
 
 When writing your harness, keep the following points in mind:
@@ -85,24 +77,23 @@ When writing your harness, keep the following points in mind:
 Once inside the container, navigate to the `fuzzing` folder to compile the fuzzer:
 
 ```bash
+export BOLOS_SDK=/opt/flex-secure-sdk
+
 cd fuzzing
 
-/ledger-secure-sdk/fuzzing/local_run.sh --build=1 \
-                                        --TARGET_DEVICE=stax \
-                                        --BOLOS_SDK=/ledger-secure-sdk/ \
-                                        --fuzzer=build/fuzz_dispatcher \
-                                        --j=4 \
-                                        --run-fuzzer=1 \
-                                        --compute-coverage=1
+${BOLOS_SDK}/fuzzing/local_run.sh --build=1 \
+                                  --BOLOS_SDK=${BOLOS_SDK} \
+                                  --fuzzer=build/fuzz_dispatcher \
+                                  --j=4 \
+                                  --run-fuzzer=1 \
+                                  --compute-coverage=1
 ```
 
 ### About local_run.sh
 
 | Parameter              | Type                | Description                                                          |
 | :--------------------- | :------------------ | :------------------------------------------------------------------- |
-| `--TARGET_DEVICE`      | `flex or stax`      | **Optional**. Whether it is a flex or stax device (default: flex)    |
 | `--BOLOS_SDK`          | `PATH TO BOLOS SDK` | **Required**. Path to the BOLOS SDK                                  |
-| `--re-generate-macros` | `bool`              | **Optional**. Whether to regenerate macros or not (default: 0)       |
 | `--build`              | `bool`              | **Optional**. Whether to build the project (default: 0)              |
 | `--fuzzer`             | `PATH`              | **Required**. Path to the fuzzer binary                              |
 | `--compute-coverage`   | `bool`              | **Optional**. Whether to compute coverage after fuzzing (default: 0) |
