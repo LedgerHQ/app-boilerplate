@@ -214,6 +214,7 @@ def _appenduint32(value: int) -> str:
     result += f"{chunks.pop():02x}"
     return result
 
+
 def get_device_pubkey(path: str) -> Tuple[bytes, str]:
     """ Retrieve the Public Key
 
@@ -223,9 +224,7 @@ def get_device_pubkey(path: str) -> Tuple[bytes, str]:
     Returns:
         The Reference PK and the byte Chain Code
     """
-    ref_pk, ref_chain_code = calculate_public_key_and_chaincode(CurveChoice.Ed25519Kholaw,
-                                                   path,
-                                                   OPTIONAL.CUSTOM_SEED)
+    ref_pk, ref_chain_code = calculate_public_key_and_chaincode(CurveChoice.Ed25519Kholaw, path)
     return bytes.fromhex(ref_pk[2:]), ref_chain_code
 
 

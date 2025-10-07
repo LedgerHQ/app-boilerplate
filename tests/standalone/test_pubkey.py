@@ -8,7 +8,7 @@ from ragger.error import ExceptionRAPDU
 
 from application_client.command_sender import CommandSender, Errors
 
-from standalone.input_files.pubkey import PubKeyTestCase, expectedPubKey, rejectTestCases, testsByron, testsShelleyUsual, testsShelleyUnusual, testsColdKeys, testsCVoteKeysUsual, testsCVoteKeysUnusual
+from standalone.input_files.pubkey import PubKeyTestCase, rejectTestCases, testsByron, testsShelleyUsual, testsShelleyUnusual, testsColdKeys, testsCVoteKeysUsual, testsCVoteKeysUnusual
 
 from standalone.utils import get_navigation_for_toggle_silent_pubkey_export, idTestFunc, get_device_pubkey
 
@@ -46,7 +46,7 @@ def test_pubkey_confirm(device: Device,
     assert response and response.status == Errors.SW_SUCCESS
 
     # Check the response
-    _check_pubkey_result(response.data, testCase.path, testCase.expected)
+    _check_pubkey_result(response.data, testCase.path)
 
 
 @pytest.mark.parametrize(
@@ -68,7 +68,7 @@ def test_pubkey_without_confirmation(backend: BackendInterface, testCase: PubKey
     assert response and response.status == Errors.SW_SUCCESS
 
     # Check the response
-    _check_pubkey_result(response.data, testCase.path, testCase.expected)
+    _check_pubkey_result(response.data, testCase.path)
 
 
 @pytest.mark.parametrize(
@@ -89,8 +89,6 @@ def test_pubkey_reject(backend: BackendInterface,
     assert err.value.status == Errors.SW_REJECTED_BY_POLICY
 
 
-def _check_pubkey_result(data: bytes, path: str, expected: expectedPubKey) -> None:
+def _check_pubkey_result(data: bytes, path: str) -> None:
     ref_pk, ref_chaincode = get_device_pubkey(path)
-    assert data.hex() == expected.publicKey + expected.chainCode
-    assert expected.publicKey == ref_pk.hex()
-    assert expected.chainCode == ref_chaincode
+    assert data.hex() == ref_pk.hex() + ref_chaincode
