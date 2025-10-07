@@ -39,7 +39,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     cmd.p1 = data[2];
     cmd.p2 = data[3];
     cmd.lc = size - 4;
-    if (size > 4) memcpy(cmd.data, &data[4], size - 4);
+    if (size > 4) cmd.data = (uint8_t *) &data[4];
     // print_apdu(cmd);
     apdu_dispatcher(&cmd);
     return 0;
