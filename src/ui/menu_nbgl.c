@@ -36,6 +36,7 @@ void app_quit(void) {
 //  -----------------------------------------------------------
 //  --------------------- SETTINGS MENU -----------------------
 //  -----------------------------------------------------------
+/*
 #define SETTING_INFO_NB 2
 static const char* const INFO_TYPES[SETTING_INFO_NB] = {"Version", "Developer"};
 static const char* const INFO_CONTENTS[SETTING_INFO_NB] = {APPVERSION, "Ledger"};
@@ -125,9 +126,11 @@ static void controls_callback(int token, uint8_t index, int page) {
         }
     }
 }
+*/
 
 // home page definition
 void ui_menu_main(void) {
+    /*
     // Initialize switches data
     switches[DUMMY_SWITCH_1_ID].initState = (nbgl_state_t) N_storage.dummy1_allowed;
     switches[DUMMY_SWITCH_1_ID].text = "Dummy 1";
@@ -144,13 +147,14 @@ void ui_menu_main(void) {
 #ifdef HAVE_PIEZO_SOUND
     switches[DUMMY_SWITCH_2_ID].tuneId = TUNE_TAP_CASUAL;
 #endif
+    */
 
     nbgl_useCaseHomeAndSettings(APPNAME,
                                 &ICON_APP_HOME,
                                 NULL,
                                 INIT_HOME_PAGE,
-                                &settingContents,
-                                &infoList,
+                                NULL,
+                                NULL,
                                 NULL,
                                 app_quit);
 }

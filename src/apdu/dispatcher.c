@@ -31,6 +31,8 @@
 #include "get_app_name.h"
 #include "get_public_key.h"
 #include "sign_tx.h"
+#include "bench.h"
+#include "read.h"
 
 int apdu_dispatcher(const command_t *cmd) {
     LEDGER_ASSERT(cmd != NULL, "NULL cmd");
@@ -39,9 +41,12 @@ int apdu_dispatcher(const command_t *cmd) {
         return io_send_sw(SW_CLA_NOT_SUPPORTED);
     }
 
+    /*
     buffer_t buf = {0};
+    */
 
     switch (cmd->ins) {
+        /*
         case GET_VERSION:
             if (cmd->p1 != 0 || cmd->p2 != 0) {
                 return io_send_sw(SW_WRONG_P1P2);
@@ -84,6 +89,19 @@ int apdu_dispatcher(const command_t *cmd) {
             buf.offset = 0;
 
             return handler_sign_tx(&buf, cmd->p1, (bool) (cmd->p2 & P2_MORE));
+            */
+        case BENCH_PRIME:
+            if (cmd->lc != sizeof(uint32_t)) {
+                return io_send_sw(SW_WRONG_DATA_LENGTH);
+            }
+            bench_prime(read_u32_be(cmd->data, 0));
+            return io_send_sw(SW_OK);
+        case BENCH_FIBO:
+            if (cmd->lc != sizeof(uint32_t)) {
+                return io_send_sw(SW_WRONG_DATA_LENGTH);
+            }
+            bench_fibonacci(read_u32_be(cmd->data, 0));
+            return io_send_sw(SW_OK);
         default:
             return io_send_sw(SW_INS_NOT_SUPPORTED);
     }
