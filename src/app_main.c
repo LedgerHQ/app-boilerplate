@@ -20,7 +20,6 @@
 
 #include "os.h"
 #include "ux.h"
-#include "swap.h"
 
 #include "types.h"
 #include "globals.h"
@@ -29,6 +28,8 @@
 #include "menu.h"
 #include "dispatcher.h"
 #include "settings.h"
+#include "mem.h"
+#include "utils/utils.h"
 
 global_ctx_t G_context;
 
@@ -43,16 +44,17 @@ void app_main() {
     // Structured APDU command
     command_t cmd;
 
+    // Initialize dynamic memory allocator
+    TRACE("Initializing dynamic memory allocator");
+    if (!app_mem_init()) {
+        TRACE("Failed to initialize memory allocator");
+    } else {
+        TRACE("Memory allocator initialized successfully");
+    }
+
     io_init();
 
-#ifdef HAVE_SWAP
-    // When called in swap context as a library, we don't want to show the menu
-    if (!G_called_from_swap) {
-#endif
-        ui_menu_main();
-#ifdef HAVE_SWAP
-    }
-#endif
+    ui_menu_main();
 
     // Reset context
     explicit_bzero(&G_context, sizeof(G_context));

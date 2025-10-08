@@ -23,3 +23,15 @@
  *
  */
 int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more);
+
+/**
+ * Handler for SIGN_TX_WITNESS command. Signs transaction hash with witness key.
+ * Must be called after transaction is approved (STATE_APPROVED).
+ *
+ * @param[in,out] cdata
+ *   Command data with witness BIP32 path.
+ *
+ * @return zero or positive integer if success, negative integer otherwise.
+ *
+ */
+int handler_sign_tx_witness(buffer_t *cdata);

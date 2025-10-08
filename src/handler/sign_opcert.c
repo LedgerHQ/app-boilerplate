@@ -23,7 +23,6 @@
 #include "os.h"
 #include "cx.h"
 #include "buffer.h"
-#include "swap.h"
 #include "nbgl_use_case.h"
 
 #include "sw.h"
@@ -31,7 +30,6 @@
 #include "display.h"
 #include "opcert_types.h"
 #include "parse_opcert.h"
-#include "validate.h"
 #include "securityPolicy.h"
 #include "messageSigning.h"
 #include "bufView.h"

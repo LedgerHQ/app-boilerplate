@@ -8,7 +8,7 @@
 // this tracing is rarely needed
 // so we want to keep it turned off to avoid polluting the trace log
 
-//#define TRACE_TX_HASH_BUILDER
+#define TRACE_TX_HASH_BUILDER
 
 #ifdef TRACE_TX_HASH_BUILDER
 #define _TRACE(...) TRACE(__VA_ARGS__)
@@ -174,6 +174,7 @@ static void assertCanLeaveCurrentOutput(tx_hash_builder_t* builder) {
         case TX_OUTPUT_INIT:
         case TX_OUTPUT_TOP_LEVEL_DATA:
             // no tokens
+            TRACE("%d", builder->outputData.multiassetData.remainingAssetGroups);
             ASSERT(builder->outputData.multiassetData.remainingAssetGroups == 0);
             // no datum or script reference
             ASSERT(!builder->outputData.includeDatum);

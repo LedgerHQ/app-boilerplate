@@ -45,13 +45,33 @@
  */
 #define SW_WRONG_TX_LENGTH 0xB004
 /**
- * Status word for fail of transaction parsing.
+ * Status word for fail of transaction parsing (general).
  */
 #define SW_TX_PARSING_FAIL 0xB005
 /**
  * Status word for fail of transaction hash.
  */
 #define SW_TX_HASH_FAIL 0xB006
+/**
+ * Status word for fail of parsing transaction inputs.
+ */
+#define SW_TX_PARSING_FAIL_INPUTS 0xB020
+/**
+ * Status word for fail of parsing transaction outputs.
+ */
+#define SW_TX_PARSING_FAIL_OUTPUTS 0xB021
+/**
+ * Status word for fail of parsing transaction fee.
+ */
+#define SW_TX_PARSING_FAIL_FEE 0xB022
+/**
+ * Status word for fail of parsing transaction TTL.
+ */
+#define SW_TX_PARSING_FAIL_TTL 0xB023
+/**
+ * Status word for invalid inclusion flag (must be ITEM_INCLUDED_YES or ITEM_INCLUDED_NO).
+ */
+#define SW_TX_PARSING_FAIL_INCLUSION_FLAG 0xB024
 /**
  * Status word for bad state.
  */
@@ -60,14 +80,6 @@
  * Status word for signature fail.
  */
 #define SW_SIGNATURE_FAIL 0xB008
-/**
- * Status word for swap failure
- */
-#define SW_SWAP_FAIL 0xC000
-/**
- * Application specific swap error code
- */
-#define SWAP_ERROR_CODE 0x00
 
 
 // TODO

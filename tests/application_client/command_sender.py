@@ -1,31 +1,12 @@
 from enum import IntEnum
-from typing import Generator, List, Optional
+from typing import Generator, Optional
 from contextlib import contextmanager
 
 from ragger.backend.interface import BackendInterface, RAPDU
-from ragger.bip import pack_derivation_path
 
 from standalone.input_files.signOpCert import OpCertTestCase
 from application_client.command_builder import CommandBuilder, InsType
 
-
-MAX_APDU_LEN: int = 255
-
-CLA: int = 0xD7
-
-class P1(IntEnum):
-    # Parameter 1 for first APDU number.
-    P1_START = 0x00
-    # Parameter 1 for maximum APDU number.
-    P1_MAX   = 0x03
-    # Parameter 1 for screen confirmation for GET_PUBLIC_KEY.
-    P1_CONFIRM = 0x01
-
-class P2(IntEnum):
-    # Parameter 2 for last APDU to receive.
-    P2_LAST = 0x00
-    # Parameter 2 for more APDU to receive.
-    P2_MORE = 0x80
 
 class Errors(IntEnum):
     SW_DENY                    = 0x6985
@@ -46,10 +27,6 @@ class Errors(IntEnum):
     SW_WRONG_ADDRESS           = 0xC000
     SW_SUCCESS                 = 0x9000
     SW_REJECTED_BY_POLICY      = 0x6E10
-
-
-def split_message(message: bytes, max_size: int) -> List[bytes]:
-    return [message[x:x + max_size] for x in range(0, len(message), max_size)]
 
 
 class CommandSender:
@@ -95,73 +72,15 @@ class CommandSender:
         return self.backend.last_async_response
 
 
-    def get_app_and_version(self) -> RAPDU:
-        return self.backend.exchange(cla=0xB0,  # specific CLA for BOLOS
-                                     ins=0x01,  # specific INS for get_app_and_version
-                                     p1=P1.P1_START,
-                                     p2=P2.P2_LAST,
-                                     data=b"")
-
-
     def get_version(self) -> RAPDU:
-        return self.backend.exchange(cla=CLA,
-                                     ins=InsType.GET_VERSION,
-                                     p1=P1.P1_START,
-                                     p2=P2.P2_LAST,
-                                     data=b"")
+        return self._exchange(self._cmd_builder.get_version())
 
-
-    def get_app_name(self) -> RAPDU:
-        return self.backend.exchange(cla=CLA,
-                                     ins=InsType.GET_APP_NAME,
-                                     p1=P1.P1_START,
-                                     p2=P2.P2_LAST,
-                                     data=b"")
-
-
-    def get_public_key(self, path: str) -> RAPDU:
-        return self.backend.exchange(cla=CLA,
-                                     ins=InsType.GET_PUBLIC_KEY,
-                                     p1=P1.P1_START,
-                                     p2=P2.P2_LAST,
-                                     data=pack_derivation_path(path))
-
-
-    @contextmanager
-    def sign_tx(self, path: str, transaction: bytes) -> Generator[None, None, None]:
-        self.backend.exchange(cla=CLA,
-                              ins=InsType.SIGN_TX,
-                              p1=P1.P1_START,
-                              p2=P2.P2_MORE,
-                              data=pack_derivation_path(path))
-        messages = split_message(transaction, MAX_APDU_LEN)
-        idx: int = P1.P1_START + 1
-
-        for msg in messages[:-1]:
-            self.backend.exchange(cla=CLA,
-                                  ins=InsType.SIGN_TX,
-                                  p1=idx,
-                                  p2=P2.P2_MORE,
-                                  data=msg)
-            idx += 1
-
-        with self.backend.exchange_async(cla=CLA,
-                                         ins=InsType.SIGN_TX,
-                                         p1=idx,
-                                         p2=P2.P2_LAST,
-                                         data=messages[-1]) as response:
-            yield response
+    def get_serial(self) -> RAPDU:
+        return self._exchange(self._cmd_builder.get_serial())
 
 
     def get_async_response(self) -> Optional[RAPDU]:
         return self.backend.last_async_response
-
-    def sign_tx_sync(self, path: str, transaction: bytes) -> Optional[RAPDU]:
-        with self.sign_tx(path, transaction):
-            pass
-        rapdu = self.get_async_response()
-        assert isinstance(rapdu, RAPDU)
-        return rapdu
 
     @contextmanager
     def get_pubkey_async(self, path: str) -> Generator[None, None, None]:
@@ -182,4 +101,110 @@ class CommandSender:
 
         with self._exchange_async(self._cmd_builder.sign_opCert(testCase)):
             yield
+
+    @contextmanager
+    def sign_tx_witness_async(self, path: str) -> Generator[None, None, None]:
+        """APDU Sign TX Witness
+
+        Args:
+            path (str): BIP44 derivation path
+
+        Returns:
+            Generator
+        """
+
+        with self._exchange_async(self._cmd_builder.sign_tx_witness(path)):
+            yield
+
+    def sign_tx_init_simple(self, options: int, tx_signing_mode: int, network_id: int,
+                           protocol_magic: int, num_inputs: int, num_outputs: int, include_ttl: bool) -> RAPDU:
+        """APDU Sign TX Init (simple chunked mode)
+
+        Args:
+            options (int): Transaction options (bit 0 = tagCborSets)
+            tx_signing_mode (int): Transaction signing mode (3=ORDINARY, 4=POOL_OWNER, etc.)
+            network_id (int): Network ID (0=testnet, 1=mainnet)
+            protocol_magic (int): Protocol magic number
+            num_inputs (int): Number of inputs
+            num_outputs (int): Number of outputs
+            include_ttl (bool): Whether TTL is included
+
+        Returns:
+            Response APDU
+        """
+        data = bytearray()
+        data.extend(options.to_bytes(8, 'big'))  # options as uint64
+        data.append(tx_signing_mode)
+        data.append(network_id)
+        data.extend(protocol_magic.to_bytes(4, 'big'))
+        data.extend(num_inputs.to_bytes(2, 'big'))
+        data.extend(num_outputs.to_bytes(2, 'big'))
+        data.append(0x02 if include_ttl else 0x01)  # ITEM_INCLUDED_YES or ITEM_INCLUDED_NO
+
+        from application_client.command_builder import P1Type
+        # P1 = P1_TX_INIT for INIT APDU, P2 = P2_MORE for more chunks to follow
+        return self._exchange(self._cmd_builder._serialize(InsType.SIGN_TX, P1Type.P1_TX_INIT, P1Type.P2_MORE, bytes(data)))
+
+    def sign_tx_chunk(self, tx_data: bytes, more: bool = True) -> RAPDU:
+        """APDU Sign TX Data Chunk (synchronous)
+
+        Args:
+            tx_data (bytes): Transaction data chunk
+            more (bool): True if more chunks follow, False for last chunk
+
+        Returns:
+            Response APDU
+        """
+        from application_client.command_builder import P1Type
+        # P1 = P1_TX_DATA_CHUNK for data chunks (both intermediate and final)
+        # P2 = P2_MORE (more chunks) or P2_LAST (final chunk)
+        p1 = P1Type.P1_TX_DATA_CHUNK
+        p2 = P1Type.P2_MORE if more else P1Type.P2_LAST
+        return self._exchange(self._cmd_builder._serialize(InsType.SIGN_TX, p1, p2, tx_data))
+
+    @contextmanager
+    def sign_tx_chunk_async(self, tx_data: bytes, more: bool = True) -> Generator[None, None, None]:
+        """APDU Sign TX Data Chunk (asynchronous - for UI navigation)
+
+        Args:
+            tx_data (bytes): Transaction data chunk
+            more (bool): True if more chunks follow, False for last chunk
+
+        Returns:
+            Generator
+        """
+        from application_client.command_builder import P1Type
+        # P1 = P1_TX_DATA_CHUNK for data chunks (both intermediate and final)
+        # P2 = P2_MORE (more chunks) or P2_LAST (final chunk)
+        p1 = P1Type.P1_TX_DATA_CHUNK
+        p2 = P1Type.P2_MORE if more else P1Type.P2_LAST
+        with self._exchange_async(self._cmd_builder._serialize(InsType.SIGN_TX, p1, p2, tx_data)):
+            yield
+
+    @contextmanager
+    def sign_tx_serialize_and_send_chunk_async(self, tx) -> Generator[None, None, None]:
+        """Serialize transaction and send as final chunk (asynchronous - for UI navigation)
+
+        Args:
+            tx: Transaction object from signTx.py (contains TTL if present)
+
+        Returns:
+            Generator (use with 'with' statement for navigation)
+        """
+        include_ttl = tx.ttl is not None
+        ttl_value = tx.ttl if include_ttl else 0
+        tx_bytes = self._cmd_builder.serialize_transaction_unpacked(tx, include_ttl, ttl_value)
+        with self.sign_tx_chunk_async(tx_bytes, more=False):
+            yield
+
+    def sign_tx_witness(self, path: str) -> RAPDU:
+        """APDU Sign TX Witness (synchronous)
+
+        Args:
+            path (str): BIP44 derivation path for witness
+
+        Returns:
+            Response APDU with signature
+        """
+        return self._exchange(self._cmd_builder.sign_tx_witness(path))
 

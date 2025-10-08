@@ -1,0 +1,38 @@
+#include "tx_warnings.h"
+#include "mem.h"
+#include <string.h>
+
+void tx_warning_add(tx_warning_list_item_t **list_head, tx_warning_type_t type,
+                   uint32_t networkId, uint32_t protocolMagic) {
+    // Allocate new warning item
+    tx_warning_list_item_t *item = (tx_warning_list_item_t *)app_mem_alloc(sizeof(tx_warning_list_item_t));
+    if (item == NULL) {
+        // If allocation fails, we can't add the warning, but continue anyway
+        return;
+    }
+
+    // Initialize warning item
+    explicit_bzero(item, sizeof(tx_warning_list_item_t));
+    item->type = type;
+    item->networkId = networkId;
+    item->protocolMagic = protocolMagic;
+
+    // Add to front of list
+    item->node.next = (s_flist_node *)*list_head;
+    *list_head = item;
+}
+
+bool tx_warning_list_empty(tx_warning_list_item_t *list_head) {
+    return list_head == NULL;
+}
+
+const char* tx_warning_get_message(tx_warning_type_t type) {
+    switch (type) {
+        case TX_WARNING_NETWORK_UNUSUAL:
+            return "Unusual network detected";
+        case TX_WARNING_NETWORK_ID_UNVERIFIABLE:
+            return "Network ID cannot be verified";
+        default:
+            return "Unknown warning";
+    }
+}

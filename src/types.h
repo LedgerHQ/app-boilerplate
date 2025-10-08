@@ -51,22 +51,32 @@ typedef struct {
 } pubkey_ctx_t;
 
 /**
+ * ED25519 signature length constant
+ */
+#define ED25519_SIGNATURE_LENGTH 64
+
+/**
  * Structure for transaction information context.
  */
 typedef struct {
-    uint8_t raw_tx[MAX_TRANSACTION_LEN];  /// raw transaction serialized
+    uint8_t *raw_tx;                      /// raw transaction serialized (dynamically allocated)
     size_t raw_tx_len;                    /// length of raw transaction
     transaction_t transaction;            /// structured transaction
-    uint8_t m_hash[32];                   /// message hash digest
-    uint8_t signature[MAX_DER_SIG_LEN];   /// transaction signature encoded in DER
-    uint8_t signature_len;                /// length of transaction signature
-    uint8_t v;                            /// parity of y-coordinate of R in ECDSA signature
+    uint8_t tx_hash[32];                   /// transaction hash (Blake2b-256)
+
+    // Witness signing fields (used after STATE_APPROVED)
+    uint16_t num_witnesses;               /// total number of witnesses expected
+    uint16_t current_witness;             /// current witness being processed
+    bip44_path_t witness_path;            /// current witness path
+    uint8_t witness_signature[ED25519_SIGNATURE_LENGTH];  /// current witness signature
+
+    // Warning collection (flist head) - network warnings only for now
+    void* warning_list;                   /// head of warning flist (tx_warning_list_item_t)
 } transaction_ctx_t;
 
 /**
  * Structure for sign operational certificate information context.
  */
-#define ED25519_SIGNATURE_LENGTH 64
 #define MAX_OPCERT_LENGTH (KES_PUBLIC_KEY_LENGTH + 8 + 8 + BIP44_MAX_PATH_SIZE)
 
 typedef struct {

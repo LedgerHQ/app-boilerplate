@@ -71,9 +71,40 @@ int apdu_dispatcher(const command_t *cmd) {
             return handler_get_public_key(&buf);
 
         case INS_SIGN_TX:
-            if ((cmd->p1 == P1_START && cmd->p2 != P2_MORE) ||  //
-                cmd->p1 > P1_MAX ||                             //
-                (cmd->p2 != P2_LAST && cmd->p2 != P2_MORE)) {
+            // Check if this is a witness APDU (P1 = 0x0f)
+            if (cmd->p1 == 0x0f) {
+                // Witness signing - P2 must be unused
+                if (cmd->p2 != P2_UNUSED) {
+                    return io_send_sw(SW_WRONG_P1P2);
+                }
+
+                if (!cmd->data) {
+                    return io_send_sw(SW_WRONG_DATA_LENGTH);
+                }
+
+                buf.ptr = cmd->data;
+                buf.size = cmd->lc;
+                buf.offset = 0;
+
+                return handler_sign_tx_witness(&buf);
+            }
+
+            // Transaction signing with new protocol:
+            // P1 = P1_TX_INIT (0xFF) for INIT, P1_TX_DATA_CHUNK (0x01) for data chunks
+            // P2 = P2_MORE (0x80) or P2_LAST (0x00)
+
+            if (cmd->p1 == P1_TX_INIT) {
+                // INIT APDU - P2 must be MORE (we always expect data after INIT)
+                if (cmd->p2 != P2_MORE) {
+                    return io_send_sw(SW_WRONG_P1P2);
+                }
+            } else if (cmd->p1 == P1_TX_DATA_CHUNK) {
+                // Data chunk - P2 must be LAST or MORE
+                if (cmd->p2 != P2_LAST && cmd->p2 != P2_MORE) {
+                    return io_send_sw(SW_WRONG_P1P2);
+                }
+            } else {
+                // Invalid P1 value
                 return io_send_sw(SW_WRONG_P1P2);
             }
 

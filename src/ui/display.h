@@ -35,14 +35,5 @@ typedef void (*action_validate_cb)(bool);
  */
 int ui_display_transaction(void);
 
-/**
- * Display blind-sign transaction information on the device and ask confirmation to sign.
- *
- * @return 0 if success, negative integer otherwise.
- *
- */
-int ui_display_blind_signed_transaction(void);
-
-// TODO this file is odd, not sure what exactly it tries to do, maybe move the declarations to more specific places
 int ui_display_opcert(security_policy_t securityPolicy);
 int ui_display_pubkey(security_policy_t securityPolicy);

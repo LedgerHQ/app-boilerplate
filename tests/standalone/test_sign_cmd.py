@@ -1,131 +1,95 @@
-import pytest
+# -*- coding: utf-8 -*-
+# Test file for Cardano transaction signing with simple chunked flow
 
-from ragger.backend.interface import BackendInterface
-from ragger.error import ExceptionRAPDU
+import pytest
+from hashlib import blake2b
+from ledgered.devices import Device
+from ragger.backend import BackendInterface
+from ragger.navigator import Navigator, NavInsID
 from ragger.navigator.navigation_scenario import NavigateWithScenario
 
-from application_client.boilerplate_transaction import Transaction
-from application_client.command_sender import CommandSender, Errors
-from application_client.response_unpacker import unpack_get_public_key_response, unpack_sign_tx_response
-from .utils import check_signature_validity
-
-# In this tests we check the behavior of the device when asked to sign a transaction
+from application_client.app_def import Errors
+from application_client.command_sender import CommandSender
+from standalone.utils import verify_signature, idTestFunc
+from standalone.input_files.signTx import testsShelleyNoCertificates, SignTxTestCase
 
 
-# In this test we send to the device a transaction to sign and validate it on screen
-# The transaction is short and will be sent in one chunk
-# We will ensure that the displayed information is correct by using screenshots comparison
-def test_sign_tx_short_tx(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
-    # Use the app interface instead of raw interface
+@pytest.mark.parametrize(
+    "testCase",
+    testsShelleyNoCertificates[:1],  # Just test the first case for now
+    ids=idTestFunc
+)
+def test_sign_tx_simple(device: Device,
+                       backend: BackendInterface,
+                       navigator: Navigator,
+                       scenario_navigator: NavigateWithScenario,
+                       testCase: SignTxTestCase) -> None:
+    """Test simple transaction signing with new protocol.
+
+    This test verifies the new handler_sign_tx implementation:
+    1. Send init APDU with transaction description
+    2. Send transaction data in unpacked format
+    3. User approves transaction
+    4. Request witness signature
+    """
+
     client = CommandSender(backend)
-    # The path used for this entire test
-    path: str = "m/1852'/1815'/0'/0/1"
+    tx = testCase.tx
 
-    # First we need to get the public key of the device in order to build the transaction
-    rapdu = client.get_public_key(path=path)
-    public_key, _ = unpack_get_public_key_response(rapdu.data)
+    # Witness path from the input
+    witness_path = tx.inputs[0].path  # m/1852'/1815'/0'/0/0
 
-    # Create the transaction that will be sent to the device for signing
-    transaction = Transaction(
-        nonce=1,
-        to="0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae",
-        value=666,
-        memo="For u EthDev"
-    ).serialize()
+    # Calculate expected transaction hash from the CBOR txBody
+    expected_cbor = bytes.fromhex(testCase.txBody)
+    expected_hash = blake2b(expected_cbor, digest_size=32).digest()
+    print(f"Expected tx hash: {expected_hash.hex()}")
 
-    # Send the sign device instruction.
-    # As it requires on-screen validation, the function is asynchronous.
-    # It will yield the result when the navigation is done
-    with client.sign_tx(path=path, transaction=transaction):
-        # Validate the on-screen request by performing the navigation appropriate for this device
-        scenario_navigator.review_approve(do_comparison=False)
+    # Step 1: Send INIT APDU with transaction description
+    response = client.sign_tx_init_simple(
+        options=testCase.options,
+        tx_signing_mode=testCase.signingMode,
+        network_id=tx.network.networkId,
+        protocol_magic=tx.network.protocol,
+        num_inputs=len(tx.inputs),
+        num_outputs=len(tx.outputs),
+        include_ttl=tx.ttl is not None
+    )
+    assert response.status == Errors.SW_SUCCESS, f"Init failed: {hex(response.status)}"
 
-    # The device as yielded the result, parse it and ensure that the signature is correct
-    response = client.get_async_response().data
-    _, der_sig, _ = unpack_sign_tx_response(response)
-    assert check_signature_validity(public_key, der_sig, transaction)
+    # Step 2: Send transaction data and navigate to approve
+    # For this small transaction, we can send it in one chunk
+    # The last chunk triggers UI display, so we use async exchange for navigation
+    with client.sign_tx_serialize_and_send_chunk_async(tx):
+        if device.is_nano:
+            # TODO: Add proper navigation for nano devices
+            navigator.navigate_until_text(NavInsID.RIGHT_CLICK, [NavInsID.BOTH_CLICK], "Sign transaction")
+        else:
+            # Check if test case expects warnings (for now we don't have warnings in simple tests)
+            scenario_navigator.review_approve(do_comparison=False)
 
+    # Get the response from the last chunk (should contain tx hash)
+    response = client.get_async_response()
+    assert response and response.status == Errors.SW_SUCCESS, f"Chunk failed: {hex(response.status)}"
 
-# In this test we send to the device a transaction to trig a blind-signing flow
-# The transaction is short and will be sent in one chunk
-# We will ensure that the displayed information is correct by using screenshots comparison
-def test_sign_tx_short_tx_blind_sign(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
-    # Use the app interface instead of raw interface
-    client = CommandSender(backend)
-    # The path used for this entire test
-    path: str = "m/1852'/1815'/0'/0/1"
+    # The last chunk response should contain the transaction hash
+    tx_hash = response.data
+    print(f"Actual tx hash:   {tx_hash.hex()}")
+    assert len(tx_hash) == 32, f"Expected 32-byte tx hash, got {len(tx_hash)}"
 
-    # First we need to get the public key of the device in order to build the transaction
-    rapdu = client.get_public_key(path=path)
-    public_key, _ = unpack_get_public_key_response(rapdu.data)
+    # Verify the hash matches the expected CBOR txBody hash
+    assert tx_hash == expected_hash, f"Transaction hash mismatch!\nExpected: {expected_hash.hex()}\nActual:   {tx_hash.hex()}"
 
-    # Create the transaction that will be sent to the device for signing
-    transaction = Transaction(
-        nonce=1,
-        to="0x0000000000000000000000000000000000000000",
-        value=0,
-        memo="Blind-sign"
-    ).serialize()
+    # Step 3: Get witness signature
+    # After user approval, request witness signature
+    response = client.sign_tx_witness(witness_path)
+    assert response.status == Errors.SW_SUCCESS, f"Witness failed: {hex(response.status)}"
 
-    # As it requires on-screen validation, the function is asynchronous.
-    # It will yield the result when the navigation is done
-    with client.sign_tx(path=path, transaction=transaction):
-        # Validate the on-screen request by performing the navigation appropriate for this device
-        scenario_navigator.review_approve_with_warning(warning_path="part1", do_comparison=False)
+    signature = response.data
+    print(f"Witness signature ({len(signature)} bytes): {signature.hex()}")
 
-    # The device as yielded the result, parse it and ensure that the signature is correct
-    response = client.get_async_response().data
-    _, der_sig, _ = unpack_sign_tx_response(response)
-    assert check_signature_validity(public_key, der_sig, transaction)
+    # Step 4: Verify signature
+    # The signature should be 64 bytes (ED25519)
+    assert len(signature) == 64, f"Expected 64-byte signature, got {len(signature)}"
 
-# In this test se send to the device a transaction to sign and validate it on screen
-# This test is mostly the same as the previous one but with different values.
-# In particular the long memo will force the transaction to be sent in multiple chunks
-def test_sign_tx_long_tx(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
-    # Use the app interface instead of raw interface
-    client = CommandSender(backend)
-    path: str = "m/1852'/1815'/0'/0/1"
-
-    rapdu = client.get_public_key(path=path)
-    public_key, _ = unpack_get_public_key_response(rapdu.data)
-
-    transaction = Transaction(
-        nonce=1,
-        to="0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae",
-        value=666,
-        memo=("This is a very long memo. "
-              "It will force the app client to send the serialized transaction to be sent in chunk. "
-              "As the maximum chunk size is 255 bytes we will make this memo greater than 255 characters. "
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, "
-              "dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam.")
-    ).serialize()
-
-    with client.sign_tx(path=path, transaction=transaction):
-        scenario_navigator.review_approve(do_comparison=False)
-
-    response = client.get_async_response().data
-    _, der_sig, _ = unpack_sign_tx_response(response)
-    assert check_signature_validity(public_key, der_sig, transaction)
-
-
-# Transaction signature refused test
-# The test will ask for a transaction signature that will be refused on screen
-def test_sign_tx_refused(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
-    # Use the app interface instead of raw interface
-    client = CommandSender(backend)
-    path: str = "m/1852'/1815'/0'/0/1"
-
-    transaction = Transaction(
-        nonce=1,
-        to="0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae",
-        value=666,
-        memo="This transaction will be refused by the user"
-    ).serialize()
-
-    with pytest.raises(ExceptionRAPDU) as e:
-        with client.sign_tx(path=path, transaction=transaction):
-            scenario_navigator.review_reject(do_comparison=False)
-
-    # Assert that we have received a refusal
-    assert e.value.status == Errors.SW_DENY
-    assert len(e.value.data) == 0
+    # Verify the signature is valid
+    verify_signature(witness_path, signature, tx_hash)

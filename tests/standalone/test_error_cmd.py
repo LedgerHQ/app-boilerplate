@@ -3,7 +3,8 @@ import pytest
 from ragger.error import ExceptionRAPDU
 from ragger.backend.interface import BackendInterface
 
-from application_client.command_sender import CLA, InsType, P1, P2, Errors
+from application_client.command_builder import CLA, InsType, P1Type, P2Type
+from application_client.command_sender import Errors
 
 
 # Ensure the app returns an error when a bad CLA is used
@@ -23,22 +24,22 @@ def test_bad_ins(backend: BackendInterface) -> None:
 # Ensure the app returns an error when a bad P1 or P2 is used
 def test_wrong_p1p2(backend: BackendInterface) -> None:
     with pytest.raises(ExceptionRAPDU) as e:
-        backend.exchange(cla=CLA, ins=InsType.GET_VERSION, p1=P1.P1_START + 1, p2=P2.P2_LAST)
+        backend.exchange(cla=CLA, ins=InsType.GET_VERSION, p1=P1Type.P1_START + 1, p2=P2Type.P2_LAST)
     assert e.value.status == Errors.SW_WRONG_P1P2
     with pytest.raises(ExceptionRAPDU) as e:
-        backend.exchange(cla=CLA, ins=InsType.GET_VERSION, p1=P1.P1_START, p2=P2.P2_MORE)
+        backend.exchange(cla=CLA, ins=InsType.GET_VERSION, p1=P1Type.P1_START, p2=P2Type.P2_MORE)
     assert e.value.status == Errors.SW_WRONG_P1P2
     with pytest.raises(ExceptionRAPDU) as e:
-        backend.exchange(cla=CLA, ins=InsType.GET_APP_NAME, p1=P1.P1_START + 1, p2=P2.P2_LAST)
+        backend.exchange(cla=CLA, ins=InsType.GET_APP_NAME, p1=P1Type.P1_START + 1, p2=P2Type.P2_LAST)
     assert e.value.status == Errors.SW_WRONG_P1P2
     with pytest.raises(ExceptionRAPDU) as e:
-        backend.exchange(cla=CLA, ins=InsType.GET_APP_NAME, p1=P1.P1_START, p2=P2.P2_MORE)
+        backend.exchange(cla=CLA, ins=InsType.GET_APP_NAME, p1=P1Type.P1_START, p2=P2Type.P2_MORE)
     assert e.value.status == Errors.SW_WRONG_P1P2
 
 
 # Ensure the app returns an error when a bad data length is used
 def test_wrong_data_length(backend: BackendInterface) -> None:
-    # APDUs must be at least 4 bytes: CLA, INS, P1, P2.
+    # APDUs must be at least 4 bytes: CLA, INS, P1, P2Type.
     with pytest.raises(ExceptionRAPDU) as e:
         backend.exchange_raw(bytes.fromhex("E00300"))
     assert e.value.status == Errors.SW_WRONG_DATA_LENGTH
@@ -53,7 +54,7 @@ def test_invalid_state(backend: BackendInterface) -> None:
     with pytest.raises(ExceptionRAPDU) as e:
         backend.exchange(cla=CLA,
                          ins=InsType.SIGN_TX,
-                         p1=P1.P1_START + 1,  # Try to continue a flow instead of start a new one
-                         p2=P2.P2_MORE,
+                         p1=P1Type.P1_START + 1,  # Try to continue a flow instead of start a new one
+                         p2=P2Type.P2_MORE,
                          data=b"abcde")  # data is not parsed in this case
     assert e.value.status == Errors.SW_BAD_STATE

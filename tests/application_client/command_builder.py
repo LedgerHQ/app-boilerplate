@@ -34,6 +34,8 @@ from standalone.input_files.derive_native_script import NativeScriptParamsScript
 
 from application_client.app_def import AddressType, StakingDataSourceType
 
+CLA: int = 0xd7
+
 class InsType(IntEnum):
     GET_VERSION = 0x03
     GET_APP_NAME = 0x04
@@ -47,6 +49,14 @@ class InsType(IntEnum):
     SIGN_MSG = 0x24
 
 class P1Type(IntEnum):
+    P2_LAST = 0x00
+    P2_MORE = 0x80
+    P1_START = 0x00
+
+    # SignTx new protocol
+    P1_TX_INIT = 0xFF
+    P1_TX_DATA_CHUNK = 0x01
+
     # Derive Address
     P1_RETURN = 0x01
     P1_DISPLAY = 0x02
@@ -119,8 +129,6 @@ class P2Type(IntEnum):
 
 
 class CommandBuilder:
-    _CLA: int = 0xd7
-
     def _serialize(self,
                    ins: InsType,
                    p1: int = 0x00,
@@ -128,7 +136,7 @@ class CommandBuilder:
                    cdata: bytes = bytes()) -> bytes:
 
         header = bytearray()
-        header.append(self._CLA)
+        header.append(CLA)
         header.append(ins)
         header.append(p1)
         header.append(p2)
@@ -1631,3 +1639,75 @@ class CommandBuilder:
         data += bytes.fromhex(token.assetNameHex)
         data += token.amount.to_bytes(8, "big", signed=True)
         return data
+
+    def serialize_transaction_unpacked(self, tx, include_ttl=False, ttl=0) -> bytes:
+        """Serialize transaction to unpacked binary format for handler_sign_tx.
+
+        NEW Format (after adding TTL):
+        Transaction data buffer (sent after INIT APDU):
+        - For each input:
+            - tx_hash (32 bytes)
+            - output_index (uint32, BE)
+        - For each output:
+            - output_length (uint16, BE)
+            - destination_type (uint8): 0x01=THIRD_PARTY, 0x02=DEVICE_OWNED
+            - If THIRD_PARTY:
+                - address_size (uint16, BE)
+                - address_bytes
+            - If DEVICE_OWNED:
+                - path_length (uint8)
+                - bip32_path
+            - ada_amount (uint64, BE)
+        - fee (uint64, BE)
+        - ttl (uint64, BE) - only if include_ttl is True
+
+        Note: num_inputs and num_outputs are now sent in the INIT APDU, not in the tx buffer
+
+        Args:
+            tx: Transaction from signTx.py test data
+            include_ttl: Whether to include TTL field
+            ttl: TTL value (only used if include_ttl is True)
+
+        Returns:
+            bytes: Serialized transaction
+        """
+        from ragger.bip import pack_derivation_path
+
+        data = bytearray()
+
+        # Inputs (no count prefix - sent in INIT APDU)
+        for tx_input in tx.inputs:
+            data.extend(bytes.fromhex(tx_input.txHashHex))
+            data.extend(tx_input.outputIndex.to_bytes(4, 'big'))
+
+        # Outputs (no count prefix - sent in INIT APDU)
+        for tx_output in tx.outputs:
+            # Build output data
+            output_data = bytearray()
+            output_data.append(tx_output.destination.type)
+
+            if tx_output.destination.type == TxOutputDestinationType.THIRD_PARTY:
+                addr_bytes = bytes.fromhex(tx_output.destination.params.addressHex)
+                output_data.extend(len(addr_bytes).to_bytes(2, 'big'))
+                output_data.extend(addr_bytes)
+            elif tx_output.destination.type == TxOutputDestinationType.DEVICE_OWNED:
+                # Assuming params is a DeriveAddressTestCase with spendingValue as path
+                path_bytes = pack_derivation_path(tx_output.destination.params.spendingValue)
+                output_data.append(len(path_bytes) // 4)  # path length in components
+                output_data.extend(path_bytes)
+
+            # ADA amount
+            output_data.extend(tx_output.amount.to_bytes(8, 'big'))
+
+            # Add output with length prefix
+            data.extend(len(output_data).to_bytes(2, 'big'))
+            data.extend(output_data)
+
+        # Fee
+        data.extend(tx.fee.to_bytes(8, 'big'))
+
+        # TTL (optional)
+        if include_ttl:
+            data.extend(ttl.to_bytes(8, 'big'))
+
+        return bytes(data)

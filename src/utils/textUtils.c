@@ -59,6 +59,8 @@ size_t str_formatDecimalAmount(uint64_t amount, size_t places, char* out, size_t
 size_t str_formatAdaAmount(uint64_t amount, char* out, size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
 
+    // TODO: Consider using format_fpu64 directly instead of str_formatDecimalAmount
+    // for consistency with other formatting code
     size_t rawSize = str_formatDecimalAmount(amount, 6, out, outSize);
 
     const char* suffix = " ADA";
