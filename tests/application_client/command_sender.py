@@ -6,7 +6,7 @@ from ragger.backend.interface import BackendInterface, RAPDU
 from ragger.bip import pack_derivation_path
 
 from standalone.input_files.signOpCert import OpCertTestCase
-from application_client.command_builder import CommandBuilder
+from application_client.command_builder import CommandBuilder, InsType
 
 
 MAX_APDU_LEN: int = 255
@@ -26,12 +26,6 @@ class P2(IntEnum):
     P2_LAST = 0x00
     # Parameter 2 for more APDU to receive.
     P2_MORE = 0x80
-
-class InsType(IntEnum):
-    GET_VERSION    = 0x03
-    GET_APP_NAME   = 0x04
-    GET_PUBLIC_KEY = 0x05
-    SIGN_TX        = 0x06
 
 class Errors(IntEnum):
     SW_DENY                    = 0x6985
@@ -131,16 +125,6 @@ class CommandSender:
                                      p1=P1.P1_START,
                                      p2=P2.P2_LAST,
                                      data=pack_derivation_path(path))
-
-
-    @contextmanager
-    def get_public_key_with_confirmation(self, path: str) -> Generator[None, None, None]:
-        with self.backend.exchange_async(cla=CLA,
-                                         ins=InsType.GET_PUBLIC_KEY,
-                                         p1=P1.P1_CONFIRM,
-                                         p2=P2.P2_LAST,
-                                         data=pack_derivation_path(path)) as response:
-            yield response
 
 
     @contextmanager

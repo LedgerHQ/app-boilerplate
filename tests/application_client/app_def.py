@@ -27,19 +27,6 @@ class Errors(IntEnum):
     SW_SUCCESS                    = 0x9000
 
 
-class InsType(IntEnum):
-    GET_VERSION = 0x00
-    GET_SERIAL = 0x01
-#    GET_PUBLIC_ADDR = 0x10
-#    DERIVE_PUBLIC_ADDR = 0x11
-    DERIVE_SCRIPT_HASH = 0x12
-    SIGN_TX = 0x21
-    SIGN_OP_CERT = 0x22
-    SIGN_CIP36_VOTE = 0x23
-    SIGN_MSG = 0x24
-    GET_PUBLIC_KEY = 0x05 # TODO
-
-
 class ProtocolMagics(IntEnum):
     MAINNET = 0x2D964A09        # 764824073
     TESTNET = 0x2A              # 42, For integration tests

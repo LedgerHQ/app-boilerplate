@@ -18,8 +18,8 @@
 typedef enum {
     INS_GET_VERSION = 0x03,     /// version of the application
     INS_GET_APP_NAME = 0x04,    /// name of the application
-    INS_GET_PUBLIC_KEY = 0x05,  /// public key of corresponding BIP32 path
-    INS_SIGN_TX = 0x06,          /// sign transaction with BIP32 path
+    INS_GET_PUBLIC_KEY = 0x10,  /// public key of corresponding BIP32 path
+    INS_SIGN_TX = 0x21,          /// sign transaction with BIP32 path
     INS_SIGN_OPCERT = 0x22  /// sign operational certificate with BIP32 path
 } command_e;
 /**

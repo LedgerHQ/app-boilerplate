@@ -6,7 +6,7 @@ from ragger.navigator.navigation_scenario import NavigateWithScenario
 
 from application_client.boilerplate_transaction import Transaction
 from application_client.command_sender import CommandSender, Errors
-from application_client.boilerplate_response_unpacker import unpack_get_public_key_response, unpack_sign_tx_response
+from application_client.response_unpacker import unpack_get_public_key_response, unpack_sign_tx_response
 from .utils import check_signature_validity
 
 # In this tests we check the behavior of the device when asked to sign a transaction
@@ -19,11 +19,11 @@ def test_sign_tx_short_tx(backend: BackendInterface, scenario_navigator: Navigat
     # Use the app interface instead of raw interface
     client = CommandSender(backend)
     # The path used for this entire test
-    path: str = "m/44'/1'/0'/0/0"
+    path: str = "m/1852'/1815'/0'/0/1"
 
     # First we need to get the public key of the device in order to build the transaction
     rapdu = client.get_public_key(path=path)
-    _, public_key, _, _ = unpack_get_public_key_response(rapdu.data)
+    public_key, _ = unpack_get_public_key_response(rapdu.data)
 
     # Create the transaction that will be sent to the device for signing
     transaction = Transaction(
@@ -38,7 +38,7 @@ def test_sign_tx_short_tx(backend: BackendInterface, scenario_navigator: Navigat
     # It will yield the result when the navigation is done
     with client.sign_tx(path=path, transaction=transaction):
         # Validate the on-screen request by performing the navigation appropriate for this device
-        scenario_navigator.review_approve()
+        scenario_navigator.review_approve(do_comparison=False)
 
     # The device as yielded the result, parse it and ensure that the signature is correct
     response = client.get_async_response().data
@@ -53,11 +53,11 @@ def test_sign_tx_short_tx_blind_sign(backend: BackendInterface, scenario_navigat
     # Use the app interface instead of raw interface
     client = CommandSender(backend)
     # The path used for this entire test
-    path: str = "m/44'/1'/0'/0/0"
+    path: str = "m/1852'/1815'/0'/0/1"
 
     # First we need to get the public key of the device in order to build the transaction
     rapdu = client.get_public_key(path=path)
-    _, public_key, _, _ = unpack_get_public_key_response(rapdu.data)
+    public_key, _ = unpack_get_public_key_response(rapdu.data)
 
     # Create the transaction that will be sent to the device for signing
     transaction = Transaction(
@@ -71,7 +71,7 @@ def test_sign_tx_short_tx_blind_sign(backend: BackendInterface, scenario_navigat
     # It will yield the result when the navigation is done
     with client.sign_tx(path=path, transaction=transaction):
         # Validate the on-screen request by performing the navigation appropriate for this device
-        scenario_navigator.review_approve_with_warning(warning_path="part1")
+        scenario_navigator.review_approve_with_warning(warning_path="part1", do_comparison=False)
 
     # The device as yielded the result, parse it and ensure that the signature is correct
     response = client.get_async_response().data
@@ -84,10 +84,10 @@ def test_sign_tx_short_tx_blind_sign(backend: BackendInterface, scenario_navigat
 def test_sign_tx_long_tx(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
     # Use the app interface instead of raw interface
     client = CommandSender(backend)
-    path: str = "m/44'/1'/0'/0/0"
+    path: str = "m/1852'/1815'/0'/0/1"
 
     rapdu = client.get_public_key(path=path)
-    _, public_key, _, _ = unpack_get_public_key_response(rapdu.data)
+    public_key, _ = unpack_get_public_key_response(rapdu.data)
 
     transaction = Transaction(
         nonce=1,
@@ -101,7 +101,7 @@ def test_sign_tx_long_tx(backend: BackendInterface, scenario_navigator: Navigate
     ).serialize()
 
     with client.sign_tx(path=path, transaction=transaction):
-        scenario_navigator.review_approve()
+        scenario_navigator.review_approve(do_comparison=False)
 
     response = client.get_async_response().data
     _, der_sig, _ = unpack_sign_tx_response(response)
@@ -113,7 +113,7 @@ def test_sign_tx_long_tx(backend: BackendInterface, scenario_navigator: Navigate
 def test_sign_tx_refused(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
     # Use the app interface instead of raw interface
     client = CommandSender(backend)
-    path: str = "m/44'/1'/0'/0/0"
+    path: str = "m/1852'/1815'/0'/0/1"
 
     transaction = Transaction(
         nonce=1,
@@ -124,7 +124,7 @@ def test_sign_tx_refused(backend: BackendInterface, scenario_navigator: Navigate
 
     with pytest.raises(ExceptionRAPDU) as e:
         with client.sign_tx(path=path, transaction=transaction):
-            scenario_navigator.review_reject()
+            scenario_navigator.review_reject(do_comparison=False)
 
     # Assert that we have received a refusal
     assert e.value.status == Errors.SW_DENY

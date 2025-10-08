@@ -32,8 +32,19 @@ from standalone.input_files.derive_native_script import NativeScript, NativeScri
 from standalone.input_files.derive_native_script import NativeScriptParamsPubkey, NativeScriptParamsInvalid
 from standalone.input_files.derive_native_script import NativeScriptParamsScripts, NativeScriptParamsNofK
 
-from application_client.app_def import InsType, AddressType, StakingDataSourceType
+from application_client.app_def import AddressType, StakingDataSourceType
 
+class InsType(IntEnum):
+    GET_VERSION = 0x03
+    GET_APP_NAME = 0x04
+    GET_SERIAL = 0x01
+    GET_PUBLIC_KEY = 0x10
+    DERIVE_PUBLIC_ADDR = 0x11
+    DERIVE_SCRIPT_HASH = 0x12
+    SIGN_TX = 0x21
+    SIGN_OP_CERT = 0x22
+    SIGN_CIP36_VOTE = 0x23
+    SIGN_MSG = 0x24
 
 class P1Type(IntEnum):
     # Derive Address

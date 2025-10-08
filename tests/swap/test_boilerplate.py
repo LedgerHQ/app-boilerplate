@@ -1,7 +1,7 @@
 import pytest
 from ledger_app_clients.exchange.test_runner import ExchangeTestRunner, ALL_TESTS_EXCEPT_MEMO_THORSWAP_AND_FEES
 
-from application_client.boilerplate_currency_utils import BOL_PATH
+from tests.swap.boilerplate_currency_utils import BOL_PATH
 from application_client.boilerplate_command_sender import BoilerplateCommandSender, Errors as BoilerplateErrors
 from application_client.boilerplate_transaction import Transaction
 
