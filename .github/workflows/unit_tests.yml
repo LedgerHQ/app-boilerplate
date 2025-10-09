@@ -12,7 +12,7 @@ on:
 jobs:
   job_unit_test:
     name: Call Ledger unit_test
-    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_unit_tests.yml@v1
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_unit_tests.yml@cev/B2CA-2306_security
     secrets: inherit
     with:
       test_directory: unit-tests
