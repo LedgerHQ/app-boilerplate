@@ -16,5 +16,5 @@ on:
 jobs:
   analyse:
     name: Call Ledger CodeQL analysis
-    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_codeql_checks.yml@v1
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_codeql_checks.yml@cev/B2CA-2306_security
     secrets: inherit
