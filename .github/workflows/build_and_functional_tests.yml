@@ -50,4 +50,3 @@ jobs:
     with:
       download_app_binaries_artifact: "app_boilerplate_binaries"
       regenerate_snapshots: ${{ github.event_name == 'workflow_dispatch' && inputs.golden_run == 'Open a PR' }}
-      swap_test_dir: "tests/swap"
