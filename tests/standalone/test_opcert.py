@@ -42,9 +42,9 @@ def test_opCert(device: Device,
             navigator.navigate_until_text(NavInsID.RIGHT_CLICK, [NavInsID.BOTH_CLICK], "Sign certificate")
         else:
             if testCase.warning:
-                scenario_navigator.review_approve_with_warning(do_comparison=False)
+                scenario_navigator.review_approve_with_warning()
             else:
-                scenario_navigator.review_approve(do_comparison=False)
+                scenario_navigator.review_approve()
     # Check the status (Asynchronous)
     response = client.get_async_response()
     assert response and response.status == Errors.SW_SUCCESS

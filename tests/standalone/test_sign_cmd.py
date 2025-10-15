@@ -65,7 +65,7 @@ def test_sign_tx_simple(device: Device,
             navigator.navigate_until_text(NavInsID.RIGHT_CLICK, [NavInsID.BOTH_CLICK], "Sign transaction")
         else:
             # Check if test case expects warnings (for now we don't have warnings in simple tests)
-            scenario_navigator.review_approve(do_comparison=False)
+            scenario_navigator.review_approve()
 
     # Get the response from the last chunk (should contain tx hash)
     response = client.get_async_response()
