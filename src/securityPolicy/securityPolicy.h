@@ -145,11 +145,14 @@ security_policy_t policyForSignTxCollateralInput(const sign_tx_signingmode_t txS
 
 security_policy_t policyForSignTxRequiredSigner(const sign_tx_signingmode_t txSigningMode,
                                                 sign_tx_required_signer_t* requiredSigner);
+*/
 
 security_policy_t policyForSignTxWitness(sign_tx_signingmode_t txSigningMode,
                                          const bip44_path_t* witnessPath,
                                          bool mintPresent,
                                          const bip44_path_t* poolOwnerPath);
+
+/*
 
 security_policy_t policyForSignTxTotalCollateral();
 

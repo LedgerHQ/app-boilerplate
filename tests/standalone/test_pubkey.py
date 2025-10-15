@@ -24,6 +24,8 @@ def test_pubkey_confirm(device: Device,
                         testCase: PubKeyTestCase) -> None:
     """Check Public Key with confirmation"""
 
+    # TODO why are snapshots missing?
+
     # turn off silent pubkey export, confirmation will be asked for each key
     nav_instructions = get_navigation_for_toggle_silent_pubkey_export(device)
     navigator.navigate(nav_instructions, screen_change_before_first_instruction=False)

@@ -56,6 +56,17 @@ typedef struct {
 #define ED25519_SIGNATURE_LENGTH 64
 
 /**
+ * Structure for single account data - enforces single account security model.
+ * Tracks the account number and Byron/Shelley prefix of the first witness
+ * to ensure all subsequent witnesses use the same account.
+ */
+typedef struct {
+    bool isStored;           /// whether account data has been stored
+    bool isByron;            /// whether the stored path uses Byron prefix (true) or Shelley prefix (false)
+    uint32_t accountNumber;  /// the account number extracted from BIP44 path
+} single_account_data_t;
+
+/**
  * Structure for transaction information context.
  */
 typedef struct {
@@ -69,6 +80,9 @@ typedef struct {
     uint16_t current_witness;             /// current witness being processed
     bip44_path_t witness_path;            /// current witness path
     uint8_t witness_signature[ED25519_SIGNATURE_LENGTH];  /// current witness signature
+
+    // Single account security model - ensures all witnesses use same account
+    single_account_data_t single_account_data;  /// tracks account for multi-witness transactions
 
     // Warning collection (flist head) - network warnings only for now
     void* warning_list;                   /// head of warning flist (tx_warning_list_item_t)

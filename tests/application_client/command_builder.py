@@ -49,13 +49,13 @@ class InsType(IntEnum):
     SIGN_MSG = 0x24
 
 class P1Type(IntEnum):
-    P2_LAST = 0x00
-    P2_MORE = 0x80
+    P2_UNUSED = 0x00
     P1_START = 0x00
 
-    # SignTx new protocol
-    P1_TX_INIT = 0xFF
+    # SignTx new protocol (P1 controls flow, P2 is always UNUSED)
+    P1_TX_INIT = 0x00
     P1_TX_DATA_CHUNK = 0x01
+    P1_TX_CHUNK_LAST = 0x02
 
     # Derive Address
     P1_RETURN = 0x01

@@ -129,7 +129,7 @@ void ui_getAccountScreen(char* line1,
     explicit_bzero(line1, line1Size);
     explicit_bzero(line2, line2Size);
 
-    uint32_t account = unharden(bip44_getAccount(path));
+    uint32_t account = bip44_unharden(bip44_getAccount(path));
     STATIC_ASSERT(sizeof(account + 1) <= sizeof(unsigned), "oversized type for %u");
     STATIC_ASSERT(!IS_SIGNED(account + 1), "signed type for %u");
     if (bip44_hasByronPrefix(path)) {
@@ -213,7 +213,7 @@ void ui_getRewardAccountScreen(char* firstLine,
             ASSERT(bip44_isOrdinaryStakingKeyPath(&rewardAccount->path));
 
             {
-                uint32_t account = unharden(bip44_getAccount(&rewardAccount->path));
+                uint32_t account = bip44_unharden(bip44_getAccount(&rewardAccount->path));
                 STATIC_ASSERT(sizeof(account + 1) <= sizeof(unsigned), "oversized type for %u");
                 STATIC_ASSERT(!IS_SIGNED(account + 1), "signed type for %u");
                 snprintf(firstLine, firstLineSize, "Reward account #%u  ", account + 1);

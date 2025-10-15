@@ -35,8 +35,8 @@ static const uint32_t ADA_COIN_TYPE = 1815;
 static const uint32_t HARDENED_BIP32 = ((uint32_t) 1 << 31);
 
 bool isHardened(uint32_t value);
-uint32_t harden(uint32_t value);
-uint32_t unharden(uint32_t value);
+uint32_t bip44_harden(uint32_t value);
+uint32_t bip44_unharden(uint32_t value);
 
 // TODO hide these two?
 bool bip44_check_path(bip44_path_t* pathSpec, const uint8_t* dataBuffer, size_t dataSize);

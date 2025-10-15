@@ -67,12 +67,12 @@ bool isHardened(uint32_t value) {
     return value == (value | HARDENED_BIP32);
 }
 
-uint32_t harden(uint32_t value) {
+uint32_t bip44_harden(uint32_t value) {
     ASSERT(!isHardened(value));
     return value | HARDENED_BIP32;
 }
 
-uint32_t unharden(uint32_t value) {
+uint32_t bip44_unharden(uint32_t value) {
     ASSERT(isHardened(value));
     return value & (~HARDENED_BIP32);
 }
@@ -82,8 +82,8 @@ bool bip44_hasByronPrefix(const bip44_path_t* pathSpec) {
 #define CHECK(cond) \
     if (!(cond)) return false
     CHECK(pathSpec->length > BIP44_I_COIN_TYPE);
-    CHECK(pathSpec->path[BIP44_I_PURPOSE] == harden(PURPOSE_BYRON));
-    CHECK(pathSpec->path[BIP44_I_COIN_TYPE] == harden(ADA_COIN_TYPE));
+    CHECK(pathSpec->path[BIP44_I_PURPOSE] == bip44_harden(PURPOSE_BYRON));
+    CHECK(pathSpec->path[BIP44_I_COIN_TYPE] == bip44_harden(ADA_COIN_TYPE));
     return true;
 #undef CHECK
 }
@@ -93,8 +93,8 @@ bool bip44_hasShelleyPrefix(const bip44_path_t* pathSpec) {
 #define CHECK(cond) \
     if (!(cond)) return false
     CHECK(pathSpec->length > BIP44_I_COIN_TYPE);
-    CHECK(pathSpec->path[BIP44_I_PURPOSE] == harden(PURPOSE_SHELLEY));
-    CHECK(pathSpec->path[BIP44_I_COIN_TYPE] == harden(ADA_COIN_TYPE));
+    CHECK(pathSpec->path[BIP44_I_PURPOSE] == bip44_harden(PURPOSE_SHELLEY));
+    CHECK(pathSpec->path[BIP44_I_COIN_TYPE] == bip44_harden(ADA_COIN_TYPE));
     return true;
 #undef CHECK
 }
@@ -109,8 +109,8 @@ bool bip44_hasMultisigWalletKeyPrefix(const bip44_path_t* pathSpec) {
 #define CHECK(cond) \
     if (!(cond)) return false
     CHECK(pathSpec->length > BIP44_I_COIN_TYPE);
-    CHECK(pathSpec->path[BIP44_I_PURPOSE] == harden(PURPOSE_MULTISIG));
-    CHECK(pathSpec->path[BIP44_I_COIN_TYPE] == harden(ADA_COIN_TYPE));
+    CHECK(pathSpec->path[BIP44_I_PURPOSE] == bip44_harden(PURPOSE_MULTISIG));
+    CHECK(pathSpec->path[BIP44_I_COIN_TYPE] == bip44_harden(ADA_COIN_TYPE));
     return true;
 #undef CHECK
 }
@@ -120,8 +120,8 @@ bool bip44_hasMintKeyPrefix(const bip44_path_t* pathSpec) {
 #define CHECK(cond) \
     if (!(cond)) return false
     CHECK(pathSpec->length > BIP44_I_COIN_TYPE);
-    CHECK(pathSpec->path[BIP44_I_PURPOSE] == harden(PURPOSE_MINT));
-    CHECK(pathSpec->path[BIP44_I_COIN_TYPE] == harden(ADA_COIN_TYPE));
+    CHECK(pathSpec->path[BIP44_I_PURPOSE] == bip44_harden(PURPOSE_MINT));
+    CHECK(pathSpec->path[BIP44_I_COIN_TYPE] == bip44_harden(ADA_COIN_TYPE));
     return true;
 #undef CHECK
 }
@@ -131,8 +131,8 @@ bool bip44_hasPoolColdKeyPrefix(const bip44_path_t* pathSpec) {
 #define CHECK(cond) \
     if (!(cond)) return false
     CHECK(pathSpec->length > BIP44_I_COIN_TYPE);
-    CHECK(pathSpec->path[BIP44_I_PURPOSE] == harden(PURPOSE_POOL_COLD_KEY));
-    CHECK(pathSpec->path[BIP44_I_COIN_TYPE] == harden(ADA_COIN_TYPE));
+    CHECK(pathSpec->path[BIP44_I_PURPOSE] == bip44_harden(PURPOSE_POOL_COLD_KEY));
+    CHECK(pathSpec->path[BIP44_I_COIN_TYPE] == bip44_harden(ADA_COIN_TYPE));
     return true;
 #undef CHECK
 }
@@ -142,8 +142,8 @@ bool bip44_hasCVoteKeyPrefix(const bip44_path_t* pathSpec) {
 #define CHECK(cond) \
     if (!(cond)) return false
     CHECK(pathSpec->length > BIP44_I_COIN_TYPE);
-    CHECK(pathSpec->path[BIP44_I_PURPOSE] == harden(PURPOSE_CVOTE_KEY));
-    CHECK(pathSpec->path[BIP44_I_COIN_TYPE] == harden(ADA_COIN_TYPE));
+    CHECK(pathSpec->path[BIP44_I_PURPOSE] == bip44_harden(PURPOSE_CVOTE_KEY));
+    CHECK(pathSpec->path[BIP44_I_COIN_TYPE] == bip44_harden(ADA_COIN_TYPE));
     return true;
 #undef CHECK
 }
@@ -173,7 +173,7 @@ static bool bip44_hasReasonableAccount(const bip44_path_t* pathSpec) {
     if (!bip44_containsAccount(pathSpec)) return false;
     uint32_t account = bip44_getAccount(pathSpec);
     if (!isHardened(account)) return false;
-    return unharden(account) <= MAX_REASONABLE_ACCOUNT;
+    return bip44_unharden(account) <= MAX_REASONABLE_ACCOUNT;
 }
 
 static bool bip44_hasReasonableMintPolicy(const bip44_path_t* pathSpec) {
@@ -181,7 +181,7 @@ static bool bip44_hasReasonableMintPolicy(const bip44_path_t* pathSpec) {
     uint32_t mintPolicyIndex = bip44_getMintPolicy(pathSpec);
 
     if (!isHardened(mintPolicyIndex)) return false;
-    return unharden(mintPolicyIndex) <= MAX_REASONABLE_MINT_POLICY_INDEX;
+    return bip44_unharden(mintPolicyIndex) <= MAX_REASONABLE_MINT_POLICY_INDEX;
 }
 
 static bool bip44_hasReasonablePoolColdKeyIndex(const bip44_path_t* pathSpec) {
@@ -189,7 +189,7 @@ static bool bip44_hasReasonablePoolColdKeyIndex(const bip44_path_t* pathSpec) {
     uint32_t coldKeyIndex = bip44_getColdKeyIndex(pathSpec);
 
     if (!isHardened(coldKeyIndex)) return false;
-    return unharden(coldKeyIndex) <= MAX_REASONABLE_COLD_KEY_INDEX;
+    return bip44_unharden(coldKeyIndex) <= MAX_REASONABLE_COLD_KEY_INDEX;
 }
 
 // ChainType
@@ -327,7 +327,7 @@ bool bip44_isPoolColdKeyPath(const bip44_path_t* pathSpec) {
     if (!(cond)) return false
     CHECK(pathSpec->length == BIP44_I_POOL_COLD_KEY + 1);
     CHECK(bip44_hasPoolColdKeyPrefix(pathSpec));
-    CHECK(pathSpec->path[BIP44_I_POOL_COLD_KEY_USECASE] == harden(0));
+    CHECK(pathSpec->path[BIP44_I_POOL_COLD_KEY_USECASE] == bip44_harden(0));
     CHECK(isHardened(pathSpec->path[BIP44_I_POOL_COLD_KEY]));
     return true;
 #undef CHECK
@@ -380,7 +380,7 @@ size_t bip44_printToStr(const bip44_path_t* pathSpec, char* out, size_t outSize)
         const uint32_t value = pathSpec->path[i];
 
         if (isHardened(value)) {
-            WRITE("/%u'", unharden(value));
+            WRITE("/%u'", bip44_unharden(value));
         } else {
             WRITE("/%u", value);
         }

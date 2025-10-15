@@ -4,10 +4,7 @@
 #include "bip44.h"
 #include "cardano.h"
 #include "txHashBuilder.h"
-
-/*
-#include "signTxUtils.h"
-*/
+#include "transaction/tx_utils.h"
 
 #include "securityPolicy.h"
 
@@ -1396,6 +1393,8 @@ security_policy_t policyForSignTxWithdrawal(sign_tx_signingmode_t txSigningMode,
     DENY();  // should not be reached
 }
 
+*/
+
 // TODO move witness policies in the proper place, at the end of tx
 static inline security_policy_t _ordinaryWitnessPolicy(const bip44_path_t* path, bool mintPresent) {
     switch (bip44_classifyPath(path)) {
@@ -1572,6 +1571,8 @@ security_policy_t policyForSignTxWitness(sign_tx_signingmode_t txSigningMode,
 
     DENY();  // should not be reached
 }
+
+/*
 
 // For transaction auxiliary data
 security_policy_t policyForSignTxAuxData(aux_data_type_t auxDataType) {

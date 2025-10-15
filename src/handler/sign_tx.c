@@ -289,6 +289,34 @@ int handler_sign_tx_witness(buffer_t *cdata) {
            G_context.tx_info.current_witness,
            path_len);
 
+    // Check security policy for witness signing
+    // Determine if mint is present in the transaction
+    bool mintPresent = false; // TODO mint not implemented yet
+
+    // Get pool owner path if this is a pool registration
+    const bip44_path_t* poolOwnerPath = NULL;
+    if (G_context.tx_info.transaction.txSigningMode == SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER ||
+        G_context.tx_info.transaction.txSigningMode == SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR) {
+        // Extract pool owner path from pool registration certificate if available
+        // TODO For now, we'll pass NULL and let the policy handle it
+        poolOwnerPath = NULL;
+    }
+
+    security_policy_t policy = policyForSignTxWitness(
+        G_context.tx_info.transaction.txSigningMode,
+        &G_context.tx_info.witness_path,
+        mintPresent,
+        poolOwnerPath
+    );
+
+    TRACE("Witness security policy: %d", (int) policy);
+
+    // Handle DENY policy
+    if (policy == POLICY_DENY) {
+        TRACE("Security policy DENY - rejecting witness");
+        return io_send_sw(ERR_REJECTED_BY_POLICY);
+    }
+
     // Sign the transaction hash with the witness path
     getWitness(&G_context.tx_info.witness_path,
                G_context.tx_info.tx_hash,
@@ -298,7 +326,14 @@ int handler_sign_tx_witness(buffer_t *cdata) {
 
     PRINTF("Witness signature: %.*H\n", ED25519_SIGNATURE_LENGTH, G_context.tx_info.witness_signature);
 
-    // Increment witness counter
+    // For SHOW and PROMPT policies, display witness to user before returning signature
+    if (policy == POLICY_SHOW_BEFORE_RESPONSE || policy == POLICY_PROMPT_BEFORE_RESPONSE ||
+        policy == POLICY_PROMPT_WARN_UNUSUAL) {
+        // Display witness path and request user confirmation
+        return ui_display_witness(&G_context.tx_info.witness_path, policy);
+    }
+
+    // For ALLOW_WITHOUT_PROMPT, increment counter and send signature directly
     G_context.tx_info.current_witness++;
 
     // Send signature back to client

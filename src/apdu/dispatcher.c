@@ -89,22 +89,17 @@ int apdu_dispatcher(const command_t *cmd) {
                 return handler_sign_tx_witness(&buf);
             }
 
-            // Transaction signing with new protocol:
-            // P1 = P1_TX_INIT (0xFF) for INIT, P1_TX_DATA_CHUNK (0x01) for data chunks
-            // P2 = P2_MORE (0x80) or P2_LAST (0x00)
+            // Transaction signing with redesigned protocol:
+            // P1 controls flow: P1_TX_INIT (0x00), P1_TX_DATA_CHUNK (0x01), P1_TX_CHUNK_LAST (0x02)
+            // P2 must always be P2_UNUSED (0x00)
 
-            if (cmd->p1 == P1_TX_INIT) {
-                // INIT APDU - P2 must be MORE (we always expect data after INIT)
-                if (cmd->p2 != P2_MORE) {
-                    return io_send_sw(SW_WRONG_P1P2);
-                }
-            } else if (cmd->p1 == P1_TX_DATA_CHUNK) {
-                // Data chunk - P2 must be LAST or MORE
-                if (cmd->p2 != P2_LAST && cmd->p2 != P2_MORE) {
-                    return io_send_sw(SW_WRONG_P1P2);
-                }
-            } else {
-                // Invalid P1 value
+            // P2 must be unused for all transaction APDU types
+            if (cmd->p2 != P2_UNUSED) {
+                return io_send_sw(SW_WRONG_P1P2);
+            }
+
+            // Validate P1 value
+            if (cmd->p1 != P1_TX_INIT && cmd->p1 != P1_TX_DATA_CHUNK && cmd->p1 != P1_TX_CHUNK_LAST) {
                 return io_send_sw(SW_WRONG_P1P2);
             }
 
@@ -116,7 +111,10 @@ int apdu_dispatcher(const command_t *cmd) {
             buf.size = cmd->lc;
             buf.offset = 0;
 
-            return handler_sign_tx(&buf, cmd->p1, (bool) (cmd->p2 & P2_MORE));
+            // Determine if more data follows based on P1
+            // P1_TX_CHUNK_LAST signals no more data, all others signal more data to come
+            bool more = (cmd->p1 != P1_TX_CHUNK_LAST);
+            return handler_sign_tx(&buf, cmd->p1, more);
 
         case INS_SIGN_OPCERT:
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {

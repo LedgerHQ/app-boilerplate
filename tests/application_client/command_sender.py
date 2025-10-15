@@ -142,8 +142,8 @@ class CommandSender:
         data.append(0x02 if include_ttl else 0x01)  # ITEM_INCLUDED_YES or ITEM_INCLUDED_NO
 
         from application_client.command_builder import P1Type
-        # P1 = P1_TX_INIT for INIT APDU, P2 = P2_MORE for more chunks to follow
-        return self._exchange(self._cmd_builder._serialize(InsType.SIGN_TX, P1Type.P1_TX_INIT, P1Type.P2_MORE, bytes(data)))
+        # P1 = P1_TX_INIT for INIT APDU, P2 = P2_UNUSED
+        return self._exchange(self._cmd_builder._serialize(InsType.SIGN_TX, P1Type.P1_TX_INIT, P1Type.P2_UNUSED, bytes(data)))
 
     def sign_tx_chunk(self, tx_data: bytes, more: bool = True) -> RAPDU:
         """APDU Sign TX Data Chunk (synchronous)
@@ -156,11 +156,10 @@ class CommandSender:
             Response APDU
         """
         from application_client.command_builder import P1Type
-        # P1 = P1_TX_DATA_CHUNK for data chunks (both intermediate and final)
-        # P2 = P2_MORE (more chunks) or P2_LAST (final chunk)
-        p1 = P1Type.P1_TX_DATA_CHUNK
-        p2 = P1Type.P2_MORE if more else P1Type.P2_LAST
-        return self._exchange(self._cmd_builder._serialize(InsType.SIGN_TX, p1, p2, tx_data))
+        # P1 determines chunk flow: P1_TX_DATA_CHUNK (0x01) for intermediate, P1_TX_CHUNK_LAST (0x02) for final
+        # P2 = P2_UNUSED
+        p1 = P1Type.P1_TX_DATA_CHUNK if more else P1Type.P1_TX_CHUNK_LAST
+        return self._exchange(self._cmd_builder._serialize(InsType.SIGN_TX, p1, P1Type.P2_UNUSED, tx_data))
 
     @contextmanager
     def sign_tx_chunk_async(self, tx_data: bytes, more: bool = True) -> Generator[None, None, None]:
@@ -174,11 +173,10 @@ class CommandSender:
             Generator
         """
         from application_client.command_builder import P1Type
-        # P1 = P1_TX_DATA_CHUNK for data chunks (both intermediate and final)
-        # P2 = P2_MORE (more chunks) or P2_LAST (final chunk)
-        p1 = P1Type.P1_TX_DATA_CHUNK
-        p2 = P1Type.P2_MORE if more else P1Type.P2_LAST
-        with self._exchange_async(self._cmd_builder._serialize(InsType.SIGN_TX, p1, p2, tx_data)):
+        # P1 determines chunk flow: P1_TX_DATA_CHUNK (0x01) for intermediate, P1_TX_CHUNK_LAST (0x02) for final
+        # P2 = P2_UNUSED
+        p1 = P1Type.P1_TX_DATA_CHUNK if more else P1Type.P1_TX_CHUNK_LAST
+        with self._exchange_async(self._cmd_builder._serialize(InsType.SIGN_TX, p1, P1Type.P2_UNUSED, tx_data)):
             yield
 
     @contextmanager
