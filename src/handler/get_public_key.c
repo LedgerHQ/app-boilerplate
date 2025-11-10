@@ -42,8 +42,6 @@ int handler_get_public_key(buffer_t *cdata) {
     TRACE();
     explicit_bzero(&G_context, sizeof(G_context));
     G_context.req_type = REQUEST_EXPORT_PUBKEY;
-    G_context.state = STATE_NONE; // TODO meaningless here? rethink
-
 
     if (!buffer_read_bip44_path(cdata, &G_context.pk_info.path)) {
         TRACE();
@@ -67,7 +65,6 @@ int handler_get_public_key(buffer_t *cdata) {
             return io_send_sw(error);
         }
     }
-    G_context.state = STATE_PARSED;
 
     return ui_display_pubkey(policy);
 }
@@ -76,27 +73,12 @@ void finalize_pubkey_export(bool confirmed) {
     TRACE("confirmed = %d", confirmed);
 
     if (!confirmed) {
-        G_context.state = STATE_NONE;
         io_send_sw(SW_DENY);
         return;
     }
 
-    // TODO change the states to be separate from tx parsing
-    TRACE("G_context.req_type: %d", G_context.req_type);
-    TRACE("G_context.state: %d", G_context.state);
     ASSERT(G_context.req_type == REQUEST_EXPORT_PUBKEY);
-    ASSERT(G_context.state == STATE_PARSED);
 
-    // TODO what state to leave it in?
-    G_context.state = STATE_NONE;
-
-    {
-        int r = io_send_response_pointer((uint8_t*) &G_context.pk_info.extPubKey, SIZEOF(G_context.pk_info.extPubKey), SW_OK);
-        if (r == -1) {
-            G_context.state = STATE_NONE;
-            io_send_sw(SW_IO_FAIL);
-        }
-    }
-
-    // we have successfully exported the pubkey
+    // Send the extended public key back to the client
+    io_send_response_pointer((uint8_t*) &G_context.pk_info.extPubKey, SIZEOF(G_context.pk_info.extPubKey), SW_OK);
 }

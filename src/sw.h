@@ -80,6 +80,10 @@
  * Status word for signature fail.
  */
 #define SW_SIGNATURE_FAIL 0xB008
+/**
+ * Status word for insufficient memory.
+ */
+#define SW_INSUFFICIENT_MEMORY 0xB009
 
 
 // TODO

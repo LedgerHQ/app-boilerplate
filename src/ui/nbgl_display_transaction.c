@@ -39,27 +39,38 @@
 #include "addressUtils/addressUtilsShelley.h"
 #include "nbgl_screens.h"
 #include "utils/textUtils.h"
+#include "ui_utils.h"
+#include "mem_utils.h"
 
-// Buffer where the transaction fee string is written
-static char g_fee[30];
-// Buffer where the transaction TTL string is written
-static char g_ttl[30];
+// Dynamically allocated buffers for transaction display
+static char *g_fee = NULL;
+static char *g_ttl = NULL;
+static char *g_warning_msg = NULL;
+static nbgl_contentCenter_t *g_warningInfo = NULL;
+static nbgl_warningDetails_t *g_warningDetails = NULL;
+static nbgl_warning_t *g_warning = NULL;
 
-// Dynamic arrays for pairs and their string buffers
-static nbgl_contentTagValue_t *g_pairs = NULL;
-static char **g_pair_values = NULL;
+// Number of pairs in the current transaction display
 static uint16_t g_num_pairs = 0;
 
-static nbgl_contentTagValueList_t pairList;
-
-// Warning info for network warnings
-static char g_warning_msg[128];
-static nbgl_contentCenter_t warningInfo;
-static nbgl_warningDetails_t warningDetails;
-static nbgl_warning_t warning = {0};
+/**
+ * Cleanup dynamically allocated buffers for transaction display
+ */
+static void tx_buffer_cleanup(void) {
+    mem_buffer_cleanup((void **) &g_fee);
+    mem_buffer_cleanup((void **) &g_ttl);
+    mem_buffer_cleanup((void **) &g_warning_msg);
+    mem_buffer_cleanup((void **) &g_warningInfo);
+    mem_buffer_cleanup((void **) &g_warningDetails);
+    mem_buffer_cleanup((void **) &g_warning);
+    ui_pairs_cleanup();
+}
 
 // called when long press button on 3rd page is long-touched or when reject footer is touched
 static void review_choice(bool confirm) {
+    // Cleanup display buffers
+    tx_buffer_cleanup();
+
     if (confirm) {
         // User approved transaction
         // Set state to APPROVED and return tx hash
@@ -100,6 +111,20 @@ int ui_display_transaction(void) {
         return io_send_sw(SW_BAD_STATE);
     }
 
+    // Allocate display buffers
+    if (!mem_buffer_allocate((void **) &g_fee, MAX_ADA_AMOUNT_STRING_SIZE)) {
+        tx_buffer_cleanup();
+        return io_send_sw(SW_TX_PARSING_FAIL);
+    }
+    if (!mem_buffer_allocate((void **) &g_ttl, MAX_ADA_AMOUNT_STRING_SIZE)) {
+        tx_buffer_cleanup();
+        return io_send_sw(SW_TX_PARSING_FAIL);
+    }
+    if (!mem_buffer_allocate((void **) &g_warning_msg, MAX_WARNING_MESSAGE_SIZE)) {
+        tx_buffer_cleanup();
+        return io_send_sw(SW_TX_PARSING_FAIL);
+    }
+
     // Calculate number of pairs: (num_outputs * 2) + 1 for fee + (1 for TTL if included) + 1 for tx hash
     // Each output needs 2 pairs: address + amount
     g_num_pairs = (G_context.tx_info.transaction.num_outputs * 2) + 2;
@@ -107,31 +132,23 @@ int ui_display_transaction(void) {
         g_num_pairs++;  // Add 1 for TTL
     }
 
-    // Allocate pairs array
-    g_pairs = (nbgl_contentTagValue_t *) app_mem_alloc(g_num_pairs * sizeof(nbgl_contentTagValue_t));
-    if (g_pairs == NULL) {
-        return io_send_sw(SW_TX_PARSING_FAIL);
-    }
-
-    // Allocate array of string pointers for values
-    g_pair_values = (char **) app_mem_alloc(g_num_pairs * sizeof(char *));
-    if (g_pair_values == NULL) {
+    // Initialize common pairs structure
+    if (!ui_pairs_init(g_num_pairs)) {
+        tx_buffer_cleanup();
         return io_send_sw(SW_TX_PARSING_FAIL);
     }
 
     uint16_t pair_idx = 0;
 
     // Add fee first
-    explicit_bzero(g_fee, sizeof(g_fee));
-    str_formatAdaAmount(G_context.tx_info.transaction.fee, g_fee, sizeof(g_fee));
+    str_formatAdaAmount(G_context.tx_info.transaction.fee, g_fee, MAX_ADA_AMOUNT_STRING_SIZE);
     g_pairs[pair_idx].item = "Fee";
     g_pairs[pair_idx].value = g_fee;
     pair_idx++;
 
     // Add TTL if included
     if (G_context.tx_info.transaction.includeTtl) {
-        explicit_bzero(g_ttl, sizeof(g_ttl));
-        ui_getUint64Screen(g_ttl, sizeof(g_ttl), G_context.tx_info.transaction.ttl);
+        ui_getUint64Screen(g_ttl, MAX_ADA_AMOUNT_STRING_SIZE, G_context.tx_info.transaction.ttl);
         g_pairs[pair_idx].item = "TTL";
         g_pairs[pair_idx].value = g_ttl;
         pair_idx++;
@@ -191,7 +208,6 @@ int ui_display_transaction(void) {
         }
 
         g_pairs[pair_idx].value = addr_str;
-        g_pair_values[pair_idx] = addr_str;
         pair_idx++;
 
         // Allocate buffer for amount label (e.g., "Output 1 Amount")
@@ -216,7 +232,6 @@ int ui_display_transaction(void) {
         }
         snprintf(amount_str, 40, "BOL %.*s", sizeof(amount_formatted), amount_formatted);
         g_pairs[pair_idx].value = amount_str;
-        g_pair_values[pair_idx] = amount_str;
         pair_idx++;
 
         output_num++;
@@ -231,13 +246,7 @@ int ui_display_transaction(void) {
     }
     ui_getHexBufferScreen(tx_hash_str, 65, G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash));
     g_pairs[pair_idx].value = tx_hash_str;
-    g_pair_values[pair_idx] = tx_hash_str;
     pair_idx++;
-
-    // Setup list
-    pairList.nbMaxLinesForValue = 0;
-    pairList.nbPairs = g_num_pairs;
-    pairList.pairs = g_pairs;
 
     // Check if we have warnings to display
     const nbgl_warning_t* warningPtr = NULL;
@@ -245,13 +254,12 @@ int ui_display_transaction(void) {
         PRINTF("Warnings detected, preparing warning display\n");
 
         // Concatenate all warning messages
-        explicit_bzero(g_warning_msg, sizeof(g_warning_msg));
         size_t offset = 0;
         tx_warning_list_item_t *warning_node = (tx_warning_list_item_t *)G_context.tx_info.warning_list;
-        while (warning_node != NULL && offset < sizeof(g_warning_msg) - 2) {
+        while (warning_node != NULL && offset < MAX_WARNING_MESSAGE_SIZE - 2) {
             const char *msg = tx_warning_get_message(warning_node->type);
             size_t msg_len = strlen(msg);
-            if (offset + msg_len + 2 < sizeof(g_warning_msg)) {
+            if (offset + msg_len + 2 < MAX_WARNING_MESSAGE_SIZE) {
                 if (offset > 0) {
                     g_warning_msg[offset++] = '\n';
                 }
@@ -261,26 +269,37 @@ int ui_display_transaction(void) {
             warning_node = (tx_warning_list_item_t *)warning_node->node.next;
         }
 
-        // Setup warning structures
-        explicit_bzero(&warningInfo, sizeof(warningInfo));
-        warningInfo.icon = &WARNING_ICON;
-        warningInfo.title = "Transaction Warning";
-        warningInfo.description = g_warning_msg;
+        // Allocate and setup warning structures
+        if (!mem_buffer_allocate((void **) &g_warningInfo, sizeof(nbgl_contentCenter_t))) {
+            tx_buffer_cleanup();
+            return io_send_sw(SW_TX_PARSING_FAIL);
+        }
+        if (!mem_buffer_allocate((void **) &g_warningDetails, sizeof(nbgl_warningDetails_t))) {
+            tx_buffer_cleanup();
+            return io_send_sw(SW_TX_PARSING_FAIL);
+        }
+        if (!mem_buffer_allocate((void **) &g_warning, sizeof(nbgl_warning_t))) {
+            tx_buffer_cleanup();
+            return io_send_sw(SW_TX_PARSING_FAIL);
+        }
 
-        explicit_bzero(&warningDetails, sizeof(warningDetails));
-        warningDetails.title = "Transaction Warning";
-        warningDetails.type = CENTERED_INFO_WARNING;
-        warningDetails.centeredInfo.icon = &WARNING_ICON;
-        warningDetails.centeredInfo.title = "Transaction Warning";
-        warningDetails.centeredInfo.description = g_warning_msg;
+        // Setup warning content
+        g_warningInfo->icon = &WARNING_ICON;
+        g_warningInfo->title = "Transaction Warning";
+        g_warningInfo->description = g_warning_msg;
 
-        explicit_bzero(&warning, sizeof(warning));
-        warning.introDetails = &warningDetails;
-        warning.reviewDetails = &warningDetails;
-        warning.info = &warningInfo;
-        warning.introTopRightIcon = &WARNING_ICON;
-        warning.reviewTopRightIcon = &WARNING_ICON;
-        warningPtr = &warning;
+        g_warningDetails->title = "Transaction Warning";
+        g_warningDetails->type = CENTERED_INFO_WARNING;
+        g_warningDetails->centeredInfo.icon = &WARNING_ICON;
+        g_warningDetails->centeredInfo.title = "Transaction Warning";
+        g_warningDetails->centeredInfo.description = g_warning_msg;
+
+        g_warning->introDetails = g_warningDetails;
+        g_warning->reviewDetails = g_warningDetails;
+        g_warning->info = g_warningInfo;
+        g_warning->introTopRightIcon = &WARNING_ICON;
+        g_warning->reviewTopRightIcon = &WARNING_ICON;
+        warningPtr = g_warning;
 
         PRINTF("Warning display prepared\n");
     }
@@ -289,7 +308,7 @@ int ui_display_transaction(void) {
     if (warningPtr != NULL) {
         // Use advanced review with warnings
         nbgl_useCaseAdvancedReview(TYPE_TRANSACTION,
-                                  &pairList,
+                                  g_pairsList,
                                   &ICON_APP_CARDANO,
                                   "Review transaction",
                                   NULL,
@@ -300,11 +319,11 @@ int ui_display_transaction(void) {
     } else {
         // Use simple review without warnings
         nbgl_useCaseReview(TYPE_TRANSACTION,
-                          &pairList,
+                          g_pairsList,
                           &ICON_APP_CARDANO,
                           "Review transaction",
                           NULL,
-#ifdef SCREEN_SIZE_WALLET
+#ifdef SCREEN_SIZE_WALLET // TODO what is this?
                           "Sign transaction",
 #else
                           NULL,

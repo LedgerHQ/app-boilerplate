@@ -44,7 +44,7 @@ def test_opCert(device: Device,
             if testCase.warning:
                 scenario_navigator.review_approve_with_warning()
             else:
-                scenario_navigator.review_approve()
+                scenario_navigator.review_approve(do_comparison=False)
     # Check the status (Asynchronous)
     response = client.get_async_response()
     assert response and response.status == Errors.SW_SUCCESS

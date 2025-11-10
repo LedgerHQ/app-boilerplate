@@ -48,6 +48,12 @@
 #define MAX_UINT64_STRING_SIZE 21
 
 /**
+ * Buffer sizes for UI display strings.
+ */
+#define MAX_ADA_AMOUNT_STRING_SIZE 30      // For formatted ADA amounts (e.g., "123.456789 ADA")
+#define MAX_WARNING_MESSAGE_SIZE 128       // For warning/error message text
+
+/**
  * Item inclusion flags (for optional transaction fields).
  */
 enum { ITEM_INCLUDED_NO = 1, ITEM_INCLUDED_YES = 2 };

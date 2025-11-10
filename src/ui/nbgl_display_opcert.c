@@ -34,21 +34,16 @@
 #include "securityPolicy.h"
 #include "nbgl_screens.h"
 #include "sign_opcert.h"
+#include "mem_utils.h"
+#include "ui_utils.h"
 
-static char poolColdKeyPathStr[BIP44_PATH_STRING_SIZE_MAX + 1];
-static char poolKeyHashStr[BECH32_STRING_SIZE_MAX];
-static char kesKeyStr[BECH32_STRING_SIZE_MAX];
-static char kesPeriodString[MAX_UINT64_STRING_SIZE];
-static char issueCounterString[MAX_UINT64_STRING_SIZE];
-
-// Items:
-// pool cold key
-// pool id
-// KES public key
-// KES period
-// issue counter
-static nbgl_contentTagValue_t pairs[5];
-static nbgl_contentTagValueList_t pairList;
+// Dynamic buffers for reduced stack pressure during signing
+static char *poolColdKeyPathStr = NULL;
+static char *poolKeyHashStr = NULL;
+static char *kesKeyStr = NULL;
+static char *kesPeriodStr = NULL;
+static char *issueCounterStr = NULL;
+static nbgl_warning_t *g_warning = NULL;
 
 // Centered info for the main warning screen.
 static const nbgl_contentCenter_t warningInfo = {
@@ -66,14 +61,23 @@ static const nbgl_warningDetails_t warningDetails = {
   .centeredInfo.description= "Pool cold key path seems unusual"
 };
 
-static nbgl_warning_t warning = {0};
+/**
+ * Cleanup dynamically allocated buffers
+ */
+static void opcert_buffer_cleanup(void) {
+    mem_buffer_cleanup((void **) &poolColdKeyPathStr);
+    mem_buffer_cleanup((void **) &poolKeyHashStr);
+    mem_buffer_cleanup((void **) &kesKeyStr);
+    mem_buffer_cleanup((void **) &kesPeriodStr);
+    mem_buffer_cleanup((void **) &issueCounterStr);
+    mem_buffer_cleanup((void **) &g_warning);
+    ui_pairs_cleanup();
+}
 
 // called when long press button on 3rd page is long-touched or when reject footer is touched
 static void review_choice(bool confirm) {
-    TRACE("=== review_choice called ===");
-    TRACE("confirm: %s", confirm ? "true" : "false");
+    opcert_buffer_cleanup();
 
-    // Answer, display a status page and go back to main
     finalize_sign_opcert(confirm);
 
     if (confirm) {
@@ -83,14 +87,8 @@ static void review_choice(bool confirm) {
         TRACE("User rejected - showing rejected status");
         nbgl_useCaseReviewStatus(STATUS_TYPE_OPERATION_REJECTED, ui_menu_main);
     }
-    TRACE("=== review_choice end ===");
 }
 
-// Public function to start the transaction review
-// - Check if the app is in the right state for transaction review
-// - Format the amount and address strings in g_amount and g_address buffers
-// - Display the first screen of the transaction review
-// - Display a warning if the transaction is blind-signed
 int ui_display_opcert(security_policy_t securityPolicy) {
     TRACE("=== ui_display_opcert START ===");
     TRACE("securityPolicy: %d", securityPolicy);
@@ -103,55 +101,81 @@ int ui_display_opcert(security_policy_t securityPolicy) {
 
     const parsed_opcert_t* opcert = &G_context.opcert_info.opcert;
 
-    // pool cold key
-    ui_getPathScreen(poolColdKeyPathStr, SIZEOF(poolColdKeyPathStr), &opcert->poolColdKeyPath);
+    // Allocate and fill pool cold key path
+    if (!mem_buffer_allocate((void **) &poolColdKeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1)) {
+        TRACE("Failed to allocate poolColdKeyPathStr");
+        opcert_buffer_cleanup();
+        return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+    }
+    ui_getPathScreen(poolColdKeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1, &opcert->poolColdKeyPath);
 
-    // pool id
+    // Allocate and fill pool ID (key hash)
+    if (!mem_buffer_allocate((void **) &poolKeyHashStr, BECH32_STRING_SIZE_MAX)) {
+        TRACE("Failed to allocate poolKeyHashStr");
+        opcert_buffer_cleanup();
+        return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+    }
     uint8_t poolKeyHash[POOL_KEY_HASH_LENGTH] = {0};
     bip44_pathToKeyHash(&opcert->poolColdKeyPath, poolKeyHash, SIZEOF(poolKeyHash));
     ui_getBech32Screen(poolKeyHashStr,
-                        SIZEOF(poolKeyHashStr),
+                        BECH32_STRING_SIZE_MAX,
                         "pool",
                         poolKeyHash,
                         SIZEOF(poolKeyHash));
 
-    // KES public key
+    // Allocate and fill KES public key
+    if (!mem_buffer_allocate((void **) &kesKeyStr, BECH32_STRING_SIZE_MAX)) {
+        TRACE("Failed to allocate kesKeyStr");
+        opcert_buffer_cleanup();
+        return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+    }
     ui_getBech32Screen(kesKeyStr,
-                        SIZEOF(kesKeyStr),
+                        BECH32_STRING_SIZE_MAX,
                         "kes_vk",
                         opcert->kesPublicKey,
                         KES_PUBLIC_KEY_LENGTH);
 
-    // KES period
-    explicit_bzero(kesPeriodString, SIZEOF(kesPeriodString));
-    if (!format_u64(kesPeriodString, SIZEOF(kesPeriodString), opcert->kesPeriod)) {
-        // TODO perhaps just assert since this is a bug of not enough memory allocated
+    // Allocate and fill KES period
+    if (!mem_buffer_allocate((void **) &kesPeriodStr, MAX_UINT64_STRING_SIZE)) {
+        TRACE("Failed to allocate kesPeriodStr");
+        opcert_buffer_cleanup();
+        return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+    }
+    if (!format_u64(kesPeriodStr, MAX_UINT64_STRING_SIZE, opcert->kesPeriod)) {
+        TRACE("Failed to format KES period");
+        opcert_buffer_cleanup();
         return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
     }
 
-    // issue counter
-    explicit_bzero(issueCounterString, SIZEOF(issueCounterString));
-    if (!format_u64(issueCounterString, SIZEOF(issueCounterString), opcert->issueCounter)) {
-        // TODO perhaps just assert since this is a bug of not enough memory allocated
+    // Allocate and fill issue counter
+    if (!mem_buffer_allocate((void **) &issueCounterStr, MAX_UINT64_STRING_SIZE)) {
+        TRACE("Failed to allocate issueCounterStr");
+        opcert_buffer_cleanup();
+        return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+    }
+    if (!format_u64(issueCounterStr, MAX_UINT64_STRING_SIZE, opcert->issueCounter)) {
+        TRACE("Failed to format issue counter");
+        opcert_buffer_cleanup();
         return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
     }
 
     // Setup data to display
-    pairs[0].item = "Pool cold key path";
-    pairs[0].value = poolColdKeyPathStr;
-    pairs[1].item = "Pool ID";
-    pairs[1].value = poolKeyHashStr;
-    pairs[2].item = "KES public key";
-    pairs[2].value = kesKeyStr;
-    pairs[3].item = "KES period";
-    pairs[3].value = kesPeriodString;
-    pairs[4].item = "Issue counter";
-    pairs[4].value = issueCounterString;
-
-    // Setup list
-    pairList.nbMaxLinesForValue = 0;
-    pairList.nbPairs = 5;
-    pairList.pairs = pairs;
+    if (!ui_pairs_init(5)) {
+        TRACE("Failed to initialize pairs");
+        opcert_buffer_cleanup();
+        return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+        // TODO not sure if this is sufficient or some other "ui_after_error" should be called
+    }
+    g_pairs[0].item = "Pool cold key path";
+    g_pairs[0].value = poolColdKeyPathStr;
+    g_pairs[1].item = "Pool ID";
+    g_pairs[1].value = poolKeyHashStr;
+    g_pairs[2].item = "KES public key";
+    g_pairs[2].value = kesKeyStr;
+    g_pairs[3].item = "KES period";
+    g_pairs[3].value = kesPeriodStr;
+    g_pairs[4].item = "Issue counter";
+    g_pairs[4].value = issueCounterStr;
 
     // set warning if needed
     const nbgl_warning_t* warningPtr = NULL;
@@ -159,14 +183,19 @@ int ui_display_opcert(security_policy_t securityPolicy) {
     switch (securityPolicy) {
         case POLICY_PROMPT_WARN_UNUSUAL:
             TRACE("Setting up warning for POLICY_PROMPT_WARN_UNUSUAL");
-            explicit_bzero(&warning, sizeof(nbgl_warning_t));
+            // Allocate warning structure dynamically
+            if (!mem_buffer_allocate((void **) &g_warning, sizeof(nbgl_warning_t))) {
+                TRACE("Failed to allocate warning structure");
+                opcert_buffer_cleanup();
+                return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+            }
             // TODO not sure about proper icons
-            warning.introDetails = &warningDetails;
-            warning.reviewDetails = &warningDetails;
-            warning.info = &warningInfo;
-            warning.introTopRightIcon = &WARNING_ICON;
-            warning.reviewTopRightIcon = &WARNING_ICON;
-            warningPtr = &warning;
+            g_warning->introDetails = &warningDetails;
+            g_warning->reviewDetails = &warningDetails;
+            g_warning->info = &warningInfo;
+            g_warning->introTopRightIcon = &WARNING_ICON;
+            g_warning->reviewTopRightIcon = &WARNING_ICON;
+            warningPtr = g_warning;
             break;
 
         case POLICY_PROMPT_BEFORE_RESPONSE:
@@ -181,7 +210,7 @@ int ui_display_opcert(security_policy_t securityPolicy) {
     }
 
     nbgl_useCaseAdvancedReview(TYPE_OPERATION,
-                        &pairList,
+                        g_pairsList,
                         &ICON_APP_CARDANO,
                         "Sign operational\ncertificate",
                         NULL,

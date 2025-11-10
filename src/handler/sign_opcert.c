@@ -70,7 +70,7 @@ int handler_sign_opcert(buffer_t *cdata) {
     if (policy == POLICY_DENY) {
         TRACE("Security policy DENY - rejecting operation");
         nbgl_useCaseStatus("Operational certificate denied", false, ui_menu_main);
-        // TODO make sure the constants are defined properly
+        // TODO make sure the constants are defined in a proper place
         return io_send_sw(ERR_REJECTED_BY_POLICY);
     }
 

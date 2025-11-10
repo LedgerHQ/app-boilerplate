@@ -34,10 +34,21 @@
 #include "securityPolicy.h"
 #include "nbgl_screens.h"
 #include "get_public_key.h"
+#include "mem_utils.h"
 
-static char pubkeyPathStr[BIP44_PATH_STRING_SIZE_MAX + 1];
+static char *pubkeyPathStr = NULL;
+
+/**
+ * Cleanup dynamically allocated buffers for pubkey display
+ */
+static void pubkey_buffer_cleanup(void) {
+    mem_buffer_cleanup((void **) &pubkeyPathStr);
+}
 
 static void review_choice(bool confirm) {
+    // Cleanup display buffers
+    pubkey_buffer_cleanup();
+
     // Answer, display a status page and go back to main
     finalize_pubkey_export(confirm);
 
@@ -56,13 +67,19 @@ int ui_display_pubkey(security_policy_t securityPolicy) {
     TRACE("=== ui_display_pubkey START ===");
     TRACE("securityPolicy: %d", securityPolicy);
 
-    if (G_context.req_type != REQUEST_EXPORT_PUBKEY || G_context.state != STATE_PARSED) {
-        TRACE("Bad state detected - returning error");
-        G_context.state = STATE_NONE;
+    if (G_context.req_type != REQUEST_EXPORT_PUBKEY) {
+        TRACE("Bad request type detected - returning error");
         return io_send_sw(SW_BAD_STATE);
     }
 
     pubkey_ctx_t* pk = &G_context.pk_info;
+
+    // Allocate display buffers
+    if (!mem_buffer_allocate((void **) &pubkeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1)) {
+        pubkey_buffer_cleanup();
+        return io_send_sw(SW_DISPLAY_BIP32_PATH_FAIL);
+    }
+    ui_getPathScreen(pubkeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1, &pk->path);
 
     // set warning if needed
     bool isUnusual = false;
@@ -80,16 +97,16 @@ int ui_display_pubkey(security_policy_t securityPolicy) {
         case POLICY_ALLOW_WITHOUT_PROMPT:
             pk->silentExport = true;
             finalize_pubkey_export(true);
+            pubkey_buffer_cleanup();
             return 0;
 
         default:
             // Catch any truly unknown or unexpected policy values.
             ASSERT(false);
+            pubkey_buffer_cleanup();
             return 0;
     }
     TRACE("isUnusual: %d", isUnusual);
-
-    ui_getPathScreen(pubkeyPathStr, SIZEOF(pubkeyPathStr), &pk->path);
 
     if (isUnusual) {
         // a mild warning about unusual path

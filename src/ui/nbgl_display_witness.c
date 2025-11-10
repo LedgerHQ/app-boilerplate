@@ -32,10 +32,21 @@
 #include "securityPolicy.h"
 #include "nbgl_screens.h"
 #include "menu.h"
+#include "mem_utils.h"
 
-static char witnessPathStr[BIP44_PATH_STRING_SIZE_MAX + 1];
+static char *witnessPathStr = NULL;
+
+/**
+ * Cleanup dynamically allocated buffers for witness display
+ */
+static void witness_display_cleanup(void) {
+    mem_buffer_cleanup((void **) &witnessPathStr);
+}
 
 static void witness_review_choice(bool confirm) {
+    // Cleanup display buffers
+    witness_display_cleanup();
+
     // Answer, display a status page and go back to main
     if (confirm) {
         // Continue with witness signing - send signature back
@@ -61,6 +72,12 @@ int ui_display_witness(const bip44_path_t* witnessPath, security_policy_t securi
         return io_send_sw(SW_BAD_STATE);
     }
 
+    // Allocate display buffers
+    if (!mem_buffer_allocate((void **) &witnessPathStr, BIP44_PATH_STRING_SIZE_MAX + 1)) {
+        witness_display_cleanup();
+        return io_send_sw(SW_DISPLAY_BIP32_PATH_FAIL);
+    }
+
     // Set warning if needed
     bool isUnusual = false;
     switch (securityPolicy) {
@@ -81,13 +98,14 @@ int ui_display_witness(const bip44_path_t* witnessPath, security_policy_t securi
         default:
             // Catch any truly unknown or unexpected policy values
             ASSERT(false);
+            witness_display_cleanup();
             return 0;
     }
 
     TRACE("isUnusual: %d", isUnusual);
 
     // Format the witness path as a string
-    ui_getPathScreen(witnessPathStr, SIZEOF(witnessPathStr), witnessPath);
+    ui_getPathScreen(witnessPathStr, BIP44_PATH_STRING_SIZE_MAX + 1, witnessPath);
 
     if (isUnusual) {
         // A mild warning about unusual path
