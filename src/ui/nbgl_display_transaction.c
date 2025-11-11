@@ -61,6 +61,20 @@ static void tx_buffer_cleanup(void) {
     ui_pairs_cleanup();
 }
 
+/**
+ * Cleanup transaction data after UI is finished
+ * Frees the raw transaction buffer and parsed transaction lists
+ */
+void tx_data_cleanup(void) {
+    // Free raw transaction buffer - no longer needed after UI
+    if (G_context.tx_info.raw_tx != NULL) {
+        app_mem_free(G_context.tx_info.raw_tx);
+        G_context.tx_info.raw_tx = NULL;
+    }
+    // Free parsed transaction lists
+    transaction_cleanup(&G_context.tx_info.transaction);
+}
+
 // called when long press button on 3rd page is long-touched or when reject footer is touched
 static void review_choice(bool confirm) {
     // Cleanup display buffers
@@ -82,23 +96,19 @@ static void review_choice(bool confirm) {
         // Check if there are witnesses to process
         if (G_context.tx_info.num_witnesses > 0) {
             // Witnesses coming - show spinner while waiting for witness APDUs
+            // Raw tx and lists will be freed when last witness is processed
             nbgl_useCaseSpinner("Processing");
         } else {
-            // No witnesses - transaction is complete (no point in processing such a tx though)
+            // No witnesses - transaction is complete, cleanup and show status
+            tx_data_cleanup();
             nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main);
         }
     } else {
         // User rejected
         G_context.state = STATE_NONE;
 
-        // Free transaction lists
-        transaction_cleanup(&G_context.tx_info.transaction);
-
-        // Free transaction buffer
-        if (G_context.tx_info.raw_tx != NULL) {
-            app_mem_free(G_context.tx_info.raw_tx);
-            G_context.tx_info.raw_tx = NULL;
-        }
+        // Cleanup transaction data
+        tx_data_cleanup();
 
         io_send_sw(SW_DENY);
         nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_REJECTED, ui_menu_main);

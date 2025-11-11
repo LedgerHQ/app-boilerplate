@@ -35,6 +35,12 @@ typedef void (*action_validate_cb)(bool);
  */
 int ui_display_transaction(void);
 
+/**
+ * Cleanup transaction data after UI is finished.
+ * Frees the raw transaction buffer and parsed transaction lists.
+ */
+void tx_data_cleanup(void);
+
 int ui_display_opcert(security_policy_t securityPolicy);
 int ui_display_pubkey(security_policy_t securityPolicy);
 int ui_display_witness(const bip44_path_t* witnessPath, security_policy_t securityPolicy);

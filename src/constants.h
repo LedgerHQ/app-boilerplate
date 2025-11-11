@@ -33,7 +33,7 @@
  * - Alignment requirements (8-byte alignment)
  * Maximum tested working size is 14KB from a 24KB pool TODO
  */
-#define TX_BUFFER_SIZE (14 * 1024)
+#define TX_BUFFER_SIZE (16 * 1024)
 
 /**
  * Maximum signature length (bytes).
