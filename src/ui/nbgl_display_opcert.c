@@ -65,12 +65,9 @@ static const nbgl_warningDetails_t warningDetails = {
  * Cleanup dynamically allocated buffers
  */
 static void opcert_buffer_cleanup(void) {
-    mem_buffer_cleanup((void **) &poolColdKeyPathStr);
-    mem_buffer_cleanup((void **) &poolKeyHashStr);
-    mem_buffer_cleanup((void **) &kesKeyStr);
-    mem_buffer_cleanup((void **) &kesPeriodStr);
-    mem_buffer_cleanup((void **) &issueCounterStr);
-    mem_buffer_cleanup((void **) &g_warning);
+    // Cleanup all tracked allocations (all string buffers and warning structure)
+    ui_cleanup_tracked_allocations();
+    // Cleanup the pairs array
     ui_pairs_cleanup();
 }
 
@@ -102,18 +99,20 @@ int ui_display_opcert(security_policy_t securityPolicy) {
     const parsed_opcert_t* opcert = &G_context.opcert_info.opcert;
 
     // Allocate and fill pool cold key path
-    if (!mem_buffer_allocate((void **) &poolColdKeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1)) {
+    poolColdKeyPathStr = (char *) ui_mem_alloc(BIP44_PATH_STRING_SIZE_MAX + 1);
+    if (poolColdKeyPathStr == NULL) {
         TRACE("Failed to allocate poolColdKeyPathStr");
         opcert_buffer_cleanup();
-        return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+        return io_send_sw(SW_INSUFFICIENT_MEMORY);
     }
     ui_getPathScreen(poolColdKeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1, &opcert->poolColdKeyPath);
 
     // Allocate and fill pool ID (key hash)
-    if (!mem_buffer_allocate((void **) &poolKeyHashStr, BECH32_STRING_SIZE_MAX)) {
+    poolKeyHashStr = (char *) ui_mem_alloc(BECH32_STRING_SIZE_MAX);
+    if (poolKeyHashStr == NULL) {
         TRACE("Failed to allocate poolKeyHashStr");
         opcert_buffer_cleanup();
-        return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+        return io_send_sw(SW_INSUFFICIENT_MEMORY);
     }
     uint8_t poolKeyHash[POOL_KEY_HASH_LENGTH] = {0};
     bip44_pathToKeyHash(&opcert->poolColdKeyPath, poolKeyHash, SIZEOF(poolKeyHash));
@@ -124,10 +123,11 @@ int ui_display_opcert(security_policy_t securityPolicy) {
                         SIZEOF(poolKeyHash));
 
     // Allocate and fill KES public key
-    if (!mem_buffer_allocate((void **) &kesKeyStr, BECH32_STRING_SIZE_MAX)) {
+    kesKeyStr = (char *) ui_mem_alloc(BECH32_STRING_SIZE_MAX);
+    if (kesKeyStr == NULL) {
         TRACE("Failed to allocate kesKeyStr");
         opcert_buffer_cleanup();
-        return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+        return io_send_sw(SW_INSUFFICIENT_MEMORY);
     }
     ui_getBech32Screen(kesKeyStr,
                         BECH32_STRING_SIZE_MAX,
@@ -136,10 +136,11 @@ int ui_display_opcert(security_policy_t securityPolicy) {
                         KES_PUBLIC_KEY_LENGTH);
 
     // Allocate and fill KES period
-    if (!mem_buffer_allocate((void **) &kesPeriodStr, MAX_UINT64_STRING_SIZE)) {
+    kesPeriodStr = (char *) ui_mem_alloc(MAX_UINT64_STRING_SIZE);
+    if (kesPeriodStr == NULL) {
         TRACE("Failed to allocate kesPeriodStr");
         opcert_buffer_cleanup();
-        return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+        return io_send_sw(SW_INSUFFICIENT_MEMORY);
     }
     if (!format_u64(kesPeriodStr, MAX_UINT64_STRING_SIZE, opcert->kesPeriod)) {
         TRACE("Failed to format KES period");
@@ -148,10 +149,11 @@ int ui_display_opcert(security_policy_t securityPolicy) {
     }
 
     // Allocate and fill issue counter
-    if (!mem_buffer_allocate((void **) &issueCounterStr, MAX_UINT64_STRING_SIZE)) {
+    issueCounterStr = (char *) ui_mem_alloc(MAX_UINT64_STRING_SIZE);
+    if (issueCounterStr == NULL) {
         TRACE("Failed to allocate issueCounterStr");
         opcert_buffer_cleanup();
-        return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+        return io_send_sw(SW_INSUFFICIENT_MEMORY);
     }
     if (!format_u64(issueCounterStr, MAX_UINT64_STRING_SIZE, opcert->issueCounter)) {
         TRACE("Failed to format issue counter");
@@ -184,10 +186,11 @@ int ui_display_opcert(security_policy_t securityPolicy) {
         case POLICY_PROMPT_WARN_UNUSUAL:
             TRACE("Setting up warning for POLICY_PROMPT_WARN_UNUSUAL");
             // Allocate warning structure dynamically
-            if (!mem_buffer_allocate((void **) &g_warning, sizeof(nbgl_warning_t))) {
+            g_warning = (nbgl_warning_t *) ui_mem_alloc(sizeof(nbgl_warning_t));
+            if (g_warning == NULL) {
                 TRACE("Failed to allocate warning structure");
                 opcert_buffer_cleanup();
-                return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+                return io_send_sw(SW_INSUFFICIENT_MEMORY);
             }
             // TODO not sure about proper icons
             g_warning->introDetails = &warningDetails;

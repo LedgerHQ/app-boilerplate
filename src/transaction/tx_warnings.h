@@ -18,8 +18,9 @@ typedef struct {
 } tx_warning_list_item_t;
 
 // Helper to add warning to list
-void tx_warning_add(tx_warning_list_item_t **list_head, tx_warning_type_t type,
-                   uint32_t networkId, uint32_t protocolMagic);
+// Returns true on success, false if allocation failed
+bool tx_warning_add(tx_warning_list_item_t **list_head, tx_warning_type_t type,
+                    uint32_t networkId, uint32_t protocolMagic);
 
 // Check if warnings list is empty
 bool tx_warning_list_empty(tx_warning_list_item_t *list_head);

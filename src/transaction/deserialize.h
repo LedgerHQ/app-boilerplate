@@ -30,3 +30,11 @@ typedef enum {
  *
  */
 parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx);
+
+/**
+ * Cleanup transaction lists (inputs, outputs) by freeing allocated items
+ *
+ * @param[in, out] tx
+ *   Pointer to transaction structure with lists to cleanup
+ */
+void transaction_cleanup(transaction_t *tx);

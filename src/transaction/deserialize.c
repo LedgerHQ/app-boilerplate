@@ -174,3 +174,30 @@ parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
 
     return (buf->offset == buf->size) ? PARSING_OK : WRONG_LENGTH_ERROR;
 }
+
+/**
+ * Cleanup transaction lists by freeing allocated input and output items
+ */
+void transaction_cleanup(transaction_t *tx) {
+    if (tx == NULL) {
+        return;
+    }
+
+    // Free all input items from the linked list
+    s_flist_node *input_node = tx->inputs;
+    while (input_node != NULL) {
+        s_flist_node *next = input_node->next;
+        app_mem_free(input_node);
+        input_node = next;
+    }
+    tx->inputs = NULL;
+
+    // Free all output items from the linked list
+    s_flist_node *output_node = tx->outputs;
+    while (output_node != NULL) {
+        s_flist_node *next = output_node->next;
+        app_mem_free(output_node);
+        output_node = next;
+    }
+    tx->outputs = NULL;
+}

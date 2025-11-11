@@ -35,20 +35,14 @@
 #include "nbgl_screens.h"
 #include "get_public_key.h"
 #include "mem_utils.h"
+#include "ui_utils.h"
 #include "settings.h"
 
 static char *pubkeyPathStr = NULL;
 
-/**
- * Cleanup dynamically allocated buffers for pubkey display
- */
-static void pubkey_buffer_cleanup(void) {
-    mem_buffer_cleanup((void **) &pubkeyPathStr);
-}
-
 static void review_choice(bool confirm) {
     // Cleanup display buffers
-    pubkey_buffer_cleanup();
+    ui_cleanup_tracked_allocations();
 
     // Answer, display a status page and go back to main
     finalize_pubkey_export(confirm);
@@ -76,9 +70,10 @@ int ui_display_pubkey(security_policy_t securityPolicy) {
     pubkey_ctx_t* pk = &G_context.pk_info;
 
     // Allocate display buffers
-    if (!mem_buffer_allocate((void **) &pubkeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1)) {
-        pubkey_buffer_cleanup();
-        return io_send_sw(SW_DISPLAY_BIP32_PATH_FAIL);
+    pubkeyPathStr = (char *) ui_mem_alloc(BIP44_PATH_STRING_SIZE_MAX + 1);
+    if (pubkeyPathStr == NULL) {
+        ui_cleanup_tracked_allocations();
+        return io_send_sw(SW_INSUFFICIENT_MEMORY);
     }
     ui_getPathScreen(pubkeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1, &pk->path);
 
@@ -100,13 +95,13 @@ int ui_display_pubkey(security_policy_t securityPolicy) {
             ASSERT(is_silent_pubkey_export_allowed());
             pk->silentExport = true;
             finalize_pubkey_export(true);
-            pubkey_buffer_cleanup();
+            ui_cleanup_tracked_allocations();
             return 0;
 
         default:
             // Catch any truly unknown or unexpected policy values.
             ASSERT(false);
-            pubkey_buffer_cleanup();
+            ui_cleanup_tracked_allocations();
             return 0;
     }
     TRACE("isUnusual: %d", isUnusual);

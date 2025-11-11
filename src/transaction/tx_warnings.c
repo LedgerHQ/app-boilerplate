@@ -2,13 +2,13 @@
 #include "mem.h"
 #include <string.h>
 
-void tx_warning_add(tx_warning_list_item_t **list_head, tx_warning_type_t type,
-                   uint32_t networkId, uint32_t protocolMagic) {
+bool tx_warning_add(tx_warning_list_item_t **list_head, tx_warning_type_t type,
+                    uint32_t networkId, uint32_t protocolMagic) {
     // Allocate new warning item
     tx_warning_list_item_t *item = (tx_warning_list_item_t *)app_mem_alloc(sizeof(tx_warning_list_item_t));
     if (item == NULL) {
-        // If allocation fails, we can't add the warning, but continue anyway
-        return;
+        // Allocation failed - return error instead of silently skipping
+        return false;
     }
 
     // Initialize warning item
@@ -20,6 +20,7 @@ void tx_warning_add(tx_warning_list_item_t **list_head, tx_warning_type_t type,
     // Add to front of list
     item->node.next = (s_flist_node *)*list_head;
     *list_head = item;
+    return true;
 }
 
 bool tx_warning_list_empty(tx_warning_list_item_t *list_head) {

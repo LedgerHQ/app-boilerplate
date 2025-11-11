@@ -38,6 +38,7 @@
 #include "mem.h"
 #include "addressUtils/addressUtilsShelley.h"
 #include "nbgl_screens.h"
+#include "transaction/deserialize.h"
 #include "utils/textUtils.h"
 #include "ui_utils.h"
 #include "mem_utils.h"
@@ -54,12 +55,9 @@ static nbgl_warning_t *g_warning = NULL;
  * Cleanup dynamically allocated buffers for transaction display
  */
 static void tx_buffer_cleanup(void) {
-    mem_buffer_cleanup((void **) &g_fee);
-    mem_buffer_cleanup((void **) &g_ttl);
-    mem_buffer_cleanup((void **) &g_warning_msg);
-    mem_buffer_cleanup((void **) &g_warningInfo);
-    mem_buffer_cleanup((void **) &g_warningDetails);
-    mem_buffer_cleanup((void **) &g_warning);
+    // Cleanup all tracked allocations (g_fee, g_ttl, g_warning_msg, warning structures, and per-output strings)
+    ui_cleanup_tracked_allocations();
+    // Cleanup the pairs array
     ui_pairs_cleanup();
 }
 
@@ -93,6 +91,9 @@ static void review_choice(bool confirm) {
         // User rejected
         G_context.state = STATE_NONE;
 
+        // Free transaction lists
+        transaction_cleanup(&G_context.tx_info.transaction);
+
         // Free transaction buffer
         if (G_context.tx_info.raw_tx != NULL) {
             app_mem_free(G_context.tx_info.raw_tx);
@@ -114,18 +115,21 @@ int ui_display_transaction(void) {
         return io_send_sw(SW_BAD_STATE);
     }
 
-    // Allocate display buffers
-    if (!mem_buffer_allocate((void **) &g_fee, MAX_ADA_AMOUNT_STRING_SIZE)) {
+    // Allocate display buffers using ui_mem_alloc for automatic tracking
+    g_fee = (char *) ui_mem_alloc(MAX_ADA_AMOUNT_STRING_SIZE);
+    if (g_fee == NULL) {
         tx_buffer_cleanup();
-        return io_send_sw(SW_TX_PARSING_FAIL);
+        return io_send_sw(SW_INSUFFICIENT_MEMORY);
     }
-    if (!mem_buffer_allocate((void **) &g_ttl, MAX_ADA_AMOUNT_STRING_SIZE)) {
+    g_ttl = (char *) ui_mem_alloc(MAX_ADA_AMOUNT_STRING_SIZE);
+    if (g_ttl == NULL) {
         tx_buffer_cleanup();
-        return io_send_sw(SW_TX_PARSING_FAIL);
+        return io_send_sw(SW_INSUFFICIENT_MEMORY);
     }
-    if (!mem_buffer_allocate((void **) &g_warning_msg, MAX_WARNING_MESSAGE_SIZE)) {
+    g_warning_msg = (char *) ui_mem_alloc(MAX_WARNING_MESSAGE_SIZE);
+    if (g_warning_msg == NULL) {
         tx_buffer_cleanup();
-        return io_send_sw(SW_TX_PARSING_FAIL);
+        return io_send_sw(SW_INSUFFICIENT_MEMORY);
     }
 
     // Calculate number of pairs: (num_outputs * 2) + 1 for fee + (1 for TTL if included) + 1 for tx hash
@@ -165,7 +169,7 @@ int ui_display_transaction(void) {
 
         // Add output number pair (e.g., "Output" | "1")
         g_pairs[pair_idx].item = "Output";
-        char *output_num_str = (char *) app_mem_alloc(MAX_UINT64_STRING_SIZE);
+        char *output_num_str = (char *) ui_mem_alloc(MAX_UINT64_STRING_SIZE);
         if (output_num_str == NULL) {
             tx_buffer_cleanup();
             return io_send_sw(SW_INSUFFICIENT_MEMORY);
@@ -179,7 +183,7 @@ int ui_display_transaction(void) {
 
         // Allocate and format address using Bech32 (Cardano format)
         // MAX_HUMAN_ADDRESS_SIZE is defined in cardano.h as 150
-        char *addr_str = (char *) app_mem_alloc(MAX_HUMAN_ADDRESS_SIZE);
+        char *addr_str = (char *) ui_mem_alloc(MAX_HUMAN_ADDRESS_SIZE);
         if (addr_str == NULL) {
             tx_buffer_cleanup();
             return io_send_sw(SW_INSUFFICIENT_MEMORY);
@@ -224,7 +228,7 @@ int ui_display_transaction(void) {
         g_pairs[pair_idx].item = "Amount";
 
         // Allocate and format amount with currency
-        char *amount_str = (char *) app_mem_alloc(MAX_AMOUNT_DISPLAY_SIZE);
+        char *amount_str = (char *) ui_mem_alloc(MAX_AMOUNT_DISPLAY_SIZE);
         if (amount_str == NULL) {
             tx_buffer_cleanup();
             return io_send_sw(SW_INSUFFICIENT_MEMORY);
@@ -246,7 +250,7 @@ int ui_display_transaction(void) {
 
     // Add transaction hash as the last item
     g_pairs[pair_idx].item = "Transaction hash";
-    char *tx_hash_str = (char *) app_mem_alloc(MAX_TX_HASH_DISPLAY_SIZE);
+    char *tx_hash_str = (char *) ui_mem_alloc(MAX_TX_HASH_DISPLAY_SIZE);
     if (tx_hash_str == NULL) {
         tx_buffer_cleanup();
         return io_send_sw(SW_INSUFFICIENT_MEMORY);
@@ -276,18 +280,21 @@ int ui_display_transaction(void) {
             warning_node = (tx_warning_list_item_t *)warning_node->node.next;
         }
 
-        // Allocate and setup warning structures
-        if (!mem_buffer_allocate((void **) &g_warningInfo, sizeof(nbgl_contentCenter_t))) {
+        // Allocate and setup warning structures using ui_mem_alloc for automatic tracking
+        g_warningInfo = (nbgl_contentCenter_t *) ui_mem_alloc(sizeof(nbgl_contentCenter_t));
+        if (g_warningInfo == NULL) {
             tx_buffer_cleanup();
-            return io_send_sw(SW_TX_PARSING_FAIL);
+            return io_send_sw(SW_INSUFFICIENT_MEMORY);
         }
-        if (!mem_buffer_allocate((void **) &g_warningDetails, sizeof(nbgl_warningDetails_t))) {
+        g_warningDetails = (nbgl_warningDetails_t *) ui_mem_alloc(sizeof(nbgl_warningDetails_t));
+        if (g_warningDetails == NULL) {
             tx_buffer_cleanup();
-            return io_send_sw(SW_TX_PARSING_FAIL);
+            return io_send_sw(SW_INSUFFICIENT_MEMORY);
         }
-        if (!mem_buffer_allocate((void **) &g_warning, sizeof(nbgl_warning_t))) {
+        g_warning = (nbgl_warning_t *) ui_mem_alloc(sizeof(nbgl_warning_t));
+        if (g_warning == NULL) {
             tx_buffer_cleanup();
-            return io_send_sw(SW_TX_PARSING_FAIL);
+            return io_send_sw(SW_INSUFFICIENT_MEMORY);
         }
 
         // Setup warning content

@@ -33,6 +33,7 @@
 #include "nbgl_screens.h"
 #include "menu.h"
 #include "mem_utils.h"
+#include "transaction/deserialize.h"
 
 static char *witnessPathStr = NULL;
 
@@ -49,6 +50,8 @@ static void witness_review_choice(bool confirm) {
     if (!confirm) {
         // User rejected the witness - abort further witness processing
         G_context.state = STATE_NONE;
+        // Cleanup transaction lists since we're aborting
+        transaction_cleanup(&G_context.tx_info.transaction);
         io_send_sw(SW_DENY);
         nbgl_useCaseStatus("Witness\ndenied", true, ui_menu_main);
     } else {
@@ -65,7 +68,8 @@ static void witness_review_choice(bool confirm) {
             // More witnesses to come - show spinner while waiting for next witness
             nbgl_useCaseSpinner("Processing");
         } else {
-            // All witnesses processed - show completion status and return to main menu
+            // All witnesses processed - cleanup transaction lists and show completion
+            transaction_cleanup(&G_context.tx_info.transaction);
             nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main);
         }
     }
