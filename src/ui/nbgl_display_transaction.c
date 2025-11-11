@@ -50,9 +50,6 @@ static nbgl_contentCenter_t *g_warningInfo = NULL;
 static nbgl_warningDetails_t *g_warningDetails = NULL;
 static nbgl_warning_t *g_warning = NULL;
 
-// Number of pairs in the current transaction display
-static uint16_t g_num_pairs = 0;
-
 /**
  * Cleanup dynamically allocated buffers for transaction display
  */
@@ -133,13 +130,13 @@ int ui_display_transaction(void) {
 
     // Calculate number of pairs: (num_outputs * 2) + 1 for fee + (1 for TTL if included) + 1 for tx hash
     // Each output needs 2 pairs: address + amount
-    g_num_pairs = (G_context.tx_info.transaction.num_outputs * 2) + 2;
+    uint16_t num_pairs = (G_context.tx_info.transaction.num_outputs * 2) + 2;
     if (G_context.tx_info.transaction.includeTtl) {
-        g_num_pairs++;  // Add 1 for TTL
+        num_pairs++;  // Add 1 for TTL
     }
 
     // Initialize common pairs structure
-    if (!ui_pairs_init(g_num_pairs)) {
+    if (!ui_pairs_init(num_pairs)) {
         tx_buffer_cleanup();
         return io_send_sw(SW_TX_PARSING_FAIL);
     }
@@ -160,25 +157,32 @@ int ui_display_transaction(void) {
         pair_idx++;
     }
 
-    // Add each output
+    // Add each output (1-indexed for display)
     uint16_t output_num = 1;
     s_flist_node *node = G_context.tx_info.transaction.outputs;
     while (node != NULL) {
         tx_output_list_item_t *output_item = (tx_output_list_item_t *) node;
 
-        // Allocate buffer for output label (e.g., "Output 1 Address")
-        char *label = (char *) app_mem_alloc(32);
-        if (label == NULL) {
-            return io_send_sw(SW_TX_PARSING_FAIL);
+        // Add output number pair (e.g., "Output" | "1")
+        g_pairs[pair_idx].item = "Output";
+        char *output_num_str = (char *) app_mem_alloc(MAX_UINT64_STRING_SIZE);
+        if (output_num_str == NULL) {
+            tx_buffer_cleanup();
+            return io_send_sw(SW_INSUFFICIENT_MEMORY);
         }
-        snprintf(label, 32, "Output %d Address", output_num);
-        g_pairs[pair_idx].item = label;
+        snprintf(output_num_str, MAX_UINT64_STRING_SIZE, "%d", output_num);
+        g_pairs[pair_idx].value = output_num_str;
+        pair_idx++;
+
+        // Add address pair (e.g., "Address" | "<address>")
+        g_pairs[pair_idx].item = "Address";
 
         // Allocate and format address using Bech32 (Cardano format)
         // MAX_HUMAN_ADDRESS_SIZE is defined in cardano.h as 150
         char *addr_str = (char *) app_mem_alloc(MAX_HUMAN_ADDRESS_SIZE);
         if (addr_str == NULL) {
-            return io_send_sw(SW_TX_PARSING_FAIL);
+            tx_buffer_cleanup();
+            return io_send_sw(SW_INSUFFICIENT_MEMORY);
         }
 
         size_t addr_len = 0;
@@ -216,18 +220,14 @@ int ui_display_transaction(void) {
         g_pairs[pair_idx].value = addr_str;
         pair_idx++;
 
-        // Allocate buffer for amount label (e.g., "Output 1 Amount")
-        label = (char *) app_mem_alloc(32);
-        if (label == NULL) {
-            return io_send_sw(SW_TX_PARSING_FAIL);
-        }
-        snprintf(label, 32, "Output %d Amount", output_num);
-        g_pairs[pair_idx].item = label;
+        // Add amount pair with label "Amount"
+        g_pairs[pair_idx].item = "Amount";
 
-        // Allocate and format amount
-        char *amount_str = (char *) app_mem_alloc(40);
+        // Allocate and format amount with currency
+        char *amount_str = (char *) app_mem_alloc(MAX_AMOUNT_DISPLAY_SIZE);
         if (amount_str == NULL) {
-            return io_send_sw(SW_TX_PARSING_FAIL);
+            tx_buffer_cleanup();
+            return io_send_sw(SW_INSUFFICIENT_MEMORY);
         }
         char amount_formatted[30] = {0};
         if (!format_fpu64(amount_formatted,
@@ -236,7 +236,7 @@ int ui_display_transaction(void) {
                           EXPONENT_SMALLEST_UNIT)) {
             return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
         }
-        snprintf(amount_str, 40, "BOL %.*s", sizeof(amount_formatted), amount_formatted);
+        snprintf(amount_str, MAX_AMOUNT_DISPLAY_SIZE, "BOL %.*s", sizeof(amount_formatted), amount_formatted);
         g_pairs[pair_idx].value = amount_str;
         pair_idx++;
 
@@ -246,11 +246,12 @@ int ui_display_transaction(void) {
 
     // Add transaction hash as the last item
     g_pairs[pair_idx].item = "Transaction hash";
-    char *tx_hash_str = (char *) app_mem_alloc(65);  // 32 bytes = 64 hex chars + null terminator
+    char *tx_hash_str = (char *) app_mem_alloc(MAX_TX_HASH_DISPLAY_SIZE);
     if (tx_hash_str == NULL) {
-        return io_send_sw(SW_TX_PARSING_FAIL);
+        tx_buffer_cleanup();
+        return io_send_sw(SW_INSUFFICIENT_MEMORY);
     }
-    ui_getHexBufferScreen(tx_hash_str, 65, G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash));
+    ui_getHexBufferScreen(tx_hash_str, MAX_TX_HASH_DISPLAY_SIZE, G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash));
     g_pairs[pair_idx].value = tx_hash_str;
     pair_idx++;
 

@@ -116,7 +116,7 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
             G_context.tx_info.raw_tx = (uint8_t *) app_mem_alloc(TX_BUFFER_SIZE);
             if (G_context.tx_info.raw_tx == NULL) {
                 TRACE("Failed to allocate %d byte transaction buffer!", TX_BUFFER_SIZE);
-                return io_send_sw(SW_TX_PARSING_FAIL);
+                return io_send_sw(SW_INSUFFICIENT_MEMORY);
             }
             TRACE("Transaction buffer allocated: %d bytes at %p", TX_BUFFER_SIZE, G_context.tx_info.raw_tx);
         }
