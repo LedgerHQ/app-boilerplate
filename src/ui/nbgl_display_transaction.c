@@ -84,8 +84,14 @@ static void review_choice(bool confirm) {
         // Send tx hash back to client
         io_send_response_pointer(G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash), SW_OK);
 
-        // Show status
-        nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main);
+        // Check if there are witnesses to process
+        if (G_context.tx_info.num_witnesses > 0) {
+            // Witnesses coming - show spinner while waiting for witness APDUs
+            nbgl_useCaseSpinner("Processing");
+        } else {
+            // No witnesses - transaction is complete (no point in processing such a tx though)
+            nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main);
+        }
     } else {
         // User rejected
         G_context.state = STATE_NONE;

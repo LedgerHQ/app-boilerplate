@@ -275,6 +275,14 @@ int handler_sign_tx_witness(buffer_t *cdata) {
         return io_send_sw(SW_BAD_STATE);
     }
 
+    // Check that we haven't exceeded the expected number of witnesses
+    if (G_context.tx_info.current_witness >= G_context.tx_info.num_witnesses) {
+        TRACE("Witness count exceeded: current=%d, expected=%d",
+              G_context.tx_info.current_witness,
+              G_context.tx_info.num_witnesses);
+        return io_send_sw(SW_WRONG_DATA_LENGTH);
+    }
+
     // Parse witness path from APDU data
     uint8_t path_len;
     if (!buffer_read_u8(cdata, &path_len) ||

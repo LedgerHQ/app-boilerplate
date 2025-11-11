@@ -39,26 +39,35 @@ static char *witnessPathStr = NULL;
 /**
  * Cleanup dynamically allocated buffers for witness display
  */
-static void witness_display_cleanup(void) {
+static void witness_buffers_cleanup(void) {
     mem_buffer_cleanup((void **) &witnessPathStr);
 }
 
 static void witness_review_choice(bool confirm) {
-    // Cleanup display buffers
-    witness_display_cleanup();
+    witness_buffers_cleanup();
 
-    // Answer, display a status page and go back to main
-    if (confirm) {
-        // Continue with witness signing - send signature back
-        // This will be handled by returning from the display function
+    if (!confirm) {
+        // User rejected the witness - abort further witness processing
+        G_context.state = STATE_NONE;
+        io_send_sw(SW_DENY);
+        nbgl_useCaseStatus("Witness\ndenied", true, ui_menu_main);
+    } else {
+        // Witness confirmed - send signature back
         io_send_response_pointer(G_context.tx_info.witness_signature,
                                 ED25519_SIGNATURE_LENGTH,
                                 SW_OK);
-        nbgl_useCaseStatus("Witness\\nsigned", true, ui_menu_main);
-    } else {
-        // User rejected the witness
-        io_send_sw(SW_DENY);
-        nbgl_useCaseStatus("Witness\\ndenied", true, ui_menu_main);
+
+        // Increment witness counter for next iteration
+        G_context.tx_info.current_witness++;
+
+        // Check if there are more witnesses to process
+        if (G_context.tx_info.current_witness < G_context.tx_info.num_witnesses) {
+            // More witnesses to come - show spinner while waiting for next witness
+            nbgl_useCaseSpinner("Processing");
+        } else {
+            // All witnesses processed - show completion status and return to main menu
+            nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main);
+        }
     }
 }
 
@@ -74,7 +83,7 @@ int ui_display_witness(const bip44_path_t* witnessPath, security_policy_t securi
 
     // Allocate display buffers
     if (!mem_buffer_allocate((void **) &witnessPathStr, BIP44_PATH_STRING_SIZE_MAX + 1)) {
-        witness_display_cleanup();
+        witness_buffers_cleanup();
         return io_send_sw(SW_DISPLAY_BIP32_PATH_FAIL);
     }
 
@@ -98,7 +107,7 @@ int ui_display_witness(const bip44_path_t* witnessPath, security_policy_t securi
         default:
             // Catch any truly unknown or unexpected policy values
             ASSERT(false);
-            witness_display_cleanup();
+            witness_buffers_cleanup();
             return 0;
     }
 
