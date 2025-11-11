@@ -35,6 +35,7 @@
 #include "nbgl_screens.h"
 #include "get_public_key.h"
 #include "mem_utils.h"
+#include "settings.h"
 
 static char *pubkeyPathStr = NULL;
 
@@ -95,6 +96,8 @@ int ui_display_pubkey(security_policy_t securityPolicy) {
             break;
 
         case POLICY_ALLOW_WITHOUT_PROMPT:
+            // This policy should only be returned when silent export is allowed
+            ASSERT(is_silent_pubkey_export_allowed());
             pk->silentExport = true;
             finalize_pubkey_export(true);
             pubkey_buffer_cleanup();
