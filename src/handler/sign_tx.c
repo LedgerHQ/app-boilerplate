@@ -21,7 +21,6 @@
 #include <string.h>   // memset, explicit_bzero
 
 #include "os.h"
-#include "cx.h"
 #include "buffer.h"
 
 #include "sign_tx.h"
@@ -45,348 +44,352 @@
 #include "addressUtils/addressUtilsShelley.h"
 #include "transaction/tx_utils.h"
 
-int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
-    // Special chunk type for INIT APDU (contains description, not tx data)
-    if (chunk_type == P1_TX_INIT) {  // INIT APDU: parse transaction description
-        explicit_bzero(&G_context, sizeof(G_context));
-        G_context.req_type = REQUEST_CONFIRM_TRANSACTION;
-        G_context.state = STATE_NONE;
-        G_context.tx_info.raw_tx = NULL;  // Initialize pointer to NULL
-        G_context.tx_info.raw_tx_len = 0;
-        G_context.tx_info.warning_list = NULL;  // Initialize warning list
+/**
+ * Helper: Initialize transaction from P1_TX_INIT APDU
+ * Validates all transaction metadata and checks security policy
+ */
+static int handle_tx_init_apdu(buffer_t *cdata) {
+    explicit_bzero(&G_context, sizeof(G_context));
+    G_context.req_type = REQUEST_CONFIRM_TRANSACTION;
+    G_context.state = STATE_NONE;
+    G_context.tx_info.raw_tx = NULL;
+    G_context.tx_info.raw_tx_len = 0;
+    G_context.tx_info.warning_list = NULL;
 
-        // Read transaction options (8 bytes)
-        uint64_t options;
-        if (!buffer_read_u64(cdata, &options, BE)) {
-            return io_send_sw(SW_WRONG_DATA_LENGTH);
+    // Read and validate options
+    uint64_t options;
+    if (!buffer_read_u64(cdata, &options, BE)) {
+        return io_send_sw(SW_WRONG_DATA_LENGTH);
+    }
+    bool tagCborSets = options & TX_OPTIONS_TAG_CBOR_SETS;
+    options &= ~TX_OPTIONS_TAG_CBOR_SETS;
+    if (options != 0) {
+        return io_send_sw(SW_WRONG_DATA_LENGTH);
+    }
+    G_context.tx_info.transaction.tagCborSets = tagCborSets;
+
+    // Read signing mode
+    uint8_t txSigningMode;
+    if (!buffer_read_u8(cdata, &txSigningMode)) {
+        return io_send_sw(SW_WRONG_DATA_LENGTH);
+    }
+    G_context.tx_info.transaction.txSigningMode = (sign_tx_signingmode_t) txSigningMode;
+
+    // Read network parameters
+    if (!buffer_read_u8(cdata, &G_context.tx_info.transaction.networkId) ||
+        !buffer_read_u32(cdata, &G_context.tx_info.transaction.protocolMagic, BE)) {
+        return io_send_sw(SW_WRONG_DATA_LENGTH);
+    }
+
+    // Read transaction structure counts
+    if (!buffer_read_u16(cdata, &G_context.tx_info.transaction.num_inputs, BE) ||
+        !buffer_read_u16(cdata, &G_context.tx_info.transaction.num_outputs, BE) ||
+        !buffer_read_u16(cdata, &G_context.tx_info.transaction.num_withdrawals, BE)) {
+        return io_send_sw(SW_WRONG_DATA_LENGTH);
+    }
+
+    // Read optional field flags
+    uint8_t includeTtlByte;
+    if (!buffer_read_u8(cdata, &includeTtlByte)) {
+        return io_send_sw(SW_WRONG_DATA_LENGTH);
+    }
+    if (!parseIncluded(includeTtlByte, &G_context.tx_info.transaction.includeTtl)) {
+        return io_send_sw(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+    }
+
+    uint8_t includeValidityIntervalStartByte;
+    if (!buffer_read_u8(cdata, &includeValidityIntervalStartByte)) {
+        return io_send_sw(SW_WRONG_DATA_LENGTH);
+    }
+    if (!parseIncluded(includeValidityIntervalStartByte, &G_context.tx_info.transaction.includeValidityIntervalStart)) {
+        return io_send_sw(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+    }
+
+    // Read number of witnesses
+    if (!buffer_read_u16(cdata, &G_context.tx_info.num_witnesses, BE)) {
+        return io_send_sw(SW_WRONG_DATA_LENGTH);
+    }
+
+    PRINTF("TX Mode=%d, Network: ID=%d, Magic=%d, Inputs=%d, Outputs=%d, Withdrawals=%d, TTL=%d, VIS=%d, Witnesses=%d\n",
+           G_context.tx_info.transaction.txSigningMode,
+           G_context.tx_info.transaction.networkId,
+           G_context.tx_info.transaction.protocolMagic,
+           G_context.tx_info.transaction.num_inputs,
+           G_context.tx_info.transaction.num_outputs,
+           G_context.tx_info.transaction.num_withdrawals,
+           G_context.tx_info.transaction.includeTtl,
+           G_context.tx_info.transaction.includeValidityIntervalStart,
+           G_context.tx_info.num_witnesses);
+
+    // Check security policy
+    security_policy_t init_policy = policyForSignTxInit(
+        G_context.tx_info.transaction.txSigningMode,
+        G_context.tx_info.transaction.networkId,
+        G_context.tx_info.transaction.protocolMagic,
+        G_context.tx_info.transaction.num_outputs,
+        0,      // numCertificates - not implemented yet
+        G_context.tx_info.transaction.num_withdrawals,
+        false,  // includeMint - not implemented yet
+        false,  // includeScriptDataHash - not implemented yet
+        0,      // numCollateralInputs - not implemented yet
+        0,      // numRequiredSigners - not implemented yet
+        false,  // includeNetworkId - not implemented yet
+        false,  // includeCollateralOutput - not implemented yet
+        false,  // includeTotalCollateral - not implemented yet
+        0,      // numReferenceInputs - not implemented yet
+        0,      // numVotingProcedures - not implemented yet
+        false,  // includeTreasury - not implemented yet
+        false); // includeDonation - not implemented yet
+
+    TRACE("Transaction init security policy: %d", (int) init_policy);
+
+    if (init_policy == POLICY_DENY) {
+        TRACE("Security policy DENY - rejecting transaction init");
+        return io_send_sw(ERR_REJECTED_BY_POLICY);
+    }
+
+    return io_send_sw(SW_OK);
+}
+
+/**
+ * Helper: Accumulate transaction data chunks into buffer
+ * Returns SW_OK if more chunks expected, or falls through to parse if final chunk
+ */
+static int handle_tx_data_chunk(buffer_t *cdata, bool more) {
+    // Allocate buffer on first data chunk
+    if (G_context.tx_info.raw_tx == NULL) {
+        TRACE("Allocating transaction buffer: %d bytes", TX_BUFFER_SIZE);
+        app_mem_dump_stats();
+        G_context.tx_info.raw_tx = (uint8_t *) app_mem_alloc(TX_BUFFER_SIZE);
+        if (G_context.tx_info.raw_tx == NULL) {
+            TRACE("Failed to allocate %d byte transaction buffer!", TX_BUFFER_SIZE);
+            app_mem_dump_stats();
+            return io_send_sw(SW_INSUFFICIENT_MEMORY);
         }
+        TRACE("Transaction buffer allocated: %d bytes at %p", TX_BUFFER_SIZE, G_context.tx_info.raw_tx);
+    }
 
-        // Parse options - extract tagCborSets flag
-        bool tagCborSets = options & TX_OPTIONS_TAG_CBOR_SETS;
-        options &= ~TX_OPTIONS_TAG_CBOR_SETS;
-        // Validate no unknown flags are set
-        if (options != 0) {
-            return io_send_sw(SW_WRONG_DATA_LENGTH);  // Unknown options
-        }
-        G_context.tx_info.transaction.tagCborSets = tagCborSets;
+    // Check if adding this chunk would exceed buffer
+    if (G_context.tx_info.raw_tx_len + cdata->size > TX_BUFFER_SIZE) {
+        TRACE("Transaction too large: current=%d, chunk=%d, max=%d",
+              G_context.tx_info.raw_tx_len, cdata->size, TX_BUFFER_SIZE);
+        return io_send_sw(SW_WRONG_TX_LENGTH);
+    }
 
-        // Read transaction metadata
-        uint8_t txSigningMode;
-        if (!buffer_read_u8(cdata, &txSigningMode)) {
-            return io_send_sw(SW_WRONG_DATA_LENGTH);
-        }
-        G_context.tx_info.transaction.txSigningMode = (sign_tx_signingmode_t) txSigningMode;
+    // Copy chunk data
+    if (!buffer_move(cdata,
+                     G_context.tx_info.raw_tx + G_context.tx_info.raw_tx_len,
+                     cdata->size)) {
+        TRACE("Failed to copy transaction chunk");
+        return io_send_sw(SW_TX_PARSING_FAIL);
+    }
+    G_context.tx_info.raw_tx_len += cdata->size;
+    TRACE("Copied %d bytes, total: %d", cdata->size, G_context.tx_info.raw_tx_len);
 
-        // Read network parameters (networkId: 1 byte, protocolMagic: 4 bytes)
-        if (!buffer_read_u8(cdata, &G_context.tx_info.transaction.networkId) ||
-            !buffer_read_u32(cdata, &G_context.tx_info.transaction.protocolMagic, BE)) {
-            return io_send_sw(SW_WRONG_DATA_LENGTH);
-        }
-
-        // Read transaction structure counts
-        if (!buffer_read_u16(cdata, &G_context.tx_info.transaction.num_inputs, BE) ||
-            !buffer_read_u16(cdata, &G_context.tx_info.transaction.num_outputs, BE) ||
-            !buffer_read_u16(cdata, &G_context.tx_info.transaction.num_withdrawals, BE)) {
-            return io_send_sw(SW_WRONG_DATA_LENGTH);
-        }
-
-        // Read optional field flags
-        uint8_t includeTtlByte;
-        if (!buffer_read_u8(cdata, &includeTtlByte)) {
-            return io_send_sw(SW_WRONG_DATA_LENGTH);
-        }
-        if (!parseIncluded(includeTtlByte, &G_context.tx_info.transaction.includeTtl)) {
-            return io_send_sw(SW_TX_PARSING_FAIL_INCLUSION_FLAG);  // Invalid inclusion flag value
-        }
-
-        // Read validity interval start flag
-        uint8_t includeValidityIntervalStartByte;
-        if (!buffer_read_u8(cdata, &includeValidityIntervalStartByte)) {
-            return io_send_sw(SW_WRONG_DATA_LENGTH);
-        }
-        if (!parseIncluded(includeValidityIntervalStartByte, &G_context.tx_info.transaction.includeValidityIntervalStart)) {
-            return io_send_sw(SW_TX_PARSING_FAIL_INCLUSION_FLAG);  // Invalid inclusion flag value
-        }
-
-        // Read number of witnesses from the INIT APDU
-        if (!buffer_read_u16(cdata, &G_context.tx_info.num_witnesses, BE)) {
-            return io_send_sw(SW_WRONG_DATA_LENGTH);
-        }
-
-        PRINTF("TX Mode=%d, Network: ID=%d, Magic=%d, Inputs=%d, Outputs=%d, Withdrawals=%d, TTL=%d, VIS=%d, Witnesses=%d\n",
-               G_context.tx_info.transaction.txSigningMode,
-               G_context.tx_info.transaction.networkId,
-               G_context.tx_info.transaction.protocolMagic,
-               G_context.tx_info.transaction.num_inputs,
-               G_context.tx_info.transaction.num_outputs,
-               G_context.tx_info.transaction.num_withdrawals,
-               G_context.tx_info.transaction.includeTtl,
-               G_context.tx_info.transaction.includeValidityIntervalStart,
-               G_context.tx_info.num_witnesses);
-
-        // Check security policy for transaction initialization
-        security_policy_t init_policy = policyForSignTxInit(
-            G_context.tx_info.transaction.txSigningMode,
-            G_context.tx_info.transaction.networkId,
-            G_context.tx_info.transaction.protocolMagic,
-            G_context.tx_info.transaction.num_outputs,
-            0,      // numCertificates - not implemented yet
-            G_context.tx_info.transaction.num_withdrawals,  // numWithdrawals
-            false,  // includeMint - not implemented yet
-            false,  // includeScriptDataHash - not implemented yet
-            0,      // numCollateralInputs - not implemented yet
-            0,      // numRequiredSigners - not implemented yet
-            false,  // includeNetworkId - not implemented yet
-            false,  // includeCollateralOutput - not implemented yet
-            false,  // includeTotalCollateral - not implemented yet
-            0,      // numReferenceInputs - not implemented yet
-            0,      // numVotingProcedures - not implemented yet
-            false,  // includeTreasury - not implemented yet
-            false); // includeDonation - not implemented yet
-
-        TRACE("Transaction init security policy: %d", (int) init_policy);
-
-        // Handle DENY policy
-        if (init_policy == POLICY_DENY) {
-            TRACE("Security policy DENY - rejecting transaction init");
-            return io_send_sw(ERR_REJECTED_BY_POLICY);
-        }
-
+    if (more) {
         return io_send_sw(SW_OK);
+    }
 
-    } else {  // parse transaction data chunks (chunk >= 0)
+    // Final chunk - will be handled by caller
+    return SW_OK;
+}
 
+/**
+ * Helper: Parse transaction, build hash, and prepare for UI display
+ * Handles all cleanup on parse errors
+ */
+static int parse_and_hash_transaction(void) {
+    buffer_t buf = {.ptr = G_context.tx_info.raw_tx,
+                    .size = G_context.tx_info.raw_tx_len,
+                    .offset = 0};
+
+    parser_status_e status = transaction_deserialize(&buf, &G_context.tx_info.transaction);
+    PRINTF("Parsing status: %d.\n", status);
+    if (status != PARSING_OK) {
+        transaction_cleanup(&G_context.tx_info.transaction);
+
+        switch (status) {
+            case INPUTS_PARSING_ERROR:
+            case INPUTS_COUNT_PARSING_ERROR:
+                return io_send_sw(SW_TX_PARSING_FAIL_INPUTS);
+            case OUTPUTS_PARSING_ERROR:
+            case OUTPUTS_COUNT_PARSING_ERROR:
+            case OUTPUT_DESTINATION_TYPE_ERROR:
+            case OUTPUT_ADDRESS_SIZE_ERROR:
+                return io_send_sw(SW_TX_PARSING_FAIL_OUTPUTS);
+            case FEE_PARSING_ERROR:
+                return io_send_sw(SW_TX_PARSING_FAIL_FEE);
+            case TO_PARSING_ERROR:
+                return io_send_sw(SW_TX_PARSING_FAIL_TTL);
+            default:
+                return io_send_sw(SW_TX_PARSING_FAIL);
+        }
+    }
+
+    G_context.state = STATE_PARSED;
+
+    // Fill in Byron protocol magic for DEVICE_OWNED outputs
+    s_flist_node *output_node = G_context.tx_info.transaction.outputs;
+    while (output_node != NULL) {
+        tx_output_list_item_t *output_item = (tx_output_list_item_t *) output_node;
+        if (output_item->output_data.destination.type == DESTINATION_DEVICE_OWNED &&
+            output_item->output_data.destination.params.type == BYRON) {
+            output_item->output_data.destination.params.protocolMagic =
+                G_context.tx_info.transaction.protocolMagic;
+        }
+        output_node = output_node->next;
+    }
+
+    // Check for high fee warning
+    if (G_context.tx_info.transaction.fee > HIGH_FEE_WARNING_THRESHOLD) {
+        TRACE("High fee detected: %llu lovelace (threshold: %u lovelace)",
+              G_context.tx_info.transaction.fee, HIGH_FEE_WARNING_THRESHOLD);
+        if (!tx_warning_add((tx_warning_list_item_t **)&G_context.tx_info.warning_list,
+                           TX_WARNING_HIGH_FEE,
+                           G_context.tx_info.transaction.networkId,
+                           G_context.tx_info.transaction.protocolMagic)) {
+            TRACE("Warning allocation failed");
+            transaction_cleanup(&G_context.tx_info.transaction);
+            return io_send_sw(SW_INSUFFICIENT_MEMORY);
+        }
+    }
+
+    // Build transaction hash
+    tx_hash_builder_t txHashBuilder;
+    explicit_bzero(&txHashBuilder, sizeof(txHashBuilder));
+
+    txHashBuilder_init(&txHashBuilder,
+                      G_context.tx_info.transaction.tagCborSets,
+                      G_context.tx_info.transaction.num_inputs,
+                      G_context.tx_info.transaction.num_outputs,
+                      G_context.tx_info.transaction.includeTtl,
+                      0,      // numCertificates
+                      G_context.tx_info.transaction.num_withdrawals,
+                      false,  // includeAuxData
+                      G_context.tx_info.transaction.includeValidityIntervalStart,
+                      false,  // includeMint
+                      false,  // includeScriptDataHash
+                      0,      // numCollateralInputs
+                      0,      // numRequiredSigners
+                      false,  // includeNetworkId
+                      false,  // includeCollateralOutput
+                      false,  // includeTotalCollateral
+                      0,      // numReferenceInputs
+                      0,      // numVotingProcedures
+                      false,  // includeTreasury
+                      false); // includeDonation
+
+    // Add inputs
+    txHashBuilder_enterInputs(&txHashBuilder);
+    s_flist_node *input_node = G_context.tx_info.transaction.inputs;
+    while (input_node != NULL) {
+        tx_input_list_item_t *item = (tx_input_list_item_t *) input_node;
+        txHashBuilder_addInput(&txHashBuilder, (const tx_input_t*)&item->input_data);
+        input_node = input_node->next;
+    }
+
+    // Add outputs
+    txHashBuilder_enterOutputs(&txHashBuilder);
+    output_node = G_context.tx_info.transaction.outputs;
+    while (output_node != NULL) {
+        tx_output_list_item_t *output_item = (tx_output_list_item_t *) output_node;
+
+        tx_output_description_t output_desc;
+        output_desc.format = output_item->output_data.format;
+        output_desc.amount = output_item->output_data.adaAmount;
+        output_desc.numAssetGroups = output_item->output_data.numAssetGroups;
+        output_desc.includeDatum = (output_item->output_data.datum.type != 0xFF);
+        output_desc.includeRefScript = output_item->output_data.hasRefScript;
+
+        if (output_item->output_data.destination.type == DESTINATION_THIRD_PARTY) {
+            output_desc.destination.type = DESTINATION_THIRD_PARTY;
+            output_desc.destination.address.buffer = output_item->output_data.destination.address.buffer;
+            output_desc.destination.address.size = output_item->output_data.destination.address.size;
+            txHashBuilder_addOutput_topLevelData(&txHashBuilder, &output_desc);
+        } else if (output_item->output_data.destination.type == DESTINATION_DEVICE_OWNED) {
+            uint8_t *address_bytes = (uint8_t *) app_mem_alloc(MAX_ADDRESS_SIZE);
+            if (address_bytes == NULL) {
+                return io_send_sw(SW_TX_PARSING_FAIL);
+            }
+
+            TRACE("Deriving device-owned address: type=%d, paymentPath.len=%u, staking=%d",
+                  output_item->output_data.destination.params.type,
+                  output_item->output_data.destination.params.paymentKeyPath.length,
+                  output_item->output_data.destination.params.stakingDataSource);
+
+            size_t address_size = deriveAddress(
+                &output_item->output_data.destination.params,
+                address_bytes,
+                MAX_ADDRESS_SIZE
+            );
+
+            TRACE("Derived address size=%u: %.*H", address_size, address_size, address_bytes);
+
+            if (address_size == 0 || address_size > MAX_ADDRESS_SIZE) {
+                app_mem_free(address_bytes);
+                return io_send_sw(SW_TX_PARSING_FAIL);
+            }
+
+            output_desc.destination.type = DESTINATION_DEVICE_OWNED;
+            output_desc.destination.address.buffer = address_bytes;
+            output_desc.destination.address.size = address_size;
+            txHashBuilder_addOutput_topLevelData(&txHashBuilder, &output_desc);
+            app_mem_free(address_bytes);
+        }
+
+        output_node = output_node->next;
+    }
+
+    // Add fee
+    txHashBuilder_addFee(&txHashBuilder, G_context.tx_info.transaction.fee);
+
+    // Add TTL if included
+    if (G_context.tx_info.transaction.includeTtl) {
+        txHashBuilder_addTtl(&txHashBuilder, G_context.tx_info.transaction.ttl);
+    }
+
+    // Finalize hash
+    txHashBuilder_finalize(&txHashBuilder,
+                          G_context.tx_info.tx_hash,
+                          sizeof(G_context.tx_info.tx_hash));
+
+    PRINTF("Hash: %.*H\n", sizeof(G_context.tx_info.tx_hash), G_context.tx_info.tx_hash);
+
+    // Free raw_tx buffer - no longer needed after deserialization and hash computation
+    if (G_context.tx_info.raw_tx != NULL) {
+        app_mem_free(G_context.tx_info.raw_tx);
+        G_context.tx_info.raw_tx = NULL;
+        G_context.tx_info.raw_tx_len = 0;
+        TRACE("Raw transaction buffer freed after deserialization");
+    }
+
+    return SW_OK;
+}
+
+int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
+    if (chunk_type == P1_TX_INIT) {
+        return handle_tx_init_apdu(cdata);
+
+    } else {  // parse transaction data chunks
         if (G_context.req_type != REQUEST_CONFIRM_TRANSACTION) {
             return io_send_sw(SW_BAD_STATE);
         }
 
-        // Allocate buffer on first data chunk
-        if (G_context.tx_info.raw_tx == NULL) {
-            TRACE("Allocating transaction buffer: %d bytes", TX_BUFFER_SIZE);
-            app_mem_dump_stats();  // Debug: show memory state before allocation
-            G_context.tx_info.raw_tx = (uint8_t *) app_mem_alloc(TX_BUFFER_SIZE);
-            if (G_context.tx_info.raw_tx == NULL) {
-                TRACE("Failed to allocate %d byte transaction buffer!", TX_BUFFER_SIZE);
-                app_mem_dump_stats();  // Debug: show memory state after allocation failure
-                return io_send_sw(SW_INSUFFICIENT_MEMORY);
-            }
-            TRACE("Transaction buffer allocated: %d bytes at %p", TX_BUFFER_SIZE, G_context.tx_info.raw_tx);
+        // Handle chunk accumulation
+        int result = handle_tx_data_chunk(cdata, more);
+        if (more || result != SW_OK) {
+            return result;
         }
 
-        // Check if adding this chunk would exceed allocated buffer
-        if (G_context.tx_info.raw_tx_len + cdata->size > TX_BUFFER_SIZE) {
-            TRACE("Transaction too large: current=%d, chunk=%d, max=%d",
-                  G_context.tx_info.raw_tx_len, cdata->size, TX_BUFFER_SIZE);
-            return io_send_sw(SW_WRONG_TX_LENGTH);
+        // Final chunk - parse and build hash
+        int parse_result = parse_and_hash_transaction();
+        if (parse_result != SW_OK) {
+            return parse_result;
         }
 
-        if (!buffer_move(cdata,
-                         G_context.tx_info.raw_tx + G_context.tx_info.raw_tx_len,
-                         cdata->size)) {
-            TRACE("Failed to copy transaction chunk");
-            return io_send_sw(SW_TX_PARSING_FAIL);
-        }
-        G_context.tx_info.raw_tx_len += cdata->size;
-        TRACE("Copied %d bytes, total: %d", cdata->size, G_context.tx_info.raw_tx_len);
-
-        if (more) {
-            // more APDUs with transaction part are expected.
-            // Send a SW_OK to signal that we have received the chunk
-            return io_send_sw(SW_OK);
-
-        } else {
-            // last APDU for this transaction, let's parse, display and request a sign confirmation
-
-            buffer_t buf = {.ptr = G_context.tx_info.raw_tx,
-                            .size = G_context.tx_info.raw_tx_len,
-                            .offset = 0};
-
-            parser_status_e status = transaction_deserialize(&buf, &G_context.tx_info.transaction);
-            PRINTF("Parsing status: %d.\n", status);
-            if (status != PARSING_OK) {
-                // Cleanup any partial allocations from deserialization before returning error
-                transaction_cleanup(&G_context.tx_info.transaction);
-
-                // Map parser status to specific error codes
-                switch (status) {
-                    case INPUTS_PARSING_ERROR:
-                    case INPUTS_COUNT_PARSING_ERROR:
-                        return io_send_sw(SW_TX_PARSING_FAIL_INPUTS);
-                    case OUTPUTS_PARSING_ERROR:
-                    case OUTPUTS_COUNT_PARSING_ERROR:
-                    case OUTPUT_DESTINATION_TYPE_ERROR:
-                    case OUTPUT_ADDRESS_SIZE_ERROR:
-                        return io_send_sw(SW_TX_PARSING_FAIL_OUTPUTS);
-                    case FEE_PARSING_ERROR:
-                        return io_send_sw(SW_TX_PARSING_FAIL_FEE);
-                    case TO_PARSING_ERROR:
-                        return io_send_sw(SW_TX_PARSING_FAIL_TTL);
-                    default:
-                        return io_send_sw(SW_TX_PARSING_FAIL);
-                }
-            }
-
-            G_context.state = STATE_PARSED;
-
-            // Fill in Byron protocol magic for DEVICE_OWNED outputs
-            // (Shelley networkId is already set from transaction init during deserialization)
-            s_flist_node *output_node = G_context.tx_info.transaction.outputs;
-            while (output_node != NULL) {
-                tx_output_list_item_t *output_item = (tx_output_list_item_t *) output_node;
-                if (output_item->output_data.destination.type == DESTINATION_DEVICE_OWNED &&
-                    output_item->output_data.destination.params.type == BYRON) {
-                    // For Byron addresses, ensure protocol magic matches transaction
-                    output_item->output_data.destination.params.protocolMagic =
-                        G_context.tx_info.transaction.protocolMagic;
-                }
-                output_node = output_node->next;
-            }
-
-            // Collect warnings based on network parameters
-            // For now, skip warning collection - will be implemented when needed
-            // Network validation functions are in securityPolicy.c which has complex dependencies
-
-            // Check for high fee warning
-            if (G_context.tx_info.transaction.fee > HIGH_FEE_WARNING_THRESHOLD) {
-                TRACE("High fee detected: %llu lovelace (threshold: %u lovelace)",
-                      G_context.tx_info.transaction.fee, HIGH_FEE_WARNING_THRESHOLD);
-                if (!tx_warning_add((tx_warning_list_item_t **)&G_context.tx_info.warning_list,
-                                   TX_WARNING_HIGH_FEE,
-                                   G_context.tx_info.transaction.networkId,
-                                   G_context.tx_info.transaction.protocolMagic)) {
-                    // Warning allocation failed - abort transaction processing
-                    TRACE("Warning allocation failed");
-                    transaction_cleanup(&G_context.tx_info.transaction);
-                    return io_send_sw(SW_INSUFFICIENT_MEMORY);
-                }
-            }
-
-            // Build transaction hash using txHashBuilder (local variable to avoid includes in types.h)
-            tx_hash_builder_t txHashBuilder;
-            explicit_bzero(&txHashBuilder, sizeof(txHashBuilder));
-
-            // Initialize txHashBuilder with inputs, outputs, withdrawals, fee, and optionally TTL and VIS
-            txHashBuilder_init(&txHashBuilder,
-                              G_context.tx_info.transaction.tagCborSets,  // tagCborSets
-                              G_context.tx_info.transaction.num_inputs,   // numInputs
-                              G_context.tx_info.transaction.num_outputs,  // numOutputs
-                              G_context.tx_info.transaction.includeTtl,   // includeTtl
-                              0,      // numCertificates
-                              G_context.tx_info.transaction.num_withdrawals,  // numWithdrawals
-                              false,  // includeAuxData
-                              G_context.tx_info.transaction.includeValidityIntervalStart,  // includeValidityIntervalStart
-                              false,  // includeMint
-                              false,  // includeScriptDataHash
-                              0,      // numCollateralInputs
-                              0,      // numRequiredSigners
-                              false,  // includeNetworkId
-                              false,  // includeCollateralOutput
-                              false,  // includeTotalCollateral
-                              0,      // numReferenceInputs
-                              0,      // numVotingProcedures
-                              false,  // includeTreasury
-                              false); // includeDonation
-
-            // Add inputs to hash builder
-            txHashBuilder_enterInputs(&txHashBuilder);
-            s_flist_node *node = G_context.tx_info.transaction.inputs;
-            while (node != NULL) {
-                tx_input_list_item_t *item = (tx_input_list_item_t *) node;
-                // Cast the embedded struct to tx_input_t* - memory layout is identical
-                txHashBuilder_addInput(&txHashBuilder, (const tx_input_t*)&item->input_data);
-                node = node->next;
-            }
-
-            // Add outputs to hash builder
-            txHashBuilder_enterOutputs(&txHashBuilder);
-            node = G_context.tx_info.transaction.outputs;
-            while (node != NULL) {
-                tx_output_list_item_t *output_item = (tx_output_list_item_t *) node;
-
-                // Prepare output description for hash builder
-                tx_output_description_t output_desc;
-                output_desc.format = output_item->output_data.format;  // Use actual format from output
-                output_desc.amount = output_item->output_data.adaAmount;
-                output_desc.numAssetGroups = output_item->output_data.numAssetGroups;  // Use actual token count
-                output_desc.includeDatum = (output_item->output_data.datum.type != 0xFF);  // 0xFF is DATUM_NONE
-                output_desc.includeRefScript = output_item->output_data.hasRefScript;
-
-                if (output_item->output_data.destination.type == DESTINATION_THIRD_PARTY) {
-                    // For third-party, use address directly
-                    output_desc.destination.type = DESTINATION_THIRD_PARTY;
-                    output_desc.destination.address.buffer = output_item->output_data.destination.address.buffer;
-                    output_desc.destination.address.size = output_item->output_data.destination.address.size;
-                    txHashBuilder_addOutput_topLevelData(&txHashBuilder, &output_desc);
-                } else if (output_item->output_data.destination.type == DESTINATION_DEVICE_OWNED) {
-                    // For device-owned, we need to derive the address first
-                    // Allocate memory for the derived address
-                    uint8_t *address_bytes = (uint8_t *) app_mem_alloc(MAX_ADDRESS_SIZE);
-                    if (address_bytes == NULL) {
-                        return io_send_sw(SW_TX_PARSING_FAIL);
-                    }
-
-                    TRACE("sign_tx: Deriving device-owned address for output");
-                    TRACE("sign_tx: Address type=%d, networkId=%u",
-                          output_item->output_data.destination.params.type,
-                          output_item->output_data.destination.params.networkId);
-                    TRACE("sign_tx: Payment path length=%u, Staking source=%d",
-                          output_item->output_data.destination.params.paymentKeyPath.length,
-                          output_item->output_data.destination.params.stakingDataSource);
-
-                    size_t address_size = deriveAddress(
-                        &output_item->output_data.destination.params,
-                        address_bytes,
-                        MAX_ADDRESS_SIZE
-                    );
-
-                    TRACE("sign_tx: Derived address size=%u", address_size);
-                    if (address_size > 0) {
-                        TRACE("sign_tx: Derived address: %.*H", address_size, address_bytes);
-                    }
-
-                    if (address_size == 0 || address_size > MAX_ADDRESS_SIZE) {
-                        app_mem_free(address_bytes);
-                        return io_send_sw(SW_TX_PARSING_FAIL);
-                    }
-
-                    output_desc.destination.type = DESTINATION_DEVICE_OWNED;
-                    output_desc.destination.address.buffer = address_bytes;
-                    output_desc.destination.address.size = address_size;
-                    txHashBuilder_addOutput_topLevelData(&txHashBuilder, &output_desc);
-                    app_mem_free(address_bytes);
-                }
-
-                node = node->next;
-            }
-
-            // Add fee to hash builder
-            txHashBuilder_addFee(&txHashBuilder, G_context.tx_info.transaction.fee);
-
-            // Add TTL to hash builder if included
-            if (G_context.tx_info.transaction.includeTtl) {
-                txHashBuilder_addTtl(&txHashBuilder, G_context.tx_info.transaction.ttl);
-            }
-
-            // Finalize the hash
-            txHashBuilder_finalize(&txHashBuilder,
-                                  G_context.tx_info.tx_hash,
-                                  sizeof(G_context.tx_info.tx_hash));
-
-            PRINTF("Hash: %.*H\n", sizeof(G_context.tx_info.tx_hash), G_context.tx_info.tx_hash);
-
-            // Free raw_tx buffer - it's no longer needed after deserialization and hash computation
-            // This prevents a memory leak if user rejects, or between transactions
-            if (G_context.tx_info.raw_tx != NULL) {
-                app_mem_free(G_context.tx_info.raw_tx);
-                G_context.tx_info.raw_tx = NULL;
-                G_context.tx_info.raw_tx_len = 0;
-                TRACE("Raw transaction buffer freed after deserialization");
-            }
-
-            return ui_display_transaction();
-        }
+        // Display transaction for user confirmation
+        return ui_display_transaction();
     }
-    return 0;
 }
 
 int handler_sign_tx_witness(buffer_t *cdata) {

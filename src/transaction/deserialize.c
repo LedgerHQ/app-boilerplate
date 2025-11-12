@@ -522,9 +522,9 @@ parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
 void transaction_free_outputs(transaction_t *tx) {
     LEDGER_ASSERT(tx != NULL, "NULL tx");
 
-    s_flist_node *node = tx->outputs;
-    while (node != NULL) {
-        tx_output_list_item_t *item = (tx_output_list_item_t *) node;
+    s_flist_node *output_node = tx->outputs;
+    while (output_node != NULL) {
+        tx_output_list_item_t *item = (tx_output_list_item_t *) output_node;
 
         // Free asset groups and their tokens
         if (item->output_data.assetGroups != NULL) {
@@ -547,7 +547,7 @@ void transaction_free_outputs(transaction_t *tx) {
             app_mem_free(item->output_data.refScript.data);
         }
 
-        node = node->next;
+        output_node = output_node->next;
     }
 }
 
@@ -555,11 +555,11 @@ void transaction_free_outputs(transaction_t *tx) {
 void transaction_free_withdrawals(transaction_t *tx) {
     LEDGER_ASSERT(tx != NULL, "NULL tx");
 
-    s_flist_node *node = tx->withdrawals;
-    while (node != NULL) {
+    s_flist_node *withdrawal_node = tx->withdrawals;
+    while (withdrawal_node != NULL) {
         // Withdrawal items don't have additional allocated memory
         // (credential data is stored inline in the union)
-        node = node->next;
+        withdrawal_node = withdrawal_node->next;
     }
 }
 

@@ -36,8 +36,14 @@ typedef void (*action_validate_cb)(bool);
 int ui_display_transaction(void);
 
 /**
- * Cleanup transaction data after UI is finished.
- * Frees the raw transaction buffer and parsed transaction lists.
+ * Cleanup transaction data after UI is finished or on error paths.
+ *
+ * CLEANUP CONTRACT:
+ * - Frees raw transaction buffer (freed early in sign_tx after hash, fallback here)
+ * - Frees all parsed transaction elements (inputs, outputs, withdrawals)
+ * - Frees all warnings accumulated during transaction review
+ * - Must be called on ALL exit paths: approval, rejection, or parse errors
+ * - Safe to call multiple times
  */
 void tx_data_cleanup(void);
 
