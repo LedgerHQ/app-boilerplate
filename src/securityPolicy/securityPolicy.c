@@ -1,7 +1,7 @@
 #include "addressUtilsShelley.h"
 #include "addressUtilsByron.h"
 #include "settings.h"
-#include "bip44.h"
+#include "addressUtils/bip44.h"
 #include "cardano.h"
 #include "txHashBuilder.h"
 #include "transaction/tx_utils.h"
@@ -184,8 +184,6 @@ security_policy_t policyForGetExtendedPublicKey(const bip44_path_t* path) {
 
     DENY();  // should not be reached
 }
-
-/*
 
 // common policy for DENY and WARN cases in returnDeriveAddress and showDeriveAddress
 // successPolicy is returned if no DENY or WARN applies
@@ -911,6 +909,8 @@ security_policy_t policyForSignTxTtl(uint32_t ttl MARK_UNUSED) {
     ALLOW();
 }
 
+/*
+
 // a generic policy for all certificates
 // does not evaluate aspects of specific certificates
 security_policy_t policyForSignTxCertificate(sign_tx_signingmode_t txSigningMode,
@@ -1311,6 +1311,8 @@ security_policy_t policyForSignTxStakePoolRegistrationConfirm(uint32_t numOwners
     ALLOW();
 }
 
+*/
+
 // For each withdrawal
 security_policy_t policyForSignTxWithdrawal(sign_tx_signingmode_t txSigningMode,
                                             const ext_credential_t* stakeCredential) {
@@ -1392,8 +1394,6 @@ security_policy_t policyForSignTxWithdrawal(sign_tx_signingmode_t txSigningMode,
 
     DENY();  // should not be reached
 }
-
-*/
 
 // TODO move witness policies in the proper place, at the end of tx
 static inline security_policy_t _ordinaryWitnessPolicy(const bip44_path_t* path, bool mintPresent) {

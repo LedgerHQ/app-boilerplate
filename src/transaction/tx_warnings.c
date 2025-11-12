@@ -33,6 +33,8 @@ const char* tx_warning_get_message(tx_warning_type_t type) {
             return "Unusual network detected";
         case TX_WARNING_NETWORK_ID_UNVERIFIABLE:
             return "Network ID cannot be verified";
+        case TX_WARNING_HIGH_FEE:
+            return "Transaction fee is unusually high";
         default:
             return "Unknown warning";
     }

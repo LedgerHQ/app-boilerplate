@@ -2,7 +2,7 @@
 #include "bufView.h"
 #include "textUtils.h"
 #include "hash.h"
-#include "bech32.h"
+#include "addressUtils/bech32.h"
 
 #define ASSET_FINGERPRINT_SIZE 20
 

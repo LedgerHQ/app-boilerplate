@@ -5,7 +5,7 @@
 
 // TODO somehow merge, maybe use standard functions instead of custom implementation in bip44
 #include "bip32.h"
-#include "bip44.h"
+#include "addressUtils/bip44.h"
 
 #include "constants.h"
 #include "tx_types.h"

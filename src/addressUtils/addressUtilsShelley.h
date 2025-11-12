@@ -1,7 +1,7 @@
 #pragma once
 
 #include "cardano.h"
-#include "bip44.h"
+#include "addressUtils/bip44.h"
 #include "bufView.h"
 
 typedef enum {

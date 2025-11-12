@@ -2,7 +2,7 @@
 #define H_CARDANO_APP_CARDANO
 
 #include "globals.h"
-#include "bip44.h"
+#include "addressUtils/bip44.h"
 #include "keyDerivation.h"
 
 // Just a trick to make the numbers readable

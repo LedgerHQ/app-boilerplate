@@ -1,12 +1,12 @@
 #include "nbgl_screens.h"
-#include "bech32.h"
+#include "addressUtils/bech32.h"
 #include "cardano.h"
 #include "hexUtils.h"
 #include "utils/ipUtils.h"
 #include "textUtils.h"
 // #include "signTx.h"
 // #include "signTxPoolRegistration.h"
-#include "tokens.h"
+#include "tokens/tokens.h"
 
 // encodes a buffer into bech32 and displays it (works for bufferSize <= 150 and prefix length <=
 // 12)

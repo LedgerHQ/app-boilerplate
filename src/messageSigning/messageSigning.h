@@ -1,6 +1,6 @@
 #pragma once
 
-#include "bip44.h"
+#include "addressUtils/bip44.h"
 
 int signRawMessageWithPath(const bip44_path_t* path,
                             const uint8_t* messageBuffer,

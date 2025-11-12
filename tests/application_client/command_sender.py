@@ -117,7 +117,9 @@ class CommandSender:
             yield
 
     def sign_tx_init_simple(self, options: int, tx_signing_mode: int, network_id: int,
-                           protocol_magic: int, num_inputs: int, num_outputs: int, include_ttl: bool) -> RAPDU:
+                           protocol_magic: int, num_inputs: int, num_outputs: int, include_ttl: bool,
+                           num_withdrawals: int = 0, include_validity_interval_start: bool = False,
+                           num_witnesses: int = 0) -> RAPDU:
         """APDU Sign TX Init (simple chunked mode)
 
         Args:
@@ -128,6 +130,9 @@ class CommandSender:
             num_inputs (int): Number of inputs
             num_outputs (int): Number of outputs
             include_ttl (bool): Whether TTL is included
+            num_withdrawals (int): Number of withdrawals (default 0)
+            include_validity_interval_start (bool): Whether validity interval start is included (default False)
+            num_witnesses (int): Number of witnesses (default 0)
 
         Returns:
             Response APDU
@@ -139,60 +144,54 @@ class CommandSender:
         data.extend(protocol_magic.to_bytes(4, 'big'))
         data.extend(num_inputs.to_bytes(2, 'big'))
         data.extend(num_outputs.to_bytes(2, 'big'))
+        data.extend(num_withdrawals.to_bytes(2, 'big'))  # num_withdrawals (2B)
         data.append(0x02 if include_ttl else 0x01)  # ITEM_INCLUDED_YES or ITEM_INCLUDED_NO
+        data.append(0x02 if include_validity_interval_start else 0x01)  # validity interval start flag
+        data.extend(num_witnesses.to_bytes(4, 'big'))  # num_witnesses (4B)
 
         from application_client.command_builder import P1Type
         # P1 = P1_TX_INIT for INIT APDU, P2 = P2_UNUSED
         return self._exchange(self._cmd_builder._serialize(InsType.SIGN_TX, P1Type.P1_TX_INIT, P1Type.P2_UNUSED, bytes(data)))
 
-    def sign_tx_chunk(self, tx_data: bytes, more: bool = True) -> RAPDU:
-        """APDU Sign TX Data Chunk (synchronous)
+    def sign_tx_send_intermediate_chunks(self, tx):
+        """Send all intermediate transaction chunks synchronously.
+
+        This method sends all but the last chunk, catching any parsing errors immediately.
+        Call this before entering the async context for the final chunk.
 
         Args:
-            tx_data (bytes): Transaction data chunk
-            more (bool): True if more chunks follow, False for last chunk
+            tx: Transaction object from signTx.py
 
         Returns:
-            Response APDU
+            List of APDU chunks (all chunks for the transaction)
         """
-        from application_client.command_builder import P1Type
-        # P1 determines chunk flow: P1_TX_DATA_CHUNK (0x01) for intermediate, P1_TX_CHUNK_LAST (0x02) for final
-        # P2 = P2_UNUSED
-        p1 = P1Type.P1_TX_DATA_CHUNK if more else P1Type.P1_TX_CHUNK_LAST
-        return self._exchange(self._cmd_builder._serialize(InsType.SIGN_TX, p1, P1Type.P2_UNUSED, tx_data))
+        chunks = self._cmd_builder.serialize_transaction_chunks(tx)
+
+        # Send all intermediate chunks synchronously
+        for chunk in chunks[:-1]:
+            response = self._exchange(chunk)
+            if response.status != Errors.SW_SUCCESS:
+                raise AssertionError(f"Intermediate chunk failed: {hex(response.status)}")
+
+        return chunks
 
     @contextmanager
-    def sign_tx_chunk_async(self, tx_data: bytes, more: bool = True) -> Generator[None, None, None]:
-        """APDU Sign TX Data Chunk (asynchronous - for UI navigation)
+    def sign_tx_serialize_and_send_chunks_async(self, tx) -> Generator[None, None, None]:
+        """Serialize transaction into chunks and send all with async on final chunk
+
+        Sends all intermediate chunks synchronously, then the final chunk asynchronously.
+        Use this when you need to navigate the UI during the final chunk processing.
 
         Args:
-            tx_data (bytes): Transaction data chunk
-            more (bool): True if more chunks follow, False for last chunk
-
-        Returns:
-            Generator
-        """
-        from application_client.command_builder import P1Type
-        # P1 determines chunk flow: P1_TX_DATA_CHUNK (0x01) for intermediate, P1_TX_CHUNK_LAST (0x02) for final
-        # P2 = P2_UNUSED
-        p1 = P1Type.P1_TX_DATA_CHUNK if more else P1Type.P1_TX_CHUNK_LAST
-        with self._exchange_async(self._cmd_builder._serialize(InsType.SIGN_TX, p1, P1Type.P2_UNUSED, tx_data)):
-            yield
-
-    @contextmanager
-    def sign_tx_serialize_and_send_chunk_async(self, tx) -> Generator[None, None, None]:
-        """Serialize transaction and send as final chunk (asynchronous - for UI navigation)
-
-        Args:
-            tx: Transaction object from signTx.py (contains TTL if present)
+            tx: Transaction object from signTx.py
 
         Returns:
             Generator (use with 'with' statement for navigation)
         """
-        include_ttl = tx.ttl is not None
-        ttl_value = tx.ttl if include_ttl else 0
-        tx_bytes = self._cmd_builder.serialize_transaction_unpacked(tx, include_ttl, ttl_value)
-        with self.sign_tx_chunk_async(tx_bytes, more=False):
+        chunks = self.sign_tx_send_intermediate_chunks(tx)
+
+        # Send final chunk asynchronously (for UI navigation)
+        with self._exchange_async(chunks[-1]):
             yield
 
     def sign_tx_witness(self, path: str) -> RAPDU:

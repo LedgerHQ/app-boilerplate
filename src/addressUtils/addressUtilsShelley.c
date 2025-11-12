@@ -3,9 +3,9 @@
 #include "keyDerivation.h"
 #include "addressUtilsByron.h"
 #include "addressUtilsShelley.h"
-#include "bip44.h"
+#include "addressUtils/bip44.h"
 #include "base58.h"
-#include "bech32.h"
+#include "addressUtils/bech32.h"
 
 uint8_t getAddressHeader(const uint8_t* addressBuffer, size_t addressSize) {
     ASSERT(addressSize > 0);

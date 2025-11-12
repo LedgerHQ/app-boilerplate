@@ -1,6 +1,6 @@
 #pragma once
 
-#include "bip44.h"
+#include "addressUtils/bip44.h"
 #include "cx.h"
 
 #define PUBLIC_KEY_SIZE      (32)

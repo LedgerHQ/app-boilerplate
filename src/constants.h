@@ -33,7 +33,7 @@
  * - Alignment requirements (8-byte alignment)
  * Maximum tested working size is 14KB from a 24KB pool TODO
  */
-#define TX_BUFFER_SIZE (16 * 1024)
+#define TX_BUFFER_SIZE (14 * 1024)
 
 /**
  * Maximum signature length (bytes).
@@ -67,3 +67,9 @@ enum { ITEM_INCLUDED_NO = 1, ITEM_INCLUDED_YES = 2 };
 enum {
     TX_OPTIONS_TAG_CBOR_SETS = 1,  // Whether to tag CBOR sets in transaction hash
 };
+
+/**
+ * High fee warning threshold (in lovelace).
+ * If a transaction fee exceeds this value, a warning is shown to the user.
+ */
+#define HIGH_FEE_WARNING_THRESHOLD 5000000

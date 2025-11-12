@@ -2,7 +2,7 @@
 
 #include "messageSigning.h"
 #include "cardano.h"
-#include "bip44.h"
+#include "addressUtils/bip44.h"
 #include "securityPolicy.h"
 #include "crypto.h"
 

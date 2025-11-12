@@ -12,7 +12,7 @@
 #include "os_print.h"
 #include "utils/utils.h"
 
-#define SIZE_MEM_BUFFER (1024 * 24)
+#define SIZE_MEM_BUFFER (24 * 1024)
 
 static uint8_t mem_buffer[SIZE_MEM_BUFFER] __attribute__((aligned(sizeof(intmax_t))));
 static mem_ctx_t mem_ctx = NULL;

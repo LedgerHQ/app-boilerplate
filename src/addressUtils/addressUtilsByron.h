@@ -1,6 +1,6 @@
 #pragma once
 
-#include "bip44.h"
+#include "addressUtils/bip44.h"
 
 size_t deriveAddress_byron(const bip44_path_t* pathSpec,
                            uint32_t protocolMagic,

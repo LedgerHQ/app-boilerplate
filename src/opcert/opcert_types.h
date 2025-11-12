@@ -3,7 +3,7 @@
 #include <stddef.h>  // size_t
 #include <stdint.h>  // uint*_t
 
-#include "bip44.h"
+#include "addressUtils/bip44.h"
 
 #define KES_PUBLIC_KEY_LENGTH 32
 

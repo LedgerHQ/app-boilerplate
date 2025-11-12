@@ -1,9 +1,11 @@
 #pragma once
 
 #include "addressUtilsShelley.h"
-#include "bip44.h"
+#include "addressUtils/bip44.h"
 #include "cardano.h"
 #include "securityPolicyType.h"
+#include "txHashBuilder/txHashBuilder.h"
+#include "transaction/tx_credential_types.h"
 /*
 #include "signTxPoolRegistration.h"
 #include "signTxAuxData.h"
@@ -13,8 +15,6 @@
 security_policy_t policyForDerivePrivateKey(const bip44_path_t* path);
 
 security_policy_t policyForGetExtendedPublicKey(const bip44_path_t* path);
-
-/*
 
 security_policy_t policyForShowDeriveAddress(const addressParams_t* addressParams);
 security_policy_t policyForReturnDeriveAddress(const addressParams_t* addressParams);
@@ -90,6 +90,8 @@ security_policy_t policyForSignTxFee(sign_tx_signingmode_t txSigningMode, uint64
 
 security_policy_t policyForSignTxTtl(uint32_t ttl);
 
+/*
+
 security_policy_t policyForSignTxCertificate(sign_tx_signingmode_t txSigningMode,
                                              const certificate_type_t certificateType);
 security_policy_t policyForSignTxCertificateStaking(sign_tx_signingmode_t txSigningMode,
@@ -128,13 +130,19 @@ security_policy_t policyForSignTxStakePoolRegistrationMetadata();
 security_policy_t policyForSignTxStakePoolRegistrationNoMetadata();
 security_policy_t policyForSignTxStakePoolRegistrationConfirm(uint32_t numOwners,
                                                               uint32_t numRelays);
+
+*/
+
 security_policy_t policyForSignTxWithdrawal(sign_tx_signingmode_t txSigningMode,
                                             const ext_credential_t* stakeCredential);
 
+/*
 security_policy_t policyForSignTxAuxData(aux_data_type_t auxDataType);
+*/
 
 security_policy_t policyForSignTxValidityIntervalStart();
 
+/*
 security_policy_t policyForSignTxMintInit(const sign_tx_signingmode_t txSigningMode);
 security_policy_t policyForSignTxMintConfirm(security_policy_t outputPolicy);
 

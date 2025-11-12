@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
-#include "bip44.h"
+#include "addressUtils/bip44.h"
 
 /**
  * Checks if a witness path violates the single-account security model.

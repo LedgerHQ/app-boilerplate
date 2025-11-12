@@ -22,7 +22,7 @@
 #include "glyphs.h"
 #include "nbgl_use_case.h"
 #include "io.h"
-#include "bip44.h"
+#include "addressUtils/bip44.h"
 #include "format.h"
 
 #include "display.h"

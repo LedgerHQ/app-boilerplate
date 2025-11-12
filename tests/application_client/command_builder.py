@@ -15,7 +15,7 @@ from standalone.input_files.derive_address import DeriveAddressTestCase
 from standalone.input_files.cvote import MAX_CIP36_PAYLOAD_SIZE, CVoteTestCase
 from standalone.input_files.signOpCert import OpCertTestCase
 from standalone.input_files.signMsg import SignMsgTestCase, MessageAddressFieldType
-from standalone.input_files.signTx import SignTxTestCase, TxInput, TxOutput, Certificate, Withdrawal
+from standalone.input_files.signTx import SignTxTestCase, TxInput, TxOutput, Certificate, Withdrawal, Transaction
 from standalone.input_files.signTx import TxAuxiliaryData, TxAuxiliaryDataHash, DRepParams
 from standalone.input_files.signTx import TxOutputDestinationType, TxOutputDestination
 from standalone.input_files.signTx import TxOutputBabbage, ThirdPartyAddressParams
@@ -126,6 +126,65 @@ class P2Type(IntEnum):
     P2_RELAYS = 0x36
     P2_METADATA = 0x37
     P2_CERT_CONFIRM = 0x38
+
+
+def gather_witness_paths(tx: Transaction, additional_witness_paths: List[str]) -> List[str]:
+    """Gather unique witness paths from transaction elements.
+
+    Collects paths from:
+    - Input paths
+    - Certificate paths (by credential type)
+    - Withdrawal paths
+    - Additional witness paths from test case
+
+    Duplicates are removed while preserving order.
+
+    Args:
+        tx: The transaction object
+        additional_witness_paths: List of additional witness paths from test case
+
+    Returns:
+        List of unique witness paths in order of first occurrence
+    """
+    witness_paths = []
+
+    # Add input paths
+    for tx_input in tx.inputs:
+        if tx_input.path and tx_input.path not in witness_paths:
+            witness_paths.append(tx_input.path)
+
+    # Add certificate paths
+    for certificate in tx.certificates:
+        cert_path = None
+        # Different certificate types have different path locations
+        if hasattr(certificate.params, 'stakeCredential'):
+            if certificate.params.stakeCredential.type.name == 'KEY_PATH':
+                cert_path = certificate.params.stakeCredential.keyValue
+        elif hasattr(certificate.params, 'coldCredential'):
+            if certificate.params.coldCredential.type.name == 'KEY_PATH':
+                cert_path = certificate.params.coldCredential.keyValue
+        elif hasattr(certificate.params, 'dRepCredential'):
+            if certificate.params.dRepCredential.type.name == 'KEY_PATH':
+                cert_path = certificate.params.dRepCredential.keyValue
+        elif hasattr(certificate.params, 'poolKeyPath'):
+            cert_path = certificate.params.poolKeyPath
+
+        if cert_path and cert_path not in witness_paths:
+            witness_paths.append(cert_path)
+
+    # Add withdrawal paths
+    for withdrawal in tx.withdrawals:
+        if withdrawal.stakeCredential.type.name == 'KEY_PATH':
+            path = withdrawal.stakeCredential.keyValue
+            if path not in witness_paths:
+                witness_paths.append(path)
+
+    # Add additional witness paths from test case
+    for additional_path in additional_witness_paths:
+        if additional_path not in witness_paths:
+            witness_paths.append(additional_path)
+
+    return witness_paths
 
 
 class CommandBuilder:
@@ -1640,10 +1699,42 @@ class CommandBuilder:
         data += token.amount.to_bytes(8, "big", signed=True)
         return data
 
-    def serialize_transaction_unpacked(self, tx, include_ttl=False, ttl=0) -> bytes:
+    def serialize_transaction_chunks(self, tx: Transaction) -> list:
+        """Create transaction data chunks for sending to device.
+
+        Breaks the serialized transaction into chunks of MAX_SIGN_TX_CHUNK_SIZE bytes,
+        with appropriate APDU headers for each chunk.
+
+        Args:
+            tx: Transaction object from signTx.py
+
+        Returns:
+            List of APDU bytes, one per chunk
+        """
+        # Serialize the full transaction first
+        tx_data = self._serialize_transaction_unpacked_raw(tx)
+
+        chunks = []
+        offset = 0
+
+        while offset < len(tx_data):
+            chunk_size = min(MAX_SIGN_TX_CHUNK_SIZE, len(tx_data) - offset)
+            chunk_data = tx_data[offset:offset + chunk_size]
+            offset += chunk_size
+
+            # Determine if this is the last chunk
+            more = offset < len(tx_data)
+
+            # Create APDU for this chunk
+            p1 = P1Type.P1_TX_DATA_CHUNK if more else P1Type.P1_TX_CHUNK_LAST
+            chunk_apdu = self._serialize(InsType.SIGN_TX, p1, P1Type.P2_UNUSED, chunk_data)
+            chunks.append(chunk_apdu)
+
+        return chunks
+
+    def _serialize_transaction_unpacked_raw(self, tx: Transaction) -> bytes:
         """Serialize transaction to unpacked binary format for handler_sign_tx.
 
-        NEW Format (after adding TTL):
         Transaction data buffer (sent after INIT APDU):
         - For each input:
             - tx_hash (32 bytes)
@@ -1658,15 +1749,20 @@ class CommandBuilder:
                 - path_length (uint8)
                 - bip32_path
             - ada_amount (uint64, BE)
+            - output_format (uint8: 0=ARRAY_LEGACY, 1=MAP_BABBAGE)
+            - num_asset_groups (uint16, BE)
+            - [asset groups...]
+            - datum_flag (uint8)
+            - [datum data...]
+            - reference_script_flag (uint8)
+            - [reference script data...]
         - fee (uint64, BE)
-        - ttl (uint64, BE) - only if include_ttl is True
+        - ttl (uint64, BE) - only if tx.ttl is not None
 
-        Note: num_inputs and num_outputs are now sent in the INIT APDU, not in the tx buffer
+        Note: num_inputs and num_outputs are sent in the INIT APDU, not in the tx buffer
 
         Args:
-            tx: Transaction from signTx.py test data
-            include_ttl: Whether to include TTL field
-            ttl: TTL value (only used if include_ttl is True)
+            tx: Transaction object from signTx.py
 
         Returns:
             bytes: Serialized transaction
@@ -1699,6 +1795,49 @@ class CommandBuilder:
             # ADA amount
             output_data.extend(tx_output.amount.to_bytes(8, 'big'))
 
+            # Output format (uint8: 0=ARRAY_LEGACY, 1=MAP_BABBAGE)
+            output_data.append(tx_output.format if hasattr(tx_output, 'format') else 0)
+
+            # Number of asset groups (uint16, BE)
+            num_asset_groups = len(tx_output.tokenBundle) if hasattr(tx_output, 'tokenBundle') else 0
+            output_data.extend(num_asset_groups.to_bytes(2, 'big'))
+
+            # Asset groups (if any)
+            if num_asset_groups > 0:
+                for asset_group in tx_output.tokenBundle:
+                    # Policy ID (28 bytes, no length prefix)
+                    output_data.extend(bytes.fromhex(asset_group.policyIdHex))
+                    # Number of tokens (uint16, BE)
+                    output_data.extend(len(asset_group.tokens).to_bytes(2, 'big'))
+                    # Tokens
+                    for token in asset_group.tokens:
+                        # Asset name length (uint8)
+                        asset_name_bytes = bytes.fromhex(token.assetNameHex)
+                        output_data.append(len(asset_name_bytes))
+                        # Asset name
+                        output_data.extend(asset_name_bytes)
+                        # Token amount (int64, BE, signed)
+                        output_data.extend(token.amount.to_bytes(8, 'big', signed=True))
+
+            # Datum (if any)
+            if hasattr(tx_output, 'datum') and tx_output.datum is not None:
+                output_data.append(0x02 if tx_output.datum is not None else 0x01)  # datum flag
+                if tx_output.datum is not None:
+                    datum_bytes = bytes.fromhex(tx_output.datum.datumHex)
+                    output_data.extend(len(datum_bytes).to_bytes(4, 'big'))
+                    output_data.extend(datum_bytes)
+            else:
+                output_data.append(0x01)  # no datum
+
+            # Reference script (if any, for Babbage format)
+            if isinstance(tx_output, TxOutputBabbage) and tx_output.referenceScriptHex is not None:
+                output_data.append(0x02)  # reference script flag
+                script_bytes = bytes.fromhex(tx_output.referenceScriptHex)
+                output_data.extend(len(script_bytes).to_bytes(4, 'big'))
+                output_data.extend(script_bytes)
+            else:
+                output_data.append(0x01)  # no reference script
+
             # Add output with length prefix
             data.extend(len(output_data).to_bytes(2, 'big'))
             data.extend(output_data)
@@ -1706,8 +1845,8 @@ class CommandBuilder:
         # Fee
         data.extend(tx.fee.to_bytes(8, 'big'))
 
-        # TTL (optional)
-        if include_ttl:
-            data.extend(ttl.to_bytes(8, 'big'))
+        # TTL (optional - only if present in transaction)
+        if tx.ttl is not None:
+            data.extend(tx.ttl.to_bytes(8, 'big'))
 
         return bytes(data)
