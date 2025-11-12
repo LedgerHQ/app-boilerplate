@@ -109,11 +109,9 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
         }
 
         // Read number of witnesses from the INIT APDU
-        uint32_t num_witnesses;
-        if (!buffer_read_u32(cdata, &num_witnesses, BE)) {
+        if (!buffer_read_u16(cdata, &G_context.tx_info.num_witnesses, BE)) {
             return io_send_sw(SW_WRONG_DATA_LENGTH);
         }
-        G_context.tx_info.num_witnesses = (uint16_t) num_witnesses;
 
         PRINTF("TX Mode=%d, Network: ID=%d, Magic=%d, Inputs=%d, Outputs=%d, Withdrawals=%d, TTL=%d, VIS=%d, Witnesses=%d\n",
                G_context.tx_info.transaction.txSigningMode,
@@ -206,6 +204,9 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
             parser_status_e status = transaction_deserialize(&buf, &G_context.tx_info.transaction);
             PRINTF("Parsing status: %d.\n", status);
             if (status != PARSING_OK) {
+                // Cleanup any partial allocations from deserialization before returning error
+                transaction_cleanup(&G_context.tx_info.transaction);
+
                 // Map parser status to specific error codes
                 switch (status) {
                     case INPUTS_PARSING_ERROR:
@@ -249,10 +250,15 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
             if (G_context.tx_info.transaction.fee > HIGH_FEE_WARNING_THRESHOLD) {
                 TRACE("High fee detected: %llu lovelace (threshold: %u lovelace)",
                       G_context.tx_info.transaction.fee, HIGH_FEE_WARNING_THRESHOLD);
-                tx_warning_add((tx_warning_list_item_t **)&G_context.tx_info.warning_list,
-                              TX_WARNING_HIGH_FEE,
-                              G_context.tx_info.transaction.networkId,
-                              G_context.tx_info.transaction.protocolMagic);
+                if (!tx_warning_add((tx_warning_list_item_t **)&G_context.tx_info.warning_list,
+                                   TX_WARNING_HIGH_FEE,
+                                   G_context.tx_info.transaction.networkId,
+                                   G_context.tx_info.transaction.protocolMagic)) {
+                    // Warning allocation failed - abort transaction processing
+                    TRACE("Warning allocation failed");
+                    transaction_cleanup(&G_context.tx_info.transaction);
+                    return io_send_sw(SW_INSUFFICIENT_MEMORY);
+                }
             }
 
             // Build transaction hash using txHashBuilder (local variable to avoid includes in types.h)
@@ -367,6 +373,15 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
                                   sizeof(G_context.tx_info.tx_hash));
 
             PRINTF("Hash: %.*H\n", sizeof(G_context.tx_info.tx_hash), G_context.tx_info.tx_hash);
+
+            // Free raw_tx buffer - it's no longer needed after deserialization and hash computation
+            // This prevents a memory leak if user rejects, or between transactions
+            if (G_context.tx_info.raw_tx != NULL) {
+                app_mem_free(G_context.tx_info.raw_tx);
+                G_context.tx_info.raw_tx = NULL;
+                G_context.tx_info.raw_tx_len = 0;
+                TRACE("Raw transaction buffer freed after deserialization");
+            }
 
             return ui_display_transaction();
         }

@@ -67,6 +67,7 @@ static void witness_review_choice(bool confirm) {
         // Check if there are more witnesses to process
         if (G_context.tx_info.current_witness < G_context.tx_info.num_witnesses) {
             // More witnesses to come - show spinner while waiting for next witness
+            // Don't cleanup yet - still need parsed transaction for remaining witnesses
             nbgl_useCaseSpinner("Processing");
         } else {
             // All witnesses processed - cleanup transaction data and show completion

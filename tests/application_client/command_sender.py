@@ -147,7 +147,7 @@ class CommandSender:
         data.extend(num_withdrawals.to_bytes(2, 'big'))  # num_withdrawals (2B)
         data.append(0x02 if include_ttl else 0x01)  # ITEM_INCLUDED_YES or ITEM_INCLUDED_NO
         data.append(0x02 if include_validity_interval_start else 0x01)  # validity interval start flag
-        data.extend(num_witnesses.to_bytes(4, 'big'))  # num_witnesses (4B)
+        data.extend(num_witnesses.to_bytes(2, 'big'))  # num_witnesses (2B)
 
         from application_client.command_builder import P1Type
         # P1 = P1_TX_INIT for INIT APDU, P2 = P2_UNUSED

@@ -63,16 +63,20 @@ static void tx_buffer_cleanup(void) {
 
 /**
  * Cleanup transaction data after UI is finished
- * Frees the raw transaction buffer and parsed transaction lists
+ * Frees the parsed transaction lists and warnings
+ * (raw_tx is freed earlier in handler_sign_tx after deserialization)
  */
 void tx_data_cleanup(void) {
-    // Free raw transaction buffer - no longer needed after UI
+    // Note: raw_tx buffer is freed in handler_sign_tx after deserialization completes
+    // Check and free just in case it wasn't freed (defensive programming)
     if (G_context.tx_info.raw_tx != NULL) {
         app_mem_free(G_context.tx_info.raw_tx);
         G_context.tx_info.raw_tx = NULL;
     }
     // Free parsed transaction lists
     transaction_cleanup(&G_context.tx_info.transaction);
+    // Free all accumulated warnings
+    tx_warning_list_cleanup((tx_warning_list_item_t **)&G_context.tx_info.warning_list);
 }
 
 // called when long press button on 3rd page is long-touched or when reject footer is touched
@@ -88,7 +92,7 @@ static void review_choice(bool confirm) {
 
         // Initialize witness counters
         G_context.tx_info.current_witness = 0;
-        // num_witnesses should be set during tx init (TODO: add to deserializer)
+        // num_witnesses is set during P1_TX_INIT (sign_tx.c:118)
 
         // Send tx hash back to client
         io_send_response_pointer(G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash), SW_OK);
@@ -96,7 +100,7 @@ static void review_choice(bool confirm) {
         // Check if there are witnesses to process
         if (G_context.tx_info.num_witnesses > 0) {
             // Witnesses coming - show spinner while waiting for witness APDUs
-            // Raw tx and lists will be freed when last witness is processed
+            // Don't cleanup yet - witnesses still need the parsed transaction structures
             nbgl_useCaseSpinner("Processing");
         } else {
             // No witnesses - transaction is complete, cleanup and show status

@@ -27,6 +27,25 @@ bool tx_warning_list_empty(tx_warning_list_item_t *list_head) {
     return list_head == NULL;
 }
 
+/**
+ * Cleanup and free all warning list items
+ *
+ * @param list_head pointer to head of warning list
+ */
+void tx_warning_list_cleanup(tx_warning_list_item_t **list_head) {
+    if (list_head == NULL) {
+        return;
+    }
+
+    tx_warning_list_item_t *current = *list_head;
+    while (current != NULL) {
+        tx_warning_list_item_t *next = (tx_warning_list_item_t *)current->node.next;
+        app_mem_free(current);
+        current = next;
+    }
+    *list_head = NULL;
+}
+
 const char* tx_warning_get_message(tx_warning_type_t type) {
     switch (type) {
         case TX_WARNING_NETWORK_UNUSUAL:

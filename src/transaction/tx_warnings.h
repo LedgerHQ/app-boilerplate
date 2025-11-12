@@ -26,5 +26,8 @@ bool tx_warning_add(tx_warning_list_item_t **list_head, tx_warning_type_t type,
 // Check if warnings list is empty
 bool tx_warning_list_empty(tx_warning_list_item_t *list_head);
 
+// Cleanup and free all warning list items
+void tx_warning_list_cleanup(tx_warning_list_item_t **list_head);
+
 // Get warning message for display
 const char* tx_warning_get_message(tx_warning_type_t type);
