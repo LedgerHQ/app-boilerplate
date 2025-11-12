@@ -355,13 +355,9 @@ static int parse_and_hash_transaction(void) {
 
     PRINTF("Hash: %.*H\n", sizeof(G_context.tx_info.tx_hash), G_context.tx_info.tx_hash);
 
-    // Free raw_tx buffer - no longer needed after deserialization and hash computation
-    if (G_context.tx_info.raw_tx != NULL) {
-        app_mem_free(G_context.tx_info.raw_tx);
-        G_context.tx_info.raw_tx = NULL;
-        G_context.tx_info.raw_tx_len = 0;
-        TRACE("Raw transaction buffer freed after deserialization");
-    }
+    // NOTE: raw_tx buffer is kept alive for UI display
+    // It will be freed later when the entire transaction processing is complete
+    // (in tx_data_cleanup after user confirms or rejects the transaction)
 
     return SW_OK;
 }

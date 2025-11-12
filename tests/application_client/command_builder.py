@@ -1758,8 +1758,11 @@ class CommandBuilder:
             - [reference script data...]
         - fee (uint64, BE)
         - ttl (uint64, BE) - only if tx.ttl is not None
+        - validity_interval_start (uint64, BE) - only if tx.validityIntervalStart is not None
+        - [withdrawals...] - num_withdrawals times (counts from INIT APDU)
+        - [certificates...] - until buffer exhausted (counts from INIT APDU)
 
-        Note: num_inputs and num_outputs are sent in the INIT APDU, not in the tx buffer
+        Note: num_inputs, num_outputs, num_withdrawals, and field inclusion flags are sent in the INIT APDU
 
         Args:
             tx: Transaction object from signTx.py
@@ -1820,23 +1823,29 @@ class CommandBuilder:
                         output_data.extend(token.amount.to_bytes(8, 'big', signed=True))
 
             # Datum (if any)
+            # Wire format: 0=NONE, 1=HASH (32 bytes, no length), 2=INLINE (u16 length + data)
             if hasattr(tx_output, 'datum') and tx_output.datum is not None:
-                output_data.append(0x02 if tx_output.datum is not None else 0x01)  # datum flag
-                if tx_output.datum is not None:
+                datum_type = tx_output.datum.type
+                if datum_type == 0:  # HASH
+                    output_data.append(0x01)
                     datum_bytes = bytes.fromhex(tx_output.datum.datumHex)
-                    output_data.extend(len(datum_bytes).to_bytes(4, 'big'))
+                    output_data.extend(datum_bytes)
+                elif datum_type == 1:  # INLINE
+                    output_data.append(0x02)
+                    datum_bytes = bytes.fromhex(tx_output.datum.datumHex)
+                    output_data.extend(len(datum_bytes).to_bytes(2, 'big'))
                     output_data.extend(datum_bytes)
             else:
-                output_data.append(0x01)  # no datum
+                output_data.append(0x00)
 
             # Reference script (if any, for Babbage format)
             if isinstance(tx_output, TxOutputBabbage) and tx_output.referenceScriptHex is not None:
-                output_data.append(0x02)  # reference script flag
+                output_data.append(0x02)
                 script_bytes = bytes.fromhex(tx_output.referenceScriptHex)
-                output_data.extend(len(script_bytes).to_bytes(4, 'big'))
+                output_data.extend(len(script_bytes).to_bytes(2, 'big'))
                 output_data.extend(script_bytes)
             else:
-                output_data.append(0x01)  # no reference script
+                output_data.append(0x00)
 
             # Add output with length prefix
             data.extend(len(output_data).to_bytes(2, 'big'))
@@ -1850,5 +1859,9 @@ class CommandBuilder:
         # If include_ttl=True in INIT, tx.ttl must be not None; if False, tx.ttl must be None
         if tx.ttl is not None:
             data.extend(tx.ttl.to_bytes(8, 'big'))
+
+        # Validity Interval Start (optional - only if present in transaction)
+        if tx.validityIntervalStart is not None:
+            data.extend(tx.validityIntervalStart.to_bytes(8, 'big'))
 
         return bytes(data)
