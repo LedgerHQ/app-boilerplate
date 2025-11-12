@@ -1846,6 +1846,8 @@ class CommandBuilder:
         data.extend(tx.fee.to_bytes(8, 'big'))
 
         # TTL (optional - only if present in transaction)
+        # Validation: TTL serialization must stay in sync with include_ttl flag from INIT APDU
+        # If include_ttl=True in INIT, tx.ttl must be not None; if False, tx.ttl must be None
         if tx.ttl is not None:
             data.extend(tx.ttl.to_bytes(8, 'big'))
 

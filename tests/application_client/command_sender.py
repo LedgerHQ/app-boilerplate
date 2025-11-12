@@ -78,10 +78,6 @@ class CommandSender:
     def get_serial(self) -> RAPDU:
         return self._exchange(self._cmd_builder.get_serial())
 
-
-    def get_async_response(self) -> Optional[RAPDU]:
-        return self.backend.last_async_response
-
     @contextmanager
     def get_pubkey_async(self, path: str) -> Generator[None, None, None]:
         with self._exchange_async(self._cmd_builder.get_pubkey_path(path)):
@@ -153,17 +149,18 @@ class CommandSender:
         # P1 = P1_TX_INIT for INIT APDU, P2 = P2_UNUSED
         return self._exchange(self._cmd_builder._serialize(InsType.SIGN_TX, P1Type.P1_TX_INIT, P1Type.P2_UNUSED, bytes(data)))
 
-    def sign_tx_send_intermediate_chunks(self, tx):
-        """Send all intermediate transaction chunks synchronously.
+    @contextmanager
+    def sign_tx_send_chunks(self, tx) -> Generator[None, None, None]:
+        """Serialize transaction into chunks and send them.
 
-        This method sends all but the last chunk, catching any parsing errors immediately.
-        Call this before entering the async context for the final chunk.
+        Sends all intermediate chunks synchronously, then the final chunk asynchronously
+        for UI navigation.
 
         Args:
             tx: Transaction object from signTx.py
 
         Returns:
-            List of APDU chunks (all chunks for the transaction)
+            Generator (use with 'with' statement for navigation)
         """
         chunks = self._cmd_builder.serialize_transaction_chunks(tx)
 
@@ -172,23 +169,6 @@ class CommandSender:
             response = self._exchange(chunk)
             if response.status != Errors.SW_SUCCESS:
                 raise AssertionError(f"Intermediate chunk failed: {hex(response.status)}")
-
-        return chunks
-
-    @contextmanager
-    def sign_tx_serialize_and_send_chunks_async(self, tx) -> Generator[None, None, None]:
-        """Serialize transaction into chunks and send all with async on final chunk
-
-        Sends all intermediate chunks synchronously, then the final chunk asynchronously.
-        Use this when you need to navigate the UI during the final chunk processing.
-
-        Args:
-            tx: Transaction object from signTx.py
-
-        Returns:
-            Generator (use with 'with' statement for navigation)
-        """
-        chunks = self.sign_tx_send_intermediate_chunks(tx)
 
         # Send final chunk asynchronously (for UI navigation)
         with self._exchange_async(chunks[-1]):

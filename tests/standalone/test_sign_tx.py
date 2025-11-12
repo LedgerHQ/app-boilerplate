@@ -66,7 +66,7 @@ def test_sign_tx_simple(device: Device,
     # Step 2: Send transaction data chunks
     # Deserialization only happens after the final chunk is received
     # If deserialization fails, ExceptionRAPDU will be raised automatically
-    with client.sign_tx_serialize_and_send_chunks_async(tx):
+    with client.sign_tx_send_chunks(tx):
         # Navigate while the final chunk is being processed
         if device.is_nano:
             # TODO: Add proper navigation for nano devices
