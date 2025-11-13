@@ -77,7 +77,7 @@ static void review_choice(bool confirm) {
         // User approved transaction
         // Set state to APPROVED and return tx hash
         // Witnesses will be handled in separate APDUs
-        G_context.state = STATE_APPROVED;
+        G_context.state.tx_state = TX_STATE_APPROVED;
 
         // Initialize witness counters
         G_context.tx_info.current_witness = 0;
@@ -98,7 +98,7 @@ static void review_choice(bool confirm) {
         }
     } else {
         // User rejected
-        G_context.state = STATE_NONE;
+        G_context.state.tx_state = TX_STATE_NONE;
 
         // Cleanup transaction data
         tx_data_cleanup();
@@ -113,8 +113,8 @@ static void review_choice(bool confirm) {
 // - Format the fee and output strings dynamically
 // - Display the first screen of the transaction review
 int ui_display_transaction(void) {
-    if (G_context.req_type != REQUEST_CONFIRM_TRANSACTION || G_context.state != STATE_PARSED) {
-        G_context.state = STATE_NONE;
+    if (G_context.req_type != REQUEST_CONFIRM_TRANSACTION || G_context.state.tx_state != TX_STATE_PARSED) {
+        G_context.state.tx_state = TX_STATE_NONE;
         return io_send_sw(SW_BAD_STATE);
     }
 

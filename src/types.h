@@ -24,13 +24,22 @@ typedef enum {
 } command_e;
 
 /**
- * Enumeration with parsing state.
+ * Enumeration with transaction signing state.
  */
 typedef enum {
-    STATE_NONE,     /// No state
-    STATE_PARSED,   /// Transaction data parsed
-    STATE_APPROVED  /// Transaction data approved
-} state_e;
+    TX_STATE_NONE,      /// No transaction being processed
+    TX_STATE_PARSED,    /// Transaction data parsed and ready for approval
+    TX_STATE_APPROVED   /// User approved, waiting for witness signatures
+} tx_state_e;
+
+/**
+ * Enumeration with operational certificate signing state.
+ */
+typedef enum {
+    OPCERT_STATE_NONE,      /// No OpCert being processed
+    OPCERT_STATE_PARSED,    /// OpCert parsed and ready for approval
+    OPCERT_STATE_APPROVED   /// User approved, waiting for signature
+} opcert_state_e;
 
 /**
  * Enumeration with user request type.
@@ -76,7 +85,7 @@ typedef struct {
     transaction_t transaction;            /// structured transaction
     uint8_t tx_hash[32];                   /// transaction hash (Blake2b-256)
 
-    // Witness signing fields (used after STATE_APPROVED)
+    // Witness signing fields (used after TX_STATE_APPROVED)
     uint16_t num_witnesses;               /// total number of witnesses expected
     uint16_t current_witness;             /// current witness being processed
     bip44_path_t witness_path;            /// current witness path
@@ -105,7 +114,12 @@ typedef struct {
  * Structure for global context.
  */
 typedef struct {
-    state_e state;  /// state of the context
+    /// Instruction-specific state (only one operation active at a time)
+    union {
+        tx_state_e tx_state;           /// Transaction signing state
+        opcert_state_e opcert_state;   /// OpCert signing state
+    } state;
+
     union {
         pubkey_ctx_t pk_info;       /// public key context
         transaction_ctx_t tx_info;  /// transaction context

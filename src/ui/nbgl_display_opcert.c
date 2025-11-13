@@ -90,9 +90,9 @@ int ui_display_opcert(security_policy_t securityPolicy) {
     TRACE("=== ui_display_opcert START ===");
     TRACE("securityPolicy: %d", securityPolicy);
 
-    if (G_context.req_type != REQUEST_SIGN_OPCERT || G_context.state != STATE_PARSED) {
+    if (G_context.req_type != REQUEST_SIGN_OPCERT || G_context.state.opcert_state != OPCERT_STATE_PARSED) {
         TRACE("Bad state detected - returning error");
-        G_context.state = STATE_NONE;
+        G_context.state.opcert_state = OPCERT_STATE_NONE;
         return io_send_sw(SW_BAD_STATE);
     }
 

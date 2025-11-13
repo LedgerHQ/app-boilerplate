@@ -36,7 +36,19 @@
 int apdu_dispatcher(const command_t *cmd) {
     LEDGER_ASSERT(cmd != NULL, "NULL cmd");
     TRACE("G_context.req_type: %d", G_context.req_type);
-    TRACE("G_context.state: %d", G_context.state);
+
+    // Log the appropriate state based on request type
+    switch (G_context.req_type) {
+        case REQUEST_CONFIRM_TRANSACTION:
+            TRACE("G_context.state.tx_state: %d", G_context.state.tx_state);
+            break;
+        case REQUEST_SIGN_OPCERT:
+            TRACE("G_context.state.opcert_state: %d", G_context.state.opcert_state);
+            break;
+        default:
+            // For stateless operations (GET_PUBLIC_KEY, GET_VERSION, etc.)
+            break;
+    }
 
     if (cmd->cla != CLA) {
         return io_send_sw(SW_CLA_NOT_SUPPORTED);

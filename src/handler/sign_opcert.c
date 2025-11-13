@@ -44,7 +44,7 @@ int handler_sign_opcert(buffer_t *cdata) {
 
     explicit_bzero(&G_context, sizeof(G_context));
     G_context.req_type = REQUEST_SIGN_OPCERT;
-    G_context.state = STATE_NONE;
+    G_context.state.opcert_state = OPCERT_STATE_NONE;
 
     G_context.opcert_info.raw_opcert_len = cdata->size;
     if (!buffer_move(cdata, G_context.opcert_info.raw_opcert, sizeof(G_context.opcert_info.raw_opcert))) {
@@ -61,7 +61,7 @@ int handler_sign_opcert(buffer_t *cdata) {
     if (status != PARSING_OK) {
         return io_send_sw(SW_OPCERT_PARSING_FAIL);
     }
-    G_context.state = STATE_PARSED;
+    G_context.state.opcert_state = OPCERT_STATE_PARSED;
     const parsed_opcert_t* opcert = &G_context.opcert_info.opcert;
 
     // Check security policy
@@ -81,13 +81,13 @@ int handler_sign_opcert(buffer_t *cdata) {
 
 void finalize_sign_opcert(bool confirmed) {
     if (!confirmed) {
-        G_context.state = STATE_NONE;
+        G_context.state.opcert_state = OPCERT_STATE_NONE;
         io_send_sw(SW_DENY);
         return;
     }
 
     // user confirmed
-    G_context.state = STATE_APPROVED;
+    G_context.state.opcert_state = OPCERT_STATE_APPROVED;
 
     // assemble the opcert bytestring and sign it
     const parsed_opcert_t* opcert = &G_context.opcert_info.opcert;
@@ -131,7 +131,7 @@ void finalize_sign_opcert(bool confirmed) {
     );
 
     if (r != 0) {
-        G_context.state = STATE_NONE;
+        G_context.state.opcert_state = OPCERT_STATE_NONE;
         io_send_sw(SW_SIGNATURE_FAIL);
     } else {
         io_send_response_pointer(

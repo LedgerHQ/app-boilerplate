@@ -50,7 +50,7 @@ static void witness_review_choice(bool confirm) {
 
     if (!confirm) {
         // User rejected the witness - abort further witness processing
-        G_context.state = STATE_NONE;
+        G_context.state.tx_state = TX_STATE_NONE;
         // Cleanup transaction data since we're aborting
         tx_data_cleanup();
         io_send_sw(SW_DENY);
@@ -81,9 +81,9 @@ int ui_display_witness(const bip44_path_t* witnessPath, security_policy_t securi
     TRACE("=== ui_display_witness START ===");
     TRACE("securityPolicy: %d", securityPolicy);
 
-    if (G_context.state != STATE_APPROVED || G_context.req_type != REQUEST_CONFIRM_TRANSACTION) {
+    if (G_context.state.tx_state != TX_STATE_APPROVED || G_context.req_type != REQUEST_CONFIRM_TRANSACTION) {
         TRACE("Bad state detected - returning error");
-        G_context.state = STATE_NONE;
+        G_context.state.tx_state = TX_STATE_NONE;
         return io_send_sw(SW_BAD_STATE);
     }
 

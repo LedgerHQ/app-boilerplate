@@ -227,7 +227,7 @@ static int parse_and_hash_transaction(void) {
         }
     }
 
-    G_context.state = STATE_PARSED;
+    G_context.state.tx_state = TX_STATE_PARSED;
 
     // Fill in Byron protocol magic for DEVICE_OWNED outputs
     s_flist_node *output_node = G_context.tx_info.transaction.outputs;
@@ -364,7 +364,7 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
     if (chunk_type == P1_TX_INIT) {
         explicit_bzero(&G_context, sizeof(G_context));
         G_context.req_type = REQUEST_CONFIRM_TRANSACTION;
-        G_context.state = STATE_NONE;
+        G_context.state.tx_state = TX_STATE_NONE;
         return handle_tx_init_apdu(cdata);
 
     } else {  // parse transaction data chunks
@@ -391,7 +391,7 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
 
 int handler_sign_tx_witness(buffer_t *cdata) {
     // Verify we're in correct state for witness signing
-    if (G_context.state != STATE_APPROVED || G_context.req_type != REQUEST_CONFIRM_TRANSACTION) {
+    if (G_context.state.tx_state != TX_STATE_APPROVED || G_context.req_type != REQUEST_CONFIRM_TRANSACTION) {
         return io_send_sw(SW_BAD_STATE);
     }
 
