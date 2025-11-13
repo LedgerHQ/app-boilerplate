@@ -1780,7 +1780,7 @@ class CommandBuilder:
             data.extend(tx_input.outputIndex.to_bytes(4, 'big'))
 
         # Outputs (no count prefix - sent in INIT APDU)
-        for tx_output in tx.outputs:
+        for output_idx, tx_output in enumerate(tx.outputs):
             # Build output data
             output_data = bytearray()
             output_data.append(tx_output.destination.type)
@@ -1790,10 +1790,54 @@ class CommandBuilder:
                 output_data.extend(len(addr_bytes).to_bytes(2, 'big'))
                 output_data.extend(addr_bytes)
             elif tx_output.destination.type == TxOutputDestinationType.DEVICE_OWNED:
-                # Assuming params is a DeriveAddressTestCase with spendingValue as path
-                path_bytes = pack_derivation_path(tx_output.destination.params.spendingValue)
-                output_data.append(len(path_bytes) // 4)  # path length in components
-                output_data.extend(path_bytes)
+                # Serialize device-owned destination in the format expected by handler:
+                # [address_type][protocol_magic (Byron only)][payment_info][staking_choice][staking_info]
+                # Note: For Shelley addresses, networkId comes from the tx init, not from output data
+                addr_params = tx_output.destination.params
+
+                # Address type (1B)
+                output_data.append(addr_params.addrType)
+
+                # Protocol Magic only for Byron addresses (4B)
+                # For Shelley addresses, network ID is taken from tx init, not serialized here
+                if addr_params.addrType == AddressType.BYRON:
+                    output_data.extend(addr_params.netDesc.protocol.to_bytes(4, 'big'))
+
+                # Payment credential (path or script hash)
+                if addr_params.spendingValue.startswith("m/"):
+                    # Payment key path
+                    output_data.extend(pack_derivation_path(addr_params.spendingValue))
+                else:
+                    # Payment script hash (28 bytes, no length prefix)
+                    output_data.extend(bytes.fromhex(addr_params.spendingValue))
+
+                # Staking choice (1B)
+                if addr_params.addrType in (AddressType.BYRON, AddressType.ENTERPRISE_KEY,
+                                             AddressType.ENTERPRISE_SCRIPT):
+                    staking_choice = StakingDataSourceType.NONE
+                elif addr_params.addrType in (AddressType.BASE_PAYMENT_KEY_STAKE_SCRIPT,
+                                              AddressType.BASE_PAYMENT_SCRIPT_STAKE_SCRIPT,
+                                              AddressType.REWARD_SCRIPT):
+                    staking_choice = StakingDataSourceType.SCRIPT_HASH
+                elif addr_params.addrType in (AddressType.POINTER_KEY, AddressType.POINTER_SCRIPT):
+                    staking_choice = StakingDataSourceType.BLOCKCHAIN_POINTER
+                elif addr_params.stakingValue.startswith("m/"):
+                    staking_choice = StakingDataSourceType.KEY_PATH
+                else:
+                    staking_choice = StakingDataSourceType.KEY_HASH
+
+                output_data.append(staking_choice)
+
+                # Staking credential based on staking choice
+                if staking_choice == StakingDataSourceType.KEY_PATH:
+                    output_data.extend(pack_derivation_path(addr_params.stakingValue))
+                elif staking_choice in (StakingDataSourceType.KEY_HASH,
+                                       StakingDataSourceType.SCRIPT_HASH):
+                    output_data.extend(bytes.fromhex(addr_params.stakingValue))
+                elif staking_choice == StakingDataSourceType.BLOCKCHAIN_POINTER:
+                    # Blockchain pointer: 3 x uint32 (12 bytes total)
+                    output_data.extend(bytes.fromhex(addr_params.stakingValue))
+                # else NO_STAKING: no additional data
 
             # ADA amount
             output_data.extend(tx_output.amount.to_bytes(8, 'big'))

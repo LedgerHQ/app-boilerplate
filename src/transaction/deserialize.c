@@ -96,6 +96,7 @@ parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
         if (!buffer_read_u8(buf, &dest_type)) {
             return OUTPUTS_PARSING_ERROR;
         }
+        TRACE("Deserialize: Output %u destination type=0x%02x (1=THIRD_PARTY, 2=DEVICE_OWNED)", i, dest_type);
         item->output_data.destination.type = (tx_output_destination_type_t) dest_type;
 
         if (dest_type == DESTINATION_THIRD_PARTY) {

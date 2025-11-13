@@ -22,6 +22,7 @@
 
 #include "os.h"
 #include "buffer.h"
+#include "nbgl_use_case.h"
 
 #include "sign_tx.h"
 #include "sw.h"
@@ -147,6 +148,9 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         TRACE("Security policy DENY - rejecting transaction init");
         return io_send_sw(ERR_REJECTED_BY_POLICY);
     }
+
+    // Show spinner to indicate transaction data is being processed
+    nbgl_useCaseSpinner("Processing");
 
     return io_send_sw(SW_OK);
 }
@@ -330,7 +334,8 @@ static int parse_and_hash_transaction(void) {
                 return io_send_sw(SW_TX_PARSING_FAIL);
             }
 
-            output_desc.destination.type = DESTINATION_DEVICE_OWNED;
+            // After derivation, treat the result as a third-party address for CBOR hashing
+            output_desc.destination.type = DESTINATION_THIRD_PARTY;
             output_desc.destination.address.buffer = address_bytes;
             output_desc.destination.address.size = address_size;
             txHashBuilder_addOutput_topLevelData(&txHashBuilder, &output_desc);
