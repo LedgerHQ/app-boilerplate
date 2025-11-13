@@ -1908,4 +1908,31 @@ class CommandBuilder:
         if tx.validityIntervalStart is not None:
             data.extend(tx.validityIntervalStart.to_bytes(8, 'big'))
 
+        # Withdrawals (num_withdrawals is sent in INIT APDU)
+        for withdrawal in tx.withdrawals:
+            # Amount (uint64, BE)
+            data.extend(withdrawal.amount.to_bytes(8, 'big'))
+
+            # Credential type (uint8) - convert to staking_data_source_t values
+            # Python CredentialParamsType: KEY_PATH=0x00, SCRIPT_HASH=0x01, KEY_HASH=0x02
+            # C staking_data_source_t: STAKING_KEY_PATH=0x22, STAKING_KEY_HASH=0x33, STAKING_SCRIPT_HASH=0x55
+            if withdrawal.stakeCredential.type == 0x00:  # KEY_PATH
+                credential_type_wire = 0x22  # STAKING_KEY_PATH
+            elif withdrawal.stakeCredential.type == 0x01:  # SCRIPT_HASH
+                credential_type_wire = 0x55  # STAKING_SCRIPT_HASH
+            elif withdrawal.stakeCredential.type == 0x02:  # KEY_HASH
+                credential_type_wire = 0x33  # STAKING_KEY_HASH
+            else:
+                raise ValueError(f"Unknown credential type: {withdrawal.stakeCredential.type}")
+
+            data.append(credential_type_wire)
+
+            # Credential data based on type
+            if withdrawal.stakeCredential.keyValue.startswith("m/"):
+                # KEY_PATH: serialize as bip32 path
+                data.extend(pack_derivation_path(withdrawal.stakeCredential.keyValue))
+            else:
+                # KEY_HASH or SCRIPT_HASH: serialize as raw bytes (28 bytes, no length prefix)
+                data.extend(bytes.fromhex(withdrawal.stakeCredential.keyValue))
+
         return bytes(data)

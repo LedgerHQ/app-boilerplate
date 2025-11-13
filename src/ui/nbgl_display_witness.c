@@ -53,8 +53,10 @@ static void witness_review_choice(bool confirm) {
         // User rejected the witness - abort further witness processing
         G_context.state.tx_state = TX_STATE_NONE;
         G_context.req_type = REQUEST_NONE;  // Reset to idle
-        // Cleanup transaction data since we're aborting
-        tx_data_cleanup();
+
+        // Cleanup transaction context (NBGL display + warnings already cleaned in review_choice)
+        tx_context_cleanup();
+
         io_send_sw(SW_DENY);
         nbgl_useCaseStatus("Witness\ndenied", true, ui_menu_main);
     } else {
@@ -72,8 +74,9 @@ static void witness_review_choice(bool confirm) {
             // Don't cleanup yet - still need parsed transaction for remaining witnesses
             nbgl_useCaseSpinner("Processing");
         } else {
-            // All witnesses processed - cleanup transaction data and show completion
-            tx_data_cleanup();
+            // All witnesses processed - cleanup transaction context
+            tx_context_cleanup();
+
             G_context.req_type = REQUEST_NONE;  // Reset to idle
             G_context.state.tx_state = TX_STATE_NONE;
             nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main);

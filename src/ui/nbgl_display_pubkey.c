@@ -41,7 +41,7 @@
 
 static char *pubkeyPathStr = NULL;
 
-static void review_choice(bool confirm) {
+static void pubkey_review_choice(bool confirm) {
     // Cleanup display buffers
     ui_cleanup_tracked_allocations();
 
@@ -117,7 +117,7 @@ int ui_display_pubkey(security_policy_t securityPolicy) {
                             pubkeyPathStr,
                             "Export",
                             "Reject",
-                            review_choice
+                            pubkey_review_choice
         );
     } else {
         nbgl_useCaseChoice(
@@ -126,7 +126,7 @@ int ui_display_pubkey(security_policy_t securityPolicy) {
                             pubkeyPathStr,
                             "Export",
                             "Reject",
-                            review_choice
+                            pubkey_review_choice
         );
     }
 

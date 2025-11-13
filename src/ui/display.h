@@ -36,14 +36,16 @@ typedef void (*action_validate_cb)(bool);
 int ui_display_transaction(void);
 
 /**
- * Cleanup transaction data after UI is finished or on error paths.
- *
- * CLEANUP CONTRACT:
- * - Frees raw transaction buffer (freed early in sign_tx after hash, fallback here)
- * - Frees all parsed transaction elements (inputs, outputs, withdrawals)
- * - Frees all warnings accumulated during transaction review
- * - Must be called on ALL exit paths: approval, rejection, or parse errors
- * - Safe to call multiple times
+ * Cleanup NBGL display buffers and warnings
+ * Includes: g_fee, g_ttl, g_warning_msg, g_pairs array, per-output/withdrawal strings
+ * Safe to call even if warnings were never allocated (handles NULL gracefully)
+ */
+void nbgl_display_and_warnings_cleanup(void);
+
+/**
+ * Cleanup all transaction data after UI is finished or on error paths.
+ * Frees NBGL display buffers, warnings, and parsed transaction context
+ * Must be called on ALL exit paths: approval, rejection, or parse errors
  */
 void tx_data_cleanup(void);
 

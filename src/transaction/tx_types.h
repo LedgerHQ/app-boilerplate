@@ -13,6 +13,48 @@
 #define TX_HASH_LENGTH 32
 #endif
 
+// Hash and account constants (from cardano.h to avoid circular includes)
+#define ADDRESS_KEY_HASH_LENGTH 28
+#define SCRIPT_HASH_LENGTH 28
+#define REWARD_ACCOUNT_SIZE (1 + ADDRESS_KEY_HASH_LENGTH)
+
+// Extended credential type (allows key path, key hash, or script hash)
+typedef enum {
+    // enum values are affected by backwards-compatibility
+    EXT_CREDENTIAL_KEY_PATH = 0,
+    EXT_CREDENTIAL_KEY_HASH = 2,
+    EXT_CREDENTIAL_SCRIPT_HASH = 1,
+} ext_credential_type_t;
+
+// Extended credential structure
+typedef struct {
+    ext_credential_type_t type;
+    union {
+        bip44_path_t keyPath;
+        uint8_t keyHash[ADDRESS_KEY_HASH_LENGTH];
+        uint8_t scriptHash[SCRIPT_HASH_LENGTH];
+    };
+} ext_credential_t;
+
+// Extended DREP type (allows key hash, key path, or script hash)
+typedef enum {
+    EXT_DREP_KEY_HASH = 0,
+    EXT_DREP_KEY_PATH = 0 + 100,
+    EXT_DREP_SCRIPT_HASH = 1,
+    EXT_DREP_ABSTAIN = 2,
+    EXT_DREP_NO_CONFIDENCE = 3,
+} ext_drep_type_t;
+
+// Extended DREP structure
+typedef struct {
+    ext_drep_type_t type;
+    union {
+        uint8_t keyHash[ADDRESS_KEY_HASH_LENGTH];
+        bip44_path_t keyPath;
+        uint8_t scriptHash[SCRIPT_HASH_LENGTH];
+    };
+} ext_drep_t;
+
 // Transaction signing mode (affects restrictions on tx being signed)
 typedef enum {
     SIGN_TX_SIGNINGMODE_ORDINARY_TX = 3,  // enum value 3 is needed for backwards compatibility
@@ -33,21 +75,11 @@ typedef struct {
 } tx_input_list_item_t;
 
 // Withdrawal types (credential for reward withdrawals)
-// Withdrawal credential structure (similar to address params but for staking only)
-typedef struct {
-    uint8_t type;  // staking_data_source_t: KEY_PATH, KEY_HASH, or SCRIPT_HASH
-    union {
-        bip44_path_t keyPath;
-        uint8_t keyHash[28];    // ADDRESS_KEY_HASH_LENGTH from cardano.h
-        uint8_t scriptHash[28]; // SCRIPT_HASH_LENGTH from cardano.h
-    };
-} withdrawal_credential_t;
-
 // Withdrawal structure (reward withdrawal from staking account)
 typedef struct {
-    withdrawal_credential_t credential;
+    ext_credential_t stakeCredential;
     uint64_t amount;
-    uint8_t previousRewardAccount[29];  // REWARD_ACCOUNT_SIZE from cardano.h (1 + 28)
+    uint8_t previousRewardAccount[REWARD_ACCOUNT_SIZE];
 } withdrawal_data_t;
 
 // Withdrawal list item with flist node

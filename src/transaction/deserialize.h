@@ -47,16 +47,13 @@ parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx);
 /**
  * Cleanup all dynamically allocated structures in transaction.
  *
- * Frees all allocated transaction elements (inputs, outputs, withdrawals, etc.) and their
- * nested allocations (asset groups/tokens, inline datums, reference scripts). Safe to
- * call multiple times or on partially-initialized transactions.
+ * Operates on G_context.tx_info.transaction. Frees all allocated transaction elements
+ * (inputs, outputs, withdrawals, etc.) and their nested allocations (asset groups/tokens,
+ * inline datums, reference scripts). Safe to call multiple times or on partially-initialized
+ * transactions.
  *
  * USAGE CONTRACT:
  * - Call this after transaction_deserialize() on ALL code paths (success and error)
- * - Call this before deallocating the transaction_t structure itself
  * - Call this in any error path that returns early from transaction processing
- *
- * @param[in, out] tx
- *   Pointer to transaction structure with element lists to cleanup. Structure itself is not freed.
  */
-void tx_context_cleanup(transaction_t *tx);
+void tx_context_cleanup(void);

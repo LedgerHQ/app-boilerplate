@@ -65,24 +65,11 @@ void *ui_mem_alloc(size_t size) {
 }
 
 /**
- * Internal Cleanup to free allocated memory and send an error status
+ * Cleanup pairs array (g_pairs and g_pairsList)
  */
-static void _cleanup(void) {
-    ui_pairs_cleanup();
-    io_send_sw(SW_INSUFFICIENT_MEMORY);
-}
-
 void ui_pairs_cleanup(void) {
     mem_buffer_cleanup((void **) &g_pairs);
     mem_buffer_cleanup((void **) &g_pairsList);
-}
-
-/**
- * Cleanup all UI-related allocated memory
- */
-void ui_all_cleanup(void) {
-    ui_cleanup_tracked_allocations();
-    ui_pairs_cleanup();
 }
 
 /**
@@ -104,6 +91,6 @@ bool ui_pairs_init(uint8_t nbPairs) {
     g_pairsList->pairs = g_pairs;
     return true;
 error:
-    _cleanup();
+    ui_pairs_cleanup();
     return false;
 }

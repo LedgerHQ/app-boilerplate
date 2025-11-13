@@ -5,7 +5,7 @@
 #include "cardano.h"
 #include "securityPolicyType.h"
 #include "txHashBuilder/txHashBuilder.h"
-#include "transaction/tx_credential_types.h"
+#include "transaction/tx_types.h"
 /*
 #include "signTxPoolRegistration.h"
 #include "signTxAuxData.h"

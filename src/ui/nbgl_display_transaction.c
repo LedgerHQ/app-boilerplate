@@ -52,28 +52,28 @@ static nbgl_warning_t *g_warning = NULL;
 /**
  * Cleanup dynamically allocated buffers for transaction display
  */
-static void tx_buffer_cleanup(void) {
-    // Cleanup all tracked allocations (g_fee, g_ttl, g_warning_msg, warning structures, and per-output strings)
+/**
+ * Cleanup NBGL display buffers and warnings
+ * Includes: g_fee, g_ttl, g_warning_msg, warning structures, g_pairs array, per-output/withdrawal strings
+ * Safe to call even if warnings were never allocated (handles NULL gracefully)
+ */
+void nbgl_display_and_warnings_cleanup(void) {
     ui_cleanup_tracked_allocations();
-    // Cleanup the pairs array
     ui_pairs_cleanup();
+    tx_warning_list_cleanup((tx_warning_list_item_t **)&G_context.tx_info.warning_list);
 }
 
 /**
- * Cleanup transaction data after UI is finished
+ * Cleanup all transaction data (NBGL display + warnings + context)
+ * Use this when transaction is immediately rejected without witnesses
  */
 void tx_data_cleanup(void) {
-    // Free display buffers (must happen AFTER NBGL is completely done rendering)
-    tx_buffer_cleanup();
-
-    // Free all accumulated warnings
-    tx_warning_list_cleanup((tx_warning_list_item_t **)&G_context.tx_info.warning_list);
-
-    tx_context_cleanup(&G_context.tx_info.transaction);
+    nbgl_display_and_warnings_cleanup();
+    tx_context_cleanup();
 }
 
 // called when long press button on 3rd page is long-touched or when reject footer is touched
-static void review_choice(bool confirm) {
+static void tx_review_choice(bool confirm) {
     if (confirm) {
         // User approved transaction
         // Set state to APPROVED and return tx hash
@@ -89,11 +89,13 @@ static void review_choice(bool confirm) {
 
         // Check if there are witnesses to process
         if (G_context.tx_info.num_witnesses > 0) {
-            // Witnesses coming - show spinner while waiting for witness APDUs
-            // Don't cleanup yet - witnesses still need the parsed transaction structures
+            // Witnesses coming - clean up NBGL display and warnings but keep transaction context
+            // (tx hash and parsed tx needed for witness signing)
+            nbgl_display_and_warnings_cleanup();
+            // Show spinner while waiting for witness APDUs
             nbgl_useCaseSpinner("Processing");
         } else {
-            // No witnesses - transaction is complete, cleanup and show status
+            // No witnesses - transaction is complete, cleanup everything and show status
             tx_data_cleanup();
             G_context.req_type = REQUEST_NONE;  // Reset to idle
             G_context.state.tx_state = TX_STATE_NONE;
@@ -125,33 +127,95 @@ int ui_display_transaction(void) {
     // Allocate display buffers using ui_mem_alloc for automatic tracking
     char *fee = (char *) ui_mem_alloc(MAX_ADA_AMOUNT_STRING_SIZE);
     if (fee == NULL) {
-        tx_buffer_cleanup();
+        nbgl_display_and_warnings_cleanup();
         return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
     }
     char *ttl = (char *) ui_mem_alloc(MAX_ADA_AMOUNT_STRING_SIZE);
     if (ttl == NULL) {
-        tx_buffer_cleanup();
+        nbgl_display_and_warnings_cleanup();
         return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
     }
     char *warning_msg = (char *) ui_mem_alloc(MAX_WARNING_MESSAGE_SIZE);
     if (warning_msg == NULL) {
-        tx_buffer_cleanup();
+        nbgl_display_and_warnings_cleanup();
         return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
     }
     // Initialize to empty string (null-terminated) in case no warnings are present
     explicit_bzero(warning_msg, MAX_WARNING_MESSAGE_SIZE);
     warning_msg[0] = '\0';
 
-    // Calculate number of pairs: (num_outputs * 2) + 1 for fee + (1 for TTL if included) + 1 for tx hash
-    // Each output needs 2 pairs: address + amount
-    uint16_t num_pairs = (G_context.tx_info.transaction.num_outputs * 2) + 2;
+    // Calculate number of pairs dynamically based on security policies
+    // Start with: fee + (TTL if included) + tx hash
+    uint16_t num_pairs = 2;
     if (G_context.tx_info.transaction.includeTtl) {
         num_pairs++;  // Add 1 for TTL
     }
 
+    // Count withdrawals that will be displayed based on security policy
+    s_flist_node *temp_node = G_context.tx_info.transaction.withdrawals;
+    while (temp_node != NULL) {
+        tx_withdrawal_list_item_t *temp_item = (tx_withdrawal_list_item_t *) temp_node;
+        security_policy_t policy = policyForSignTxWithdrawal(
+            G_context.tx_info.transaction.txSigningMode,
+            &temp_item->withdrawal_data.stakeCredential
+        );
+        if (policy != POLICY_DENY) {
+            // Withdrawal will be displayed: number + amount + reward account
+            num_pairs += 3;
+        }
+        temp_node = temp_node->next;
+    }
+
+    // Count outputs that will be displayed based on security policy
+    temp_node = G_context.tx_info.transaction.outputs;
+    while (temp_node != NULL) {
+        tx_output_list_item_t *temp_output = (tx_output_list_item_t *) temp_node;
+
+        // Build output description for policy checking
+        tx_output_description_t output_desc;
+        output_desc.format = temp_output->output_data.format;
+        output_desc.amount = temp_output->output_data.adaAmount;
+        output_desc.numAssetGroups = temp_output->output_data.numAssetGroups;
+        output_desc.includeDatum = (temp_output->output_data.datum.type != 0xFF);
+        output_desc.includeRefScript = temp_output->output_data.hasRefScript;
+
+        if (temp_output->output_data.destination.type == DESTINATION_THIRD_PARTY) {
+            output_desc.destination.type = DESTINATION_THIRD_PARTY;
+            output_desc.destination.address.buffer = temp_output->output_data.destination.address.buffer;
+            output_desc.destination.address.size = temp_output->output_data.destination.address.size;
+        } else if (temp_output->output_data.destination.type == DESTINATION_DEVICE_OWNED) {
+            output_desc.destination.type = DESTINATION_DEVICE_OWNED;
+            output_desc.destination.params = &temp_output->output_data.destination.params;
+        }
+
+        // Check output policy
+        security_policy_t output_policy;
+        if (temp_output->output_data.destination.type == DESTINATION_THIRD_PARTY) {
+            output_policy = policyForSignTxOutputAddressBytes(
+                &output_desc,
+                G_context.tx_info.transaction.txSigningMode,
+                G_context.tx_info.transaction.networkId,
+                G_context.tx_info.transaction.protocolMagic
+            );
+        } else {
+            output_policy = policyForSignTxOutputAddressParams(
+                &output_desc,
+                G_context.tx_info.transaction.txSigningMode,
+                G_context.tx_info.transaction.networkId,
+                G_context.tx_info.transaction.protocolMagic
+            );
+        }
+
+        if (output_policy != POLICY_DENY) {
+            // Output will be displayed: number + address + amount
+            num_pairs += 3;
+        }
+        temp_node = temp_node->next;
+    }
+
     // Initialize common pairs structure
     if (!ui_pairs_init(num_pairs)) {
-        tx_buffer_cleanup();
+        nbgl_display_and_warnings_cleanup();
         return send_error_and_reset(SW_TX_PARSING_FAIL);
     }
 
@@ -171,85 +235,239 @@ int ui_display_transaction(void) {
         pair_idx++;
     }
 
+    // Add each withdrawal (1-indexed for display)
+    uint16_t withdrawal_num = 1;
+    s_flist_node *withdrawal_node = G_context.tx_info.transaction.withdrawals;
+    while (withdrawal_node != NULL) {
+        tx_withdrawal_list_item_t *withdrawal_item = (tx_withdrawal_list_item_t *) withdrawal_node;
+
+        // Check security policy for this withdrawal
+        security_policy_t policy = policyForSignTxWithdrawal(
+            G_context.tx_info.transaction.txSigningMode,
+            &withdrawal_item->withdrawal_data.stakeCredential
+        );
+
+        // Only display withdrawal if policy allows it
+        if (policy != POLICY_DENY) {
+            // Add withdrawal number pair (e.g., "Withdrawal" | "#1")
+            char *withdrawal_num_str = (char *) ui_mem_alloc(MAX_UINT64_STRING_SIZE);
+            if (withdrawal_num_str == NULL) {
+                nbgl_display_and_warnings_cleanup();
+                return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
+            }
+            snprintf(withdrawal_num_str, MAX_UINT64_STRING_SIZE, "#%d", withdrawal_num);
+            g_pairs[pair_idx].item = "Withdrawal";
+            g_pairs[pair_idx].value = withdrawal_num_str;
+            pair_idx++;
+
+            // Add amount pair with label "Amount"
+            g_pairs[pair_idx].item = "Amount";
+
+            char *withdrawal_amount_str = (char *) ui_mem_alloc(MAX_ADA_AMOUNT_STRING_SIZE);
+            if (withdrawal_amount_str == NULL) {
+                nbgl_display_and_warnings_cleanup();
+                return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
+            }
+            if (!str_formatAdaAmount(withdrawal_item->withdrawal_data.amount, withdrawal_amount_str, MAX_ADA_AMOUNT_STRING_SIZE)) {
+                return send_error_and_reset(SW_DISPLAY_AMOUNT_FAIL);
+            }
+            g_pairs[pair_idx].value = withdrawal_amount_str;
+            pair_idx++;
+
+            // Add reward account pair
+            g_pairs[pair_idx].item = "Reward account";
+
+            char *reward_account_str = (char *) ui_mem_alloc(MAX_HUMAN_ADDRESS_SIZE);
+            if (reward_account_str == NULL) {
+                nbgl_display_and_warnings_cleanup();
+                return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
+            }
+
+            size_t reward_addr_len = 0;
+            uint8_t reward_addr_bytes[REWARD_ACCOUNT_SIZE];
+
+            switch (withdrawal_item->withdrawal_data.stakeCredential.type) {
+                case EXT_CREDENTIAL_KEY_PATH: {
+                    // Construct reward address from path
+                    reward_addr_len = constructRewardAddressFromKeyPath(
+                        &withdrawal_item->withdrawal_data.stakeCredential.keyPath,
+                        G_context.tx_info.transaction.networkId,
+                        reward_addr_bytes,
+                        sizeof(reward_addr_bytes)
+                    );
+                    break;
+                }
+                case EXT_CREDENTIAL_KEY_HASH: {
+                    // Construct reward address from key hash
+                    reward_addr_len = constructRewardAddressFromHash(
+                        G_context.tx_info.transaction.networkId,
+                        REWARD_HASH_SOURCE_KEY,
+                        withdrawal_item->withdrawal_data.stakeCredential.keyHash,
+                        ADDRESS_KEY_HASH_LENGTH,
+                        reward_addr_bytes,
+                        sizeof(reward_addr_bytes)
+                    );
+                    break;
+                }
+                case EXT_CREDENTIAL_SCRIPT_HASH: {
+                    // Construct reward address from script hash
+                    reward_addr_len = constructRewardAddressFromHash(
+                        G_context.tx_info.transaction.networkId,
+                        REWARD_HASH_SOURCE_SCRIPT,
+                        withdrawal_item->withdrawal_data.stakeCredential.scriptHash,
+                        SCRIPT_HASH_LENGTH,
+                        reward_addr_bytes,
+                        sizeof(reward_addr_bytes)
+                    );
+                    break;
+                }
+                default:
+                    return send_error_and_reset(SW_TX_PARSING_FAIL);
+            }
+
+            if (reward_addr_len == 0) {
+                return send_error_and_reset(SW_DISPLAY_ADDRESS_FAIL);
+            }
+
+            // Convert reward address bytes to human-readable bech32
+            reward_addr_len = humanReadableAddress(
+                reward_addr_bytes,
+                reward_addr_len,
+                reward_account_str,
+                MAX_HUMAN_ADDRESS_SIZE
+            );
+
+            if (reward_addr_len == 0) {
+                return send_error_and_reset(SW_DISPLAY_ADDRESS_FAIL);
+            }
+
+            g_pairs[pair_idx].value = reward_account_str;
+            pair_idx++;
+
+            withdrawal_num++;
+        }
+
+        withdrawal_node = withdrawal_node->next;
+    }
+
     // Add each output (1-indexed for display)
     uint16_t output_num = 1;
     s_flist_node *node = G_context.tx_info.transaction.outputs;
     while (node != NULL) {
         tx_output_list_item_t *output_item = (tx_output_list_item_t *) node;
 
-        // Add output number pair (e.g., "Output" | "1")
-        g_pairs[pair_idx].item = "Output";
-        char *output_num_str = (char *) ui_mem_alloc(MAX_UINT64_STRING_SIZE);
-        if (output_num_str == NULL) {
-            tx_buffer_cleanup();
-            return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
-        }
-        snprintf(output_num_str, MAX_UINT64_STRING_SIZE, "%d", output_num);
-        g_pairs[pair_idx].value = output_num_str;
-        pair_idx++;
+        // Build output description for policy checking
+        tx_output_description_t output_desc;
+        output_desc.format = output_item->output_data.format;
+        output_desc.amount = output_item->output_data.adaAmount;
+        output_desc.numAssetGroups = output_item->output_data.numAssetGroups;
+        output_desc.includeDatum = (output_item->output_data.datum.type != 0xFF);
+        output_desc.includeRefScript = output_item->output_data.hasRefScript;
 
-        // Add address pair (e.g., "Address" | "<address>")
-        g_pairs[pair_idx].item = "Address";
-
-        // Allocate and format address using Bech32 (Cardano format)
-        // MAX_HUMAN_ADDRESS_SIZE is defined in cardano.h as 150
-        char *addr_str = (char *) ui_mem_alloc(MAX_HUMAN_ADDRESS_SIZE);
-        if (addr_str == NULL) {
-            tx_buffer_cleanup();
-            return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
-        }
-
-        size_t addr_len = 0;
         if (output_item->output_data.destination.type == DESTINATION_THIRD_PARTY) {
-            // Use Cardano's humanReadableAddress function for proper Bech32 formatting
-            addr_len = humanReadableAddress(
-                output_item->output_data.destination.address.buffer,
-                output_item->output_data.destination.address.size,
-                addr_str,
-                MAX_HUMAN_ADDRESS_SIZE
-            );
+            output_desc.destination.type = DESTINATION_THIRD_PARTY;
+            output_desc.destination.address.buffer = output_item->output_data.destination.address.buffer;
+            output_desc.destination.address.size = output_item->output_data.destination.address.size;
         } else if (output_item->output_data.destination.type == DESTINATION_DEVICE_OWNED) {
-            // Derive address from path
-            uint8_t address_bytes[MAX_ADDRESS_SIZE];
-            size_t address_size = deriveAddress(
-                &output_item->output_data.destination.params,
-                address_bytes,
-                sizeof(address_bytes)
-            );
+            output_desc.destination.type = DESTINATION_DEVICE_OWNED;
+            output_desc.destination.params = &output_item->output_data.destination.params;
+        }
 
-            if (address_size > 0) {
+        // Check output policy
+        security_policy_t output_policy;
+        if (output_item->output_data.destination.type == DESTINATION_THIRD_PARTY) {
+            output_policy = policyForSignTxOutputAddressBytes(
+                &output_desc,
+                G_context.tx_info.transaction.txSigningMode,
+                G_context.tx_info.transaction.networkId,
+                G_context.tx_info.transaction.protocolMagic
+            );
+        } else {
+            output_policy = policyForSignTxOutputAddressParams(
+                &output_desc,
+                G_context.tx_info.transaction.txSigningMode,
+                G_context.tx_info.transaction.networkId,
+                G_context.tx_info.transaction.protocolMagic
+            );
+        }
+
+        // Only display output if policy allows it
+        if (output_policy != POLICY_DENY) {
+            // Add output number pair (e.g., "Output" | "#1")
+            char *output_num_str = (char *) ui_mem_alloc(MAX_UINT64_STRING_SIZE);
+            if (output_num_str == NULL) {
+                nbgl_display_and_warnings_cleanup();
+                return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
+            }
+            snprintf(output_num_str, MAX_UINT64_STRING_SIZE, "#%d", output_num);
+            g_pairs[pair_idx].item = "Output";
+            g_pairs[pair_idx].value = output_num_str;
+            pair_idx++;
+
+            // Add address pair (e.g., "Address" | "<address>")
+            g_pairs[pair_idx].item = "Address";
+
+            // Allocate and format address using Bech32 (Cardano format)
+            // MAX_HUMAN_ADDRESS_SIZE is defined in cardano.h as 150
+            char *addr_str = (char *) ui_mem_alloc(MAX_HUMAN_ADDRESS_SIZE);
+            if (addr_str == NULL) {
+                nbgl_display_and_warnings_cleanup();
+                return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
+            }
+
+            size_t addr_len = 0;
+            if (output_item->output_data.destination.type == DESTINATION_THIRD_PARTY) {
+                // Use Cardano's humanReadableAddress function for proper Bech32 formatting
                 addr_len = humanReadableAddress(
-                    address_bytes,
-                    address_size,
+                    output_item->output_data.destination.address.buffer,
+                    output_item->output_data.destination.address.size,
                     addr_str,
                     MAX_HUMAN_ADDRESS_SIZE
                 );
+            } else if (output_item->output_data.destination.type == DESTINATION_DEVICE_OWNED) {
+                // Derive address from path
+                uint8_t address_bytes[MAX_ADDRESS_SIZE];
+                size_t address_size = deriveAddress(
+                    &output_item->output_data.destination.params,
+                    address_bytes,
+                    sizeof(address_bytes)
+                );
+
+                if (address_size > 0) {
+                    addr_len = humanReadableAddress(
+                        address_bytes,
+                        address_size,
+                        addr_str,
+                        MAX_HUMAN_ADDRESS_SIZE
+                    );
+                }
             }
+
+            if (addr_len == 0) {
+                return send_error_and_reset(SW_DISPLAY_ADDRESS_FAIL);
+            }
+
+            g_pairs[pair_idx].value = addr_str;
+            pair_idx++;
+
+            // Add amount pair with label "Amount"
+            g_pairs[pair_idx].item = "Amount";
+
+            // Allocate and format amount with currency
+            char *amount_str = (char *) ui_mem_alloc(MAX_AMOUNT_DISPLAY_SIZE);
+            if (amount_str == NULL) {
+                nbgl_display_and_warnings_cleanup();
+                return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
+            }
+            if (!str_formatAdaAmount(output_item->output_data.adaAmount, amount_str, MAX_AMOUNT_DISPLAY_SIZE)) {
+                return send_error_and_reset(SW_DISPLAY_AMOUNT_FAIL);
+            }
+            g_pairs[pair_idx].value = amount_str;
+            pair_idx++;
+
+            output_num++;
         }
 
-        if (addr_len == 0) {
-            return send_error_and_reset(SW_DISPLAY_ADDRESS_FAIL);
-        }
-
-        g_pairs[pair_idx].value = addr_str;
-        pair_idx++;
-
-        // Add amount pair with label "Amount"
-        g_pairs[pair_idx].item = "Amount";
-
-        // Allocate and format amount with currency
-        char *amount_str = (char *) ui_mem_alloc(MAX_AMOUNT_DISPLAY_SIZE);
-        if (amount_str == NULL) {
-            tx_buffer_cleanup();
-            return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
-        }
-        if (!str_formatAdaAmount(output_item->output_data.adaAmount, amount_str, MAX_AMOUNT_DISPLAY_SIZE)) {
-            return send_error_and_reset(SW_DISPLAY_AMOUNT_FAIL);
-        }
-        g_pairs[pair_idx].value = amount_str;
-        pair_idx++;
-
-        output_num++;
         node = node->next;
     }
 
@@ -257,7 +475,7 @@ int ui_display_transaction(void) {
     g_pairs[pair_idx].item = "Transaction hash";
     char *tx_hash_str = (char *) ui_mem_alloc(MAX_TX_HASH_DISPLAY_SIZE);
     if (tx_hash_str == NULL) {
-        tx_buffer_cleanup();
+        nbgl_display_and_warnings_cleanup();
         return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
     }
     ui_getHexBufferScreen(tx_hash_str, MAX_TX_HASH_DISPLAY_SIZE, G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash));
@@ -288,17 +506,17 @@ int ui_display_transaction(void) {
         // Allocate and setup warning structures using ui_mem_alloc for automatic tracking
         g_warningInfo = (nbgl_contentCenter_t *) ui_mem_alloc(sizeof(nbgl_contentCenter_t));
         if (g_warningInfo == NULL) {
-            tx_buffer_cleanup();
+            nbgl_display_and_warnings_cleanup();
             return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
         }
         g_warningDetails = (nbgl_warningDetails_t *) ui_mem_alloc(sizeof(nbgl_warningDetails_t));
         if (g_warningDetails == NULL) {
-            tx_buffer_cleanup();
+            nbgl_display_and_warnings_cleanup();
             return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
         }
         g_warning = (nbgl_warning_t *) ui_mem_alloc(sizeof(nbgl_warning_t));
         if (g_warning == NULL) {
-            tx_buffer_cleanup();
+            nbgl_display_and_warnings_cleanup();
             return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
         }
 
@@ -334,7 +552,7 @@ int ui_display_transaction(void) {
                                   "Sign transaction",
                                   NULL,
                                   warningPtr,
-                                  review_choice);
+                                  tx_review_choice);
     } else {
         // Use simple review without warnings
         nbgl_useCaseReview(TYPE_TRANSACTION,
@@ -347,7 +565,7 @@ int ui_display_transaction(void) {
 #else
                           NULL,
 #endif
-                          review_choice);
+                          tx_review_choice);
     }
     return 0;
 }

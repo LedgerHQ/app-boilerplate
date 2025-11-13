@@ -217,7 +217,7 @@ static int parse_and_hash_transaction(void) {
     parser_status_e status = transaction_deserialize(&buf, &G_context.tx_info.transaction);
     PRINTF("Parsing status: %d.\n", status);
     if (status != PARSING_OK) {
-        tx_context_cleanup(&G_context.tx_info.transaction);
+        tx_context_cleanup();
 
         // Return appropriate error based on parse failure type
         switch (status) {
@@ -262,7 +262,7 @@ static int parse_and_hash_transaction(void) {
                            G_context.tx_info.transaction.networkId,
                            G_context.tx_info.transaction.protocolMagic)) {
             TRACE("Warning allocation failed");
-            tx_context_cleanup(&G_context.tx_info.transaction);
+            tx_context_cleanup();
             return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
         }
     }
@@ -360,6 +360,67 @@ static int parse_and_hash_transaction(void) {
     // Add TTL if included
     if (G_context.tx_info.transaction.includeTtl) {
         txHashBuilder_addTtl(&txHashBuilder, G_context.tx_info.transaction.ttl);
+    }
+
+    // Add withdrawals if present
+    if (G_context.tx_info.transaction.num_withdrawals > 0) {
+        txHashBuilder_enterWithdrawals(&txHashBuilder);
+        s_flist_node *withdrawal_node = G_context.tx_info.transaction.withdrawals;
+        while (withdrawal_node != NULL) {
+            tx_withdrawal_list_item_t *withdrawal_item = (tx_withdrawal_list_item_t *) withdrawal_node;
+
+            // Construct reward address from withdrawal credential
+            uint8_t reward_address[REWARD_ACCOUNT_SIZE];
+            size_t reward_addr_len = 0;
+
+            switch (withdrawal_item->withdrawal_data.stakeCredential.type) {
+                case EXT_CREDENTIAL_KEY_PATH: {
+                    reward_addr_len = constructRewardAddressFromKeyPath(
+                        &withdrawal_item->withdrawal_data.stakeCredential.keyPath,
+                        G_context.tx_info.transaction.networkId,
+                        reward_address,
+                        sizeof(reward_address)
+                    );
+                    break;
+                }
+                case EXT_CREDENTIAL_KEY_HASH: {
+                    reward_addr_len = constructRewardAddressFromHash(
+                        G_context.tx_info.transaction.networkId,
+                        REWARD_HASH_SOURCE_KEY,
+                        withdrawal_item->withdrawal_data.stakeCredential.keyHash,
+                        ADDRESS_KEY_HASH_LENGTH,
+                        reward_address,
+                        sizeof(reward_address)
+                    );
+                    break;
+                }
+                case EXT_CREDENTIAL_SCRIPT_HASH: {
+                    reward_addr_len = constructRewardAddressFromHash(
+                        G_context.tx_info.transaction.networkId,
+                        REWARD_HASH_SOURCE_SCRIPT,
+                        withdrawal_item->withdrawal_data.stakeCredential.scriptHash,
+                        SCRIPT_HASH_LENGTH,
+                        reward_address,
+                        sizeof(reward_address)
+                    );
+                    break;
+                }
+                default:
+                    return send_error_and_reset(SW_TX_PARSING_FAIL);
+            }
+
+            if (reward_addr_len == 0 || reward_addr_len != REWARD_ACCOUNT_SIZE) {
+                return send_error_and_reset(SW_TX_PARSING_FAIL);
+            }
+
+            // Add withdrawal to hash builder
+            txHashBuilder_addWithdrawal(&txHashBuilder,
+                                       reward_address,
+                                       reward_addr_len,
+                                       withdrawal_item->withdrawal_data.amount);
+
+            withdrawal_node = withdrawal_node->next;
+        }
     }
 
     // Finalize hash

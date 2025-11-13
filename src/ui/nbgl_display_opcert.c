@@ -73,7 +73,7 @@ static void opcert_buffer_cleanup(void) {
 }
 
 // called when long press button on 3rd page is long-touched or when reject footer is touched
-static void review_choice(bool confirm) {
+static void opcert_review_choice(bool confirm) {
     opcert_buffer_cleanup();
 
     finalize_sign_opcert(confirm);
@@ -220,7 +220,7 @@ int ui_display_opcert(security_policy_t securityPolicy) {
                         "Sign certificate",
                         NULL,
                         warningPtr,
-                        review_choice
+                        opcert_review_choice
     );
 
     return 0;

@@ -467,40 +467,56 @@ parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
             return WITHDRAWALS_PARSING_ERROR;
         }
 
-        // Read withdrawal credential type (uint8)
-        uint8_t cred_type;
-        if (!buffer_read_u8(buf, &cred_type)) {
+        // Read withdrawal credential type (uint8) and convert from wire format
+        uint8_t cred_type_wire;
+        if (!buffer_read_u8(buf, &cred_type_wire)) {
             return WITHDRAWALS_PARSING_ERROR;
         }
-        item->withdrawal_data.credential.type = (staking_data_source_t) cred_type;
+
+        // Convert from staking_data_source_t wire format to ext_credential_type_t
+        ext_credential_type_t cred_type;
+        switch (cred_type_wire) {
+            case 0x22:  // STAKING_KEY_PATH
+                cred_type = EXT_CREDENTIAL_KEY_PATH;
+                break;
+            case 0x33:  // STAKING_KEY_HASH
+                cred_type = EXT_CREDENTIAL_KEY_HASH;
+                break;
+            case 0x55:  // STAKING_SCRIPT_HASH
+                cred_type = EXT_CREDENTIAL_SCRIPT_HASH;
+                break;
+            default:
+                return WITHDRAWALS_PARSING_ERROR;
+        }
+        item->withdrawal_data.stakeCredential.type = cred_type;
 
         // Read withdrawal credential based on type
         switch (cred_type) {
-            case STAKING_KEY_PATH: {
+            case EXT_CREDENTIAL_KEY_PATH: {
                 // Read withdrawal key path using bip44 wire format
-                if (!buffer_read_bip44_path(buf, &item->withdrawal_data.credential.keyPath)) {
+                if (!buffer_read_bip44_path(buf, &item->withdrawal_data.stakeCredential.keyPath)) {
                     return WITHDRAWALS_PARSING_ERROR;
                 }
-                TRACE("Deserialize: Withdrawal %u key path, length=%u", i, item->withdrawal_data.credential.keyPath.length);
+                TRACE("Deserialize: Withdrawal %u key path, length=%u", i, item->withdrawal_data.stakeCredential.keyPath.length);
                 break;
             }
-            case STAKING_KEY_HASH: {
+            case EXT_CREDENTIAL_KEY_HASH: {
                 // Read withdrawal key hash (fixed 28 bytes, no length prefix)
                 uint8_t *hash_ptr = (uint8_t *) (buf->ptr + buf->offset);
                 if (!buffer_seek_cur(buf, ADDRESS_KEY_HASH_LENGTH)) {
                     return WITHDRAWALS_PARSING_ERROR;
                 }
-                memmove(item->withdrawal_data.credential.keyHash, hash_ptr, ADDRESS_KEY_HASH_LENGTH);
+                memmove(item->withdrawal_data.stakeCredential.keyHash, hash_ptr, ADDRESS_KEY_HASH_LENGTH);
                 TRACE("Deserialize: Withdrawal %u key hash", i);
                 break;
             }
-            case STAKING_SCRIPT_HASH: {
+            case EXT_CREDENTIAL_SCRIPT_HASH: {
                 // Read withdrawal script hash (fixed 28 bytes, no length prefix)
                 uint8_t *hash_ptr = (uint8_t *) (buf->ptr + buf->offset);
                 if (!buffer_seek_cur(buf, SCRIPT_HASH_LENGTH)) {
                     return WITHDRAWALS_PARSING_ERROR;
                 }
-                memmove(item->withdrawal_data.credential.scriptHash, hash_ptr, SCRIPT_HASH_LENGTH);
+                memmove(item->withdrawal_data.stakeCredential.scriptHash, hash_ptr, SCRIPT_HASH_LENGTH);
                 TRACE("Deserialize: Withdrawal %u script hash", i);
                 break;
             }
@@ -567,8 +583,8 @@ void transaction_free_withdrawals(transaction_t *tx) {
 /**
  * Cleanup transaction lists by freeing allocated input, output, and withdrawal items
  */
-void tx_context_cleanup(transaction_t *tx) {
-    ASSERT(tx != NULL);
+void tx_context_cleanup(void) {
+    transaction_t *tx = &G_context.tx_info.transaction;
 
     // Free all input items from the linked list
     s_flist_node *input_node = tx->inputs;
