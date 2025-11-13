@@ -149,6 +149,10 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
     // Show spinner to indicate transaction data is being processed
     nbgl_useCaseSpinner("Processing");
 
+    // Transition to CHUNKS state - now ready to receive transaction data chunks
+    G_context.state.tx_state = TX_STATE_CHUNKS;
+    TRACE("Transaction initialized, waiting for data chunks");
+
     return io_send_sw(SW_OK);
 }
 
@@ -157,6 +161,12 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
  * Returns SW_OK if more chunks expected, or falls through to parse if final chunk
  */
 static int handle_tx_data_chunk(buffer_t *cdata, bool more) {
+    // Validate we're in the correct state for receiving chunks
+    if (G_context.state.tx_state != TX_STATE_CHUNKS) {
+        TRACE("Invalid state for chunk reception: expected TX_STATE_CHUNKS, got %d", G_context.state.tx_state);
+        return io_send_sw(SW_BAD_STATE);
+    }
+
     // Allocate buffer on first data chunk
     if (G_context.tx_info.raw_tx == NULL) {
         TRACE("Allocating transaction buffer: %d bytes", TX_BUFFER_SIZE);
@@ -208,6 +218,8 @@ static int parse_and_hash_transaction(void) {
     PRINTF("Parsing status: %d.\n", status);
     if (status != PARSING_OK) {
         tx_context_cleanup(&G_context.tx_info.transaction);
+        // Reset state on parse error
+        G_context.state.tx_state = TX_STATE_NONE;
 
         switch (status) {
             case INPUTS_PARSING_ERROR:
@@ -227,6 +239,7 @@ static int parse_and_hash_transaction(void) {
         }
     }
 
+    // Transition from CHUNKS to PARSED state
     G_context.state.tx_state = TX_STATE_PARSED;
 
     // Fill in Byron protocol magic for DEVICE_OWNED outputs
@@ -363,12 +376,12 @@ static int parse_and_hash_transaction(void) {
 int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
     if (chunk_type == P1_TX_INIT) {
         explicit_bzero(&G_context, sizeof(G_context));
-        G_context.req_type = REQUEST_CONFIRM_TRANSACTION;
+        G_context.req_type = REQUEST_SIGN_TRANSACTION;
         G_context.state.tx_state = TX_STATE_NONE;
         return handle_tx_init_apdu(cdata);
 
     } else {  // parse transaction data chunks
-        if (G_context.req_type != REQUEST_CONFIRM_TRANSACTION) {
+        if (G_context.req_type != REQUEST_SIGN_TRANSACTION) {
             return io_send_sw(SW_BAD_STATE);
         }
 
@@ -391,7 +404,13 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
 
 int handler_sign_tx_witness(buffer_t *cdata) {
     // Verify we're in correct state for witness signing
-    if (G_context.state.tx_state != TX_STATE_APPROVED || G_context.req_type != REQUEST_CONFIRM_TRANSACTION) {
+    if (G_context.req_type != REQUEST_SIGN_TRANSACTION) {
+        TRACE("Bad request type for witness signing: %d", G_context.req_type);
+        return io_send_sw(SW_BAD_STATE);
+    }
+
+    if (G_context.state.tx_state != TX_STATE_APPROVED) {
+        TRACE("Bad state for witness signing: expected TX_STATE_APPROVED, got %d", G_context.state.tx_state);
         return io_send_sw(SW_BAD_STATE);
     }
 

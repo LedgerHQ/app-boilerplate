@@ -13,14 +13,15 @@ from application_client.app_def import Errors
 from application_client.command_sender import CommandSender
 from application_client.command_builder import gather_witness_paths
 from standalone.utils import verify_signature, idTestFunc
-from standalone.input_files.signTx import (testsShelleyNoCertificates, SignTxTestCase,
+from standalone.input_files.signTx import (testsByron, testsMary, testsShelleyNoCertificates, SignTxTestCase,
                                             TxAuxiliaryDataType, ThirdPartyAddressParams,
                                             TransactionSigningMode)
 
 
 @pytest.mark.parametrize(
     "testCase",
-    testsShelleyNoCertificates,  # Just test the first case for now
+    # TODO add testsMary and multiassets in outputs support
+    testsByron + testsShelleyNoCertificates,
     ids=idTestFunc
 )
 def test_sign_tx_simple(device: Device,

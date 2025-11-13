@@ -81,7 +81,7 @@ int ui_display_witness(const bip44_path_t* witnessPath, security_policy_t securi
     TRACE("=== ui_display_witness START ===");
     TRACE("securityPolicy: %d", securityPolicy);
 
-    if (G_context.state.tx_state != TX_STATE_APPROVED || G_context.req_type != REQUEST_CONFIRM_TRANSACTION) {
+    if (G_context.state.tx_state != TX_STATE_APPROVED || G_context.req_type != REQUEST_SIGN_TRANSACTION) {
         TRACE("Bad state detected - returning error");
         G_context.state.tx_state = TX_STATE_NONE;
         return io_send_sw(SW_BAD_STATE);

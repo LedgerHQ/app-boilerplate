@@ -27,7 +27,8 @@ typedef enum {
  * Enumeration with transaction signing state.
  */
 typedef enum {
-    TX_STATE_NONE,      /// No transaction being processed
+    TX_STATE_NONE,      /// No transaction being processed (truly idle)
+    TX_STATE_CHUNKS,    /// Actively receiving transaction data chunks
     TX_STATE_PARSED,    /// Transaction data parsed and ready for approval
     TX_STATE_APPROVED   /// User approved, waiting for witness signatures
 } tx_state_e;
@@ -46,8 +47,7 @@ typedef enum {
  */
 typedef enum {
     REQUEST_EXPORT_PUBKEY,     /// export public key
-    REQUEST_CONFIRM_ADDRESS,     /// confirm address derived from public key
-    REQUEST_CONFIRM_TRANSACTION, /// confirm transaction information
+    REQUEST_SIGN_TRANSACTION, /// confirm transaction information
     REQUEST_SIGN_OPCERT,         /// sign operational certificate
 } request_type_e;
 

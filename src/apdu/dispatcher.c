@@ -39,7 +39,7 @@ int apdu_dispatcher(const command_t *cmd) {
 
     // Log the appropriate state based on request type
     switch (G_context.req_type) {
-        case REQUEST_CONFIRM_TRANSACTION:
+        case REQUEST_SIGN_TRANSACTION:
             TRACE("G_context.state.tx_state: %d", G_context.state.tx_state);
             break;
         case REQUEST_SIGN_OPCERT:

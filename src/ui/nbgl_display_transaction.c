@@ -113,7 +113,7 @@ static void review_choice(bool confirm) {
 // - Format the fee and output strings dynamically
 // - Display the first screen of the transaction review
 int ui_display_transaction(void) {
-    if (G_context.req_type != REQUEST_CONFIRM_TRANSACTION || G_context.state.tx_state != TX_STATE_PARSED) {
+    if (G_context.req_type != REQUEST_SIGN_TRANSACTION || G_context.state.tx_state != TX_STATE_PARSED) {
         G_context.state.tx_state = TX_STATE_NONE;
         return io_send_sw(SW_BAD_STATE);
     }
