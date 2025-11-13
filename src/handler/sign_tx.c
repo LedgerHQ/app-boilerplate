@@ -50,9 +50,6 @@
  * Validates all transaction metadata and checks security policy
  */
 static int handle_tx_init_apdu(buffer_t *cdata) {
-    explicit_bzero(&G_context, sizeof(G_context));
-    G_context.req_type = REQUEST_CONFIRM_TRANSACTION;
-    G_context.state = STATE_NONE;
     G_context.tx_info.raw_tx = NULL;
     G_context.tx_info.raw_tx_len = 0;
     G_context.tx_info.warning_list = NULL;
@@ -369,6 +366,9 @@ static int parse_and_hash_transaction(void) {
 
 int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
     if (chunk_type == P1_TX_INIT) {
+        explicit_bzero(&G_context, sizeof(G_context));
+        G_context.req_type = REQUEST_CONFIRM_TRANSACTION;
+        G_context.state = STATE_NONE;
         return handle_tx_init_apdu(cdata);
 
     } else {  // parse transaction data chunks
