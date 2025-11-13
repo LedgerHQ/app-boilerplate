@@ -33,6 +33,26 @@
 #include "sign_tx.h"
 #include "sign_opcert.h"
 
+/**
+ * Map request type to its expected instruction
+ * Used to detect instruction interleaving attacks
+ */
+static command_e req_type_to_instruction(request_type_e req_type) {
+    switch (req_type) {
+        case REQUEST_NONE:
+            return INS_GET_VERSION;  // Dummy value, should never be checked
+        case REQUEST_EXPORT_PUBKEY:
+            return INS_GET_PUBLIC_KEY;
+        case REQUEST_SIGN_TRANSACTION:
+            return INS_SIGN_TX;
+        case REQUEST_SIGN_OPCERT:
+            return INS_SIGN_OPCERT;
+        default:
+            LEDGER_ASSERT(false, "Unknown request type");
+            return INS_GET_VERSION;  // Unreachable
+    }
+}
+
 int apdu_dispatcher(const command_t *cmd) {
     LEDGER_ASSERT(cmd != NULL, "NULL cmd");
     TRACE("G_context.req_type: %d", G_context.req_type);
@@ -48,6 +68,20 @@ int apdu_dispatcher(const command_t *cmd) {
         default:
             // For stateless operations (GET_PUBLIC_KEY, GET_VERSION, etc.)
             break;
+    }
+
+    // Guard against instruction interleaving attacks
+    // If an operation is in progress, only allow the same instruction to continue
+    if (G_context.req_type != REQUEST_NONE) {
+        command_e expected_ins = req_type_to_instruction(G_context.req_type);
+        if (cmd->ins != expected_ins) {
+            TRACE("Instruction interleaving detected: current=%d (req_type=%d), attempted=%d",
+                  expected_ins, G_context.req_type, cmd->ins);
+            // Reset to idle state (Option B: reset on rejection)
+            G_context.req_type = REQUEST_NONE;
+            return io_send_sw(ERR_STILL_IN_CALL);
+        }
+        TRACE("Same instruction continuing: ins=%d", cmd->ins);
     }
 
     if (cmd->cla != CLA) {

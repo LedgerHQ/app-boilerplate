@@ -29,6 +29,7 @@
 #include "display.h"
 #include "constants.h"
 #include "globals.h"
+#include "utils/utils.h"
 #include "sw.h"
 #include "address.h"
 #include "tx_types.h"
@@ -94,11 +95,14 @@ static void review_choice(bool confirm) {
         } else {
             // No witnesses - transaction is complete, cleanup and show status
             tx_data_cleanup();
+            G_context.req_type = REQUEST_NONE;  // Reset to idle
+            G_context.state.tx_state = TX_STATE_NONE;
             nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main);
         }
     } else {
         // User rejected
         G_context.state.tx_state = TX_STATE_NONE;
+        G_context.req_type = REQUEST_NONE;  // Reset to idle
 
         // Cleanup transaction data
         tx_data_cleanup();
@@ -115,24 +119,24 @@ static void review_choice(bool confirm) {
 int ui_display_transaction(void) {
     if (G_context.req_type != REQUEST_SIGN_TRANSACTION || G_context.state.tx_state != TX_STATE_PARSED) {
         G_context.state.tx_state = TX_STATE_NONE;
-        return io_send_sw(SW_BAD_STATE);
+        return send_error_and_reset(SW_BAD_STATE);
     }
 
     // Allocate display buffers using ui_mem_alloc for automatic tracking
     char *fee = (char *) ui_mem_alloc(MAX_ADA_AMOUNT_STRING_SIZE);
     if (fee == NULL) {
         tx_buffer_cleanup();
-        return io_send_sw(SW_INSUFFICIENT_MEMORY);
+        return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
     }
     char *ttl = (char *) ui_mem_alloc(MAX_ADA_AMOUNT_STRING_SIZE);
     if (ttl == NULL) {
         tx_buffer_cleanup();
-        return io_send_sw(SW_INSUFFICIENT_MEMORY);
+        return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
     }
     char *warning_msg = (char *) ui_mem_alloc(MAX_WARNING_MESSAGE_SIZE);
     if (warning_msg == NULL) {
         tx_buffer_cleanup();
-        return io_send_sw(SW_INSUFFICIENT_MEMORY);
+        return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
     }
     // Initialize to empty string (null-terminated) in case no warnings are present
     explicit_bzero(warning_msg, MAX_WARNING_MESSAGE_SIZE);
@@ -148,7 +152,7 @@ int ui_display_transaction(void) {
     // Initialize common pairs structure
     if (!ui_pairs_init(num_pairs)) {
         tx_buffer_cleanup();
-        return io_send_sw(SW_TX_PARSING_FAIL);
+        return send_error_and_reset(SW_TX_PARSING_FAIL);
     }
 
     uint16_t pair_idx = 0;
@@ -178,7 +182,7 @@ int ui_display_transaction(void) {
         char *output_num_str = (char *) ui_mem_alloc(MAX_UINT64_STRING_SIZE);
         if (output_num_str == NULL) {
             tx_buffer_cleanup();
-            return io_send_sw(SW_INSUFFICIENT_MEMORY);
+            return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
         }
         snprintf(output_num_str, MAX_UINT64_STRING_SIZE, "%d", output_num);
         g_pairs[pair_idx].value = output_num_str;
@@ -192,7 +196,7 @@ int ui_display_transaction(void) {
         char *addr_str = (char *) ui_mem_alloc(MAX_HUMAN_ADDRESS_SIZE);
         if (addr_str == NULL) {
             tx_buffer_cleanup();
-            return io_send_sw(SW_INSUFFICIENT_MEMORY);
+            return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
         }
 
         size_t addr_len = 0;
@@ -224,7 +228,7 @@ int ui_display_transaction(void) {
         }
 
         if (addr_len == 0) {
-            return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
+            return send_error_and_reset(SW_DISPLAY_ADDRESS_FAIL);
         }
 
         g_pairs[pair_idx].value = addr_str;
@@ -237,14 +241,14 @@ int ui_display_transaction(void) {
         char *amount_str = (char *) ui_mem_alloc(MAX_AMOUNT_DISPLAY_SIZE);
         if (amount_str == NULL) {
             tx_buffer_cleanup();
-            return io_send_sw(SW_INSUFFICIENT_MEMORY);
+            return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
         }
         char amount_formatted[30] = {0};
         if (!format_fpu64(amount_formatted,
                           sizeof(amount_formatted),
                           output_item->output_data.adaAmount,
                           EXPONENT_SMALLEST_UNIT)) {
-            return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+            return send_error_and_reset(SW_DISPLAY_AMOUNT_FAIL);
         }
         snprintf(amount_str, MAX_AMOUNT_DISPLAY_SIZE, "BOL %.*s", sizeof(amount_formatted), amount_formatted);
         g_pairs[pair_idx].value = amount_str;
@@ -259,7 +263,7 @@ int ui_display_transaction(void) {
     char *tx_hash_str = (char *) ui_mem_alloc(MAX_TX_HASH_DISPLAY_SIZE);
     if (tx_hash_str == NULL) {
         tx_buffer_cleanup();
-        return io_send_sw(SW_INSUFFICIENT_MEMORY);
+        return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
     }
     ui_getHexBufferScreen(tx_hash_str, MAX_TX_HASH_DISPLAY_SIZE, G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash));
     g_pairs[pair_idx].value = tx_hash_str;
@@ -290,17 +294,17 @@ int ui_display_transaction(void) {
         g_warningInfo = (nbgl_contentCenter_t *) ui_mem_alloc(sizeof(nbgl_contentCenter_t));
         if (g_warningInfo == NULL) {
             tx_buffer_cleanup();
-            return io_send_sw(SW_INSUFFICIENT_MEMORY);
+            return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
         }
         g_warningDetails = (nbgl_warningDetails_t *) ui_mem_alloc(sizeof(nbgl_warningDetails_t));
         if (g_warningDetails == NULL) {
             tx_buffer_cleanup();
-            return io_send_sw(SW_INSUFFICIENT_MEMORY);
+            return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
         }
         g_warning = (nbgl_warning_t *) ui_mem_alloc(sizeof(nbgl_warning_t));
         if (g_warning == NULL) {
             tx_buffer_cleanup();
-            return io_send_sw(SW_INSUFFICIENT_MEMORY);
+            return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
         }
 
         // Setup warning content

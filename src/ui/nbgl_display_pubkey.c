@@ -28,6 +28,7 @@
 #include "display.h"
 #include "constants.h"
 #include "globals.h"
+#include "utils/utils.h"
 #include "sw.h"
 #include "opcert_types.h"
 #include "menu.h"
@@ -64,7 +65,7 @@ int ui_display_pubkey(security_policy_t securityPolicy) {
 
     if (G_context.req_type != REQUEST_EXPORT_PUBKEY) {
         TRACE("Bad request type detected - returning error");
-        return io_send_sw(SW_BAD_STATE);
+        return send_error_and_reset(SW_BAD_STATE);
     }
 
     pubkey_ctx_t* pk = &G_context.pk_info;
@@ -73,7 +74,7 @@ int ui_display_pubkey(security_policy_t securityPolicy) {
     pubkeyPathStr = (char *) ui_mem_alloc(BIP44_PATH_STRING_SIZE_MAX + 1);
     if (pubkeyPathStr == NULL) {
         ui_cleanup_tracked_allocations();
-        return io_send_sw(SW_INSUFFICIENT_MEMORY);
+        return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
     }
     ui_getPathScreen(pubkeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1, &pk->path);
 

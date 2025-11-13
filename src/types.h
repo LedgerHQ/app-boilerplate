@@ -46,9 +46,10 @@ typedef enum {
  * Enumeration with user request type.
  */
 typedef enum {
-    REQUEST_EXPORT_PUBKEY,     /// export public key
-    REQUEST_SIGN_TRANSACTION, /// confirm transaction information
-    REQUEST_SIGN_OPCERT,         /// sign operational certificate
+    REQUEST_NONE = 0,              /// No operation in progress (idle state)
+    REQUEST_EXPORT_PUBKEY,         /// export public key
+    REQUEST_SIGN_TRANSACTION,      /// confirm transaction information
+    REQUEST_SIGN_OPCERT,           /// sign operational certificate
 } request_type_e;
 
 /**

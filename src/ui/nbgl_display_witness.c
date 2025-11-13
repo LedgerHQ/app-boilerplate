@@ -28,6 +28,7 @@
 #include "display.h"
 #include "constants.h"
 #include "globals.h"
+#include "utils/utils.h"
 #include "sw.h"
 #include "securityPolicy.h"
 #include "nbgl_screens.h"
@@ -51,6 +52,7 @@ static void witness_review_choice(bool confirm) {
     if (!confirm) {
         // User rejected the witness - abort further witness processing
         G_context.state.tx_state = TX_STATE_NONE;
+        G_context.req_type = REQUEST_NONE;  // Reset to idle
         // Cleanup transaction data since we're aborting
         tx_data_cleanup();
         io_send_sw(SW_DENY);
@@ -72,6 +74,8 @@ static void witness_review_choice(bool confirm) {
         } else {
             // All witnesses processed - cleanup transaction data and show completion
             tx_data_cleanup();
+            G_context.req_type = REQUEST_NONE;  // Reset to idle
+            G_context.state.tx_state = TX_STATE_NONE;
             nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main);
         }
     }
@@ -84,13 +88,13 @@ int ui_display_witness(const bip44_path_t* witnessPath, security_policy_t securi
     if (G_context.state.tx_state != TX_STATE_APPROVED || G_context.req_type != REQUEST_SIGN_TRANSACTION) {
         TRACE("Bad state detected - returning error");
         G_context.state.tx_state = TX_STATE_NONE;
-        return io_send_sw(SW_BAD_STATE);
+        return send_error_and_reset(SW_BAD_STATE);
     }
 
     // Allocate display buffers
     if (!mem_buffer_allocate((void **) &witnessPathStr, BIP44_PATH_STRING_SIZE_MAX + 1)) {
         witness_buffers_cleanup();
-        return io_send_sw(SW_DISPLAY_BIP32_PATH_FAIL);
+        return send_error_and_reset(SW_DISPLAY_BIP32_PATH_FAIL);
     }
 
     // Set warning if needed
