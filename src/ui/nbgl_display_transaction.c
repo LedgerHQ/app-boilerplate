@@ -243,14 +243,9 @@ int ui_display_transaction(void) {
             tx_buffer_cleanup();
             return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
         }
-        char amount_formatted[30] = {0};
-        if (!format_fpu64(amount_formatted,
-                          sizeof(amount_formatted),
-                          output_item->output_data.adaAmount,
-                          EXPONENT_SMALLEST_UNIT)) {
+        if (!str_formatAdaAmount(output_item->output_data.adaAmount, amount_str, MAX_AMOUNT_DISPLAY_SIZE)) {
             return send_error_and_reset(SW_DISPLAY_AMOUNT_FAIL);
         }
-        snprintf(amount_str, MAX_AMOUNT_DISPLAY_SIZE, "BOL %.*s", sizeof(amount_formatted), amount_formatted);
         g_pairs[pair_idx].value = amount_str;
         pair_idx++;
 
