@@ -404,22 +404,18 @@ int handler_sign_tx_witness(buffer_t *cdata) {
         TRACE("Witness count exceeded: current=%d, expected=%d",
               G_context.tx_info.current_witness,
               G_context.tx_info.num_witnesses);
-        return io_send_sw(SW_WRONG_DATA_LENGTH);
+        return io_send_sw(SW_BAD_STATE);
     }
 
     // Parse witness path from APDU data
-    uint8_t path_len;
-    if (!buffer_read_u8(cdata, &path_len) ||
-        !buffer_read_bip32_path(cdata,
-                                G_context.tx_info.witness_path.path,
-                                (size_t) path_len)) {
+    // buffer_read_bip44_path reads the length byte and all path components
+    if (!buffer_read_bip44_path(cdata, &G_context.tx_info.witness_path)) {
         return io_send_sw(SW_WRONG_DATA_LENGTH);
     }
-    G_context.tx_info.witness_path.length = path_len;
 
     PRINTF("Witness %d: path length=%d\n",
            G_context.tx_info.current_witness,
-           path_len);
+           G_context.tx_info.witness_path.length);
 
     // Check security policy for witness signing
     // Determine if mint is present in the transaction
@@ -456,20 +452,25 @@ int handler_sign_tx_witness(buffer_t *cdata) {
                G_context.tx_info.witness_signature,
                sizeof(G_context.tx_info.witness_signature));
 
-    PRINTF("Witness signature: %.*H\n", ED25519_SIGNATURE_LENGTH, G_context.tx_info.witness_signature);
+    TRACE("Witness signature: %.*H", ED25519_SIGNATURE_LENGTH, G_context.tx_info.witness_signature);
 
-    // For SHOW and PROMPT policies, display witness to user before returning signature
-    if (policy == POLICY_SHOW_BEFORE_RESPONSE || policy == POLICY_PROMPT_BEFORE_RESPONSE ||
-        policy == POLICY_PROMPT_WARN_UNUSUAL) {
-        // Display witness path and request user confirmation
-        return ui_display_witness(&G_context.tx_info.witness_path, policy);
+    // Handle witness based on security policy
+    switch (policy) {
+        case POLICY_SHOW_BEFORE_RESPONSE:
+        case POLICY_PROMPT_BEFORE_RESPONSE:
+        case POLICY_PROMPT_WARN_UNUSUAL:
+            // Display witness path and request user confirmation
+            return ui_display_witness(&G_context.tx_info.witness_path, policy);
+
+        case POLICY_ALLOW_WITHOUT_PROMPT:
+            // Increment counter and send signature directly without prompting
+            G_context.tx_info.current_witness++;
+            return io_send_response_pointer(G_context.tx_info.witness_signature,
+                                            ED25519_SIGNATURE_LENGTH,
+                                            SW_OK);
+
+        default:
+            ASSERT(false);
+            return io_send_sw(SW_BAD_STATE);
     }
-
-    // For ALLOW_WITHOUT_PROMPT, increment counter and send signature directly
-    G_context.tx_info.current_witness++;
-
-    // Send signature back to client
-    return io_send_response_pointer(G_context.tx_info.witness_signature,
-                                    ED25519_SIGNATURE_LENGTH,
-                                    SW_OK);
 }
