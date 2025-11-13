@@ -124,12 +124,15 @@ def test_sign_tx_simple(device: Device,
 
         # Each witness requires explicit confirmation on the device
         with client.sign_tx_witness_async(path):
-            if device.is_nano:
-                navigator.navigate(moves)
+            if len(moves) > 0:
+                if device.is_nano:
+                    navigator.navigate(moves)
+                else:
+                    # Stax/Flex: Each witness gets a confirmation choice screen
+                    # The scenario_navigator.address_review_approve handles the Confirm button
+                    scenario_navigator.address_review_approve(do_comparison=False)
             else:
-                # Stax/Flex: Each witness gets a confirmation choice screen
-                # The scenario_navigator.address_review_approve handles the Confirm button
-                scenario_navigator.address_review_approve(do_comparison=False)
+                pass
 
         response = client.get_async_response()
         assert response is not None, f"No response for witness {path_idx}: {path}"
