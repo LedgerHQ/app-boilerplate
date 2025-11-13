@@ -567,10 +567,8 @@ void transaction_free_withdrawals(transaction_t *tx) {
 /**
  * Cleanup transaction lists by freeing allocated input, output, and withdrawal items
  */
-void transaction_cleanup(transaction_t *tx) {
-    if (tx == NULL) {
-        return;
-    }
+void tx_context_cleanup(transaction_t *tx) {
+    ASSERT(tx != NULL);
 
     // Free all input items from the linked list
     s_flist_node *input_node = tx->inputs;
@@ -600,4 +598,10 @@ void transaction_cleanup(transaction_t *tx) {
         withdrawal_node = next;
     }
     tx->withdrawals = NULL;
+
+    // free raw tx buffer
+    if (G_context.tx_info.raw_tx != NULL) {
+        app_mem_free(G_context.tx_info.raw_tx);
+        G_context.tx_info.raw_tx = NULL;
+    }
 }

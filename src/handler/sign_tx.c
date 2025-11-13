@@ -207,7 +207,7 @@ static int parse_and_hash_transaction(void) {
     parser_status_e status = transaction_deserialize(&buf, &G_context.tx_info.transaction);
     PRINTF("Parsing status: %d.\n", status);
     if (status != PARSING_OK) {
-        transaction_cleanup(&G_context.tx_info.transaction);
+        tx_context_cleanup(&G_context.tx_info.transaction);
 
         switch (status) {
             case INPUTS_PARSING_ERROR:
@@ -250,7 +250,7 @@ static int parse_and_hash_transaction(void) {
                            G_context.tx_info.transaction.networkId,
                            G_context.tx_info.transaction.protocolMagic)) {
             TRACE("Warning allocation failed");
-            transaction_cleanup(&G_context.tx_info.transaction);
+            tx_context_cleanup(&G_context.tx_info.transaction);
             return io_send_sw(SW_INSUFFICIENT_MEMORY);
         }
     }
@@ -356,10 +356,6 @@ static int parse_and_hash_transaction(void) {
                           sizeof(G_context.tx_info.tx_hash));
 
     PRINTF("Hash: %.*H\n", sizeof(G_context.tx_info.tx_hash), G_context.tx_info.tx_hash);
-
-    // NOTE: raw_tx buffer is kept alive for UI display
-    // It will be freed later when the entire transaction processing is complete
-    // (in tx_data_cleanup after user confirms or rejects the transaction)
 
     return SW_OK;
 }

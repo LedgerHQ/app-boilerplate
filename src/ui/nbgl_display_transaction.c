@@ -60,31 +60,19 @@ static void tx_buffer_cleanup(void) {
 
 /**
  * Cleanup transaction data after UI is finished
- * Frees the parsed transaction lists and warnings
- * (raw_tx is freed earlier in handler_sign_tx after deserialization)
  */
 void tx_data_cleanup(void) {
     // Free display buffers (must happen AFTER NBGL is completely done rendering)
     tx_buffer_cleanup();
 
-    // Note: raw_tx buffer is freed in handler_sign_tx after deserialization completes
-    // Check and free just in case it wasn't freed (defensive programming)
-    if (G_context.tx_info.raw_tx != NULL) {
-        app_mem_free(G_context.tx_info.raw_tx);
-        G_context.tx_info.raw_tx = NULL;
-    }
-    // Free parsed transaction lists
-    transaction_cleanup(&G_context.tx_info.transaction);
     // Free all accumulated warnings
     tx_warning_list_cleanup((tx_warning_list_item_t **)&G_context.tx_info.warning_list);
+
+    tx_context_cleanup(&G_context.tx_info.transaction);
 }
 
 // called when long press button on 3rd page is long-touched or when reject footer is touched
 static void review_choice(bool confirm) {
-    // NOTE: Display buffers (g_fee, g_ttl, g_warning_msg, output strings) are freed in
-    // tx_data_cleanup() after this callback completes and NBGL is fully done using them.
-    // Do NOT clean up here - NBGL may still be using the string pointers.
-
     if (confirm) {
         // User approved transaction
         // Set state to APPROVED and return tx hash

@@ -22,6 +22,7 @@ typedef enum {
     INS_SIGN_TX = 0x21,          /// sign transaction with BIP32 path
     INS_SIGN_OPCERT = 0x22  /// sign operational certificate with BIP32 path
 } command_e;
+
 /**
  * Enumeration with parsing state.
  */
