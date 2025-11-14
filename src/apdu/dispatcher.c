@@ -27,6 +27,8 @@
 #include "globals.h"
 #include "types.h"
 #include "sw.h"
+#include "utils/assert.h"
+#include "utils/utils.h"
 #include "get_serial.h"
 #include "get_version.h"
 #include "get_app_name.h"

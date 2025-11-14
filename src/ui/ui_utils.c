@@ -42,6 +42,7 @@ void ui_track_allocation(void *ptr) {
  * Cleanup all tracked allocations and reset tracker
  */
 void ui_cleanup_tracked_allocations(void) {
+    // Idempotent: resetting count ensures multiple calls do nothing after the first.
     for (uint16_t i = 0; i < g_allocation_tracker.count; i++) {
         mem_buffer_cleanup(&g_allocation_tracker.ptrs[i]);
     }

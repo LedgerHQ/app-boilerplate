@@ -5,12 +5,8 @@
 #include <stdbool.h>
 
 #include "ux.h"
-
-#include "io.h"
 #include "types.h"
 #include "constants.h"
-#include "utils/assert.h"
-#include "utils/utils.h"
 
 /**
  * Global context for user requests.

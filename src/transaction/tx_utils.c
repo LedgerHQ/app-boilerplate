@@ -18,6 +18,8 @@
 #include "tx_utils.h"
 #include "globals.h"
 #include "bip44.h"
+#include "utils/assert.h"
+#include "utils/utils.h"
 
 bool violatesSingleAccountOrStoreIt(const bip44_path_t* path) {
     PRINTF("Considering path ");

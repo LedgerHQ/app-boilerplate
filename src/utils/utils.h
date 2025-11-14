@@ -1,8 +1,9 @@
 #pragma once
 
+#include "io.h"
 #include "os.h"
-
 #include "assert.h"
+#include "globals.h"
 
 // Does not compile if x is pointer of some kind
 // See http://zubplot.blogspot.com/2015/01/gcc-is-wonderful-better-arraysize-macro.html
@@ -99,14 +100,9 @@ static inline bool parseIncluded(uint8_t value, bool* result) {
  * Call this on any error during instruction processing to ensure clean state
  * Sets req_type = REQUEST_NONE and state = *_STATE_NONE (union member)
  * Works for all instructions (transaction, opcert, pubkey, etc.)
- * Must be called from code that includes both globals.h and this file
  */
-#include "globals.h"
-#include "io.h"
-
 static inline int send_error_and_reset(uint16_t sw) {
-    extern global_ctx_t G_context;
     G_context.req_type = REQUEST_NONE;
-    G_context.state.tx_state = TX_STATE_NONE;  // Resets state union to NONE
+    explicit_bzero(&G_context.state, SIZEOF(G_context.state));
     return io_send_sw(sw);
 }

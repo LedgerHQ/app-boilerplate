@@ -44,6 +44,7 @@
 #include "addressUtils/bip44.h"
 #include "addressUtils/addressUtilsShelley.h"
 #include "transaction/tx_utils.h"
+#include "ui/menu.h"
 
 /**
  * Helper: Initialize transaction from P1_TX_INIT APDU
@@ -462,15 +463,37 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
     }
 }
 
+// All witnesses processed
+void finalize_witness()
+{
+    // Witness confirmed - send signature back
+    io_send_response_pointer(
+        G_context.tx_info.witness_signature,
+        ED25519_SIGNATURE_LENGTH,
+        SW_OK
+    );
+    G_context.tx_info.current_witness++;
+    if (G_context.tx_info.current_witness == G_context.tx_info.num_witnesses) {
+        tx_context_cleanup();
+        G_context.req_type = REQUEST_NONE;
+        G_context.state.tx_state = TX_STATE_NONE;
+        nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main);
+    } else {
+        nbgl_useCaseSpinner("Processing");
+    }
+}
+
 int handler_sign_tx_witness(buffer_t *cdata) {
     // Verify we're in correct state for witness signing
     if (G_context.req_type != REQUEST_SIGN_TRANSACTION) {
         TRACE("Bad request type for witness signing: %d", G_context.req_type);
+        tx_context_cleanup();
         return send_error_and_reset(SW_BAD_STATE);
     }
 
     if (G_context.state.tx_state != TX_STATE_APPROVED) {
         TRACE("Bad state for witness signing: expected TX_STATE_APPROVED, got %d", G_context.state.tx_state);
+        tx_context_cleanup();
         return send_error_and_reset(SW_BAD_STATE);
     }
 
@@ -478,13 +501,16 @@ int handler_sign_tx_witness(buffer_t *cdata) {
     if (G_context.tx_info.current_witness >= G_context.tx_info.num_witnesses) {
         TRACE("Witness count exceeded: current=%d, expected=%d",
               G_context.tx_info.current_witness,
-              G_context.tx_info.num_witnesses);
+              G_context.tx_info.num_witnesses
+        );
+        tx_context_cleanup();
         return send_error_and_reset(SW_BAD_STATE);
     }
 
     // Parse witness path from APDU data
     // buffer_read_bip44_path reads the length byte and all path components
     if (!buffer_read_bip44_path(cdata, &G_context.tx_info.witness_path)) {
+        tx_context_cleanup();
         return send_error_and_reset(SW_WRONG_DATA_LENGTH);
     }
 
@@ -517,6 +543,7 @@ int handler_sign_tx_witness(buffer_t *cdata) {
     // Handle DENY policy
     if (policy == POLICY_DENY) {
         TRACE("Security policy DENY - rejecting witness");
+        tx_context_cleanup();
         return send_error_and_reset(ERR_REJECTED_BY_POLICY);
     }
 
@@ -538,14 +565,12 @@ int handler_sign_tx_witness(buffer_t *cdata) {
             return ui_display_witness(&G_context.tx_info.witness_path, policy);
 
         case POLICY_ALLOW_WITHOUT_PROMPT:
-            // Increment counter and send signature directly without prompting
-            G_context.tx_info.current_witness++;
-            return io_send_response_pointer(G_context.tx_info.witness_signature,
-                                            ED25519_SIGNATURE_LENGTH,
-                                            SW_OK);
+            finalize_witness();
+            return 0;
 
         default:
             ASSERT(false);
+            tx_context_cleanup();
             return send_error_and_reset(SW_BAD_STATE);
     }
 }

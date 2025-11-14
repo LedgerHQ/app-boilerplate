@@ -37,17 +37,15 @@ int ui_display_transaction(void);
 
 /**
  * Cleanup NBGL display buffers and warnings
- * Includes: g_fee, g_ttl, g_warning_msg, g_pairs array, per-output/withdrawal strings
+ * Includes warning structures, g_pairs array, and tracked per-output/withdrawal strings
  * Safe to call even if warnings were never allocated (handles NULL gracefully)
  */
-void nbgl_display_and_warnings_cleanup(void);
-
 /**
- * Cleanup all transaction data after UI is finished or on error paths.
- * Frees NBGL display buffers, warnings, and parsed transaction context
- * Must be called on ALL exit paths: approval, rejection, or parse errors
+ * Clean up all NBGL review state (display buffers + warnings).
+ * Call this once the review use case finishes but you still need the parsed
+ * transaction context for the witness flow.
  */
-void tx_data_cleanup(void);
+void tx_review_cleanup(void);
 
 int ui_display_opcert(security_policy_t securityPolicy);
 int ui_display_pubkey(security_policy_t securityPolicy);

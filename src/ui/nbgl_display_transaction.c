@@ -52,24 +52,10 @@ static nbgl_warning_t *g_warning = NULL;
 /**
  * Cleanup dynamically allocated buffers for transaction display
  */
-/**
- * Cleanup NBGL display buffers and warnings
- * Includes: g_fee, g_ttl, g_warning_msg, warning structures, g_pairs array, per-output/withdrawal strings
- * Safe to call even if warnings were never allocated (handles NULL gracefully)
- */
-void nbgl_display_and_warnings_cleanup(void) {
+void tx_review_cleanup(void) {
     ui_cleanup_tracked_allocations();
     ui_pairs_cleanup();
     tx_warning_list_cleanup((tx_warning_list_item_t **)&G_context.tx_info.warning_list);
-}
-
-/**
- * Cleanup all transaction data (NBGL display + warnings + context)
- * Use this when transaction is immediately rejected without witnesses
- */
-void tx_data_cleanup(void) {
-    nbgl_display_and_warnings_cleanup();
-    tx_context_cleanup();
 }
 
 // called when long press button on 3rd page is long-touched or when reject footer is touched
@@ -91,23 +77,22 @@ static void tx_review_choice(bool confirm) {
         if (G_context.tx_info.num_witnesses > 0) {
             // Witnesses coming - clean up NBGL display and warnings but keep transaction context
             // (tx hash and parsed tx needed for witness signing)
-            nbgl_display_and_warnings_cleanup();
+            tx_review_cleanup();
             // Show spinner while waiting for witness APDUs
             nbgl_useCaseSpinner("Processing");
         } else {
-            // No witnesses - transaction is complete, cleanup everything and show status
-            tx_data_cleanup();
-            G_context.req_type = REQUEST_NONE;  // Reset to idle
+            tx_review_cleanup();
+            tx_context_cleanup();
             G_context.state.tx_state = TX_STATE_NONE;
+            G_context.req_type = REQUEST_NONE;  // Reset to idle
             nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main);
         }
     } else {
         // User rejected
+        tx_review_cleanup();
+        tx_context_cleanup();
         G_context.state.tx_state = TX_STATE_NONE;
-        G_context.req_type = REQUEST_NONE;  // Reset to idle
-
-        // Cleanup transaction data
-        tx_data_cleanup();
+        G_context.req_type = REQUEST_NONE;
 
         io_send_sw(SW_DENY);
         nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_REJECTED, ui_menu_main);
@@ -127,17 +112,17 @@ int ui_display_transaction(void) {
     // Allocate display buffers using ui_mem_alloc for automatic tracking
     char *fee = (char *) ui_mem_alloc(MAX_ADA_AMOUNT_STRING_SIZE);
     if (fee == NULL) {
-        nbgl_display_and_warnings_cleanup();
+        tx_review_cleanup();
         return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
     }
     char *ttl = (char *) ui_mem_alloc(MAX_ADA_AMOUNT_STRING_SIZE);
     if (ttl == NULL) {
-        nbgl_display_and_warnings_cleanup();
+        tx_review_cleanup();
         return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
     }
     char *warning_msg = (char *) ui_mem_alloc(MAX_WARNING_MESSAGE_SIZE);
     if (warning_msg == NULL) {
-        nbgl_display_and_warnings_cleanup();
+        tx_review_cleanup();
         return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
     }
     // Initialize to empty string (null-terminated) in case no warnings are present
@@ -215,7 +200,7 @@ int ui_display_transaction(void) {
 
     // Initialize common pairs structure
     if (!ui_pairs_init(num_pairs)) {
-        nbgl_display_and_warnings_cleanup();
+        tx_review_cleanup();
         return send_error_and_reset(SW_TX_PARSING_FAIL);
     }
 
@@ -252,7 +237,7 @@ int ui_display_transaction(void) {
             // Add withdrawal number pair (e.g., "Withdrawal" | "#1")
             char *withdrawal_num_str = (char *) ui_mem_alloc(MAX_UINT64_STRING_SIZE);
             if (withdrawal_num_str == NULL) {
-                nbgl_display_and_warnings_cleanup();
+                tx_review_cleanup();
                 return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
             }
             snprintf(withdrawal_num_str, MAX_UINT64_STRING_SIZE, "#%d", withdrawal_num);
@@ -265,7 +250,7 @@ int ui_display_transaction(void) {
 
             char *withdrawal_amount_str = (char *) ui_mem_alloc(MAX_ADA_AMOUNT_STRING_SIZE);
             if (withdrawal_amount_str == NULL) {
-                nbgl_display_and_warnings_cleanup();
+                tx_review_cleanup();
                 return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
             }
             if (!str_formatAdaAmount(withdrawal_item->withdrawal_data.amount, withdrawal_amount_str, MAX_ADA_AMOUNT_STRING_SIZE)) {
@@ -279,7 +264,7 @@ int ui_display_transaction(void) {
 
             char *reward_account_str = (char *) ui_mem_alloc(MAX_HUMAN_ADDRESS_SIZE);
             if (reward_account_str == NULL) {
-                nbgl_display_and_warnings_cleanup();
+                tx_review_cleanup();
                 return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
             }
 
@@ -396,7 +381,7 @@ int ui_display_transaction(void) {
             // Add output number pair (e.g., "Output" | "#1")
             char *output_num_str = (char *) ui_mem_alloc(MAX_UINT64_STRING_SIZE);
             if (output_num_str == NULL) {
-                nbgl_display_and_warnings_cleanup();
+                tx_review_cleanup();
                 return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
             }
             snprintf(output_num_str, MAX_UINT64_STRING_SIZE, "#%d", output_num);
@@ -411,7 +396,7 @@ int ui_display_transaction(void) {
             // MAX_HUMAN_ADDRESS_SIZE is defined in cardano.h as 150
             char *addr_str = (char *) ui_mem_alloc(MAX_HUMAN_ADDRESS_SIZE);
             if (addr_str == NULL) {
-                nbgl_display_and_warnings_cleanup();
+                tx_review_cleanup();
                 return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
             }
 
@@ -456,7 +441,7 @@ int ui_display_transaction(void) {
             // Allocate and format amount with currency
             char *amount_str = (char *) ui_mem_alloc(MAX_AMOUNT_DISPLAY_SIZE);
             if (amount_str == NULL) {
-                nbgl_display_and_warnings_cleanup();
+                tx_review_cleanup();
                 return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
             }
             if (!str_formatAdaAmount(output_item->output_data.adaAmount, amount_str, MAX_AMOUNT_DISPLAY_SIZE)) {
@@ -475,7 +460,7 @@ int ui_display_transaction(void) {
     g_pairs[pair_idx].item = "Transaction hash";
     char *tx_hash_str = (char *) ui_mem_alloc(MAX_TX_HASH_DISPLAY_SIZE);
     if (tx_hash_str == NULL) {
-        nbgl_display_and_warnings_cleanup();
+        tx_review_cleanup();
         return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
     }
     ui_getHexBufferScreen(tx_hash_str, MAX_TX_HASH_DISPLAY_SIZE, G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash));
@@ -506,17 +491,17 @@ int ui_display_transaction(void) {
         // Allocate and setup warning structures using ui_mem_alloc for automatic tracking
         g_warningInfo = (nbgl_contentCenter_t *) ui_mem_alloc(sizeof(nbgl_contentCenter_t));
         if (g_warningInfo == NULL) {
-            nbgl_display_and_warnings_cleanup();
+            tx_review_cleanup();
             return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
         }
         g_warningDetails = (nbgl_warningDetails_t *) ui_mem_alloc(sizeof(nbgl_warningDetails_t));
         if (g_warningDetails == NULL) {
-            nbgl_display_and_warnings_cleanup();
+            tx_review_cleanup();
             return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
         }
         g_warning = (nbgl_warning_t *) ui_mem_alloc(sizeof(nbgl_warning_t));
         if (g_warning == NULL) {
-            nbgl_display_and_warnings_cleanup();
+            tx_review_cleanup();
             return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
         }
 

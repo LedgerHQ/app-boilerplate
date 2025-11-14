@@ -1,6 +1,7 @@
 #pragma once
 
 #include "globals.h"
+#include "utils/assert.h"
 
 enum {
     STORAGE_INITIALIZED = 0x01
@@ -20,6 +21,7 @@ static inline uint8_t flip_bool_setting(uint8_t value)
         return SETTINGS_NO;
     default:
         ASSERT(false);
+        return 0;  // Unreachable, but satisfies compiler
     }
 }
 

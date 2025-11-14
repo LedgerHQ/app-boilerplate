@@ -36,51 +36,24 @@
 #include "mem_utils.h"
 #include "mem.h"
 #include "transaction/deserialize.h"
-
-static char *witnessPathStr = NULL;
+#include "ui_utils.h"
+#include "handler/sign_tx.h"
 
 /**
- * Cleanup dynamically allocated buffers for witness display
+ * Callback when user confirms or rejects witness display
+ * Cleans up allocated UI resources and processes the witness accordingly
  */
-static void witness_buffers_cleanup(void) {
-    mem_buffer_cleanup((void **) &witnessPathStr);
-}
-
 static void witness_review_choice(bool confirm) {
-    witness_buffers_cleanup();
+    ui_cleanup_tracked_allocations();
 
     if (!confirm) {
         // User rejected the witness - abort further witness processing
-        G_context.state.tx_state = TX_STATE_NONE;
-        G_context.req_type = REQUEST_NONE;  // Reset to idle
-
-        // Cleanup transaction context (NBGL display + warnings already cleaned in review_choice)
         tx_context_cleanup();
 
-        io_send_sw(SW_DENY);
+        send_error_and_reset(SW_DENY);
         nbgl_useCaseStatus("Witness\ndenied", true, ui_menu_main);
     } else {
-        // Witness confirmed - send signature back
-        io_send_response_pointer(G_context.tx_info.witness_signature,
-                                ED25519_SIGNATURE_LENGTH,
-                                SW_OK);
-
-        // Increment witness counter for next iteration
-        G_context.tx_info.current_witness++;
-
-        // Check if there are more witnesses to process
-        if (G_context.tx_info.current_witness < G_context.tx_info.num_witnesses) {
-            // More witnesses to come - show spinner while waiting for next witness
-            // Don't cleanup yet - still need parsed transaction for remaining witnesses
-            nbgl_useCaseSpinner("Processing");
-        } else {
-            // All witnesses processed - cleanup transaction context
-            tx_context_cleanup();
-
-            G_context.req_type = REQUEST_NONE;  // Reset to idle
-            G_context.state.tx_state = TX_STATE_NONE;
-            nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main);
-        }
+        finalize_witness();
     }
 }
 
@@ -90,13 +63,17 @@ int ui_display_witness(const bip44_path_t* witnessPath, security_policy_t securi
 
     if (G_context.state.tx_state != TX_STATE_APPROVED || G_context.req_type != REQUEST_SIGN_TRANSACTION) {
         TRACE("Bad state detected - returning error");
-        G_context.state.tx_state = TX_STATE_NONE;
+        tx_context_cleanup();
         return send_error_and_reset(SW_BAD_STATE);
     }
 
-    // Allocate display buffers
-    if (!mem_buffer_allocate((void **) &witnessPathStr, BIP44_PATH_STRING_SIZE_MAX + 1)) {
-        witness_buffers_cleanup();
+    // Allocate display buffer for witness path using UI tracking system
+    // This ensures automatic cleanup when the user responds or on error
+    char *witnessPathStr = (char *) ui_mem_alloc(BIP44_PATH_STRING_SIZE_MAX + 1);
+    if (witnessPathStr == NULL) {
+        TRACE("Failed to allocate witness path string");
+        ui_cleanup_tracked_allocations();
+        tx_context_cleanup();
         return send_error_and_reset(SW_DISPLAY_BIP32_PATH_FAIL);
     }
 
@@ -120,8 +97,8 @@ int ui_display_witness(const bip44_path_t* witnessPath, security_policy_t securi
         default:
             // Catch any truly unknown or unexpected policy values
             ASSERT(false);
-            witness_buffers_cleanup();
-            return 0;
+            ui_cleanup_tracked_allocations();
+            return send_error_and_reset(SW_BAD_STATE);
     }
 
     TRACE("isUnusual: %d", isUnusual);

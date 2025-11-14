@@ -45,3 +45,9 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more);
  *
  */
 int handler_sign_tx_witness(buffer_t *cdata);
+
+/**
+ * Finalize witness signing. Called after user approves witness signature.
+ * Sends the witness signature back to the client.
+ */
+void finalize_witness(void);
