@@ -27,6 +27,7 @@
 #include "globals.h"
 #include "types.h"
 #include "sw.h"
+#include "get_serial.h"
 #include "get_version.h"
 #include "get_app_name.h"
 #include "get_public_key.h"
@@ -91,6 +92,13 @@ int apdu_dispatcher(const command_t *cmd) {
     buffer_t buf = {0};
 
     switch (cmd->ins) {
+        case INS_GET_SERIAL:
+            if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
+                return io_send_sw(SW_WRONG_P1P2);
+            }
+
+            return handler_get_serial();
+
         case INS_GET_VERSION:
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
                 return io_send_sw(SW_WRONG_P1P2);

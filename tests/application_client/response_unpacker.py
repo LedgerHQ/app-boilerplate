@@ -25,6 +25,13 @@ def unpack_get_version_response(response: bytes) -> Tuple[int, int, int]:
     return (major, minor, patch)
 
 # Unpack from response:
+# response = serial (7)
+def unpack_get_serial_response(response: bytes) -> bytes:
+    SERIAL_LENGTH = 7
+    assert len(response) == SERIAL_LENGTH
+    return response
+
+# Unpack from response:
 # response = format_id (1)
 #            app_name_raw_len (1)
 #            app_name_raw (var)

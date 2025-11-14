@@ -2,21 +2,22 @@
 # SPDX-FileCopyrightText: 2024 Ledger SAS
 # SPDX-License-Identifier: LicenseRef-LEDGER
 """
-This module provides Ragger tests for Version/Serial check
+This module provides Ragger tests for application version and serial information.
+Tests both OS-level and app-level version retrieval mechanisms.
 """
 
 from ragger.utils.misc import get_current_app_name_and_version
 from ragger.backend import BackendInterface
 
 from application_client.command_sender import CommandSender
+from application_client.response_unpacker import unpack_get_version_response, unpack_get_serial_response
 
-from standalone.utils import verify_name, verify_version
+from .utils import verify_name, verify_version
 
 
 def test_check_version(backend: BackendInterface) -> None:
-    """Check version and name, returned by the OS"""
-
-    # Send the APDU
+    """Check version and name returned by the OS (BOLOS-level)."""
+    # This tests the OS-level version check, independent of the app
     app_name, version = get_current_app_name_and_version(backend)
     print(f" Name: {app_name}")
     print(f" Version: {version}")
@@ -25,24 +26,26 @@ def test_check_version(backend: BackendInterface) -> None:
 
 
 def test_check_app_version(backend: BackendInterface) -> None:
-    """Check version and name, returned by the App"""
-
-    # Use the app interface instead of raw interface
+    """Check version returned by the app via GET_VERSION APDU."""
+    # Use the app interface to send GET_VERSION command
     client = CommandSender(backend)
-    # Send the APDU
-    version = client.get_version()
+    rapdu = client.get_version()
 
-    print(f" Version: {version.hex()}")
-    vers_str = f"{version[0]}.{version[1]}.{version[2]}"
+    # Parse the version response using the unpacker
+    major, minor, patch = unpack_get_version_response(rapdu.data)
+    vers_str = f"{major}.{minor}.{patch}"
+
+    print(f" Version: {vers_str}")
     verify_version(vers_str)
 
 
 def test_check_app_serial(backend: BackendInterface) -> None:
-    """Check App Serial"""
-
-    # Use the app interface instead of raw interface
+    """Check application serial number."""
+    # Use the app interface to send GET_SERIAL command
     client = CommandSender(backend)
-    # Send the APDU
-    serial = client.get_serial()
+    rapdu = client.get_serial()
+
+    # Parse the serial response using the unpacker
+    serial = unpack_get_serial_response(rapdu.data)
 
     print(f" Serial: {serial.hex()} -> {serial.decode()}")
