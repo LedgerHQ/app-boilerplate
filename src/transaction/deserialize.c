@@ -265,12 +265,12 @@ parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
             for (uint16_t ag = 0; ag < item->output_data.numAssetGroups; ag++) {
                 asset_group_t *group = &item->output_data.assetGroups[ag];
 
-                // Read policy ID (28 bytes, no length prefix)
+                // Read policy ID (no length prefix)
                 uint8_t *policy_id = (uint8_t *) (buf->ptr + buf->offset);
-                if (!buffer_seek_cur(buf, 28)) {
+                if (!buffer_seek_cur(buf, MINTING_POLICY_ID_SIZE)) {
                     return OUTPUTS_PARSING_ERROR;
                 }
-                memmove(group->policyId, policy_id, 28);
+                memmove(group->policyId, policy_id, MINTING_POLICY_ID_SIZE);
                 TRACE("Deserialize: Asset group %u: policy ID read", ag);
 
                 // Read number of tokens (uint16, BE)
@@ -352,13 +352,13 @@ parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
                 break;
 
             case 1:  // HASH
-                // Read datum hash (32 bytes)
+                // Read datum hash
                 {
                     uint8_t *hash_ptr = (uint8_t *) (buf->ptr + buf->offset);
-                    if (!buffer_seek_cur(buf, 32)) {
+                    if (!buffer_seek_cur(buf, OUTPUT_DATUM_HASH_LENGTH)) {
                         return OUTPUTS_PARSING_ERROR;
                     }
-                    memmove(item->output_data.datum.hash, hash_ptr, 32);
+                    memmove(item->output_data.datum.hash, hash_ptr, OUTPUT_DATUM_HASH_LENGTH);
                     TRACE("Deserialize: Datum hash read");
                 }
                 break;
@@ -467,12 +467,12 @@ parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
             return OUTPUTS_PARSING_ERROR;  // Reuse output error for mint
         }
 
-        // Read policy ID (28 bytes, no length prefix)
+        // Read policy ID (no length prefix)
         uint8_t *policy_id = (uint8_t *) (buf->ptr + buf->offset);
-        if (!buffer_seek_cur(buf, 28)) {
+        if (!buffer_seek_cur(buf, MINTING_POLICY_ID_SIZE)) {
             return OUTPUTS_PARSING_ERROR;
         }
-        memmove(item->asset_group.policyId, policy_id, 28);
+        memmove(item->asset_group.policyId, policy_id, MINTING_POLICY_ID_SIZE);
         TRACE("Deserialize: Mint asset group %u: policy ID read", ag);
 
         // Read number of tokens (uint16, big-endian)

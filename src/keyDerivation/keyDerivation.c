@@ -10,7 +10,7 @@
 #include "securityPolicy.h"
 #include "crypto.h"
 
-static void extractRawPublicKey(uint8_t rawPubkey[static 65], uint8_t* outBuffer, size_t outSize) {
+static void extractRawPublicKey(uint8_t rawPubkey[static ED25519_PUBKEY_UNCOMPRESSED_LENGTH], uint8_t* outBuffer, size_t outSize) {
     // copy public key little endian to big endian
     ASSERT(outSize == 32);
 
@@ -26,7 +26,7 @@ static void extractRawPublicKey(uint8_t rawPubkey[static 65], uint8_t* outBuffer
 
 // pub_key + chain_code
 cx_err_t deriveExtendedPublicKey(const bip44_path_t* path, extendedPublicKey_t* out) {
-    uint8_t rawPubkey[65];
+    uint8_t rawPubkey[ED25519_PUBKEY_UNCOMPRESSED_LENGTH];
     uint8_t chainCode[CHAIN_CODE_SIZE];
 
     STATIC_ASSERT(SIZEOF(*out) == CHAIN_CODE_SIZE + PUBLIC_KEY_SIZE, "bad ext pub key size");

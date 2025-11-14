@@ -228,7 +228,7 @@ typedef struct {
     uint8_t *raw_tx;                      /// raw transaction serialized (dynamically allocated)
     size_t raw_tx_len;                    /// length of raw transaction
     transaction_t transaction;            /// structured transaction
-    uint8_t tx_hash[32];                   /// transaction hash (Blake2b-256)
+    uint8_t tx_hash[TX_HASH_LENGTH];      /// transaction hash (Blake2b-256)
 
     // Witness signing fields (used after TX_STATE_APPROVED)
     uint16_t num_witnesses;               /// total number of witnesses expected
@@ -246,7 +246,7 @@ typedef struct {
 /**
  * Structure for sign operational certificate information context.
  */
-#define MAX_OPCERT_LENGTH (KES_PUBLIC_KEY_LENGTH + 8 + 8 + BIP44_MAX_PATH_SIZE)
+#define MAX_OPCERT_LENGTH (KES_PUBLIC_KEY_LENGTH + OPCERT_KES_PERIOD_SIZE + OPCERT_ISSUE_COUNTER_SIZE + BIP44_MAX_PATH_SIZE)
 
 typedef struct {
     uint8_t raw_opcert[MAX_OPCERT_LENGTH];

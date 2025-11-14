@@ -7,7 +7,9 @@
 #include "lcx_crc.h"
 #include "sw.h"
 
-static const size_t ADDRESS_ROOT_SIZE = 28;
+#define BYRON_ADDRESS_CBOR_HASH_SIZE 32
+#define ADDRESS_ROOT_SIZE 28
+
 static const size_t PROTOCOL_MAGIC_ADDRESS_ATTRIBUTE_KEY = 2;
 
 enum {
@@ -44,7 +46,7 @@ void addressRootFromExtPubKey(const extendedPublicKey_t* extPubKey,
     }
 
     // cborBuffer is hashed twice. First by sha3_256 and then by blake2b_224
-    uint8_t cborShaHash[32] = {0};
+    uint8_t cborShaHash[BYRON_ADDRESS_CBOR_HASH_SIZE] = {0};
     sha3_256_hash(VIEW_PROCESSED_TO_TUPLE_BUF_SIZE(&cbor), cborShaHash, SIZEOF(cborShaHash));
     blake2b_224_hash(cborShaHash, SIZEOF(cborShaHash), outBuffer, outSize);
 }
@@ -134,7 +136,7 @@ size_t deriveRawAddress(const bip44_path_t* pathSpec,
                         size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
 
-    uint8_t addressRoot[28] = {0};
+    uint8_t addressRoot[ADDRESS_ROOT_SIZE] = {0};
     {
         extendedPublicKey_t extPubKey;
 

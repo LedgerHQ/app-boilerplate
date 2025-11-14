@@ -66,6 +66,8 @@ typedef enum {
  * Cryptographic hash and key lengths (in bytes).
  */
 #define ED25519_SIGNATURE_LENGTH               64
+#define ED25519_EXTENDED_PRIVKEY_LENGTH        64  // Extended Ed25519 private key (32 bytes seed + 32 bytes)
+#define ED25519_PUBKEY_UNCOMPRESSED_LENGTH     65  // Uncompressed Ed25519 public key (1 byte prefix + 32 bytes X + 32 bytes Y)
 #define ADDRESS_KEY_HASH_LENGTH                28
 #define POOL_KEY_HASH_LENGTH                   28
 #define VRF_KEY_HASH_LENGTH                    32
@@ -81,7 +83,7 @@ typedef enum {
 /**
  * Token and minting policy sizes.
  */
-#define MINTING_POLICY_ID_SIZE (SCRIPT_HASH_LENGTH)
+#define MINTING_POLICY_ID_SIZE 28
 #define ASSET_NAME_SIZE_MAX    32
 
 /**

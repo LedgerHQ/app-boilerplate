@@ -6,6 +6,8 @@
 #include "addressUtils/bip44.h"
 
 #define KES_PUBLIC_KEY_LENGTH 32
+#define OPCERT_KES_PERIOD_SIZE 8   // uint64_t
+#define OPCERT_ISSUE_COUNTER_SIZE 8  // uint64_t
 
 typedef struct {
     uint8_t *kesPublicKey;

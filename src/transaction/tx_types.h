@@ -3,15 +3,14 @@
 #include <stddef.h>  // size_t
 #include <stdint.h>  // uint*_t
 #include <stdbool.h> // bool
+
+#include "constants.h"
 #include "utils/list.h"
 #include "addressUtils/bip44.h"
 
 #define MAX_TX_LEN   510
 #define ADDRESS_LEN  20
 
-#ifndef TX_HASH_LENGTH
-#define TX_HASH_LENGTH 32
-#endif
 
 // Hash and account constants (from cardano.h to avoid circular includes)
 #define ADDRESS_KEY_HASH_LENGTH 28
@@ -32,7 +31,7 @@ typedef struct {
 
 // Mint asset group (policy ID + tokens)
 typedef struct {
-    uint8_t policyId[28];                         // Policy ID (28 bytes, no length prefix)
+    uint8_t policyId[MINTING_POLICY_ID_SIZE];    // Policy ID (no length prefix)
     uint16_t numTokens;                           // Number of tokens in this group
     mint_token_t* tokens;                         // Dynamically allocated array of tokens
 } mint_asset_group_t;

@@ -20,13 +20,14 @@
 
 #include "cx.h"
 #include "os.h"
+#include "constants.h"
 
 static cx_err_t crypto_init_privkey(const uint32_t* path,
                                     size_t path_len,
                                     cx_ecfp_256_extended_private_key_t* privkey,
                                     uint8_t* chain_code) {
     cx_err_t error = CX_OK;
-    uint8_t raw_privkey[64];
+    uint8_t raw_privkey[ED25519_EXTENDED_PRIVKEY_LENGTH];
 
     // Derive private key according to BIP32 path
     CX_CHECK(os_derive_bip32_no_throw(CX_CURVE_Ed25519, path, path_len, raw_privkey, chain_code));

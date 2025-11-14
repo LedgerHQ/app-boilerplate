@@ -475,7 +475,7 @@ static int parse_and_hash_transaction(void) {
             asset_group_t *group = &output_item->output_data.assetGroups[ag];
             txHashBuilder_addOutput_tokenGroup(&txHashBuilder,
                                                group->policyId,
-                                               28,  // Policy ID is always 28 bytes
+                                               MINTING_POLICY_ID_SIZE,
                                                group->numTokens);
 
             for (uint16_t tk = 0; tk < group->numTokens; tk++) {
@@ -577,7 +577,7 @@ static int parse_and_hash_transaction(void) {
 
             txHashBuilder_addMint_tokenGroup(&txHashBuilder,
                                              mint_item->asset_group.policyId,
-                                             28,  // Policy ID is always 28 bytes
+                                             MINTING_POLICY_ID_SIZE,
                                              mint_item->asset_group.numTokens);
 
             for (uint16_t tk = 0; tk < mint_item->asset_group.numTokens; tk++) {
