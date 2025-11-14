@@ -1,6 +1,7 @@
 #pragma once
 
-#include "cardano.h"
+#include "types.h"
+#include "utils/utils.h"
 
 __noinline_due_to_stack__ size_t deriveAssetFingerprintBech32(const uint8_t* policyId,
                                                               size_t policyIdSize,

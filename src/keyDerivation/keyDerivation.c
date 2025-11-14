@@ -6,7 +6,7 @@
 #include "hash.h"
 #include "base58.h"
 #include "utils.h"
-#include "cardano.h"
+#include "constants.h"
 #include "securityPolicy.h"
 #include "crypto.h"
 

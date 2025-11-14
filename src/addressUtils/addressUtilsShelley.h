@@ -1,6 +1,7 @@
 #pragma once
 
-#include "cardano.h"
+#include "constants.h"
+#include "types.h"
 #include "addressUtils/bip44.h"
 #include "bufView.h"
 
@@ -113,3 +114,15 @@ void view_parseAddressParams(read_view_t* view, addressParams_t* params);
 
 bool isValidAddressParams(const addressParams_t* addressParams);
 payment_choice_t determinePaymentChoice(address_type_t addressType);
+
+/**
+ * Convert a reward account to its binary representation.
+ * Handles both key path (device-owned) and key hash (third-party) references.
+ *
+ * @param rewardAccount The reward account structure containing either a key path or hash
+ * @param networkId The network ID to use for the reward account
+ * @param rewardAccountBuffer Output buffer to store the serialized reward account (REWARD_ACCOUNT_SIZE bytes)
+ */
+void rewardAccountToBuffer(const reward_account_t* rewardAccount,
+                           uint8_t networkId,
+                           uint8_t* rewardAccountBuffer);

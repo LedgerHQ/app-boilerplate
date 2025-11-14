@@ -1,7 +1,7 @@
 #pragma once
 
+#include "constants.h"
 #include "addressUtils/bip44.h"
-#include "cardano.h"
 
 // Extended credential type (allows key path, key hash, or script hash)
 typedef enum {

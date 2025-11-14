@@ -1,8 +1,9 @@
+#include "constants.h"
+#include "types.h"
 #include "addressUtilsShelley.h"
 #include "addressUtilsByron.h"
 #include "settings.h"
 #include "addressUtils/bip44.h"
-#include "cardano.h"
 #include "txHashBuilder.h"
 #include "transaction/tx_utils.h"
 

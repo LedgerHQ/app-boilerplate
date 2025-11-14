@@ -1,8 +1,8 @@
 #pragma once
 
+#include "constants.h"
 #include "addressUtilsShelley.h"
 #include "addressUtils/bip44.h"
-#include "cardano.h"
 #include "securityPolicyType.h"
 #include "txHashBuilder/txHashBuilder.h"
 #include "transaction/tx_types.h"

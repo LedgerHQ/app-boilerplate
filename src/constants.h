@@ -20,31 +20,6 @@
  */
 #define MAX_APPNAME_LEN 64
 
-/**
- * Maximum transaction length (bytes).
- */
-#define MAX_TRANSACTION_LEN 510
-
-/**
- * Transaction buffer size for dynamic allocation (bytes).
- * Note: Must be significantly less than SIZE_MEM_BUFFER in mem.c to account for:
- * - HEAP_HEADER_SIZE (~160 bytes for heap metadata)
- * - Chunk headers (4-8 bytes per allocation)
- * - Alignment requirements (8-byte alignment)
- * Maximum tested working size is 14KB from a 24KB pool TODO
- */
-#define TX_BUFFER_SIZE (14 * 1024)
-
-/**
- * Maximum signature length (bytes).
- */
-#define MAX_DER_SIG_LEN 72
-
-/**
- * Exponent used to convert mBOL to BOL unit (N BOL = N * 10^3 mBOL).
- */
-#define EXPONENT_SMALLEST_UNIT 3
-
 #define MAX_UINT64_STRING_SIZE 21
 
 /**
@@ -58,18 +33,113 @@
 
 /**
  * Item inclusion flags (for optional transaction fields).
+ * Used to indicate whether an optional field is present in transaction data.
  */
-enum { ITEM_INCLUDED_NO = 1, ITEM_INCLUDED_YES = 2 };
+typedef enum {
+    ITEM_INCLUDED_NO = 1,   // Field is not included
+    ITEM_INCLUDED_YES = 2,  // Field is included
+} item_included_e;
 
 /**
- * Transaction options flags.
+ * Transaction option flags for transaction hashing and processing.
  */
-enum {
+typedef enum {
     TX_OPTIONS_TAG_CBOR_SETS = 1,  // Whether to tag CBOR sets in transaction hash
-};
+} tx_options_e;
 
 /**
  * High fee warning threshold (in lovelace).
  * If a transaction fee exceeds this value, a warning is shown to the user.
  */
 #define HIGH_FEE_WARNING_THRESHOLD 5000000
+
+// ==============================  CARDANO BLOCKCHAIN CONSTANTS  ==============================
+
+/**
+ * Lovelace (ADA in smallest units) constants.
+ * 1 ADA = 1,000,000 lovelace
+ */
+#define LOVELACE_MAX_SUPPLY 45000000000000000  // 45 billion ADA * 10^6
+#define LOVELACE_INVALID    47000000000000000  // Invalid sentinel value
+
+/**
+ * Cryptographic hash and key lengths (in bytes).
+ */
+#define ED25519_SIGNATURE_LENGTH               64
+#define ADDRESS_KEY_HASH_LENGTH                28
+#define POOL_KEY_HASH_LENGTH                   28
+#define VRF_KEY_HASH_LENGTH                    32
+#define TX_HASH_LENGTH                         32
+#define AUX_DATA_HASH_LENGTH                   32
+#define POOL_METADATA_HASH_LENGTH              32
+#define CVOTE_REGISTRATION_PAYLOAD_HASH_LENGTH 32
+#define SCRIPT_HASH_LENGTH                     28
+#define SCRIPT_DATA_HASH_LENGTH                32
+#define OUTPUT_DATUM_HASH_LENGTH               32
+#define ANCHOR_HASH_LENGTH                     32
+
+/**
+ * Token and minting policy sizes.
+ */
+#define MINTING_POLICY_ID_SIZE (SCRIPT_HASH_LENGTH)
+#define ASSET_NAME_SIZE_MAX    32
+
+/**
+ * Reward account size (in bytes).
+ * Format: 1 byte header + 28 bytes key hash = 29 bytes
+ */
+#define REWARD_ACCOUNT_SIZE (1 + ADDRESS_KEY_HASH_LENGTH)
+
+/**
+ * Maximum address sizes (in bytes).
+ * Shelley addresses: up to 1 (header) + 28 (payment) + 28 (staking) = 57 bytes
+ * Byron addresses: up to 100+ bytes
+ */
+#define MAX_ADDRESS_SIZE              128
+#define MAX_HUMAN_ADDRESS_SIZE        150
+#define MAX_HUMAN_REWARD_ACCOUNT_SIZE 65
+
+/**
+ * Network IDs and protocol magic numbers for different Cardano networks.
+ * Network ID is 4-bit value embedded in address headers.
+ * Protocol magic is 32-bit value used in Byron addresses.
+ */
+#define MAINNET_NETWORK_ID     1
+#define MAINNET_PROTOCOL_MAGIC 764824073
+
+#define TESTNET_NETWORK_ID             0
+#define TESTNET_PROTOCOL_MAGIC_LEGACY  1097911063
+#define TESTNET_PROTOCOL_MAGIC_PREPROD 1
+#define TESTNET_PROTOCOL_MAGIC_PREVIEW 2
+
+/**
+ * Maximum valid network ID (4 bits = 0-15).
+ */
+#define MAXIMUM_NETWORK_ID 0b1111
+
+/**
+ * URL and domain name constraints for certificate metadata and pool information.
+ */
+#define ANCHOR_URL_LENGTH_MAX       128
+#define POOL_METADATA_URL_LENGTH_MAX 128
+#define DNS_NAME_SIZE_MAX           128
+
+/**
+ * IP address sizes for pool relay information.
+ */
+#define IPV4_SIZE 4
+#define IPV6_SIZE 16
+
+/**
+ * Pool margin denominator maximum (for fractional operator margins).
+ * Used in UI display calculations. See ui_displayMarginScreen().
+ * Represents margin as a fraction: actual_margin = margin_value / MARGIN_DENOMINATOR_MAX
+ */
+#define MARGIN_DENOMINATOR_MAX 1000000000000000ul  // 10^15
+
+/**
+ * Maximum native script nesting depth.
+ * A depth of n means the script can handle up to n-1 levels of nesting.
+ * This is an application-specific limit to prevent stack overflow.
+ */
+#define MAX_SCRIPT_DEPTH 11

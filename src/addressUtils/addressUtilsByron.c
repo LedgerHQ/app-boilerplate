@@ -1,7 +1,7 @@
 #include "addressUtilsByron.h"
 #include "keyDerivation.h"
 #include "cbor.h"
-#include "cardano.h"
+#include "constants.h"
 #include "hash.h"
 #include "bufView.h"
 #include "lcx_crc.h"

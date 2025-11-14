@@ -6,6 +6,16 @@
 #include "buffer.h"
 
 /**
+ * Transaction buffer size for dynamic allocation (bytes).
+ * Note: Must be significantly less than SIZE_MEM_BUFFER in mem.c to account for:
+ * - HEAP_HEADER_SIZE (~160 bytes for heap metadata)
+ * - Chunk headers (4-8 bytes per allocation)
+ * - Alignment requirements (8-byte alignment)
+ * Maximum tested working size is 14KB from a 24KB pool TODO
+ */
+#define TX_BUFFER_SIZE (14 * 1024)
+
+/**
  * Handler for SIGN_TX command. If successfully parse BIP32 path
  * and transaction, sign transaction and send APDU response.
  *

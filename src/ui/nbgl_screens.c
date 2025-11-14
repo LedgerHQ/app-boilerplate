@@ -1,6 +1,7 @@
 #include "nbgl_screens.h"
+#include "constants.h"
+#include "types.h"
 #include "addressUtils/bech32.h"
-#include "cardano.h"
 #include "hexUtils.h"
 #include "utils/ipUtils.h"
 #include "textUtils.h"

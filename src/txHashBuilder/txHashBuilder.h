@@ -1,6 +1,7 @@
 #pragma once
 
-#include "cardano.h"
+#include "constants.h"
+#include "types.h"
 #include "hash.h"
 #include "addressUtilsShelley.h"
 
