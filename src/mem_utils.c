@@ -4,6 +4,7 @@
 #include "os_print.h"
 #include "mem.h"
 #include "mem_utils.h"
+#include "utils/utils.h"
 
 /**
  * Format an unsigned number up to 32-bit into memory into an ASCII string.
@@ -55,12 +56,12 @@ bool mem_buffer_allocate_impl(void **buffer,
     if (size != 0) {
         // Check if the buffer is already allocated
         if (*buffer != NULL) {
-            PRINTF("Buffer already allocated, freeing it before reallocating\n");
+            TRACE("Buffer already allocated, freeing it before reallocating");
             app_mem_free_impl(*buffer, file, line);
         }
         // Allocate the Title message buffer
         if ((*buffer = app_mem_alloc_impl(size, persistent, file, line)) == NULL) {
-            PRINTF("Memory allocation failed for buffer of size %u\n", size);
+            TRACE("Memory allocation failed for buffer of size %u", size);
             return false;
         }
         explicit_bzero(*buffer, size);

@@ -20,18 +20,18 @@ static const uint32_t MAX_REASONABLE_MINT_POLICY_INDEX = 1000000;
 
 bool bip44_check_path(bip44_path_t* pathSpec, const uint8_t* dataBuffer, size_t dataSize) {
     if (dataSize < 1) {
-        PRINTF("ERROR: Invalid data size\n");
+        TRACE("ERROR: Invalid data size");
         return false;
     }
 
     size_t length = dataBuffer[0];
 
     if (length > ARRAY_LEN(pathSpec->path)) {
-        PRINTF("ERROR: Invalid path too long\n");
+        TRACE("ERROR: Invalid path too long");
         return false;
     }
     if (length * 4 + 1 > dataSize) {
-        PRINTF("ERROR: Invalid path length\n");
+        TRACE("ERROR: Invalid path length");
         return false;
     }
     pathSpec->length = length;
@@ -610,6 +610,6 @@ void bip44_PRINTF(const bip44_path_t* pathSpec) {
     char tmp[BIP44_PATH_STRING_SIZE_MAX + 1] = {0};
     SIZEOF(*pathSpec);
     bip44_printToStr(pathSpec, tmp, SIZEOF(tmp));
-    PRINTF("%s", tmp);
+    TRACE("%s", tmp);
 };
 #endif  // DEVEL

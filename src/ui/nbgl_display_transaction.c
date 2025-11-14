@@ -470,7 +470,7 @@ int ui_display_transaction(void) {
     // Check if we have warnings to display
     const nbgl_warning_t* warningPtr = NULL;
     if (!tx_warning_list_empty((tx_warning_list_item_t *)G_context.tx_info.warning_list)) {
-        PRINTF("Warnings detected, preparing warning display\n");
+        TRACE("Warnings detected, preparing warning display");
 
         // Concatenate all warning messages
         size_t offset = 0;
@@ -523,7 +523,7 @@ int ui_display_transaction(void) {
         g_warning->reviewTopRightIcon = &WARNING_ICON;
         warningPtr = g_warning;
 
-        PRINTF("Warning display prepared\n");
+        TRACE("Warning display prepared");
     }
 
     // Start review flow (with or without warnings)

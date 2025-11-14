@@ -32,7 +32,7 @@ enum {
         STATIC_ASSERT(bits == CIPHER##_##bits##_SIZE * 8, "bad cipher size");                   \
         cx_err_t error = cx_##cipher##_init_no_throw(&ctx->cx_ctx, CIPHER##_##bits##_SIZE * 8); \
         if (error != CX_OK) {                                                                   \
-            PRINTF("error: %d", error);                                                         \
+            TRACE("error: %d", error);                                                          \
             ASSERT(false);                                                                      \
         }                                                                                       \
         ctx->initialized_magic = HASH_CONTEXT_INITIALIZED_MAGIC;                                \
@@ -50,7 +50,7 @@ enum {
                                           NULL,                                                 \
                                           0);                                                   \
         if (error != CX_OK) {                                                                   \
-            PRINTF("error: %d", error);                                                         \
+            TRACE("error: %d", error);                                                          \
             ASSERT(false);                                                                      \
         }                                                                                       \
     }                                                                                           \
@@ -68,7 +68,7 @@ enum {
                                           outBuffer,                                            \
                                           CIPHER##_##bits##_SIZE);                              \
         if (error != CX_OK) {                                                                   \
-            PRINTF("error: %d", error);                                                         \
+            TRACE("error: %d", error);                                                          \
             ASSERT(false);                                                                      \
         }                                                                                       \
     }                                                                                           \

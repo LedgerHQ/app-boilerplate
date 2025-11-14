@@ -32,7 +32,7 @@
 #define VALIDATE(cond, error)                                           \
     do {                                                                \
         if (!(cond)) {                                                  \
-            PRINTF("Validation Error in %s: %d\n", __FILE__, __LINE__); \
+            TRACE("Validation Error in %s: %d", __FILE__, __LINE__);    \
             THROW(error);                                               \
         }                                                               \
     } while (0)

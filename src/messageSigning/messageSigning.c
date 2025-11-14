@@ -26,7 +26,7 @@ int signRawMessageWithPath(const bip44_path_t* path,
     {
         TRACE("signing with path:");
         BIP44_PRINTF(path);
-        PRINTF("\n");
+        TRACE("");
 
         cx_err_t error = crypto_eddsa_sign(path->path,
                                            path->length,
@@ -35,7 +35,7 @@ int signRawMessageWithPath(const bip44_path_t* path,
                                            outBuffer,
                                            &sigLen);
         if (error != CX_OK) {
-            PRINTF("error: %d", error);
+            TRACE("error: %d", error);
             ASSERT(false);
             return error;
         }

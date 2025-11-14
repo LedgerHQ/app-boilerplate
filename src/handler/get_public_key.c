@@ -33,7 +33,6 @@
 #include "types.h"
 #include "sw.h"
 #include "display.h"
-#include "send_response.h"
 #include "dispatcher.h"
 #include "securityPolicy.h"
 #include "nbgl_use_case.h"

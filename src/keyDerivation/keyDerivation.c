@@ -40,7 +40,7 @@ cx_err_t deriveExtendedPublicKey(const bip44_path_t* path, extendedPublicKey_t* 
     {
         cx_err_t error = crypto_get_pubkey(path->path, path->length, rawPubkey, chainCode);
         if (error != CX_OK) {
-            PRINTF("error: %d", error);
+            TRACE("error: %d", error);
             return error;
         }
     }

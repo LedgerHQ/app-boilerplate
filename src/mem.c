@@ -34,7 +34,7 @@ bool app_mem_init(void) {
         TRACE("mem_init SUCCESS: ctx=%p", mem_ctx);
     }
 #ifdef HAVE_MEMORY_PROFILING
-    PRINTF(MP_LOG_PREFIX "init;0x%p;%u\n", buf, buf_size);
+    TRACE("init;0x%p;%u", buf, buf_size);
 #endif
     return mem_ctx != NULL;
 }
@@ -56,9 +56,9 @@ void *app_mem_alloc_impl(size_t size, bool persistent, const char *file, int lin
     }
 #ifdef HAVE_MEMORY_PROFILING
     if (persistent) {
-        PRINTF(MP_LOG_PREFIX "persist;%u;0x%p;%s:%u\n", size, ptr, file, line);
+        TRACE("persist;%u;0x%p;%s:%u", size, ptr, file, line);
     } else {
-        PRINTF(MP_LOG_PREFIX "alloc;%u;0x%p;%s:%u\n", size, ptr, file, line);
+        TRACE("alloc;%u;0x%p;%s:%u", size, ptr, file, line);
     }
 #else
     (void) file;
@@ -71,7 +71,7 @@ void *app_mem_alloc_impl(size_t size, bool persistent, const char *file, int lin
 void app_mem_free_impl(void *ptr, const char *file, int line) {
     TRACE("app_mem_free: freeing %p", ptr);
 #ifdef HAVE_MEMORY_PROFILING
-    PRINTF(MP_LOG_PREFIX "free;0x%p;%s:%u\n", ptr, file, line);
+    TRACE("free;0x%p;%s:%u", ptr, file, line);
 #else
     (void) file;
     (void) line;

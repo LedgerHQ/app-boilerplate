@@ -225,7 +225,7 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         return send_error_and_reset(SW_WRONG_DATA_LENGTH);
     }
 
-    PRINTF("TX Mode=%d, Network: ID=%d, Magic=%d, Inputs=%d, Outputs=%d, Withdrawals=%d, Mint=%d, TTL=%d, VIS=%d, Witnesses=%d\n",
+    TRACE("TX Mode=%d, Network: ID=%d, Magic=%d, Inputs=%d, Outputs=%d, Withdrawals=%d, Mint=%d, TTL=%d, VIS=%d, Witnesses=%d",
         G_context.tx_info.transaction.txSigningMode,
         G_context.tx_info.transaction.networkId,
         G_context.tx_info.transaction.protocolMagic,
@@ -334,7 +334,7 @@ static int parse_and_hash_transaction(void) {
                     .offset = 0};
 
     parser_status_e status = transaction_deserialize(&buf, &G_context.tx_info.transaction);
-    PRINTF("Parsing status: %d.\n", status);
+    TRACE("Parsing status: %d", status);
     if (status != PARSING_OK) {
         tx_context_cleanup();
 
@@ -597,7 +597,7 @@ static int parse_and_hash_transaction(void) {
                           G_context.tx_info.tx_hash,
                           sizeof(G_context.tx_info.tx_hash));
 
-    PRINTF("Hash: %.*H\n", sizeof(G_context.tx_info.tx_hash), G_context.tx_info.tx_hash);
+    TRACE("Hash: %.*H", sizeof(G_context.tx_info.tx_hash), G_context.tx_info.tx_hash);
 
     return SW_OK;
 }
@@ -682,7 +682,7 @@ int handler_sign_tx_witness(buffer_t *cdata) {
         return send_error_and_reset(SW_WRONG_DATA_LENGTH);
     }
 
-    PRINTF("Witness %d: path length=%d\n",
+    TRACE("Witness %d: path length=%d",
            G_context.tx_info.current_witness,
            G_context.tx_info.witness_path.length);
 

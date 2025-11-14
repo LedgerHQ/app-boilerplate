@@ -22,9 +22,9 @@
 #include "utils/utils.h"
 
 bool violatesSingleAccountOrStoreIt(const bip44_path_t* path) {
-    PRINTF("Considering path ");
+    TRACE("Considering path");
     BIP44_PRINTF(path);
-    PRINTF(" for single account security model\n");
+    TRACE("");
 
     single_account_data_t* singleAccountData = &(G_context.tx_info.single_account_data);
 
