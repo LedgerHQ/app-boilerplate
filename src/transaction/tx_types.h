@@ -18,6 +18,31 @@
 #define SCRIPT_HASH_LENGTH 28
 #define REWARD_ACCOUNT_SIZE (1 + ADDRESS_KEY_HASH_LENGTH)
 
+// Mint token limits
+#define MAX_MINT_ASSET_GROUPS 100
+#define MAX_TOKENS_PER_MINT_GROUP 100
+#define MAX_MINT_ASSET_NAME_LEN 32
+
+// Mint token structure (within an asset group)
+typedef struct {
+    uint8_t assetName[MAX_MINT_ASSET_NAME_LEN];  // Asset name (variable length)
+    uint8_t assetNameLen;                         // Length of asset name (0-32)
+    int64_t amount;                               // Amount (signed - can be negative for burning)
+} mint_token_t;
+
+// Mint asset group (policy ID + tokens)
+typedef struct {
+    uint8_t policyId[28];                         // Policy ID (28 bytes, no length prefix)
+    uint16_t numTokens;                           // Number of tokens in this group
+    mint_token_t* tokens;                         // Dynamically allocated array of tokens
+} mint_asset_group_t;
+
+// Mint asset group list item with flist node
+typedef struct {
+    s_flist_node node;              /// flist node for linked list
+    mint_asset_group_t asset_group;
+} mint_asset_group_list_item_t;
+
 // Extended credential type (allows key path, key hash, or script hash)
 typedef enum {
     // enum values are affected by backwards-compatibility
@@ -101,6 +126,7 @@ typedef struct {
     uint16_t num_inputs;    /// number of inputs
     uint16_t num_outputs;   /// number of outputs
     uint16_t num_withdrawals;  /// number of withdrawals
+    uint16_t num_mint_asset_groups;  /// number of mint asset groups
     bool includeTtl;        /// whether TTL is included
     bool includeValidityIntervalStart;  /// whether validity interval start is included
 
@@ -108,6 +134,7 @@ typedef struct {
     s_flist_node *inputs;   /// linked list of inputs (tx_input_list_item_t)
     s_flist_node *outputs;  /// linked list of outputs (tx_output_list_item_t)
     s_flist_node *withdrawals;  /// linked list of withdrawals (tx_withdrawal_list_item_t)
+    s_flist_node *mint_asset_groups;  /// linked list of mint asset groups (mint_asset_group_list_item_t)
     uint64_t fee;           /// fee (8 bytes)
     uint64_t ttl;           /// time-to-live (optional, only if includeTtl is true)
     uint64_t validityIntervalStart;  /// validity interval start (optional, slot 8)

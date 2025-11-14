@@ -20,8 +20,7 @@ from standalone.input_files.signTx import (testsByron, testsMary, testsShelleyNo
 
 @pytest.mark.parametrize(
     "testCase",
-    # TODO add testsMary and multiassets in outputs support
-    testsByron + testsShelleyNoCertificates,
+    testsByron + testsMary + testsShelleyNoCertificates,
     ids=idTestFunc
 )
 def test_sign_tx_simple(device: Device,
@@ -62,6 +61,7 @@ def test_sign_tx_simple(device: Device,
         include_ttl=tx.ttl is not None,
         num_withdrawals=len(tx.withdrawals),
         include_validity_interval_start=tx.validityIntervalStart is not None,
+        num_mint_asset_groups=len(tx.mint),
         num_witnesses=len(witness_paths)
     )
     assert response.status == Errors.SW_SUCCESS, f"Init failed: {hex(response.status)}"
@@ -75,10 +75,10 @@ def test_sign_tx_simple(device: Device,
             # TODO: Add proper navigation for nano devices
             navigator.navigate_until_text(NavInsID.RIGHT_CLICK, [NavInsID.BOTH_CLICK], "Sign transaction")
         else:
-            # Navigate through transaction review, including any warnings that might be displayed
-            # The scenario_navigator.review_approve() automatically handles warning screens
-            # (see TX_WARNING_* in transaction/tx_warnings.h for possible warnings like HIGH_FEE)
-            scenario_navigator.review_approve(do_comparison=False)
+            if testCase.has_warning:
+                scenario_navigator.review_approve_with_warning(do_comparison=False)
+            else:
+                scenario_navigator.review_approve(do_comparison=False)
 
     # Get the response from the final chunk after navigation
     # The final chunk response contains the transaction hash

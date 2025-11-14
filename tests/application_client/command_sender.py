@@ -115,7 +115,7 @@ class CommandSender:
     def sign_tx_init_simple(self, options: int, tx_signing_mode: int, network_id: int,
                            protocol_magic: int, num_inputs: int, num_outputs: int, include_ttl: bool,
                            num_withdrawals: int = 0, include_validity_interval_start: bool = False,
-                           num_witnesses: int = 0) -> RAPDU:
+                           num_mint_asset_groups: int = 0, num_witnesses: int = 0) -> RAPDU:
         """APDU Sign TX Init (simple chunked mode)
 
         Args:
@@ -128,22 +128,62 @@ class CommandSender:
             include_ttl (bool): Whether TTL is included
             num_withdrawals (int): Number of withdrawals (default 0)
             include_validity_interval_start (bool): Whether validity interval start is included (default False)
+            num_mint_asset_groups (int): Number of mint asset groups (default 0)
             num_witnesses (int): Number of witnesses (default 0)
 
         Returns:
             Response APDU
         """
         data = bytearray()
-        data.extend(options.to_bytes(8, 'big'))  # options as uint64
-        data.append(tx_signing_mode)
+
+        # Fixed header: options, networkId, protocolMagic, signingMode
+        data.extend(options.to_bytes(8, 'big'))
         data.append(network_id)
         data.extend(protocol_magic.to_bytes(4, 'big'))
+        data.append(tx_signing_mode)
+
+        # Fields 0-1: inputs and outputs (always present)
         data.extend(num_inputs.to_bytes(2, 'big'))
         data.extend(num_outputs.to_bytes(2, 'big'))
-        data.extend(num_withdrawals.to_bytes(2, 'big'))  # num_withdrawals (2B)
-        data.append(0x02 if include_ttl else 0x01)  # ITEM_INCLUDED_YES or ITEM_INCLUDED_NO
-        data.append(0x02 if include_validity_interval_start else 0x01)  # validity interval start flag
-        data.extend(num_witnesses.to_bytes(2, 'big'))  # num_witnesses (2B)
+
+        # Field 3 (TTL) - optional
+        data.append(0x02 if include_ttl else 0x01)
+        # Field 4 (certificates) - placeholder, always 0 for now
+        data.extend((0).to_bytes(2, 'big'))
+        # Field 5 (withdrawals) - optional
+        data.extend(num_withdrawals.to_bytes(2, 'big'))
+
+        # Field 7 (auxiliary data hash) - optional, always false for now
+        data.append(0x01)
+        # Field 8 (validity interval start) - optional
+        data.append(0x02 if include_validity_interval_start else 0x01)
+
+        # Field 9 (mint) - optional
+        data.extend(num_mint_asset_groups.to_bytes(2, 'big'))
+
+        # Field 11 (script data hash) - optional, always false for now
+        data.append(0x01)
+        # Field 13 (collateral inputs) - optional, always 0 for now
+        data.extend((0).to_bytes(2, 'big'))
+        # Field 14 (required signers) - optional, always 0 for now
+        data.extend((0).to_bytes(2, 'big'))
+        # Field 15 (network ID) - optional, always false for now
+        data.append(0x01)
+        # Field 16 (collateral output) - optional, always false for now
+        data.append(0x01)
+        # Field 17 (total collateral) - optional, always false for now
+        data.append(0x01)
+        # Field 18 (reference inputs) - optional, always 0 for now
+        data.extend((0).to_bytes(2, 'big'))
+        # Field 19 (voting procedures) - optional, always 0 for now
+        data.extend((0).to_bytes(2, 'big'))
+        # Field 21 (treasury) - optional, always false for now
+        data.append(0x01)
+        # Field 22 (donation) - optional, always false for now
+        data.append(0x01)
+
+        # Number of witness paths
+        data.extend(num_witnesses.to_bytes(2, 'big'))
 
         from application_client.command_builder import P1Type
         # P1 = P1_TX_INIT for INIT APDU, P2 = P2_UNUSED

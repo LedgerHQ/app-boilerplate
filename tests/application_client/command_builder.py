@@ -437,57 +437,92 @@ class CommandBuilder:
 
         Returns:
             Serial data APDU
+
+        Note: Format follows canonical CBOR transaction body ordering from Cardano spec
         """
 
-        # Serialization format:
+        # Serialization format (following CBOR transaction_body ordering):
         #    Options (8B)
         #    NetworkId (1B)
         #    ProtocolMagic (4B)
-        #    TTL option flag (1B)
-        #    auxiliary Data option flag (1B)
-        #    validityIntervalStart option flag (1B)
-        #    mint
-        #    scriptDataHash
-        #    includeNetworkId
-        #    collateralOutput
-        #    totalCollateral
-        #    treasury
-        #    donation
-        #    signingMode
-        #    TX inputs length (4B)
-        #    TX outputs length (4B)
-        #    TX certificates length (4B)
-        #    TX withdrawals length (4B)
-        #    witnessLegacy
-        #    collateralInputs
-        #    requiredSigners
-        #    referenceInputs
-        #    votingProcedures
-        #    witnessBabbage
+        #    Signing mode (1B)
+        #
+        #    TX inputs length (4B)                  // field 0
+        #    TX outputs length (4B)                 // field 1
+        #
+        #    Include TTL flag (1B)                  // field 3 (optional)
+        #    TX certificates length (4B)            // field 4 (optional, placeholder)
+        #    TX withdrawals length (4B)             // field 5 (optional)
+        #
+        #    Include auxiliary data hash flag (1B)   // field 7 (optional)
+        #    Include validityIntervalStart flag (1B) // field 8 (optional)
+        #
+        #    TX mint asset groups count (4B)        // field 9 (optional)
+        #
+        #    Include scriptDataHash flag (1B)       // field 11 (optional)
+        #    TX collateralInputs length (4B)        // field 13 (optional)
+        #    TX requiredSigners length (4B)         // field 14 (optional)
+        #    Include networkId flag (1B)            // field 15 (optional)
+        #    Include collateralOutput flag (1B)     // field 16 (optional)
+        #    Include totalCollateral flag (1B)      // field 17 (optional)
+        #    TX referenceInputs length (4B)         // field 18 (optional)
+        #    TX votingProcedures length (4B)        // field 19 (optional)
+        #    Include treasury flag (1B)             // field 21 (optional)
+        #    Include donation flag (1B)             // field 22 (optional)
+        #
+        #    Number of witness paths (4B)
+
         data = bytes()
+
+        # Fixed header
         data += testCase.options.to_bytes(8, "big")
         data += testCase.tx.network.networkId.to_bytes(1, "big")
         data += testCase.tx.network.protocol.to_bytes(4, "big")
-        data += self._serializeOptionFlags(testCase.tx.ttl is not None)
-        data += self._serializeOptionFlags(testCase.tx.auxiliaryData is not None)
-        data += self._serializeOptionFlags(testCase.tx.validityIntervalStart is not None)
-        data += self._serializeOptionFlags(len(testCase.tx.mint) > 0)
-        data += self._serializeOptionFlags(testCase.tx.scriptDataHash is not None)
-        data += self._serializeOptionFlags(testCase.tx.includeNetworkId is not None)
-        data += self._serializeOptionFlags(testCase.tx.collateralOutput is not None)
-        data += self._serializeOptionFlags(testCase.tx.totalCollateral is not None)
-        data += self._serializeOptionFlags(testCase.tx.treasury is not None)
-        data += self._serializeOptionFlags(testCase.tx.donation is not None)
         data += testCase.signingMode.to_bytes(1, "big")
-        data += len(testCase.tx.inputs).to_bytes(4, "big")
-        data += len(testCase.tx.outputs).to_bytes(4, "big")
-        data += len(testCase.tx.certificates).to_bytes(4, "big")
-        data += len(testCase.tx.withdrawals).to_bytes(4, "big")
-        data += len(testCase.tx.collateralInputs).to_bytes(4, "big")
-        data += len(testCase.tx.requiredSigners).to_bytes(4, "big")
-        data += len(testCase.tx.referenceInputs).to_bytes(4, "big")
-        data += len(testCase.tx.votingProcedures).to_bytes(4, "big")
+
+        # Fields 0-1: inputs and outputs (always present)
+        data += len(testCase.tx.inputs).to_bytes(2, "big")
+        data += len(testCase.tx.outputs).to_bytes(2, "big")
+
+        # Field 3 (TTL) - optional
+        data += self._serializeOptionFlags(testCase.tx.ttl is not None)
+        # Field 4 (certificates) - optional, placeholder for future
+        data += len(testCase.tx.certificates).to_bytes(2, "big")
+        # Field 5 (withdrawals) - optional
+        data += len(testCase.tx.withdrawals).to_bytes(2, "big")
+
+        # Field 7 (auxiliary data hash) - optional
+        data += self._serializeOptionFlags(testCase.tx.auxiliaryData is not None)
+        # Field 8 (validity interval start) - optional
+        data += self._serializeOptionFlags(testCase.tx.validityIntervalStart is not None)
+
+        # Field 9 (mint) - optional
+        data += len(testCase.tx.mint).to_bytes(2, "big")
+
+        # Field 11 (script data hash) - optional
+        data += self._serializeOptionFlags(testCase.tx.scriptDataHash is not None)
+        # Field 13 (collateral inputs) - optional
+        data += len(testCase.tx.collateralInputs).to_bytes(2, "big")
+        # Field 14 (required signers) - optional
+        data += len(testCase.tx.requiredSigners).to_bytes(2, "big")
+        # Field 15 (network ID) - optional
+        data += self._serializeOptionFlags(testCase.tx.includeNetworkId is not None)
+        # Field 16 (collateral output) - optional
+        data += self._serializeOptionFlags(testCase.tx.collateralOutput is not None)
+        # Field 17 (total collateral) - optional
+        data += self._serializeOptionFlags(testCase.tx.totalCollateral is not None)
+        # Field 18 (reference inputs) - optional
+        data += len(testCase.tx.referenceInputs).to_bytes(2, "big")
+        # Field 19 (voting procedures) - optional
+        data += len(testCase.tx.votingProcedures).to_bytes(2, "big")
+        # Field 21 (treasury) - optional
+        data += self._serializeOptionFlags(testCase.tx.treasury is not None)
+        # Field 22 (donation) - optional
+        data += self._serializeOptionFlags(testCase.tx.donation is not None)
+
+        # Number of witness paths
         data += nbWitnessPaths.to_bytes(4, "big")
+
         return self._serialize(InsType.SIGN_TX, P1Type.P1_INIT, 0x00, data)
 
 
@@ -1907,6 +1942,26 @@ class CommandBuilder:
         # Validity Interval Start (optional - only if present in transaction)
         if tx.validityIntervalStart is not None:
             data.extend(tx.validityIntervalStart.to_bytes(8, 'big'))
+
+        # Mint (num_mint_asset_groups is sent in INIT APDU)
+        for mint_asset_group in tx.mint:
+            # Policy ID (28 bytes, no length prefix)
+            data.extend(bytes.fromhex(mint_asset_group.policyIdHex))
+
+            # Number of tokens (uint16, BE)
+            data.extend(len(mint_asset_group.tokens).to_bytes(2, 'big'))
+
+            # Tokens
+            for token in mint_asset_group.tokens:
+                # Asset name length (uint8)
+                asset_name_bytes = bytes.fromhex(token.assetNameHex)
+                data.append(len(asset_name_bytes))
+
+                # Asset name
+                data.extend(asset_name_bytes)
+
+                # Token amount (int64, BE, signed)
+                data.extend(token.amount.to_bytes(8, 'big', signed=True))
 
         # Withdrawals (num_withdrawals is sent in INIT APDU)
         for withdrawal in tx.withdrawals:

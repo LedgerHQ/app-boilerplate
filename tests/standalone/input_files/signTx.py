@@ -394,6 +394,7 @@ class SignTxTestCase:
     options: bool = False
     additionalWitnessPaths: List[str] = field(default_factory=list)
     expected_sw: Optional[Errors] = Errors.SW_SUCCESS
+    has_warning: bool = False
     # TODO: Debug navigation
     nano_skip: Optional[bool] = False
 
@@ -1545,7 +1546,8 @@ testsMary: List[SignTxTestCase] = [
                                24103998870869519,
                                validityIntervalStart=24103998870869519),
                    TransactionSigningMode.ORDINARY_TRANSACTION,
-                   "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018182583901eb0baa5e570cffbe2934db29df0b6a3d7c0430ee65d4c3a7ab2fefb91bc428e4720702ebd5dab4fb175324c192dc9bb76cc5da956e3c8dff821b0055a275925d560fa1581c95a292ffee938be03e9bae5657982a74e9014eb4960108c9e23a5b39a14874652474436f696e1b0055a275925d560f021b0055a275925d560f031b0055a275925d560f081b0055a275925d560f"),
+                   "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018182583901eb0baa5e570cffbe2934db29df0b6a3d7c0430ee65d4c3a7ab2fefb91bc428e4720702ebd5dab4fb175324c192dc9bb76cc5da956e3c8dff821b0055a275925d560fa1581c95a292ffee938be03e9bae5657982a74e9014eb4960108c9e23a5b39a14874652474436f696e1b0055a275925d560f021b0055a275925d560f031b0055a275925d560f081b0055a275925d560f",
+                   has_warning=True),
     SignTxTestCase("Sign_tx_with_a_multiasset_change_output",
                    Transaction(Mainnet,
                                [inputs["utxoShelley"]],

@@ -19,6 +19,7 @@
 
 #include "deserialize.h"
 #include "utils.h"
+#include "utils/textUtils.h"
 #include "types.h"
 #include "tx_output_types.h"
 #include "addressUtils/addressUtilsShelley.h"
@@ -44,7 +45,10 @@ parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
     // Initialize withdrawals list
     tx->withdrawals = NULL;
 
-    // Note: num_inputs, num_outputs, and num_withdrawals are already set from INIT APDU, not read from buffer
+    // Initialize mint list
+    tx->mint_asset_groups = NULL;
+
+    // Note: num_inputs, num_outputs, num_withdrawals, and num_mint_asset_groups are already set from INIT APDU, not read from buffer
 
     // Parse each input and add to linked list
     for (uint16_t i = 0; i < tx->num_inputs; i++) {
@@ -310,8 +314,9 @@ parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
                         return OUTPUTS_PARSING_ERROR;
                     }
 
-                    TRACE("Deserialize: Token %u: name_len=%u, amount=%lld",
-                          tk, token->assetNameLen, (long long)token->amount);
+                    TRACE("Deserialize: Token %u: name_len=%u, amount=",
+                          tk, token->assetNameLen);
+                    TRACE_INT64(token->amount);
                 }
             }
         } else {
@@ -454,6 +459,72 @@ parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
         }
     }
 
+    // Parse each mint asset group and add to linked list
+    for (uint16_t ag = 0; ag < tx->num_mint_asset_groups; ag++) {
+        // Allocate memory for the mint asset group list item
+        mint_asset_group_list_item_t *item = (mint_asset_group_list_item_t *) app_mem_alloc(sizeof(mint_asset_group_list_item_t));
+        if (item == NULL) {
+            return OUTPUTS_PARSING_ERROR;  // Reuse output error for mint
+        }
+
+        // Read policy ID (28 bytes, no length prefix)
+        uint8_t *policy_id = (uint8_t *) (buf->ptr + buf->offset);
+        if (!buffer_seek_cur(buf, 28)) {
+            return OUTPUTS_PARSING_ERROR;
+        }
+        memmove(item->asset_group.policyId, policy_id, 28);
+        TRACE("Deserialize: Mint asset group %u: policy ID read", ag);
+
+        // Read number of tokens (uint16, big-endian)
+        if (!buffer_read_u16(buf, &item->asset_group.numTokens, BE)) {
+            return OUTPUTS_PARSING_ERROR;
+        }
+        if (item->asset_group.numTokens > MAX_TOKENS_PER_MINT_GROUP) {
+            return OUTPUTS_PARSING_ERROR;
+        }
+        TRACE("Deserialize: Mint asset group %u: %u tokens", ag, item->asset_group.numTokens);
+
+        // Allocate tokens array
+        item->asset_group.tokens = (mint_token_t *) app_mem_alloc(item->asset_group.numTokens * sizeof(mint_token_t));
+        if (item->asset_group.tokens == NULL) {
+            return OUTPUTS_PARSING_ERROR;
+        }
+
+        // Parse each token
+        for (uint16_t tk = 0; tk < item->asset_group.numTokens; tk++) {
+            mint_token_t *token = &item->asset_group.tokens[tk];
+
+            // Read asset name length (uint8)
+            if (!buffer_read_u8(buf, &token->assetNameLen)) {
+                return OUTPUTS_PARSING_ERROR;
+            }
+            if (token->assetNameLen > MAX_MINT_ASSET_NAME_LEN) {
+                return OUTPUTS_PARSING_ERROR;
+            }
+
+            // Read asset name (variable length)
+            if (token->assetNameLen > 0) {
+                uint8_t *asset_name = (uint8_t *) (buf->ptr + buf->offset);
+                if (!buffer_seek_cur(buf, token->assetNameLen)) {
+                    return OUTPUTS_PARSING_ERROR;
+                }
+                memmove(token->assetName, asset_name, token->assetNameLen);
+            }
+
+            // Read token amount (int64, BE, signed)
+            if (!buffer_read_u64(buf, (uint64_t*)&token->amount, BE)) {
+                return OUTPUTS_PARSING_ERROR;
+            }
+
+            TRACE("Deserialize: Mint token %u: name_len=%u, amount=", tk, token->assetNameLen);
+            TRACE_INT64(token->amount);
+        }
+
+        // Add to linked list
+        item->node.next = NULL;
+        flist_push_back(&tx->mint_asset_groups, (s_flist_node *) item);
+    }
+
     // Parse each withdrawal and add to linked list
     for (uint16_t i = 0; i < tx->num_withdrawals; i++) {
         // Allocate memory for the withdrawal list item
@@ -535,13 +606,14 @@ parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
     return (buf->offset == buf->size) ? PARSING_OK : WRONG_LENGTH_ERROR;
 }
 
-/// Clean up dynamically allocated memory in transaction outputs
+/// Clean up dynamically allocated memory in transaction outputs (including list items)
 void transaction_free_outputs(transaction_t *tx) {
     LEDGER_ASSERT(tx != NULL, "NULL tx");
 
     s_flist_node *output_node = tx->outputs;
     while (output_node != NULL) {
         tx_output_list_item_t *item = (tx_output_list_item_t *) output_node;
+        s_flist_node *next = output_node->next;
 
         // Free asset groups and their tokens
         if (item->output_data.assetGroups != NULL) {
@@ -564,11 +636,14 @@ void transaction_free_outputs(transaction_t *tx) {
             app_mem_free(item->output_data.refScript.data);
         }
 
-        output_node = output_node->next;
+        // Free the list item itself
+        app_mem_free(output_node);
+        output_node = next;
     }
+    tx->outputs = NULL;
 }
 
-/// Clean up dynamically allocated memory in transaction withdrawals
+/// Clean up dynamically allocated memory in transaction withdrawals (including list items)
 void transaction_free_withdrawals(transaction_t *tx) {
     LEDGER_ASSERT(tx != NULL, "NULL tx");
 
@@ -576,12 +651,36 @@ void transaction_free_withdrawals(transaction_t *tx) {
     while (withdrawal_node != NULL) {
         // Withdrawal items don't have additional allocated memory
         // (credential data is stored inline in the union)
-        withdrawal_node = withdrawal_node->next;
+        s_flist_node *next = withdrawal_node->next;
+        app_mem_free(withdrawal_node);
+        withdrawal_node = next;
     }
+    tx->withdrawals = NULL;
+}
+
+/// Clean up dynamically allocated memory in transaction mint (including list items)
+void transaction_free_mint(transaction_t *tx) {
+    LEDGER_ASSERT(tx != NULL, "NULL tx");
+
+    s_flist_node *mint_node = tx->mint_asset_groups;
+    while (mint_node != NULL) {
+        mint_asset_group_list_item_t *item = (mint_asset_group_list_item_t *) mint_node;
+        s_flist_node *next = mint_node->next;
+
+        // Free tokens array
+        if (item->asset_group.tokens != NULL) {
+            app_mem_free(item->asset_group.tokens);
+        }
+
+        // Free the list item itself
+        app_mem_free(mint_node);
+        mint_node = next;
+    }
+    tx->mint_asset_groups = NULL;
 }
 
 /**
- * Cleanup transaction lists by freeing allocated input, output, and withdrawal items
+ * Cleanup transaction lists by freeing all allocated memory
  */
 void tx_context_cleanup(void) {
     transaction_t *tx = &G_context.tx_info.transaction;
@@ -597,25 +696,14 @@ void tx_context_cleanup(void) {
 
     // Free all output items with their associated data (asset groups, datums, ref scripts)
     transaction_free_outputs(tx);
-    s_flist_node *output_node = tx->outputs;
-    while (output_node != NULL) {
-        s_flist_node *next = output_node->next;
-        app_mem_free(output_node);
-        output_node = next;
-    }
-    tx->outputs = NULL;
+
+    // Free all mint asset groups with their tokens
+    transaction_free_mint(tx);
 
     // Free all withdrawal items
     transaction_free_withdrawals(tx);
-    s_flist_node *withdrawal_node = tx->withdrawals;
-    while (withdrawal_node != NULL) {
-        s_flist_node *next = withdrawal_node->next;
-        app_mem_free(withdrawal_node);
-        withdrawal_node = next;
-    }
-    tx->withdrawals = NULL;
 
-    // free raw tx buffer
+    // Free raw tx buffer
     if (G_context.tx_info.raw_tx != NULL) {
         app_mem_free(G_context.tx_info.raw_tx);
         G_context.tx_info.raw_tx = NULL;

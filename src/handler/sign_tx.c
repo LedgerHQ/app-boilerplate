@@ -55,7 +55,7 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
     G_context.tx_info.raw_tx_len = 0;
     G_context.tx_info.warning_list = NULL;
 
-    // Read and validate options
+    // Read and validate options (fixed header)
     uint64_t options;
     if (!buffer_read_u64(cdata, &options, BE)) {
         return send_error_and_reset(SW_WRONG_DATA_LENGTH);
@@ -67,27 +67,25 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
     }
     G_context.tx_info.transaction.tagCborSets = tagCborSets;
 
-    // Read signing mode
+    // Read network parameters and signing mode
+    if (!buffer_read_u8(cdata, &G_context.tx_info.transaction.networkId) ||
+        !buffer_read_u32(cdata, &G_context.tx_info.transaction.protocolMagic, BE)) {
+        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+    }
+
     uint8_t txSigningMode;
     if (!buffer_read_u8(cdata, &txSigningMode)) {
         return send_error_and_reset(SW_WRONG_DATA_LENGTH);
     }
     G_context.tx_info.transaction.txSigningMode = (sign_tx_signingmode_t) txSigningMode;
 
-    // Read network parameters
-    if (!buffer_read_u8(cdata, &G_context.tx_info.transaction.networkId) ||
-        !buffer_read_u32(cdata, &G_context.tx_info.transaction.protocolMagic, BE)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
-    }
-
-    // Read transaction structure counts
+    // Read transaction structure counts (fields 0-1: inputs and outputs, always present)
     if (!buffer_read_u16(cdata, &G_context.tx_info.transaction.num_inputs, BE) ||
-        !buffer_read_u16(cdata, &G_context.tx_info.transaction.num_outputs, BE) ||
-        !buffer_read_u16(cdata, &G_context.tx_info.transaction.num_withdrawals, BE)) {
+        !buffer_read_u16(cdata, &G_context.tx_info.transaction.num_outputs, BE)) {
         return send_error_and_reset(SW_WRONG_DATA_LENGTH);
     }
 
-    // Read optional field flags
+    // Field 3 (TTL) - optional
     uint8_t includeTtlByte;
     if (!buffer_read_u8(cdata, &includeTtlByte)) {
         return send_error_and_reset(SW_WRONG_DATA_LENGTH);
@@ -96,6 +94,29 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
 
+    // Field 4 (certificates) - optional, not implemented yet
+    uint16_t num_certificates_dummy;
+    if (!buffer_read_u16(cdata, &num_certificates_dummy, BE)) {
+        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+    }
+
+    // Field 5 (withdrawals) - optional
+    if (!buffer_read_u16(cdata, &G_context.tx_info.transaction.num_withdrawals, BE)) {
+        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+    }
+
+    // Field 7 (auxiliary data hash) - optional, not implemented yet
+    uint8_t includeAuxDataHashByte;
+    bool includeAuxDataHash = false;
+    if (!buffer_read_u8(cdata, &includeAuxDataHashByte)) {
+        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+    }
+    if (!parseIncluded(includeAuxDataHashByte, &includeAuxDataHash)) {
+        return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+    }
+    // TODO: Store includeAuxDataHash when auxiliary data is implemented
+
+    // Field 8 (validity interval start) - optional
     uint8_t includeValidityIntervalStartByte;
     if (!buffer_read_u8(cdata, &includeValidityIntervalStartByte)) {
         return send_error_and_reset(SW_WRONG_DATA_LENGTH);
@@ -104,21 +125,118 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
 
+    // Field 9 (mint) - optional
+    if (!buffer_read_u16(cdata, &G_context.tx_info.transaction.num_mint_asset_groups, BE)) {
+        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+    }
+
+    // Field 11 (script data hash) - optional, not implemented yet
+    uint8_t includeScriptDataHashByte;
+    bool includeScriptDataHash = false;
+    if (!buffer_read_u8(cdata, &includeScriptDataHashByte)) {
+        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+    }
+    if (!parseIncluded(includeScriptDataHashByte, &includeScriptDataHash)) {
+        return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+    }
+    // TODO: Store includeScriptDataHash when script data hash is implemented
+
+    // Field 13 (collateral inputs) - optional, not implemented yet
+    uint16_t num_collateral_inputs_dummy;
+    if (!buffer_read_u16(cdata, &num_collateral_inputs_dummy, BE)) {
+        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+    }
+
+    // Field 14 (required signers) - optional, not implemented yet
+    uint16_t num_required_signers_dummy;
+    if (!buffer_read_u16(cdata, &num_required_signers_dummy, BE)) {
+        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+    }
+
+    // Field 15 (network ID) - optional, not implemented yet
+    uint8_t includeNetworkIdByte;
+    bool includeNetworkId = false;
+    if (!buffer_read_u8(cdata, &includeNetworkIdByte)) {
+        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+    }
+    if (!parseIncluded(includeNetworkIdByte, &includeNetworkId)) {
+        return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+    }
+    // TODO: Store includeNetworkId when network ID is implemented
+
+    // Field 16 (collateral output) - optional, not implemented yet
+    uint8_t includeCollateralOutputByte;
+    bool includeCollateralOutput = false;
+    if (!buffer_read_u8(cdata, &includeCollateralOutputByte)) {
+        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+    }
+    if (!parseIncluded(includeCollateralOutputByte, &includeCollateralOutput)) {
+        return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+    }
+    // TODO: Store includeCollateralOutput when collateral output is implemented
+
+    // Field 17 (total collateral) - optional, not implemented yet
+    uint8_t includeTotalCollateralByte;
+    bool includeTotalCollateral = false;
+    if (!buffer_read_u8(cdata, &includeTotalCollateralByte)) {
+        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+    }
+    if (!parseIncluded(includeTotalCollateralByte, &includeTotalCollateral)) {
+        return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+    }
+    // TODO: Store includeTotalCollateral when total collateral is implemented
+
+    // Field 18 (reference inputs) - optional, not implemented yet
+    uint16_t num_reference_inputs_dummy;
+    if (!buffer_read_u16(cdata, &num_reference_inputs_dummy, BE)) {
+        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+    }
+
+    // Field 19 (voting procedures) - optional, not implemented yet
+    uint16_t num_voting_procedures_dummy;
+    if (!buffer_read_u16(cdata, &num_voting_procedures_dummy, BE)) {
+        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+    }
+
+    // Field 21 (treasury) - optional, not implemented yet
+    uint8_t includeTreasuryByte;
+    bool includeTreasury = false;
+    if (!buffer_read_u8(cdata, &includeTreasuryByte)) {
+        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+    }
+    if (!parseIncluded(includeTreasuryByte, &includeTreasury)) {
+        return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+    }
+    // TODO: Store includeTreasury when treasury is implemented
+
+    // Field 22 (donation) - optional, not implemented yet
+    uint8_t includeDonationByte;
+    bool includeDonation = false;
+    if (!buffer_read_u8(cdata, &includeDonationByte)) {
+        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+    }
+    if (!parseIncluded(includeDonationByte, &includeDonation)) {
+        return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+    }
+    // TODO: Store includeDonation when donation is implemented
+
     // Read number of witnesses
     if (!buffer_read_u16(cdata, &G_context.tx_info.num_witnesses, BE)) {
         return send_error_and_reset(SW_WRONG_DATA_LENGTH);
     }
 
-    PRINTF("TX Mode=%d, Network: ID=%d, Magic=%d, Inputs=%d, Outputs=%d, Withdrawals=%d, TTL=%d, VIS=%d, Witnesses=%d\n",
-           G_context.tx_info.transaction.txSigningMode,
-           G_context.tx_info.transaction.networkId,
-           G_context.tx_info.transaction.protocolMagic,
-           G_context.tx_info.transaction.num_inputs,
-           G_context.tx_info.transaction.num_outputs,
-           G_context.tx_info.transaction.num_withdrawals,
-           G_context.tx_info.transaction.includeTtl,
-           G_context.tx_info.transaction.includeValidityIntervalStart,
-           G_context.tx_info.num_witnesses);
+    PRINTF("TX Mode=%d, Network: ID=%d, Magic=%d, Inputs=%d, Outputs=%d, Withdrawals=%d, Mint=%d, TTL=%d, VIS=%d, Witnesses=%d\n",
+        G_context.tx_info.transaction.txSigningMode,
+        G_context.tx_info.transaction.networkId,
+        G_context.tx_info.transaction.protocolMagic,
+        G_context.tx_info.transaction.num_inputs,
+        G_context.tx_info.transaction.num_outputs,
+        G_context.tx_info.transaction.num_withdrawals,
+        G_context.tx_info.transaction.num_mint_asset_groups,
+        G_context.tx_info.transaction.includeTtl,
+        G_context.tx_info.transaction.includeValidityIntervalStart,
+        G_context.tx_info.num_witnesses
+    );
 
     // Check security policy
     security_policy_t init_policy = policyForSignTxInit(
@@ -281,7 +399,7 @@ static int parse_and_hash_transaction(void) {
                       G_context.tx_info.transaction.num_withdrawals,
                       false,  // includeAuxData
                       G_context.tx_info.transaction.includeValidityIntervalStart,
-                      false,  // includeMint
+                      G_context.tx_info.transaction.num_mint_asset_groups > 0,  // includeMint
                       false,  // includeScriptDataHash
                       0,      // numCollateralInputs
                       0,      // numRequiredSigners
@@ -350,6 +468,23 @@ static int parse_and_hash_transaction(void) {
             output_desc.destination.address.size = address_size;
             txHashBuilder_addOutput_topLevelData(&txHashBuilder, &output_desc);
             app_mem_free(address_bytes);
+        }
+
+        // Add asset groups and tokens for this output
+        for (uint16_t ag = 0; ag < output_item->output_data.numAssetGroups; ag++) {
+            asset_group_t *group = &output_item->output_data.assetGroups[ag];
+            txHashBuilder_addOutput_tokenGroup(&txHashBuilder,
+                                               group->policyId,
+                                               28,  // Policy ID is always 28 bytes
+                                               group->numTokens);
+
+            for (uint16_t tk = 0; tk < group->numTokens; tk++) {
+                output_token_t *token = &group->tokens[tk];
+                txHashBuilder_addOutput_token(&txHashBuilder,
+                                              token->assetName,
+                                              token->assetNameLen,
+                                              (uint64_t)token->amount);
+            }
         }
 
         output_node = output_node->next;
@@ -421,6 +556,39 @@ static int parse_and_hash_transaction(void) {
                                        withdrawal_item->withdrawal_data.amount);
 
             withdrawal_node = withdrawal_node->next;
+        }
+    }
+
+    // Add validity interval start if included
+    if (G_context.tx_info.transaction.includeValidityIntervalStart) {
+        txHashBuilder_addValidityIntervalStart(&txHashBuilder,
+                                               G_context.tx_info.transaction.validityIntervalStart);
+    }
+
+    // Add mint if present
+    if (G_context.tx_info.transaction.num_mint_asset_groups > 0) {
+        txHashBuilder_enterMint(&txHashBuilder);
+        txHashBuilder_addMint_topLevelData(&txHashBuilder,
+                                           G_context.tx_info.transaction.num_mint_asset_groups);
+
+        s_flist_node *mint_node = G_context.tx_info.transaction.mint_asset_groups;
+        while (mint_node != NULL) {
+            mint_asset_group_list_item_t *mint_item = (mint_asset_group_list_item_t *) mint_node;
+
+            txHashBuilder_addMint_tokenGroup(&txHashBuilder,
+                                             mint_item->asset_group.policyId,
+                                             28,  // Policy ID is always 28 bytes
+                                             mint_item->asset_group.numTokens);
+
+            for (uint16_t tk = 0; tk < mint_item->asset_group.numTokens; tk++) {
+                mint_token_t *token = &mint_item->asset_group.tokens[tk];
+                txHashBuilder_addMint_token(&txHashBuilder,
+                                            token->assetName,
+                                            token->assetNameLen,
+                                            (uint64_t)token->amount);
+            }
+
+            mint_node = mint_node->next;
         }
     }
 
