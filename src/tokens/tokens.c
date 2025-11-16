@@ -3,6 +3,7 @@
 #include "textUtils.h"
 #include "hash.h"
 #include "addressUtils/bech32.h"
+#include "utils/os_utils.h"
 
 #define ASSET_FINGERPRINT_SIZE 20
 

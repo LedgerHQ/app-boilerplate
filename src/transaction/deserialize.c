@@ -24,6 +24,7 @@
 #include "types.h"
 #include "tx_output_types.h"
 #include "addressUtils/addressUtilsShelley.h"
+#include "globals.h"
 
 #if defined(TEST) || defined(FUZZ)
 #include "assert.h"

@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#include "os.h"
 #include "ux.h"
 #include "types.h"
 #include "constants.h"

@@ -35,13 +35,21 @@ endif()
 
 add_compile_definitions(TEST)
 
+# IMPORTANT: mock_includes MUST come first so our SDK mocks override Ledger SDK headers
+# (We use real headers from ../src for app-specific code like utils.h, assert.h, etc.)
+include_directories(mock_includes)
 include_directories(../src)
 include_directories(../src/transaction)
 include_directories($ENV{BOLOS_SDK}/lib_standard_app)
 
-add_executable(test_tx_parser test_tx_parser.c)
-add_executable(test_tx_utils test_tx_utils.c)
+# Test executables
+add_executable(test_hex_utils test_hex_utils.c)
+add_executable(test_base58 test_base58.c)
+add_executable(test_bech32 test_bech32.c)
+# add_executable(test_tx_parser test_tx_parser.c)  # TODO: create this file
+# add_executable(test_tx_utils test_tx_utils.c)    # TODO: create this file
 
+# SDK libraries
 add_library(base58 SHARED $ENV{BOLOS_SDK}/lib_standard_app/base58.c)
 add_library(bip32 SHARED $ENV{BOLOS_SDK}/lib_standard_app/bip32.c)
 add_library(buffer SHARED $ENV{BOLOS_SDK}/lib_standard_app/buffer.c)
@@ -50,25 +58,40 @@ add_library(write SHARED $ENV{BOLOS_SDK}/lib_standard_app/write.c)
 add_library(format SHARED $ENV{BOLOS_SDK}/lib_standard_app/format.c)
 add_library(varint SHARED $ENV{BOLOS_SDK}/lib_standard_app/varint.c)
 add_library(apdu_parser SHARED $ENV{BOLOS_SDK}/lib_standard_app/parser.c)
-add_library(transaction_deserialize ../src/transaction/deserialize.c)
-add_library(transaction_serialize ../src/transaction/serialize.c)
-add_library(transaction_utils ../src/transaction/utils.c)
 
-target_link_libraries(test_tx_parser PUBLIC
-                      transaction_deserialize
-                      transaction_serialize
-                      buffer
-                      bip32
-                      cmocka
-                      gcov
-                      write
-                      read
-                      varint
-                      transaction_utils)
-target_link_libraries(test_tx_utils PUBLIC
-                      cmocka
-                      gcov
-                      transaction_utils)
+# App-specific libraries (testing the REAL source files!)
+# The mock_includes/ directory is prioritized, so our mock utils.h will be used
+add_library(hex_utils SHARED ../src/utils/hexUtils.c)
+add_library(bech32_lib SHARED ../src/addressUtils/bech32.c)
+# add_library(transaction_deserialize SHARED ../src/transaction/deserialize.c)  # TODO: uncomment when needed
+# add_library(transaction_serialize SHARED ../src/transaction/serialize.c)      # TODO: uncomment when needed
+# add_library(transaction_utils SHARED ../src/transaction/utils.c)              # TODO: uncomment when needed
 
-add_test(test_tx_parser test_tx_parser)
-add_test(test_tx_utils test_tx_utils)
+# Link test executables
+target_link_libraries(test_hex_utils PUBLIC cmocka gcov hex_utils)
+target_link_libraries(test_base58 PUBLIC cmocka gcov base58 hex_utils)
+target_link_libraries(test_bech32 PUBLIC cmocka gcov bech32_lib hex_utils)
+
+# TODO: uncomment when test files are created
+# target_link_libraries(test_tx_parser PUBLIC
+#                       transaction_deserialize
+#                       transaction_serialize
+#                       buffer
+#                       bip32
+#                       cmocka
+#                       gcov
+#                       write
+#                       read
+#                       varint
+#                       transaction_utils)
+# target_link_libraries(test_tx_utils PUBLIC
+#                       cmocka
+#                       gcov
+#                       transaction_utils)
+
+# Register tests with CTest
+add_test(test_hex_utils test_hex_utils)
+add_test(test_base58 test_base58)
+add_test(test_bech32 test_bech32)
+# add_test(test_tx_parser test_tx_parser)  # TODO: uncomment when created
+# add_test(test_tx_utils test_tx_utils)    # TODO: uncomment when created

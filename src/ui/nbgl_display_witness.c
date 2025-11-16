@@ -29,6 +29,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "utils/utils.h"
+#include "utils/os_utils.h"
 #include "sw.h"
 #include "securityPolicy.h"
 #include "nbgl_screens.h"

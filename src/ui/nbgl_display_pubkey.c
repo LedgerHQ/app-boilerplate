@@ -29,6 +29,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "utils/utils.h"
+#include "utils/os_utils.h"
 #include "sw.h"
 #include "opcert_types.h"
 #include "menu.h"

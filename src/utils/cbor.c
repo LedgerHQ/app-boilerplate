@@ -2,6 +2,8 @@
 #include "sw.h"
 #include "read.h"
 #include "write.h"
+#include "assert.h"
+#include "exceptions.h"
 
 // Note(ppershing): consume functions should either
 // a) *consume* expected value, or

@@ -28,6 +28,7 @@
 #include "sw.h"
 #include "globals.h"
 #include "utils/utils.h"
+#include "utils/os_utils.h"
 #include "display.h"
 #include "opcert_types.h"
 #include "parse_opcert.h"

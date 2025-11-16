@@ -1,9 +1,9 @@
 #pragma once
 
-#include "io.h"
-#include "os.h"
+#include <stdint.h>
+#include <stdbool.h>
 #include "assert.h"
-#include "globals.h"
+#include "exceptions.h"
 
 // Does not compile if x is pointer of some kind
 // See http://zubplot.blogspot.com/2015/01/gcc-is-wonderful-better-arraysize-macro.html
@@ -40,8 +40,6 @@
 // Any buffer claiming to be longer than this is a bug
 // (we anyway have only 4KB of memory)
 #define BUFFER_SIZE_PARANOIA 1024
-
-#define PTR_PIC(ptr) ((__typeof__(ptr)) PIC(ptr))
 
 #define ITERATE(it, arr) for (__typeof__(&(arr[0])) it = BEGIN(arr); it < END(arr); it++)
 
@@ -93,16 +91,4 @@ static inline bool parseIncluded(uint8_t value, bool* result) {
         default:
             return false;
     }
-}
-
-/**
- * Helper: Reset context to idle and return error
- * Call this on any error during instruction processing to ensure clean state
- * Sets req_type = REQUEST_NONE and state = *_STATE_NONE (union member)
- * Works for all instructions (transaction, opcert, pubkey, etc.)
- */
-static inline int send_error_and_reset(uint16_t sw) {
-    G_context.req_type = REQUEST_NONE;
-    explicit_bzero(&G_context.state, SIZEOF(G_context.state));
-    return io_send_sw(sw);
 }
