@@ -3,7 +3,7 @@
 #include "constants.h"
 #include "types.h"
 #include "addressUtils/bip44.h"
-#include "bufView.h"
+#include "utils/utils.h"
 
 typedef enum {
     // base address contains explicit payment info (key hash / script hash)
@@ -110,7 +110,7 @@ void printBlockchainPointerToStr(blockchainPointer_t blockchainPointer, char* ou
 
 size_t humanReadableAddress(const uint8_t* address, size_t addressSize, char* out, size_t outSize);
 
-void view_parseAddressParams(read_view_t* view, addressParams_t* params);
+bool buffer_parseAddressParams(buffer_t* buffer, addressParams_t* params);
 
 bool isValidAddressParams(const addressParams_t* addressParams);
 payment_choice_t determinePaymentChoice(address_type_t addressType);

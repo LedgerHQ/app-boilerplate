@@ -33,7 +33,7 @@
 #include "parse_opcert.h"
 #include "securityPolicy.h"
 #include "messageSigning.h"
-#include "bufView.h"
+#include "buffer_utils.h"
 #include "write.h"
 #include "sign_opcert.h"
 #include "menu.h"
@@ -96,32 +96,16 @@ void finalize_sign_opcert(bool confirmed) {
     uint8_t opCertBodyBuffer[OP_CERT_BODY_LENGTH] = {0};
     explicit_bzero(opCertBodyBuffer, SIZEOF(opCertBodyBuffer));
     {
-        write_view_t opCertBodyBufferView =
-            make_write_view(opCertBodyBuffer, opCertBodyBuffer + OP_CERT_BODY_LENGTH);
+        write_buffer_t buf = buffer_init(opCertBodyBuffer, SIZEOF(opCertBodyBuffer));
 
-        view_appendBuffer(&opCertBodyBufferView,
-                        (const uint8_t*) opcert->kesPublicKey,
-                        KES_PUBLIC_KEY_LENGTH);
-        {
-            uint8_t chunk[8] = {0};
-            write_u64_be(chunk, 0, opcert->issueCounter);
-#ifdef FUZZING
-            view_appendBuffer(&opCertBodyBufferView, chunk, 8);
-#else
-            view_appendBuffer(&opCertBodyBufferView, chunk, SIZEOF(chunk));
-#endif
-        }
-        {
-            uint8_t chunk[8] = {0};
-            write_u64_be(chunk, 0, opcert->kesPeriod);
-#ifdef FUZZING
-            view_appendBuffer(&opCertBodyBufferView, chunk, 8);
-#else
-            view_appendBuffer(&opCertBodyBufferView, chunk, SIZEOF(chunk));
-#endif
-        }
+        // Buffer is exactly sized - failure is programming error
+        ASSERT(buffer_write_bytes(&buf,
+                                  (const uint8_t*) opcert->kesPublicKey,
+                                  KES_PUBLIC_KEY_LENGTH));
+        ASSERT(buffer_write_u64(&buf, opcert->issueCounter, BE));
+        ASSERT(buffer_write_u64(&buf, opcert->kesPeriod, BE));
 
-        ASSERT(view_processedSize(&opCertBodyBufferView) == OP_CERT_BODY_LENGTH);
+        ASSERT(buffer_written_size(&buf) == OP_CERT_BODY_LENGTH);
         TRACE_BUFFER(opCertBodyBuffer, SIZEOF(opCertBodyBuffer));
     }
 

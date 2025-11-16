@@ -2,7 +2,6 @@
 #include "hash.h"
 #include "cbor.h"
 #include "constants.h"
-#include "bufView.h"
 #include "write.h"
 
 // this tracing is rarely needed

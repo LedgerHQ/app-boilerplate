@@ -12,10 +12,15 @@ static const uint64_t VALUE_W2_UPPER_THRESHOLD = (uint64_t) 1 << 8;
 static const uint64_t VALUE_W4_UPPER_THRESHOLD = (uint64_t) 1 << 16;
 static const uint64_t VALUE_W8_UPPER_THRESHOLD = (uint64_t) 1 << 32;
 
-cbor_token_t cbor_parseToken(const uint8_t* buf, size_t size) {
-#define ENSURE_AVAILABLE_BYTES(x) \
-    if (x > size) THROW(ERR_NOT_ENOUGH_INPUT);
-    ENSURE_AVAILABLE_BYTES(1);
+bool cbor_parseToken(const uint8_t* buf, size_t size, cbor_token_t* out_token) {
+    LEDGER_ASSERT(buf != NULL, "NULL buf");
+    LEDGER_ASSERT(out_token != NULL, "NULL out_token");
+
+    // Need at least 1 byte for the tag
+    if (size < 1) {
+        return false;
+    }
+
     const uint8_t tag = buf[0];
     cbor_token_t result;
 
@@ -24,7 +29,8 @@ cbor_token_t cbor_parseToken(const uint8_t* buf, size_t size) {
         result.type = tag;
         result.width = 0;
         result.value = 0;
-        return result;
+        *out_token = result;
+        return true;
     }
 
     result.type = tag & CBOR_TYPE_MASK;
@@ -40,7 +46,7 @@ cbor_token_t cbor_parseToken(const uint8_t* buf, size_t size) {
         default:
             // We don't know how to parse others
             // (particularly CBOR_TYPE_PRIMITIVES)
-            THROW(ERR_UNEXPECTED_TOKEN);
+            return false;
     }
 
     const uint8_t val = (tag & CBOR_VALUE_MASK);
@@ -48,32 +54,45 @@ cbor_token_t cbor_parseToken(const uint8_t* buf, size_t size) {
         result.width = 0;
         result.value = val;
     } else {
-        // shift buffer
         // Holds minimum value for a given byte-width.
         // Anything below this is not canonical CBOR as
         // it could be represented by a shorter CBOR notation
         uint64_t limit_min;
+        size_t required_size;
+
         switch (val) {
             case 24:
-                ENSURE_AVAILABLE_BYTES(1 + 1);
+                required_size = 1 + 1;
+                if (size < required_size) {
+                    return false;
+                }
                 result.width = 1;
                 result.value = (buf + 1)[0];
                 limit_min = VALUE_W1_UPPER_THRESHOLD;
                 break;
             case 25:
-                ENSURE_AVAILABLE_BYTES(1 + 2);
+                required_size = 1 + 2;
+                if (size < required_size) {
+                    return false;
+                }
                 result.width = 2;
                 result.value = read_u16_be(buf + 1, 0);
                 limit_min = VALUE_W2_UPPER_THRESHOLD;
                 break;
             case 26:
-                ENSURE_AVAILABLE_BYTES(1 + 4);
+                required_size = 1 + 4;
+                if (size < required_size) {
+                    return false;
+                }
                 result.width = 4;
                 result.value = read_u32_be(buf + 1, 0);
                 limit_min = VALUE_W4_UPPER_THRESHOLD;
                 break;
             case 27:
-                ENSURE_AVAILABLE_BYTES(1 + 8);
+                required_size = 1 + 8;
+                if (size < required_size) {
+                    return false;
+                }
                 result.width = 8;
                 result.value = read_u64_be(buf + 1, 0);
                 limit_min = VALUE_W8_UPPER_THRESHOLD;
@@ -82,18 +101,18 @@ cbor_token_t cbor_parseToken(const uint8_t* buf, size_t size) {
                 // Values above 27 are not valid in CBOR.
                 // Exception is indefinite length marker
                 // but this has been handled separately.
-                THROW(ERR_UNEXPECTED_TOKEN);
+                return false;
         }
 
         if (result.value < limit_min) {
             // This isn't canonical CBOR
-            THROW(ERR_UNEXPECTED_TOKEN);
+            return false;
         }
     }
 
     if (result.type == CBOR_TYPE_NEGATIVE) {
         if (result.value > INT64_MAX) {
-            THROW(ERR_UNEXPECTED_TOKEN);
+            return false;
         }
         int64_t negativeValue;
         if (result.value < INT64_MAX) {
@@ -104,8 +123,8 @@ cbor_token_t cbor_parseToken(const uint8_t* buf, size_t size) {
         result.value = negativeValue;
     }
 
-    return result;
-#undef ENSURE_AVAILABLE_BYTES
+    *out_token = result;
+    return true;
 }
 
 size_t cbor_writeToken(uint8_t type, uint64_t value, uint8_t* buffer, size_t bufferSize) {

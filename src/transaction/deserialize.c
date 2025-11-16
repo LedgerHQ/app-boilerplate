@@ -20,6 +20,7 @@
 #include "deserialize.h"
 #include "utils.h"
 #include "utils/textUtils.h"
+#include "utils/buffer_utils.h"
 #include "types.h"
 #include "tx_output_types.h"
 #include "addressUtils/addressUtilsShelley.h"

@@ -18,23 +18,9 @@
 
 #include "parse_opcert.h"
 #include "utils/utils.h"
+#include "utils/buffer_utils.h"
 #include "opcert_types.h"
 #include "assert.h"
-
-
-// TODO: This is a general buffer utility and should be moved to an appropriate file
-// destBuffer is set to point at the beginning of the bytestring in buf;
-// buf position is moved by len bytes
-// if not enough bytes in the buffer, return false
-bool buffer_read_bytes_ptr(buffer_t *buf, uint8_t** destBuffer, size_t len) {
-    LEDGER_ASSERT(buf != NULL, "NULL buf");
-
-    *destBuffer = (uint8_t *) (buf->ptr + buf->offset);
-    if (!buffer_seek_cur(buf, len)) {
-        return false;
-    }
-    return true;
-}
 
 opcert_parser_status_e opcert_deserialize(buffer_t *buf, parsed_opcert_t *opcert)
 {

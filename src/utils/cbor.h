@@ -53,7 +53,11 @@ typedef cbor_token_t token_t;  // legacy
 // Serializes token into buffer, returning number of written bytes
 size_t cbor_writeToken(uint8_t type, uint64_t value, uint8_t* buffer, size_t bufferSize);
 
-cbor_token_t cbor_parseToken(const uint8_t* buf, size_t size);
+// Parse a single CBOR token from buffer
+// Returns true on success and sets *out_token
+// Returns false on any error (truncated buffer, invalid token, etc.)
+// Does not modify output parameter on error
+bool cbor_parseToken(const uint8_t* buf, size_t size, cbor_token_t* out_token);
 
 bool cbor_mapKeyFulfillsCanonicalOrdering(const uint8_t* previousBuffer,
                                           size_t previousSize,

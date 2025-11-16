@@ -451,9 +451,12 @@ static bool is_addressBytes_suitable_for_tx_output(const uint8_t* addressBuffer,
                 // outputs may not contain reward addresses
                 return false;
 
-            case BYRON:
-                CHECK(extractProtocolMagic(addressBuffer, addressSize) == protocolMagic);
+            case BYRON: {
+                uint32_t extractedMagic;
+                CHECK(extractProtocolMagic(addressBuffer, addressSize, &extractedMagic));
+                CHECK(extractedMagic == protocolMagic);
                 break;
+            }
 
             default: {
                 // shelley types allowed in output

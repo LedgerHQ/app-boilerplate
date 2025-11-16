@@ -8,4 +8,6 @@ size_t deriveAddress_byron(const bip44_path_t* pathSpec,
                            size_t outSize);
 
 // Note: validates the overall address structure at the same time
-uint32_t extractProtocolMagic(const uint8_t* addressBuffer, size_t addressSize);
+// Returns true on success, false if address is invalid
+// out_protocol_magic is set to the protocol magic value on success
+bool extractProtocolMagic(const uint8_t* addressBuffer, size_t addressSize, uint32_t* out_protocol_magic);

@@ -18,7 +18,9 @@ static const uint32_t MAX_REASONABLE_ADDRESS = 1000000;
 static const uint32_t MAX_REASONABLE_COLD_KEY_INDEX = 1000000;
 static const uint32_t MAX_REASONABLE_MINT_POLICY_INDEX = 1000000;
 
-bool bip44_check_path(bip44_path_t* pathSpec, const uint8_t* dataBuffer, size_t dataSize) {
+// Internal helper: validate BIP44 path format from wire data
+// Returns true if path is valid, false on any validation error
+static bool bip44_check_path(bip44_path_t* pathSpec, const uint8_t* dataBuffer, size_t dataSize) {
     if (dataSize < 1) {
         TRACE("ERROR: Invalid data size");
         return false;
@@ -38,10 +40,14 @@ bool bip44_check_path(bip44_path_t* pathSpec, const uint8_t* dataBuffer, size_t 
     return true;
 }
 
-size_t bip44_parseFromWire(bip44_path_t* pathSpec, const uint8_t* dataBuffer, size_t dataSize) {
-    // TODO rethink how exceptions are thrown during parsing/validation
-    // but some parsing is quite deep within a complex structure, so it seems easier to throw
-    VALIDATE(bip44_check_path(pathSpec, dataBuffer, dataSize), ERR_INVALID_DATA);
+// Internal helper: parse BIP44 path from wire format
+// Returns number of bytes consumed, or 0 on error
+// Use buffer_read_bip44_path (public API) for safe reading with buffer advancement
+static size_t bip44_parse_path(bip44_path_t* pathSpec, const uint8_t* dataBuffer, size_t dataSize) {
+    // Check path validity - return 0 on error instead of throwing
+    if (!bip44_check_path(pathSpec, dataBuffer, dataSize)) {
+        return 0;
+    }
 
     size_t offset = 1;
     for (size_t i = 0; i < pathSpec->length; i++) {
@@ -56,9 +62,17 @@ bool buffer_read_bip44_path(buffer_t *buf, bip44_path_t* path)
     LEDGER_ASSERT(buf != NULL, "NULL buf");
     LEDGER_ASSERT(path != NULL, "NULL path");
 
-    size_t length = bip44_parseFromWire(path, buf->ptr + buf->offset, buf->size - buf->offset);
+    size_t length = bip44_parse_path(path, buf->ptr + buf->offset, buf->size - buf->offset);
 
-    buffer_seek_cur(buf, length);
+    // bip44_parse_path returns 0 on error (invalid path)
+    if (length == 0) {
+        return false;
+    }
+
+    // Advance buffer by the number of bytes consumed
+    if (!buffer_seek_cur(buf, length)) {
+        return false;
+    }
 
     return true;
 }

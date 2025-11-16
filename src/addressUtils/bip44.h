@@ -38,10 +38,8 @@ bool isHardened(uint32_t value);
 uint32_t bip44_harden(uint32_t value);
 uint32_t bip44_unharden(uint32_t value);
 
-// TODO hide these two?
-bool bip44_check_path(bip44_path_t* pathSpec, const uint8_t* dataBuffer, size_t dataSize);
-size_t bip44_parseFromWire(bip44_path_t* pathSpec, const uint8_t* dataBuffer, size_t dataSize);
-
+// Public API for safe BIP44 path reading from buffer
+// Handles buffer advancement and error checking internally
 bool buffer_read_bip44_path(buffer_t *buffer, bip44_path_t* path);
 
 // Indexes into pathSpec
