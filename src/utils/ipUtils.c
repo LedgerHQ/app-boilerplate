@@ -23,6 +23,8 @@
  * SOFTWARE.
  */
 
+#include <string.h>
+
 #include "assert.h"
 #include "ipUtils.h"
 #include "utils.h"

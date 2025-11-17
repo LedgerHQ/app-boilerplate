@@ -21,8 +21,10 @@
 
 // modified by Vacuumlabs
 
-#include "bech32.h"
+#include <string.h>
+#include "utils/assert.h"
 #include "utils/utils.h"
+#include "bech32.h"
 
 uint32_t bech32_polymod_step(uint32_t pre) {
     const uint8_t b = pre >> 25;

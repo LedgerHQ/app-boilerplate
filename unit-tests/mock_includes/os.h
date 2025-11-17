@@ -1,6 +1,5 @@
 #pragma once
 
-
 /*******************************************************************************
 *   Ledger Nano S - Secure firmware
 *   (c) 2019 Ledger
@@ -20,6 +19,54 @@
 
 #ifndef OS_H
 #define OS_H
+
+#ifndef WARN_UNUSED_RESULT
+#define WARN_UNUSED_RESULT __attribute__((warn_unused_result))
+#endif
+
+// Mock arch qualifiers have to be available before crypto headers pull them in.
+#ifndef WIDE
+#define WIDE // const // don't !!
+#endif
+#ifndef WIDE_AS_INT
+#define WIDE_AS_INT unsigned long int
+#endif
+#ifndef REENTRANT
+#define REENTRANT(x) x //
+#endif
+#ifndef SYSCALL
+#define SYSCALL
+#endif
+#ifndef TASKSWITCH
+#define TASKSWITCH
+#endif
+#ifndef SUDOCALL
+#define SUDOCALL
+#endif
+#ifndef LIBCALL
+#define LIBCALL
+#endif
+#ifndef SHARED
+#define SHARED
+#endif
+#ifndef PERMISSION
+#define PERMISSION(...)
+#endif
+#ifndef PLENGTH
+#define PLENGTH(...)
+#endif
+#ifndef CXPORT
+#define CXPORT(...)
+#endif
+#ifndef TASKLEVEL
+#define TASKLEVEL(...)
+#endif
+#ifndef CXCALL
+#define CXCALL SYSCALL
+#endif
+
+// Include crypto types needed by this header
+#include "lcx_ecfp.h"
 
 #define TARGET_NANOSP
 #define USB_SEGMENT_SIZE 64
@@ -115,10 +162,6 @@ typedef unsigned short exception_t;
 #define NATIVE_64BITS
 #define NVM_ERASED_WORD_VALUE 0xFFFFFFFFUL
 
-#define WIDE // const // don't !!
-#define WIDE_AS_INT unsigned long int
-#define REENTRANT(x) x //
-
 #include <setjmp.h>
 // GCC/LLVM declare way too big jmp context, reduce them to what is used on CM0+
 typedef struct try_context_s try_context_t;
@@ -158,10 +201,6 @@ int setjmp(jmp_buf __jmpb);
 //#define macro_offsetof // already defined in stddef.h
 #define OS_LITTLE_ENDIAN
 #define NATIVE_64BITS
-#define WIDE // const // don't !!
-#define WIDE_AS_INT unsigned long int
-#define REENTRANT(x) x //
-
 //#include <setjmp.h>
 // GCC/LLVM declare way too big jmp context, reduce them to what is used on CM0+
 typedef struct try_context_s try_context_t;
@@ -211,47 +250,6 @@ int setjmp(jmp_buf __jmpb);
 #ifndef PIC
 #define PIC(x) pic((unsigned int)x)
 unsigned int pic(unsigned int linked_address);
-#endif
-
-#ifndef SYSCALL
-// #define SYSCALL syscall
-#define SYSCALL
-#endif
-
-#ifndef TASKSWITCH
-// #define TASKSWITCH taskswitch
-#define TASKSWITCH
-#endif
-
-#ifndef SUDOCALL
-// #define SUDOCALL sudocall
-#define SUDOCALL
-#endif
-
-#ifndef LIBCALL
-// #define LIBCALL libcall
-#define LIBCALL
-#endif
-
-#ifndef SHARED
-// #define SHARED shared
-#define SHARED
-#endif
-
-#ifndef PERMISSION
-#define PERMISSION(...)
-#endif
-
-#ifndef PLENGTH
-#define PLENGTH(...)
-#endif
-
-#ifndef CXPORT
-#define CXPORT(...)
-#endif
-
-#ifndef TASKLEVEL
-#define TASKLEVEL(...)
 #endif
 
 /* ----------------------------------------------------------------------- */

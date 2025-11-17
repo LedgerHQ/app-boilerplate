@@ -699,10 +699,9 @@ static inline bool isValidPaymentInfo(const addressParams_t* params) {
 bool isValidAddressParams(const addressParams_t* params) {
 #define CHECK(cond) \
     if (!(cond)) return false
+
     if (params->type != BYRON) {
         CHECK(isValidNetworkId(params->networkId));
-    } else {
-        return false;
     }
 
     CHECK(isValidStakingInfo(params));

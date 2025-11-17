@@ -24,6 +24,9 @@
 
 #include <stdint.h>
 
+#include "os.h"
+#include "cx_errors.h"
+
 /* ======================================================================= */
 /*                                  CHIP/LIB3rd                            */
 /* ======================================================================= */
@@ -50,6 +53,7 @@
 #include "lcx_ripemd160.h"
 
 #include "lcx_sha256.h"
+#include "lcx_sha3.h"
 // #include "lcx_sha3.h"
 // #include "lcx_sha512.h"
 

@@ -7,13 +7,14 @@
 
 /**
  * Transaction buffer size for dynamic allocation (bytes).
- * Note: Must be significantly less than SIZE_MEM_BUFFER in mem.c to account for:
+ * Note: Must be less than SIZE_MEM_BUFFER in mem.c to account for:
  * - HEAP_HEADER_SIZE (~160 bytes for heap metadata)
  * - Chunk headers (4-8 bytes per allocation)
  * - Alignment requirements (8-byte alignment)
- * Maximum tested working size is 14KB from a 24KB pool TODO
  */
-#define TX_BUFFER_SIZE (14 * 1024)
+// TODO max cardano tx size is 16K, but our format of non-serialized (not CBOR) tx might be bigger or smaller, needs to be checked
+// up to 19K is possible to alloc, but we want this minimal
+#define TX_BUFFER_SIZE (16 * 1024)
 
 /**
  * Handler for SIGN_TX command. If successfully parse BIP32 path

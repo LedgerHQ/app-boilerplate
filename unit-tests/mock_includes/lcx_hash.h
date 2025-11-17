@@ -19,8 +19,11 @@
 #ifndef LCX_HASH_H
 #define LCX_HASH_H
 
-#include "os.h"
 #include <stdint.h>
+#include <string.h>
+
+#include "blake2b.h"
+#include "cx_errors.h"
 
 /** Message Digest algorithm identifiers. */
 enum cx_md_e {
@@ -71,7 +74,39 @@ struct cx_hash_header_s {
 typedef struct cx_hash_header_s cx_hash_t;
 
 /**
+ * Blake2b context for our mock implementation
+ */
+typedef struct {
+    cx_hash_t header;
+    uint8_t output_len;
+    uint8_t reserved[7];  // keep 8-byte alignment
+    size_t buffer_len;
+    uint64_t total_len;
+    blake2b_t state;
+} cx_blake2b_t;
+
+/**
+ * Full Blake2b context (used in tests)
+ */
+typedef cx_blake2b_t cx_blake2b_full_t;
+
+/**
+ * Initialize Blake2b context with specified output length
+ */
+cx_err_t cx_blake2b_init_no_throw(cx_blake2b_t *ctx, uint8_t output_len);
+
+/**
  * Add more data to hash.
+ * Mode flags: CX_LAST to finalize
+ */
+cx_err_t cx_hash_no_throw(cx_hash_t *hash, int mode,
+                          const uint8_t *in, size_t in_len,
+                          uint8_t *out, size_t out_len);
+
+#include "os.h"
+
+/**
+ * Add more data to hash (legacy API).
  *
  * @param  [in/out] hash
  *   Univers Continuation Blob.

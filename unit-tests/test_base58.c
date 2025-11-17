@@ -35,7 +35,9 @@ static void test_base58_single_bytes(void **state) {
 
     for (size_t i = 0; i < sizeof(testVectors) / sizeof(testVectors[0]); i++) {
         uint8_t inputBuffer[100] = {0};
-        size_t inputSize = decode_hex(testVectors[i].inputHex, inputBuffer, sizeof(inputBuffer));
+        size_t inputSize;
+        bool success = decode_hex(testVectors[i].inputHex, inputBuffer, sizeof(inputBuffer), &inputSize);
+        assert_true(success);
 
         char outputStr[100] = {0};
         size_t outputLen = base58_encode(inputBuffer, inputSize, outputStr, sizeof(outputStr));
@@ -61,7 +63,9 @@ static void test_base58_multi_byte(void **state) {
 
     for (size_t i = 0; i < sizeof(testVectors) / sizeof(testVectors[0]); i++) {
         uint8_t inputBuffer[100] = {0};
-        size_t inputSize = decode_hex(testVectors[i].inputHex, inputBuffer, sizeof(inputBuffer));
+        size_t inputSize;
+        bool success = decode_hex(testVectors[i].inputHex, inputBuffer, sizeof(inputBuffer), &inputSize);
+        assert_true(success);
 
         char outputStr[100] = {0};
         size_t outputLen = base58_encode(inputBuffer, inputSize, outputStr, sizeof(outputStr));
@@ -87,7 +91,9 @@ static void test_base58_leading_zeros(void **state) {
 
     for (size_t i = 0; i < sizeof(testVectors) / sizeof(testVectors[0]); i++) {
         uint8_t inputBuffer[100] = {0};
-        size_t inputSize = decode_hex(testVectors[i].inputHex, inputBuffer, sizeof(inputBuffer));
+        size_t inputSize;
+        bool success = decode_hex(testVectors[i].inputHex, inputBuffer, sizeof(inputBuffer), &inputSize);
+        assert_true(success);
 
         char outputStr[100] = {0};
         size_t outputLen = base58_encode(inputBuffer, inputSize, outputStr, sizeof(outputStr));
@@ -116,7 +122,9 @@ static void test_base58_cardano_address(void **state) {
 
     for (size_t i = 0; i < sizeof(testVectors) / sizeof(testVectors[0]); i++) {
         uint8_t inputBuffer[200] = {0};
-        size_t inputSize = decode_hex(testVectors[i].inputHex, inputBuffer, sizeof(inputBuffer));
+        size_t inputSize;
+        bool success = decode_hex(testVectors[i].inputHex, inputBuffer, sizeof(inputBuffer), &inputSize);
+        assert_true(success);
 
         char outputStr[200] = {0};
         size_t outputLen = base58_encode(inputBuffer, inputSize, outputStr, sizeof(outputStr));

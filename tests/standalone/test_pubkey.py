@@ -38,8 +38,6 @@ def test_pubkey_confirm(device: Device,
                 # For Nano devices: navigate to "Export" and click it
                 navigator.navigate_until_text(NavInsID.RIGHT_CLICK, [NavInsID.BOTH_CLICK], "Export")
             else:
-                # For NanoS+/Stax: TODO - determine correct navigation pattern
-                # Likely uses USE_CASE_CHOICE_CONFIRM or similar
                 navigator.navigate_until_text(NavInsID.RIGHT_CLICK, [NavInsID.USE_CASE_CHOICE_CONFIRM], "Export")
         else:
             pass

@@ -74,12 +74,12 @@ bool buffer_write_cbor_token(write_buffer_t *buffer, uint8_t type, uint64_t valu
         return false;
     }
 
-    size_t written = cbor_writeToken(type, value,
-                                     buffer->ptr + buffer->offset,
-                                     buffer_remaining_size(buffer));
-
-    if (written == 0) {
-        // cbor_writeToken returns 0 on failure
+    size_t written = 0;
+    if (!cbor_writeToken(type, value,
+                         buffer->ptr + buffer->offset,
+                         buffer_remaining_size(buffer),
+                         &written)) {
+        // cbor_writeToken returns false on failure
         return false;
     }
 

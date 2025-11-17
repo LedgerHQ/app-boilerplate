@@ -13,8 +13,8 @@ enum {
     CBOR_MT_TAG = 6,
     CBOR_MT_PRIMITIVES = 7,
 
-    CBOR_VALUE_MASK = 0b00011111,
-    CBOR_TYPE_MASK = 0b11100000,
+    CBOR_VALUE_MASK = 0x1F,  // 00011111
+    CBOR_TYPE_MASK = 0xE0,   // 11100000
     CBOR_INDEF = CBOR_VALUE_MASK,
     CBOR_NULL = 22
 };
@@ -50,8 +50,9 @@ typedef struct {
 
 typedef cbor_token_t token_t;  // legacy
 
-// Serializes token into buffer, returning number of written bytes
-size_t cbor_writeToken(uint8_t type, uint64_t value, uint8_t* buffer, size_t bufferSize);
+// Serializes token into buffer, returning true on success, false on error
+// On success, the buffer is written with the serialized token
+bool cbor_writeToken(uint8_t type, uint64_t value, uint8_t* buffer, size_t bufferSize, size_t* out_size);
 
 // Parse a single CBOR token from buffer
 // Returns true on success and sets *out_token

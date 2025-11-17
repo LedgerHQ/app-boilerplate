@@ -38,7 +38,8 @@ static void blake2b_256_append_buffer_tx_body(blake2b_256_context_t* hashCtx,
 __noinline_due_to_stack__ static void
 blake2b_256_append_cbor_tx_body(blake2b_256_context_t* hashCtx, uint8_t type, uint64_t value) {
     uint8_t buffer[10] = {0};
-    size_t size = cbor_writeToken(type, value, buffer, SIZEOF(buffer));
+    size_t size = 0;
+    cbor_writeToken(type, value, buffer, SIZEOF(buffer), &size);
     TRACE_BUFFER(buffer, size);
     blake2b_256_append(hashCtx, buffer, size);
 }

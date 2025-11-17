@@ -1,11 +1,13 @@
+#include "utils/assert.h"
+#include "utils/buffer_utils.h"
 #include "addressUtilsByron.h"
-#include "keyDerivation.h"
+#include "keyDerivation/keyDerivation.h"
 #include "cbor.h"
 #include "constants.h"
 #include "hash.h"
-#include "buffer_utils.h"
 #include "lcx_crc.h"
 #include "sw.h"
+#include "utils/utils.h"
 
 #define BYRON_ADDRESS_CBOR_HASH_SIZE 32
 #define ADDRESS_ROOT_SIZE 28
@@ -85,10 +87,12 @@ size_t cborEncodePubkeyAddressInner(const uint8_t* addressRoot,
 
                     // Protocol magic itself is bytes with cbor-encoded content
                     uint8_t scratch[10] = {0};
-                    size_t scratchSize = cbor_writeToken(CBOR_TYPE_UNSIGNED,
-                                                         protocolMagic,
-                                                         scratch,
-                                                         SIZEOF(scratch));
+                    size_t scratchSize = 0;
+                    cbor_writeToken(CBOR_TYPE_UNSIGNED,
+                                    protocolMagic,
+                                    scratch,
+                                    SIZEOF(scratch),
+                                    &scratchSize);
                     ASSERT(buffer_write_cbor_token(&out, CBOR_TYPE_BYTES, scratchSize));
                     ASSERT(buffer_write_bytes(&out, scratch, scratchSize));
                 }

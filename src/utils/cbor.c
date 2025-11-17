@@ -4,6 +4,7 @@
 #include "write.h"
 #include "assert.h"
 #include "exceptions.h"
+#include <string.h>
 
 // Note(ppershing): consume functions should either
 // a) *consume* expected value, or
@@ -129,20 +130,22 @@ bool cbor_parseToken(const uint8_t* buf, size_t size, cbor_token_t* out_token) {
     return true;
 }
 
-size_t cbor_writeToken(uint8_t type, uint64_t value, uint8_t* buffer, size_t bufferSize) {
+bool cbor_writeToken(uint8_t type, uint64_t value, uint8_t* buffer, size_t bufferSize, size_t* out_size) {
     ASSERT(bufferSize < BUFFER_SIZE_PARANOIA);
+    ASSERT(out_size != NULL);
 
 #define CHECK_BUF_LEN(requiredSize) \
-    if ((size_t) requiredSize > bufferSize) THROW(ERR_DATA_TOO_LARGE);
+    if ((size_t) requiredSize > bufferSize) return false;
     if (type == CBOR_TYPE_ARRAY_INDEF || type == CBOR_TYPE_INDEF_END || type == CBOR_TYPE_NULL) {
         CHECK_BUF_LEN(1);
         buffer[0] = type;
-        return 1;
+        *out_size = 1;
+        return true;
     }
 
     if (type & CBOR_VALUE_MASK) {
         // type should not have any value
-        THROW(ERR_UNEXPECTED_TOKEN);
+        return false;
     }
 
     // Check sanity
@@ -154,7 +157,7 @@ size_t cbor_writeToken(uint8_t type, uint64_t value, uint8_t* buffer, size_t buf
                           "incompatible signed and unsigned type sizes");
             memmove(&negativeValue, &value, SIZEOF(value));
             if (negativeValue >= 0) {
-                THROW(ERR_UNEXPECTED_TOKEN);
+                return false;
             }
             value = (uint64_t)(-negativeValue) - 1;
         }
@@ -168,7 +171,7 @@ size_t cbor_writeToken(uint8_t type, uint64_t value, uint8_t* buffer, size_t buf
             break;
         default:
             // not supported
-            THROW(ERR_UNEXPECTED_TOKEN);
+            return false;
     }
 
     // Warning(ppershing): It might be tempting but we don't want to call stream_appendData() twice
@@ -178,27 +181,32 @@ size_t cbor_writeToken(uint8_t type, uint64_t value, uint8_t* buffer, size_t buf
     if (value < VALUE_W1_UPPER_THRESHOLD) {
         CHECK_BUF_LEN(1);
         u1be_write(buffer, (uint8_t)(type | value));
-        return 1;
+        *out_size = 1;
+        return true;
     } else if (value < VALUE_W2_UPPER_THRESHOLD) {
         CHECK_BUF_LEN(1 + 1);
         u1be_write(buffer, type | 24);
         u1be_write(buffer + 1, (uint8_t) value);
-        return 1 + 1;
+        *out_size = 1 + 1;
+        return true;
     } else if (value < VALUE_W4_UPPER_THRESHOLD) {
         CHECK_BUF_LEN(1 + 2);
         u1be_write(buffer, type | 25);
         write_u16_be(buffer + 1, 0, (uint16_t) value);
-        return 1 + 2;
+        *out_size = 1 + 2;
+        return true;
     } else if (value < VALUE_W8_UPPER_THRESHOLD) {
         CHECK_BUF_LEN(1 + 4);
         u1be_write(buffer, type | 26);
         write_u32_be(buffer + 1, 0, (uint32_t) value);
-        return 1 + 4;
+        *out_size = 1 + 4;
+        return true;
     } else {
         CHECK_BUF_LEN(1 + 8);
         u1be_write(buffer, type | 27);
         write_u64_be(buffer + 1, 0, value);
-        return 1 + 8;
+        *out_size = 1 + 8;
+        return true;
     }
     #undef u1be_write
 #undef CHECK_BUF_LEN

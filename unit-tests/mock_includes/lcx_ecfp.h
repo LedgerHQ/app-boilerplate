@@ -19,6 +19,9 @@
 #ifndef LCX_ECFP_H
 #define LCX_ECFP_H
 
+#include "lcx_common.h"
+#include "lcx_hash.h"
+
 /**
  *
  */

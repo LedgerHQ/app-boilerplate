@@ -43,7 +43,9 @@ static void test_bech32_with_data(void **state) {
     // Test with actual data payload
     const char* inputHex = "00443214c74254b635cf84653a56d7c675be77df";
     uint8_t inputBuffer[100] = {0};
-    size_t inputSize = decode_hex(inputHex, inputBuffer, sizeof(inputBuffer));
+    size_t inputSize;
+    bool success = decode_hex(inputHex, inputBuffer, sizeof(inputBuffer), &inputSize);
+    assert_true(success);
 
     char outputStr[300] = {0};
     size_t outputLen = bech32_encode("abcdef", inputBuffer, inputSize, outputStr, sizeof(outputStr));
@@ -60,7 +62,9 @@ static void test_bech32_all_zeros(void **state) {
     const char* inputHex = "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
                           "0000000000000";
     uint8_t inputBuffer[100] = {0};
-    size_t inputSize = decode_hex(inputHex, inputBuffer, sizeof(inputBuffer));
+    size_t inputSize;
+    bool success = decode_hex(inputHex, inputBuffer, sizeof(inputBuffer), &inputSize);
+    assert_true(success);
 
     char outputStr[300] = {0};
     size_t outputLen = bech32_encode("1", inputBuffer, inputSize, outputStr, sizeof(outputStr));
@@ -77,7 +81,9 @@ static void test_bech32_split_example(void **state) {
     // Test "split" example
     const char* inputHex = "c5f38b70305f519bf66d85fb6cf03058f3dde463ecd7918f2dc743918f2d";
     uint8_t inputBuffer[100] = {0};
-    size_t inputSize = decode_hex(inputHex, inputBuffer, sizeof(inputBuffer));
+    size_t inputSize;
+    bool success = decode_hex(inputHex, inputBuffer, sizeof(inputBuffer), &inputSize);
+    assert_true(success);
 
     char outputStr[300] = {0};
     size_t outputLen = bech32_encode("split", inputBuffer, inputSize, outputStr, sizeof(outputStr));
@@ -94,7 +100,9 @@ static void test_bech32_cardano_address(void **state) {
     const char* inputHex = "009493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e32c728d3861e164cab28cb8f0064481"
                           "39c8f1740ffb8e7aa9e5232dc";
     uint8_t inputBuffer[100] = {0};
-    size_t inputSize = decode_hex(inputHex, inputBuffer, sizeof(inputBuffer));
+    size_t inputSize;
+    bool success = decode_hex(inputHex, inputBuffer, sizeof(inputBuffer), &inputSize);
+    assert_true(success);
 
     char outputStr[300] = {0};
     size_t outputLen = bech32_encode("addr", inputBuffer, inputSize, outputStr, sizeof(outputStr));

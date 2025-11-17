@@ -26,31 +26,26 @@ static void test_hex_nibble_parsing(void **state) {
     };
 
     for (size_t i = 0; i < sizeof(testVectors) / sizeof(testVectors[0]); i++) {
-        uint8_t result = hex_parseNibble(testVectors[i].nibble);
-        assert_int_equal(result, testVectors[i].value);
+        uint8_t nibble;
+        bool success = hex_parseNibble(testVectors[i].nibble, &nibble);
+        assert_true(success);
+        assert_int_equal(nibble, testVectors[i].value);
     }
 }
 
 static void test_hex_nibble_invalid(void **state) {
     (void) state;
 
-    // Invalid nibble characters that should throw ERR_UNEXPECTED_TOKEN
+    // Invalid nibble characters that should return false
     char invalidNibbles[] = {
         '\x00', '\x01', '.', '/', ':', ';', '?', '@', 'G', 'H', 'Z',
         '[', '\\', '_', '`', 'g', 'h', 'z', '{', 127, (char)128, (char)255
     };
 
     for (size_t i = 0; i < sizeof(invalidNibbles) / sizeof(invalidNibbles[0]); i++) {
-        // CMocka doesn't have exception handling like the old test framework
-        // We need to wrap this in a TRY/CATCH or test differently
-        // For now, we'll skip this test or use expect_assert_failure if available
-
-        // TODO: This test needs proper exception handling support
-        // The original test used EXPECT_THROWS(hex_parseNibble(it->nibble), ERR_UNEXPECTED_TOKEN)
-        // which relied on Ledger's THROW/CATCH mechanism
-
-        // One option is to test that invalid inputs trigger assertions
-        // Another is to refactor hex_parseNibble to return error codes instead of throwing
+        uint8_t nibble;
+        bool success = hex_parseNibble(invalidNibbles[i], &nibble);
+        assert_false(success);
     }
 }
 
@@ -72,7 +67,9 @@ static void test_hex_parsing(void **state) {
     };
 
     for (size_t i = 0; i < sizeof(testVectors) / sizeof(testVectors[0]); i++) {
-        uint8_t result = hex_parseNibblePair(testVectors[i].hex);
+        uint8_t result;
+        bool success = hex_parseNibblePair(testVectors[i].hex, &result);
+        assert_true(success);
         assert_int_equal(result, testVectors[i].raw);
     }
 }
@@ -83,8 +80,10 @@ static void test_decode_hex(void **state) {
     // Test basic hex decoding
     const char* hexStr = "48656c6c6f";  // "Hello" in hex
     uint8_t buffer[10];
-    size_t len = decode_hex(hexStr, buffer, sizeof(buffer));
+    size_t len;
+    bool success = decode_hex(hexStr, buffer, sizeof(buffer), &len);
 
+    assert_true(success);
     assert_int_equal(len, 5);
     assert_memory_equal(buffer, "Hello", 5);
 }
@@ -112,19 +111,60 @@ static void test_hex_roundtrip(void **state) {
     size_t encLen = encode_hex(original, sizeof(original), hexStr, sizeof(hexStr));
     assert_int_equal(encLen, 12);
 
-    size_t decLen = decode_hex(hexStr, decoded, sizeof(decoded));
+    size_t decLen;
+    bool success = decode_hex(hexStr, decoded, sizeof(decoded), &decLen);
+    assert_true(success);
     assert_int_equal(decLen, sizeof(original));
     assert_memory_equal(decoded, original, sizeof(original));
+}
+
+static void test_decode_hex_invalid(void **state) {
+    (void) state;
+
+    // Test decode with invalid hex characters
+    const char* invalidHexStr = "4865xxc6";
+    uint8_t buffer[10];
+    size_t len;
+    bool success = decode_hex(invalidHexStr, buffer, sizeof(buffer), &len);
+
+    assert_false(success);
+}
+
+static void test_decode_hex_odd_length(void **state) {
+    (void) state;
+
+    // Test decode with odd length string
+    const char* oddHexStr = "48656c6c6f0";
+    uint8_t buffer[10];
+    size_t len;
+    bool success = decode_hex(oddHexStr, buffer, sizeof(buffer), &len);
+
+    assert_false(success);
+}
+
+static void test_decode_hex_buffer_too_small(void **state) {
+    (void) state;
+
+    // Test decode with buffer too small
+    const char* hexStr = "48656c6c6f";  // 5 bytes
+    uint8_t buffer[3];
+    size_t len;
+    bool success = decode_hex(hexStr, buffer, sizeof(buffer), &len);
+
+    assert_false(success);
 }
 
 int main(void) {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_hex_nibble_parsing),
-        // cmocka_unit_test(test_hex_nibble_invalid),  // TODO: needs exception handling
+        cmocka_unit_test(test_hex_nibble_invalid),
         cmocka_unit_test(test_hex_parsing),
         cmocka_unit_test(test_decode_hex),
         cmocka_unit_test(test_encode_hex),
         cmocka_unit_test(test_hex_roundtrip),
+        cmocka_unit_test(test_decode_hex_invalid),
+        cmocka_unit_test(test_decode_hex_odd_length),
+        cmocka_unit_test(test_decode_hex_buffer_too_small),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

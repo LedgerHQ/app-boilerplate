@@ -5,12 +5,14 @@
 #include "sw.h"
 #include "read.h"
 
-static const uint32_t CARDANO_CHAIN_EXTERNAL = 0;
-static const uint32_t CARDANO_CHAIN_INTERNAL = 1;
-static const uint32_t CARDANO_CHAIN_STAKING_KEY = 2;
-static const uint32_t CARDANO_CHAIN_DREP_KEY = 3;
-static const uint32_t CARDANO_CHAIN_COMMITTEE_COLD_KEY = 4;
-static const uint32_t CARDANO_CHAIN_COMMITTEE_HOT_KEY = 5;
+enum {
+    CARDANO_CHAIN_EXTERNAL = 0,
+    CARDANO_CHAIN_INTERNAL = 1,
+    CARDANO_CHAIN_STAKING_KEY = 2,
+    CARDANO_CHAIN_DREP_KEY = 3,
+    CARDANO_CHAIN_COMMITTEE_COLD_KEY = 4,
+    CARDANO_CHAIN_COMMITTEE_HOT_KEY = 5,
+};
 
 static const uint32_t MAX_REASONABLE_ACCOUNT = 100;
 static const uint32_t MAX_REASONABLE_ADDRESS = 1000000;

@@ -1,0 +1,122 @@
+#pragma once
+
+#include <stdint.h>
+
+#include "ledger_assert.h"
+
+/**
+ * Checks the error code of a function.
+ * @hideinitializer
+ */
+#ifdef HAVE_BOLOS
+#define CX_CHECK(call) \
+    do {               \
+        error = call;  \
+        if (error) {   \
+            goto end;  \
+        }              \
+    } while (0)
+#else
+#define CX_CHECK(call)                                           \
+    do {                                                         \
+        error = call;                                            \
+        if (error) {                                             \
+            PRINTF("[CX_CHECK] - %s: %d\n", __FILE__, __LINE__); \
+            goto end;                                            \
+        }                                                        \
+    } while (0)
+#endif
+
+/**
+ * Checks the error code of a function and ignore
+ * it if CX_CARRY.
+ * @hideinitializer
+ */
+#define CX_CHECK_IGNORE_CARRY(call)       \
+    do {                                  \
+        error = call;                     \
+        if (error && error != CX_CARRY) { \
+            goto end;                     \
+        }                                 \
+    } while (0)
+
+/**
+ * Checks the error code of a function and assert in case of error.
+ */
+#define CX_ASSERT(call)                                                   \
+    do {                                                                  \
+        cx_err_t _assert_err = call;                                      \
+        LEDGER_ASSERT(!_assert_err, "err 0x%X <%s>", _assert_err, #call); \
+    } while (0)
+
+/** Success. */
+#define CX_OK 0x00000000
+
+/** There exists a carry at the end of the operation. */
+#define CX_CARRY 0xFFFFFF21
+
+/**
+ *  Multi Precision Integer processor is locked:
+ *  operations can be done.
+ */
+#define CX_LOCKED 0xFFFFFF81
+
+/**
+ * Multi Precision Integer processor is unlocked:
+ * operations can't be done.
+ */
+#define CX_UNLOCKED 0xFFFFFF82
+
+/**
+ * Multi Precision Integer processor is not locked:
+ * it cannot be unlocked.
+ */
+#define CX_NOT_LOCKED 0xFFFFFF83
+
+/**
+ *  Multi Precision Integer processor is already locked:
+ *  it cannot be locked.
+ */
+#define CX_NOT_UNLOCKED 0xFFFFFF84
+
+/** Internal error */
+#define CX_INTERNAL_ERROR 0xFFFFFF85
+
+/**
+ * A parameter has an invalid size.
+ */
+#define CX_INVALID_PARAMETER_SIZE 0xFFFFFF86
+
+/**
+ * A parameter has an invalid value.
+ */
+#define CX_INVALID_PARAMETER_VALUE 0xFFFFFF87
+
+/** A parameter is invalid. */
+#define CX_INVALID_PARAMETER 0xFFFFFF88
+
+/**
+ * A value is not invertible.
+ */
+#define CX_NOT_INVERTIBLE 0xFFFFFF89
+
+/** A value overflow occurred. */
+#define CX_OVERFLOW 0xFFFFFF8A
+
+/** Memory is full: allocation is not possible anymore. */
+#define CX_MEMORY_FULL 0xFFFFFF8B
+
+/** A quadratic residue cannot be computed. */
+#define CX_NO_RESIDUE 0xFFFFFF8C
+
+/** Point at infinity is hit. */
+#define CX_EC_INFINITE_POINT 0xFFFFFF41
+
+/** Point is invalid: it does not belong to the curve. */
+#define CX_EC_INVALID_POINT 0xFFFFFFA2
+
+/** Curve is invalid. */
+#define CX_EC_INVALID_CURVE 0xFFFFFFA3
+
+/** Type of error code */
+typedef uint32_t cx_err_t;

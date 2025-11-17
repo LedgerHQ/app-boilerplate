@@ -1,3 +1,5 @@
+#include "utils/assert.h"
+#include "utils/utils.h"
 #include "textUtils.h"
 #include "hexUtils.h"
 
