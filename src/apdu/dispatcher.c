@@ -69,6 +69,8 @@ int apdu_dispatcher(const command_t *cmd) {
 
             return handler_get_public_key(&buf, (bool) cmd->p1);
         case SIGN_TX:
+        case SIGN_TOKEN_TX:
+            PRINTF("APDU_DISPATCHER: %d\n", cmd->ins);
             if ((cmd->p1 == P1_START && cmd->p2 != P2_MORE) ||  //
                 cmd->p1 > P1_MAX ||                             //
                 (cmd->p2 != P2_LAST && cmd->p2 != P2_MORE)) {
@@ -83,7 +85,10 @@ int apdu_dispatcher(const command_t *cmd) {
             buf.size = cmd->lc;
             buf.offset = 0;
 
-            return handler_sign_tx(&buf, cmd->p1, (bool) (cmd->p2 & P2_MORE));
+            return handler_sign_tx(&buf,
+                                   cmd->p1,
+                                   (bool) (cmd->p2 & P2_MORE),
+                                   cmd->ins == SIGN_TOKEN_TX);
         default:
             return io_send_sw(SW_INS_NOT_SUPPORTED);
     }
