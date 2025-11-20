@@ -11,3 +11,8 @@ BOL_CONF = create_currency_config("BOL", "Boilerplate", sub_coin_config=None)
 BOL_PACKED_DERIVATION_PATH = pack_derivation_path(BOL_PATH)
 # Coin configuration mock as stored in CAL for the SWAP feature
 BOL_CURRENCY_CONFIGURATION = CurrencyConfiguration(ticker="BOL", conf=BOL_CONF, packed_derivation_path=BOL_PACKED_DERIVATION_PATH)
+
+# BOL USDC token configuration - USDC with 12 decimals as defined in token_db.c
+BOL_USDC_CONF = create_currency_config("USDC", "Boilerplate", sub_coin_config=("USDC", 12))
+BOL_USDC_PACKED_DERIVATION_PATH = BOL_PACKED_DERIVATION_PATH
+BOL_USDC_CURRENCY_CONFIGURATION = CurrencyConfiguration(ticker="USDC", conf=BOL_USDC_CONF, packed_derivation_path=BOL_USDC_PACKED_DERIVATION_PATH)

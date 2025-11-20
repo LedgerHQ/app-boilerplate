@@ -11,6 +11,7 @@ The application covers the following functionalities :
 
 - Get a public Boilerplate address given a BIP 32 path
 - Sign a basic Boilerplate transaction given a BIP 32 path and raw transaction
+- Sign a token transaction given a BIP 32 path, token address, and raw transaction
 - Retrieve the Boilerplate app version
 - Retrieve the Boilerplate app name
 
@@ -84,6 +85,56 @@ The input data is the RLP encoded transaction streamed to the device in 255 byte
 | Description                                          | Length   |
 | ---                                                  | ---      |
 | Transaction chunk                                    | variable |
+
+##### `Output data`
+
+| Description                                          | Length   |
+| ---                                                  | ---      |
+| Signature length                                     | 1        |
+| Signature                                            | variable |
+| v                                                    | 1        |
+
+### SIGN BOILERPLATE TOKEN TRANSACTION
+
+#### Description
+
+This command signs a Boilerplate token transaction after having the user validate the transaction parameters including token information.
+
+The input data includes the token address (32 bytes) and is streamed to the device in 255 bytes maximum data chunks. The token must be present in the hardcoded token database.
+
+#### Coding
+
+##### `Command`
+
+| CLA | INS  | P1                   | P2                               | Lc       | Le       |
+| --- | ---  | ---                  | ---                              | ---      | ---      |
+| E0  | 07   |  00-FF : chunk index | 00 : last transaction data block | variable | variable |
+|     |      |                      | 80 : subsequent transaction data block |    |          |
+
+##### `Input data (first transaction data block)`
+
+| Description                                          | Length   |
+| ---                                                  | ---      |
+| Number of BIP 32 derivations to perform (max 10)     | 1        |
+| First derivation index (big endian)                  | 4        |
+| ...                                                  | 4        |
+| Last derivation index (big endian)                   | 4        |
+
+##### `Input data (other transaction data block)`
+
+| Description                                          | Length   |
+| ---                                                  | ---      |
+| Token transaction chunk (includes 32-byte token address) | variable |
+
+##### `Transaction format`
+
+The token transaction has the following format:
+- Nonce (8 bytes, big endian)
+- To address (20 bytes)
+- Token address (32 bytes) - must be in the token database
+- Value (8 bytes, big endian) - in token's smallest unit
+- Memo length (varint)
+- Memo (variable length)
 
 ##### `Output data`
 

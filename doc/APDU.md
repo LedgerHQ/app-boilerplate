@@ -16,12 +16,22 @@ in the industry.
 
 | Field name | Length (bytes) | Description |
 | --- | --- | --- |
-| CLA | 1 | Instruction class - indicates the type of command |
-| INS | 1 | Instruction code - indicates the specific command |
+| CLA | 1 | Instruction class - indicates the type of command (0xE0 for this app) |
+| INS | 1 | Instruction code - indicates the specific command (0x03-0x07) |
 | P1 | 1 | Instruction parameter 1 for the command |
 | P2 | 1 | Instruction parameter 2 for the command |
 | Lc | 1 | The number of bytes of command data to follow (a value from 0 to 255) |
 | CData | var | Command data with `Lc` bytes |
+
+### Supported INS Codes
+
+| INS | Command | Description |
+| --- | --- | --- |
+| 0x03 | GET_VERSION | Get application version |
+| 0x04 | GET_APP_NAME | Get application name |
+| 0x05 | GET_PUBLIC_KEY | Get public key for BIP32 path |
+| 0x06 | SIGN_TX | Sign a regular transaction |
+| 0x07 | SIGN_TOKEN_TX | Sign a token transaction (includes 32-byte token address) |
 
 ## Response APDU
 
