@@ -18,8 +18,10 @@
  *   Index number of the APDU chunk.
  * @param[in]       more
  *   Whether more APDU chunk to be received or not.
+ * @param[in]   is_token_tx
+ *  Whether the transaction to sign is a token transaction or not.
  *
  * @return zero or positive integer if success, negative integer otherwise.
  *
  */
-int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more);
+int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more, bool is_token_tx);

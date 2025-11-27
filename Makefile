@@ -29,8 +29,8 @@ APPNAME = "Boilerplate"
 
 # Application version
 APPVERSION_M = 2
-APPVERSION_N = 2
-APPVERSION_P = 3
+APPVERSION_N = 3
+APPVERSION_P = 0
 APPVERSION = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 
 # Application source files
@@ -121,6 +121,14 @@ ENABLE_TESTING_SWAP = 1
 # ENABLE_SWAP = 1
 endif
 # --8<-- [end:variables]
+
+########################################
+#          TLV & PKI features          #
+########################################
+# Both are used in the Dynamic Token example
+ENABLE_TLV_LIBRARY = 1
+ENABLE_PKI_LIBRARY = 1
+
 
 ########################################
 #          Features disablers          #
