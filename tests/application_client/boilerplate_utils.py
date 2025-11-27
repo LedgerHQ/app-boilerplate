@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import Optional, Literal
+from typing import Optional, Literal, Union
 
 
 UINT64_MAX: int = 2**64-1
@@ -59,3 +59,10 @@ def read_uint(buf: BytesIO,
         raise ValueError(f"Can't read u{bit_len} in buffer!")
 
     return int.from_bytes(b, byteorder)
+
+
+def parse_hex_address(address: Union[str, bytes]) -> bytes:
+    """Convert hex string or bytes to bytes, stripping 0x prefix if present."""
+    if isinstance(address, str):
+        return bytes.fromhex(address[2:] if address.startswith("0x") else address)
+    return address
