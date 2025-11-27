@@ -63,7 +63,7 @@ static void test_tx_serialization(void **state) {
 
     buffer_t buf = {.ptr = raw_tx, .size = sizeof(raw_tx), .offset = 0};
 
-    parser_status_e status = transaction_deserialize(&buf, &tx);
+    parser_status_e status = transaction_deserialize(&buf, &tx, false);
 
     assert_int_equal(status, PARSING_OK);
 
@@ -73,8 +73,82 @@ static void test_tx_serialization(void **state) {
     assert_memory_equal(raw_tx, output, sizeof(raw_tx));
 }
 
+static void test_token_tx_serialization(void **state) {
+    (void) state;
+
+    transaction_t tx;
+    // clang-format off
+    uint8_t raw_token_tx[] = {
+        // nonce (8)
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
+        // to (20)
+        0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x11, 0x22,
+        0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0x00,
+        0x12, 0x34, 0x56, 0x78,
+        // token_address (32)
+        0xca, 0xfe, 0xba, 0xbe, 0xde, 0xad, 0xbe, 0xef,
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+        0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+        // value (8)
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0xe8,
+        // memo length (varint: 1)
+        0x0c,
+        // memo (12 bytes)
+        0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x20, 0x74, 0x72,
+        0x61, 0x6e, 0x73, 0x66
+    };
+    // clang-format on
+
+    buffer_t buf = {.ptr = raw_token_tx, .size = sizeof(raw_token_tx), .offset = 0};
+
+    parser_status_e status = transaction_deserialize(&buf, &tx, true);
+
+    assert_int_equal(status, PARSING_OK);
+    assert_int_equal(tx.nonce, 2);
+    assert_int_equal(tx.value, 1000);
+    assert_int_equal(tx.memo_len, 12);
+    assert_non_null(tx.token_address);
+
+    // Verify token address was parsed correctly
+    uint8_t expected_token_addr[] = {
+        0xca, 0xfe, 0xba, 0xbe, 0xde, 0xad, 0xbe, 0xef,
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+        0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08
+    };
+    assert_memory_equal(tx.token_address, expected_token_addr, 32);
+}
+
+static void test_token_tx_error_short_buffer(void **state) {
+    (void) state;
+
+    transaction_t tx;
+    // clang-format off
+    uint8_t raw_token_tx[] = {
+        // nonce (8)
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
+        // to (20)
+        0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x11, 0x22,
+        0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0x00,
+        0x12, 0x34, 0x56, 0x78,
+        // token_address (only 10 bytes instead of 32 - truncated)
+        0xca, 0xfe, 0xba, 0xbe, 0xde, 0xad, 0xbe, 0xef,
+        0x00, 0x11
+    };
+    // clang-format on
+
+    buffer_t buf = {.ptr = raw_token_tx, .size = sizeof(raw_token_tx), .offset = 0};
+
+    parser_status_e status = transaction_deserialize(&buf, &tx, true);
+
+    assert_int_equal(status, TOKEN_ADDRESS_PARSING_ERROR);
+}
+
 int main() {
-    const struct CMUnitTest tests[] = {cmocka_unit_test(test_tx_serialization)};
+    const struct CMUnitTest tests[] = {cmocka_unit_test(test_tx_serialization),
+                                       cmocka_unit_test(test_token_tx_serialization),
+                                       cmocka_unit_test(test_token_tx_error_short_buffer)};
 
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

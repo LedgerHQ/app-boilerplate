@@ -25,6 +25,7 @@
 #include "io.h"
 #include "bip32.h"
 #include "format.h"
+#include "tokens.h"
 
 #include "display.h"
 #include "constants.h"
@@ -39,8 +40,11 @@
 static char g_amount[30];
 // Buffer where the transaction address string is written
 static char g_address[43];
+// Buffer where the token ticker is written
+static char g_token[10];
 
-static nbgl_contentTagValue_t pairs[2];
+// The flow with the most pairs to display is the token signing flow with amount + dest + token
+static nbgl_contentTagValue_t pairs[3];
 static nbgl_contentTagValueList_t pairList;
 
 // called when long press button on 3rd page is long-touched or when reject footer is touched
@@ -57,54 +61,100 @@ static void review_choice(bool confirm) {
 // Public function to start the transaction review
 // - Check if the app is in the right state for transaction review
 // - Format the amount and address strings in g_amount and g_address buffers
+// - Format the token name if in token signing flow
 // - Display the first screen of the transaction review
 // - Display a warning if the transaction is blind-signed
-int ui_display_transaction_bs_choice(bool is_blind_signed) {
-    if (G_context.req_type != CONFIRM_TRANSACTION || G_context.state != STATE_PARSED) {
+static int ui_display_transaction_bs_token_choice(bool is_blind_signing, bool is_token_signing) {
+    explicit_bzero(g_amount, sizeof(g_amount));
+    explicit_bzero(g_address, sizeof(g_address));
+    explicit_bzero(g_token, sizeof(g_token));
+
+    // Validate state based on transaction type
+    uint8_t expected_req_type;
+    if (is_token_signing) {
+        expected_req_type = CONFIRM_TOKEN_TRANSACTION;
+    } else {
+        expected_req_type = CONFIRM_TRANSACTION;
+    }
+    if (G_context.req_type != expected_req_type || G_context.state != STATE_PARSED) {
         G_context.state = STATE_NONE;
+        PRINTF("ui_display_transaction: bad state %d/%d (expected %d/%d)\n",
+               G_context.req_type,
+               G_context.state,
+               expected_req_type,
+               STATE_PARSED);
         return io_send_sw(SW_BAD_STATE);
     }
 
-    // Format amount and address to g_amount and g_address buffers
-    explicit_bzero(g_amount, sizeof(g_amount));
-    char amount[30] = {0};
-    if (!format_fpu64(amount,
-                      sizeof(amount),
-                      G_context.tx_info.transaction.value,
-                      EXPONENT_SMALLEST_UNIT)) {
+    // Format amount
+    // 50 chars is comfortable for amount formatting
+    char amount[50 + MAX_TICKER_SIZE] = {0};
+    uint8_t decimals =
+        is_token_signing ? G_context.tx_info.token_info.decimals : EXPONENT_SMALLEST_UNIT;
+    if (!format_fpu64(amount, sizeof(amount), G_context.tx_info.transaction.value, decimals)) {
         return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
     }
-    snprintf(g_amount, sizeof(g_amount), "%.*s BOL", (int) strlen(amount), amount);
-    explicit_bzero(g_address, sizeof(g_address));
 
+    if (is_token_signing) {
+        snprintf(g_amount,
+                 sizeof(g_amount),
+                 "%.*s %s",
+                 (int) strlen(amount),
+                 amount,
+                 G_context.tx_info.token_info.ticker);
+    } else {
+        snprintf(g_amount, sizeof(g_amount), "%.*s BOL", (int) strlen(amount), amount);
+    }
+
+    // Format address
     if (format_hex(G_context.tx_info.transaction.to, ADDRESS_LEN, g_address, sizeof(g_address)) ==
         -1) {
         return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
     }
 
-    // Setup data to display
-    pairs[0].item = "Amount";
-    pairs[0].value = g_amount;
-    pairs[1].item = "Address";
-    pairs[1].value = g_address;
+    // Setup pairs based on transaction type
+    int pair_index = 0;
+    if (is_token_signing) {
+        // Token flow: Token, Amount, Address
+        snprintf(g_token, sizeof(g_token), "%s", G_context.tx_info.token_info.ticker);
+        pairs[pair_index].item = "Token";
+        pairs[pair_index].value = g_token;
+        pair_index++;
+    }
+
+    pairs[pair_index].item = "Amount";
+    pairs[pair_index].value = g_amount;
+    pair_index++;
+
+    pairs[pair_index].item = "Address";
+    pairs[pair_index].value = g_address;
+    pair_index++;
 
     // Setup list
     pairList.nbMaxLinesForValue = 0;
-    pairList.nbPairs = 2;
+    pairList.nbPairs = pair_index;
     pairList.pairs = pairs;
 
-    if (is_blind_signed) {
+    // Determine review text
+    const char *review_text =
+        is_token_signing ? "Review transaction\nto send token" : "Review transaction\nto send BOL";
+#ifdef SCREEN_SIZE_WALLET
+    // On big screen size devices, display a rich text with some context on the final page
+    const char *sign_text =
+        is_token_signing ? "Sign transaction\nto send token?" : "Sign transaction\nto send BOL?";
+#else
+    // On small screen size devices, fallback to the SDK default text
+    const char *sign_text = NULL;
+#endif
+
+    if (is_blind_signing) {
         // Start blind-signing review flow
         nbgl_useCaseReviewBlindSigning(TYPE_TRANSACTION,
                                        &pairList,
                                        &ICON_APP_BOILERPLATE,
-                                       "Review transaction\nto send BOL",
+                                       review_text,
                                        NULL,
-#ifdef SCREEN_SIZE_WALLET
-                                       "Sign transaction\nto send BOL",
-#else
-                                       NULL,
-#endif
+                                       sign_text,
                                        NULL,
                                        review_choice);
     } else {
@@ -112,13 +162,9 @@ int ui_display_transaction_bs_choice(bool is_blind_signed) {
         nbgl_useCaseReview(TYPE_TRANSACTION,
                            &pairList,
                            &ICON_APP_BOILERPLATE,
-                           "Review transaction\nto send BOL",
+                           review_text,
                            NULL,
-#ifdef SCREEN_SIZE_WALLET
-                           "Sign transaction\nto send BOL",
-#else
-                           NULL,
-#endif
+                           sign_text,
                            review_choice);
     }
     return 0;
@@ -126,10 +172,15 @@ int ui_display_transaction_bs_choice(bool is_blind_signed) {
 
 // Flow used to display a blind-signed transaction
 int ui_display_blind_signed_transaction(void) {
-    return ui_display_transaction_bs_choice(true);
+    return ui_display_transaction_bs_token_choice(true, false);
 }
 
 // Flow used to display a clear-signed transaction
-int ui_display_transaction() {
-    return ui_display_transaction_bs_choice(false);
+int ui_display_transaction(void) {
+    return ui_display_transaction_bs_token_choice(false, false);
+}
+
+// Public function to start the token transaction review
+int ui_display_token_transaction(void) {
+    return ui_display_transaction_bs_token_choice(false, true);
 }

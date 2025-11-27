@@ -34,3 +34,15 @@
  * Exponent used to convert mBOL to BOL unit (N BOL = N * 10^3 mBOL).
  */
 #define EXPONENT_SMALLEST_UNIT 3
+
+/**
+ * Boilerplate SLIP-44 coin type (TEST coin - 0x8001).
+ * Production apps must use their assigned SLIP-44 coin type.
+ * @see https://github.com/satoshilabs/slips/blob/master/slip-0044.md
+ */
+#define BOILERPLATE_SLIP44_COIN_TYPE 0x8001
+
+/**
+ * Boilerplate SLIP-44 coin type with hardened bit (0x80008001).
+ */
+#define BOILERPLATE_SLIP44_COIN_TYPE_HARDENED (0x80000000 | BOILERPLATE_SLIP44_COIN_TYPE)

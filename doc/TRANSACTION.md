@@ -17,7 +17,7 @@ of the public key.
 
 ## Structure
 
-### Transaction
+### Regular Transaction
 
 | Field | Size (bytes) | Description |
 | --- | :---: | --- |
@@ -29,6 +29,29 @@ of the public key.
 | `v` | 1 | 0x01 if y-coordinate of R is odd, 0x00 otherwise |
 | `r` | 32 | x-coordinate of R in ECDSA signature |
 | `s` | 32 | x-coordinate of S in ECDSA signature |
+
+### Token Transaction
+
+| Field | Size (bytes) | Description |
+| --- | :---: | --- |
+| `nonce` | 8 | A sequence number used to prevent message replay |
+| `to` | 20 | The destination address |
+| `token_address` | 32 | The 32-byte token contract address (must be in token database) |
+| `value` | 8 | The amount in token's smallest unit to send |
+| `memo_len` | 1-9 | length of the memo as [varint](#variablelenghtinteger) |
+| `memo` | var | A text ASCII-encoded of length `memo_len` to show your love |
+| `v` | 1 | 0x01 if y-coordinate of R is odd, 0x00 otherwise |
+| `r` | 32 | x-coordinate of R in ECDSA signature |
+| `s` | 32 | x-coordinate of S in ECDSA signature |
+
+**Note**: Token transactions use the SIGN_TOKEN_TX command (INS 0x07) and include a 32-byte token address. The token must exist in the hardcoded token database or dynamically received for the transaction to be valid. The value is interpreted using the token's specific decimal places (12 or 14 decimals).
+
+**Note:** This implementation is for demonstration purposes only. It showcases dynamic token TLV (Type-Length-Value) handling and uses a hardcoded token database. This is not intended for actual blockchain use and should not be deployed in production environments.
+
+These token transactions are pure examples designed to illustrate:
+- How to parse and process token metadata using TLV encoding
+- Dynamic handling of token information structures
+- Mock token database integration for testing and development
 
 ### Variable length integer (varint)
 
