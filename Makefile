@@ -76,8 +76,13 @@ PATH_APP_LOAD_PARAMS = "44'/1'"   # purpose=coin(44) / coin_type=Testnet(1)
 VARIANT_PARAM = COIN
 VARIANT_VALUES = BOL
 
-# Enabling DEBUG flag will enable PRINTF and disable optimizations
+# Enabling DEBUG flag will enable PRINTF for speculos
 #DEBUG = 1
+
+# Enabling DEBUG_OVER_USB flag will enable PRINTF over USB
+# This will force DISABLE_OS_IO_STACK_USE and add USB CDC profile
+# The log can be displayed using a COM port terminal
+#DEBUG_OVER_USB = 1
 
 ########################################
 #     Application custom permissions   #
