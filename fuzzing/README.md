@@ -1,86 +1,137 @@
-# Fuzzing on transaction parser
+# Fuzzing Harnesses for Cardano Ledger App
 
-## Fuzzing
+## Overview
 
 Fuzzing allows us to test how a program behaves when provided with invalid, unexpected, or random data as input.
 
-In the case of `app-boilerplate` we want to test the code that is responsible for parsing the transaction data,
-which is `transaction_deserialize()`.
-To test `transaction_deserialize()`, our fuzz target, `fuzz_tx_parser.c`,
-needs to implement `int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)`,
-which provides an array of random bytes that can be used to simulate a serialized transaction.
-If the application crashes, or a [sanitizer](https://github.com/google/sanitizers) detects any kind of
-access violation, the fuzzing process is stopped, a report regarding the vulnerability is shown,
-and the input that triggered the bug is written to disk under the name `crash-*`.
-The vulnerable input file created can be passed as an argument to the fuzzer to triage the issue.
+This directory contains multiple fuzzing harnesses for security-critical components of the Cardano app:
+- **`fuzz_signOpCert`** - Tests operational certificate signing
+- **`fuzz_getPublicKeys`** - Tests BIP44 path parsing and key derivation
+- **`fuzz_all_handlers`** - Tests APDU dispatcher and command routing
 
-> **Note**: Usually we want to write a separate fuzz target for each functionality.
+Each harness implements `int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)`, which feeds random APDU-formatted data to the handlers.
 
-## Manual usage based on Ledger container
+## Available Harnesses
 
-### Preparation
+### fuzz_signOpCert
+Tests the operational certificate signing handler for robustness against:
+- Malformed KES public keys
+- Invalid path specifications
+- Boundary conditions in period/counter values
 
-The fuzzer can run from the docker `ledger-app-builder-legacy`. You can download it from the `ghcr.io` docker repository:
+### fuzz_getPublicKeys
+Tests public key derivation for:
+- Invalid BIP44 paths
+- Buffer overflow attempts
+- Path validation enforcement
 
-```console
-sudo docker pull ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-legacy:latest
-```
+### fuzz_all_handlers
+Tests the main APDU dispatcher by:
+- Routing random command sequences
+- Testing state machine consistency
+- Checking instruction validation and routing
 
-You can then enter this development environment by executing the following command from the repository root directory:
+## Building and Running Fuzzers
 
-```console
-sudo docker run --rm -ti --user "$(id -u):$(id -g)" -v "$(realpath .):/app" ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-legacy:latest
-```
+### Local Build (Recommended for Development)
 
-### Compilation
+The fuzzing harnesses can be built locally using Clang and the Ledger SDK:
 
-Once in the container, go into the `fuzzing` folder to compile the fuzzer:
-
-```console
+```bash
 cd fuzzing
-
-# cmake initialization
 cmake -DBOLOS_SDK=/opt/ledger-secure-sdk -DCMAKE_C_COMPILER=/usr/bin/clang -Bbuild -H.
-
-# Fuzzer compilation
 make -C build
 ```
 
-### Run
+**What this does:**
+1. Configures the build with the Ledger SDK path
+2. Compiles all fuzzing harnesses with address sanitizer and libfuzzer
+3. Output binaries: `build/fuzz_signOpCert`, `build/fuzz_getPublicKeys`, `build/fuzz_all_handlers`
 
-```console
-./build/fuzz_tx_parser
+### Container-Based Build (For CI/Continuous Fuzzing)
+
+For continuous fuzzing integration with OSS-Fuzz:
+
+```bash
+mkdir -p fuzzing/out
+docker build -t cardano-app --file .clusterfuzzlite/Dockerfile .
+docker run --rm --privileged -e FUZZING_LANGUAGE=c \
+    -v "$(realpath .)/fuzzing/out:/out" -ti cardano-app
 ```
 
-## Full usage based on `clusterfuzzlite` container
+**What happens:**
+1. `ledger-app-builder-lite` builds the BOLOS SDK
+2. `oss-fuzz-base/base-builder` provides clang, libfuzzer, and sanitizers
+3. `build.sh` compiles all fuzzing harnesses
+4. Output binaries in `fuzzing/out/`: `fuzz_signOpCert`, `fuzz_getPublicKeys`, `fuzz_all_handlers`
 
-Exactly the same context as the CI, directly using the `clusterfuzzlite` environment.
+### Running Fuzzers
 
-More info can be found here:
-<https://google.github.io/clusterfuzzlite/>
+After local build:
 
-### Preparation
+```bash
+cd fuzzing
 
-The principle is to build the container, and run it to perform the fuzzing.
+# Interactive fuzzing with seed corpus
+./build/fuzz_signOpCert ./corpus
 
-> **Note**: The container contains a copy of the sources (they are not cloned),
-> which means the `docker build` command must be re-executed after each code modification.
+# Fuzzing without seed (finds more edge cases, slower startup)
+./build/fuzz_getPublicKeys
 
-```console
-# Prepare directory tree
-mkdir fuzzing/{corpus,out}
-# Container generation
-docker build -t app-boilerplate --file .clusterfuzzlite/Dockerfile .
+# Test multi-command sequences
+./build/fuzz_all_handlers ./corpus -max_len=8192
 ```
 
-### Compilation
+After container build, binaries will be in `out/` instead of `build/`.
 
-```console
-docker run --rm --privileged -e FUZZING_LANGUAGE=c -v "$(realpath .)/fuzzing/out:/out" -ti app-boilerplate
+### Crash Reproduction
+
+If fuzzing finds a crash, it will save the input to `crash-*`:
+
+```bash
+# Reproduce a specific crash
+./out/fuzz_signOpCert crash-abc123
 ```
 
-### Run
+## Continuous Fuzzing via Google OSS-Fuzz
 
-```console
-docker run --rm --privileged -e FUZZING_ENGINE=libfuzzer -e RUN_FUZZER_MODE=interactive -v "$(realpath .)/fuzzing/corpus:/tmp/fuzz_corpus" -v "$(realpath .)/fuzzing/out:/out" -ti gcr.io/oss-fuzz-base/base-runner run_fuzzer fuzz_tx_parser
-```
+For production continuous fuzzing integration with Google's OSS-Fuzz infrastructure:
+
+The repository includes `.clusterfuzzlite/` configuration files that enable automatic fuzzing campaigns.
+
+**How it works:**
+1. `.clusterfuzzlite/Dockerfile` - Multi-stage build:
+   - Stage 1: `ledger-app-builder-lite` compiles BOLOS SDK
+   - Stage 2: `oss-fuzz-base/base-builder` provides fuzzing infrastructure
+2. `.clusterfuzzlite/build.sh` - Build script that:
+   - Calls `cmake -DBOLOS_SDK=../BOLOS_SDK`
+   - Compiles all fuzz harnesses
+   - Outputs binaries to `$OUT` directory
+
+**Integration:**
+- This setup is compatible with Google's OSS-Fuzz and ClusterFuzzLite services
+- No additional configuration needed beyond what's in `.clusterfuzzlite/`
+- See [Google OSS-Fuzz documentation](https://google.github.io/oss-fuzz/) for integration details
+
+## Corpus Seed Data
+
+The `corpus/` directory contains minimal seed inputs to accelerate fuzzing:
+- `signOpCert_basic` - Valid operational certificate data
+- `getPublicKeys_bip44_mainnet` - BIP44 mainnet path
+- `allHandlers_sequence` - Multi-command APDU sequence
+- Edge case files for testing error handling
+
+## Notes
+
+- Fuzzing requires **Clang** compiler
+- Address sanitizer catches memory errors automatically
+- Coverage mapping tracks which code paths are tested
+- Long-running fuzzing campaigns may find subtle bugs
+- Corpus files should be added as new interesting inputs are discovered
+
+## References
+
+- [Google Sanitizers](https://github.com/google/sanitizers)
+- [LLVM LibFuzzer](https://llvm.org/docs/LibFuzzer/)
+- [ClusterFuzzLite](https://google.github.io/clusterfuzzlite/)
+- [OSS-Fuzz](https://google.github.io/oss-fuzz/)

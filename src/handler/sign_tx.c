@@ -656,7 +656,6 @@ int handler_sign_tx_witness(buffer_t *cdata) {
     // Verify we're in correct state for witness signing
     if (G_context.req_type != REQUEST_SIGN_TRANSACTION) {
         TRACE("Bad request type for witness signing: %d", G_context.req_type);
-        tx_context_cleanup();
         return send_error_and_reset(SW_BAD_STATE);
     }
 

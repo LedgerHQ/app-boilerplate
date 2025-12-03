@@ -20,6 +20,7 @@
 
 #include "os.h"
 #include "ux.h"
+#include "parser.h"  // command_t, apdu_parser
 
 #include "types.h"
 #include "globals.h"

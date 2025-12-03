@@ -547,10 +547,13 @@ void ui_getPoolOwnerScreen(char* firstLine,
 void ui_getPoolRelayScreen(char* line, const size_t lineSize, size_t relayIndex) {
     explicit_bzero(line, lineSize);
     {
+#ifndef FUZZING
+        // Skip size checks for fuzzing builds (size_t is 64-bit on x86_64 but 32-bit on device)
         STATIC_ASSERT(sizeof(relayIndex + 1) <= sizeof(unsigned), "oversized type for %u");
         STATIC_ASSERT(!IS_SIGNED(relayIndex + 1), "signed type for %u");
+#endif
         // indexed from 0 as discussed with IOHK on Slack
-        snprintf(line, lineSize, "#%u", relayIndex);
+        snprintf(line, lineSize, "#%u", (unsigned)relayIndex);
         // make sure all the information is displayed to the user
         ASSERT(strlen(line) + 1 < lineSize);
     }

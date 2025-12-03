@@ -280,6 +280,46 @@ target_link_libraries(test_sign_tx_handler
         cx_crc_support
 )
 add_test(test_sign_tx_handler test_sign_tx_handler)
+
+add_executable(test_sign_tx_rejects
+    test_sign_tx_rejects.c
+    mock_globals.c
+    ../src/utils/list.c
+    ../src/handler/sign_tx.c
+    ../src/transaction/deserialize.c
+    ../src/transaction/tx_utils.c
+    ../src/transaction/tx_warnings.c
+    ../src/securityPolicy/securityPolicy.c
+    ../src/securityPolicy/securityPolicy_privkey.c
+    ../src/messageSigning/messageSigning.c
+    ../src/keyDerivation/keyDerivation.c
+    ../src/addressUtils/addressUtilsShelley.c
+    ../src/addressUtils/addressUtilsByron.c
+    ../src/txHashBuilder/txHashBuilder.c
+)
+target_link_libraries(test_sign_tx_rejects
+    PUBLIC
+        cmocka
+        gcov
+        text_utils
+        hex_utils
+        base58
+        bech32_lib
+        bip44_real
+        buffer_utils_lib
+        cbor_lib
+        blake2b_lib
+        sha3_lib
+        hash_mocks_lib
+        crypto_mocks_lib
+        buffer
+        write
+        read
+        varint
+        bip32
+        cx_crc_support
+)
+add_test(test_sign_tx_rejects test_sign_tx_rejects)
 # target_link_libraries(test_tokens PUBLIC cmocka gcov tokens_lib bech32_lib hex_utils)  # TODO: when tokens_lib is ready
 
 # TODO: uncomment when test files are created

@@ -11,6 +11,7 @@
 #include "tx_types.h"
 #include "opcert_types.h"
 #include "keyDerivation.h"
+#include "parser.h"  // command_t from SDK
 
 /**
  * Enumeration with expected INS of APDU commands.

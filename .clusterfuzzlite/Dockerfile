@@ -4,11 +4,11 @@ FROM ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-lite:latest AS LITE_
 FROM gcr.io/oss-fuzz-base/base-builder:v1
 
 # Copy the project's source code.
-COPY . $SRC/app-boilerplate
-COPY --from=LITE_BUILDER /opt/ledger-secure-sdk $SRC/app-boilerplate/BOLOS_SDK
+COPY . $SRC/app-cardano
+COPY --from=LITE_BUILDER /opt/ledger-secure-sdk $SRC/app-cardano/BOLOS_SDK
 
 # Working directory for build.sh
-WORKDIR $SRC/app-boilerplate
+WORKDIR $SRC/app-cardano
 
 # Copy build.sh into $SRC dir.
 COPY ./.clusterfuzzlite/build.sh $SRC/
