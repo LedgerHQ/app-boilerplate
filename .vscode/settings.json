@@ -9,13 +9,29 @@
         "testsList": [
             "test_app_mainmenu",
             "test_app_name",
-            "test_get_app_and_version",
+            "test_cvote",
+            "test_derive_address_byron",
+            "test_derive_address_byron_show",
+            "test_derive_address_shelley",
+            "test_derive_address_shelley_confirm",
+            "test_derive_address_shelley_show",
+            "test_derive_address_reject",
+            "test_derive_native_script_hash",
+            "test_derive_native_script_hash_reject",
+            "test_bad_cla",
+            "test_bad_ins",
+            "test_wrong_p1p2",
+            "test_wrong_data_length",
+            "test_invalid_state",
             "test_opCert",
             "test_pubkey_confirm",
             "test_pubkey_without_confirmation",
             "test_pubkey_reject",
-            "test_simple_cardano_tx",
-            "test_version"
+            "test_sign_message",
+            "test_sign_tx_simple",
+            "test_check_version",
+            "test_check_app_version",
+            "test_check_app_serial"
         ]
     }
 }
