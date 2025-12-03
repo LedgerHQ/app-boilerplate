@@ -7,7 +7,7 @@
 #include "textUtils.h"
 // #include "signTx.h"
 // #include "signTxPoolRegistration.h"
-#include "tokens/tokens.h"
+#include "app_tokens/app_tokens.h"
 
 // encodes a buffer into bech32 and displays it (works for bufferSize <= 150 and prefix length <=
 // 12)
