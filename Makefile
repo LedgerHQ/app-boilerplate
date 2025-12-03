@@ -115,7 +115,6 @@ ENABLE_NBGL_QRCODE = 1
 #DISABLE_STANDARD_USB = 1
 #DISABLE_STANDARD_WEBUSB = 1
 #DISABLE_DEBUG_LEDGER_ASSERT = 1
-#DISABLE_DEBUG_THROW = 1
 
 ########################################
 #       Dynamic memory allocation      #

@@ -809,10 +809,10 @@ void os_longjmp(unsigned int exception) __attribute__((analyzer_noreturn));
 #else
 void os_longjmp(unsigned int exception) __attribute__((noreturn));
 #endif
-#define THROW_L(L, x) os_longjmp(x)
+#define THROW_L(L, x) _Static_assert(0, "Legacy THROW_L is forbidden; return errors explicitly instead.")
 
 // Default macros when nesting is not used.
-#define THROW(x) THROW_L(EX, x)
+#define THROW(x) _Static_assert(0, "Legacy THROW is forbidden; return errors explicitly instead.")
 #define BEGIN_TRY BEGIN_TRY_L(EX)
 #define TRY TRY_L(EX)
 #define CATCH(x) CATCH_L(EX, x)

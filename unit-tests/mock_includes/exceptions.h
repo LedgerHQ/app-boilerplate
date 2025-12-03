@@ -1,6 +1,8 @@
 #pragma once
 
-// Mock exceptions.h for unit tests
-// When os.h is included (which defines THROW, TRY, CATCH, FINALLY),
-// we don't need to redefine them. This header is kept for compatibility
-// with code that includes exceptions.h directly.
+// Mock exceptions.h for unit tests.
+// The production SDK header used to expose THROW/TRY/CATCH, but the new
+// codebase must not depend on that mechanism anymore. The mock os.h
+// redefines those macros to static assertions so any accidental use fails
+// at compile time. This stub header simply provides compatibility for
+// modules that still include exceptions.h without needing anything from it.

@@ -28,15 +28,6 @@
 #define SIZEOF(var) sizeof(var)
 #endif
 
-// Helper function to check APDU request parameters
-#define VALIDATE(cond, error)                                           \
-    do {                                                                \
-        if (!(cond)) {                                                  \
-            TRACE("Validation Error in %s: %d", __FILE__, __LINE__);    \
-            THROW(error);                                               \
-        }                                                               \
-    } while (0)
-
 // Any buffer claiming to be longer than this is a bug
 // (we anyway have only 4KB of memory)
 #define BUFFER_SIZE_PARANOIA 1024
