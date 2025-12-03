@@ -624,8 +624,7 @@ bool bip44_pathsEqual(const bip44_path_t* lhs, const bip44_path_t* rhs) {
 #ifdef DEVEL
 void bip44_PRINTF(const bip44_path_t* pathSpec) {
     char tmp[BIP44_PATH_STRING_SIZE_MAX + 1] = {0};
-    SIZEOF(*pathSpec);
     bip44_printToStr(pathSpec, tmp, SIZEOF(tmp));
     TRACE("%s", tmp);
-};
+}
 #endif  // DEVEL

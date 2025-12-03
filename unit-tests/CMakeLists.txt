@@ -48,9 +48,13 @@ include_directories(../src/crypto)
 include_directories(../src/transaction)
 include_directories(../src/opcert)
 include_directories(../src/securityPolicy)
+include_directories(../src/messageSigning)
+include_directories(../src/apdu)
+include_directories(../src/txHashBuilder)
 include_directories($ENV{BOLOS_SDK}/lib_standard_app)
 include_directories($ENV{BOLOS_SDK}/include)
 include_directories($ENV{BOLOS_SDK}/lib_cxng/include)
+include_directories($ENV{BOLOS_SDK}/lib_nbgl/include)
 
 add_compile_definitions(HAVE_CRC)
 
@@ -94,6 +98,22 @@ add_executable(test_aux_data_hash_builder
 )
 add_executable(test_tx_hash_builder
     test_tx_hash_builder.c
+    ../src/txHashBuilder/txHashBuilder.c
+)
+add_executable(test_sign_tx_handler
+    test_sign_tx_handler.c
+    mock_globals.c
+    ../src/utils/list.c
+    ../src/handler/sign_tx.c
+    ../src/transaction/deserialize.c
+    ../src/transaction/tx_utils.c
+    ../src/transaction/tx_warnings.c
+    ../src/securityPolicy/securityPolicy.c
+    ../src/securityPolicy/securityPolicy_privkey.c
+    ../src/messageSigning/messageSigning.c
+    ../src/keyDerivation/keyDerivation.c
+    ../src/addressUtils/addressUtilsShelley.c
+    ../src/addressUtils/addressUtilsByron.c
     ../src/txHashBuilder/txHashBuilder.c
 )
 # add_executable(test_tokens test_tokens.c)  # TODO: needs crypto mocks (keyDerivation.h, etc.)
@@ -237,6 +257,29 @@ target_link_libraries(test_tx_hash_builder
         bip32
 )
 add_test(test_tx_hash_builder test_tx_hash_builder)
+target_link_libraries(test_sign_tx_handler
+    PUBLIC
+        cmocka
+        gcov
+        text_utils
+        hex_utils
+        base58
+        bech32_lib
+        bip44_real
+        buffer_utils_lib
+        cbor_lib
+        blake2b_lib
+        sha3_lib
+        hash_mocks_lib
+        crypto_mocks_lib
+        buffer
+        write
+        read
+        varint
+        bip32
+        cx_crc_support
+)
+add_test(test_sign_tx_handler test_sign_tx_handler)
 # target_link_libraries(test_tokens PUBLIC cmocka gcov tokens_lib bech32_lib hex_utils)  # TODO: when tokens_lib is ready
 
 # TODO: uncomment when test files are created

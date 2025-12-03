@@ -48,7 +48,7 @@ enum {
         cx_##cipher##_t cx_ctx;                                                                 \
     } cipher##_##bits##_context_t;                                                              \
                                                                                                 \
-    static __attribute__((always_inline, unused)) void cipher##_##bits##_init(                  \
+    static inline __attribute__((unused)) void cipher##_##bits##_init(                  \
         cipher##_##bits##_context_t* ctx) {                                                     \
         STATIC_ASSERT(bits == CIPHER##_##bits##_SIZE * 8, "bad cipher size");                   \
         cx_err_t error = cx_##cipher##_init_no_throw(&ctx->cx_ctx, CIPHER##_##bits##_SIZE * 8 / 8); \
@@ -59,7 +59,7 @@ enum {
         ctx->initialized_magic = HASH_CONTEXT_INITIALIZED_MAGIC;                                \
     }                                                                                           \
                                                                                                 \
-    static __attribute__((always_inline, unused)) void cipher##_##bits##_append(                \
+    static inline __attribute__((unused)) void cipher##_##bits##_append(                \
         cipher##_##bits##_context_t* ctx,                                                       \
         const uint8_t* inBuffer,                                                                \
         size_t inSize) {                                                                        \
@@ -76,7 +76,7 @@ enum {
         }                                                                                       \
     }                                                                                           \
                                                                                                 \
-    static __attribute__((always_inline, unused)) void cipher##_##bits##_finalize(              \
+    static inline __attribute__((unused)) void cipher##_##bits##_finalize(              \
         cipher##_##bits##_context_t* ctx,                                                       \
         uint8_t* outBuffer,                                                                     \
         size_t outSize) {                                                                       \
@@ -94,7 +94,7 @@ enum {
         }                                                                                       \
     }                                                                                           \
     /* Convenience function to make all in one step */                                          \
-    static __attribute__((always_inline, unused)) void cipher##_##bits##_hash(                  \
+    static inline __attribute__((unused)) void cipher##_##bits##_hash(                  \
         const uint8_t* inBuffer,                                                                \
         size_t inSize,                                                                          \
         uint8_t* outBuffer,                                                                     \

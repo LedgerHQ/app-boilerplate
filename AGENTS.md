@@ -23,7 +23,7 @@ Test fixtures:
 ../ledger-app-cardano/tests/standalone/input_files
 Tests are run by hand.
 
-Transaction body uses CBOR, do not modify code in txhashbuilder.c, it is trusted and correct, so is addressUtilsShelley.c and bip44.c.
+Transaction body uses CBOR (via CDDL spec), do not modify code in txhashbuilder.c, it is trusted and correct, so is addressUtilsShelley.c and bip44.c.
 Do not add any CBOR serialization or address manipulation or bip44 path manipulations functions on your own (if it seems necessary, ask first).
 Order of items in transaction body (should be followed in general when organizing code and ordering UI display items):
 In raw_tx (or elsewhere), we do not serialize constants (e.g. if some item is always 28 bytes, both C and Python should have a named constant for that length and apply it, no need to serialize 28 as a prefix in any buffer).

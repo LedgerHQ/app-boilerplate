@@ -117,7 +117,7 @@ typedef enum {
 /**
  * Maximum valid network ID (4 bits = 0-15).
  */
-#define MAXIMUM_NETWORK_ID 0b1111
+#define MAXIMUM_NETWORK_ID 0xF
 
 /**
  * URL and domain name constraints for certificate metadata and pool information.

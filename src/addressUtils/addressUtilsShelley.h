@@ -8,25 +8,25 @@
 typedef enum {
     // base address contains explicit payment info (key hash / script hash)
     // and explicit staking info
-    BASE_PAYMENT_KEY_STAKE_KEY = 0b0000,
-    BASE_PAYMENT_SCRIPT_STAKE_KEY = 0b0001,
-    BASE_PAYMENT_KEY_STAKE_SCRIPT = 0b0010,
-    BASE_PAYMENT_SCRIPT_STAKE_SCRIPT = 0b0011,
+    BASE_PAYMENT_KEY_STAKE_KEY = 0x0,         // 0b0000
+    BASE_PAYMENT_SCRIPT_STAKE_KEY = 0x1,      // 0b0001
+    BASE_PAYMENT_KEY_STAKE_SCRIPT = 0x2,      // 0b0010
+    BASE_PAYMENT_SCRIPT_STAKE_SCRIPT = 0x3,   // 0b0011
 
     // pointer address contains explicit payment info and a pointer to blockchain for staking info
-    POINTER_KEY = 0b0100,
-    POINTER_SCRIPT = 0b0101,
+    POINTER_KEY = 0x4,                        // 0b0100
+    POINTER_SCRIPT = 0x5,                     // 0b0101
 
     // enterprise address contains explicit payment info and no staking info
-    ENTERPRISE_KEY = 0b0110,
-    ENTERPRISE_SCRIPT = 0b0111,
+    ENTERPRISE_KEY = 0x6,                     // 0b0110
+    ENTERPRISE_SCRIPT = 0x7,                  // 0b0111
 
     // legacy addresses, aka bootstrap addresses
-    BYRON = 0b1000,
+    BYRON = 0x8,                              // 0b1000
 
     // reward address (aka reward account) contains only staking info
-    REWARD_KEY = 0b1110,
-    REWARD_SCRIPT = 0b1111,
+    REWARD_KEY = 0xE,                         // 0b1110
+    REWARD_SCRIPT = 0xF,                      // 0b1111
 } address_type_t;
 
 uint8_t getAddressHeader(const uint8_t* addressBuffer, size_t addressSize);

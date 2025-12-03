@@ -15,7 +15,7 @@ uint8_t getAddressHeader(const uint8_t* addressBuffer, size_t addressSize) {
 }
 
 address_type_t getAddressType(uint8_t addressHeader) {
-    const uint8_t ADDRESS_TYPE_MASK = 0b11110000;
+    const uint8_t ADDRESS_TYPE_MASK = 0xF0;
     return (addressHeader & ADDRESS_TYPE_MASK) >> 4;
 }
 
@@ -64,7 +64,7 @@ uint8_t constructShelleyAddressHeader(address_type_t type, uint8_t networkId) {
 }
 
 uint8_t getNetworkId(uint8_t addressHeader) {
-    const uint8_t NETWORK_ID_MASK = 0b00001111;
+    const uint8_t NETWORK_ID_MASK = 0x0F;
     return addressHeader & NETWORK_ID_MASK;
 }
 
@@ -236,14 +236,14 @@ static bool buffer_appendVariableLengthUInt(write_buffer_t* buf, uint64_t value)
         blockchainIndex_t bits = value;
         while (bits > 0) {
             // take next 7 bits from the right
-            chunks[outputSize++] = bits & 0b01111111;
+            chunks[outputSize++] = bits & 0x7F;
             bits >>= 7;
         }
     }
     ASSERT(outputSize > 0);
     for (size_t i = outputSize - 1; i > 0; --i) {
         // highest bit set to 1 since more bytes follow
-        uint8_t nextByte = chunks[i] | 0b10000000;
+        uint8_t nextByte = chunks[i] | 0x80;
         if (!buffer_write_bytes(buf, &nextByte, 1)) {
             return false;
         }
