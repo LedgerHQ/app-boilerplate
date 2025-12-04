@@ -126,7 +126,7 @@ static int ui_display_transaction_bs_token_choice(bool is_blind_signing, bool is
     pairs[pair_index].value = g_amount;
     pair_index++;
 
-    pairs[pair_index].item = "Address";
+    pairs[pair_index].item = "To";
     pairs[pair_index].value = g_address;
     pair_index++;
 
