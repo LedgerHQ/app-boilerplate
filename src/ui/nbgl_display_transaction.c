@@ -134,6 +134,7 @@ static int ui_display_transaction_bs_token_choice(bool is_blind_signing, bool is
     pairList.nbMaxLinesForValue = 0;
     pairList.nbPairs = pair_index;
     pairList.pairs = pairs;
+    pairList.wrapping = true;
 
     // Determine review text
     const char *review_text =
