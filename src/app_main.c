@@ -28,6 +28,7 @@
 #include "sw.h"
 #include "menu.h"
 #include "dispatcher.h"
+#include "dynamic_token_info.h"
 
 global_ctx_t G_context;
 
@@ -55,6 +56,8 @@ void app_main() {
 
     // Reset context
     explicit_bzero(&G_context, sizeof(G_context));
+
+    init_dynamic_token_storage();
 
     // Initialize the NVM data if required
     if (N_storage.initialized != 0x01) {

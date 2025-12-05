@@ -1,19 +1,23 @@
 from typing import Tuple
 from struct import unpack
 
-# remainder, data_len, data
-def pop_sized_buf_from_buffer(buffer:bytes, size:int) -> Tuple[bytes, bytes]:
-    return buffer[size:], buffer[0:size]
 
 # remainder, data_len, data
-def pop_size_prefixed_buf_from_buf(buffer:bytes) -> Tuple[bytes, int, bytes]:
+def pop_sized_buf_from_buffer(buffer: bytes, size: int) -> Tuple[bytes, bytes]:
+    return buffer[size:], buffer[0:size]
+
+
+# remainder, data_len, data
+def pop_size_prefixed_buf_from_buf(buffer: bytes) -> Tuple[bytes, int, bytes]:
     data_len = buffer[0]
-    return buffer[1+data_len:], data_len, buffer[1:data_len+1]
+    return buffer[1 + data_len :], data_len, buffer[1 : data_len + 1]
+
 
 # Unpack from response:
 # response = app_name (var)
 def unpack_get_app_name_response(response: bytes) -> str:
     return response.decode("ascii")
+
 
 # Unpack from response:
 # response = MAJOR (1)
@@ -23,6 +27,7 @@ def unpack_get_version_response(response: bytes) -> Tuple[int, int, int]:
     assert len(response) == 3
     major, minor, patch = unpack("BBB", response)
     return (major, minor, patch)
+
 
 # Unpack from response:
 # response = format_id (1)
@@ -42,6 +47,7 @@ def unpack_get_app_and_version_response(response: bytes) -> Tuple[str, str]:
 
     return app_name_raw.decode("ascii"), version_raw.decode("ascii")
 
+
 # Unpack from response:
 # response = pub_key_len (1)
 #            pub_key (var)
@@ -57,6 +63,7 @@ def unpack_get_public_key_response(response: bytes) -> Tuple[int, bytes, int, by
 
     return pub_key_len, pub_key, chain_code_len, chain_code
 
+
 # Unpack from response:
 # response = der_sig_len (1)
 #            der_sig (var)
@@ -67,4 +74,4 @@ def unpack_sign_tx_response(response: bytes) -> Tuple[int, bytes, int]:
 
     assert len(response) == 0
 
-    return der_sig_len, der_sig, int.from_bytes(v, byteorder='big')
+    return der_sig_len, der_sig, int.from_bytes(v, byteorder="big")
