@@ -17,6 +17,6 @@ bool hex_parseNibblePair(const char* buffer, uint8_t* out_byte);
 // Returns false on any error (invalid hex characters, odd length, buffer too small)
 bool decode_hex(const char* inStr, uint8_t* outBuffer, size_t outMaxSize, size_t* out_length);
 
-// Encode binary buffer into hex string
-// Returns the length of the string written to out (not including null terminator)
-size_t encode_hex(const uint8_t* bytes, size_t bytesLength, char* outString, size_t outMaxSize);
+// Test utility: encode bytes to lowercase hex (for testing purposes)
+// Returns 0 on success, -1 if buffer too small (matching SDK's bytes_to_lowercase_hex behavior)
+int test_bytes_to_lowercase_hex(char* out, size_t outl, const uint8_t* bytes, size_t bytesLength);

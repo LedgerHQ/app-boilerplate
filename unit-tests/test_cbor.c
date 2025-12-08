@@ -8,7 +8,7 @@
 #include <cmocka.h>
 
 #include "utils/cbor.h"
-#include "utils/hexUtils.h"
+#include "hexUtils.h"
 
 // Test vectors are taken from
 // https://tools.ietf.org/html/rfc7049#appendix-A

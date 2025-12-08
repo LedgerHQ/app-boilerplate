@@ -81,20 +81,6 @@ void nbgl_useCaseReviewStatus(nbgl_reviewStatusType_t reviewStatusType,
     UNUSED(quitCallback);
 }
 
-void nbgl_useCaseReviewStart(const nbgl_icon_details_t *icon,
-                             const char *reviewTitle,
-                             const char *reviewSubTitle,
-                             const char *rejectText,
-                             nbgl_callback_t continueCallback,
-                             nbgl_callback_t rejectCallback) {
-    UNUSED(icon);
-    UNUSED(reviewTitle);
-    UNUSED(reviewSubTitle);
-    UNUSED(rejectText);
-    UNUSED(continueCallback);
-    UNUSED(rejectCallback);
-}
-
 uint16_t nbgl_getTextNbLinesInWidth(nbgl_font_id_e fontId,
                                     const char *text,
                                     uint16_t maxWidth,

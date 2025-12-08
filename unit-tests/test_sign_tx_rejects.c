@@ -17,7 +17,7 @@
 #include "securityPolicy/securityPolicy.h"
 #include "transaction/tx_utils.h"
 #include "transaction/deserialize.h"
-#include "utils/hexUtils.h"
+#include "hexUtils.h"
 #include "utils/utils.h"
 
 typedef enum {

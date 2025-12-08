@@ -134,7 +134,7 @@ add_library(apdu_parser SHARED $ENV{BOLOS_SDK}/lib_standard_app/parser.c)
 
 # App-specific libraries (testing the REAL source files!)
 # The mock_includes/ directory is prioritized so our SDK mocks override Ledger SDK headers
-add_library(hex_utils SHARED ../src/utils/hexUtils.c)
+add_library(hex_utils SHARED hexUtils.c)
 target_link_libraries(hex_utils PUBLIC c)
 add_library(bech32_lib SHARED ../src/addressUtils/bech32.c)
 target_link_libraries(bech32_lib PUBLIC c)

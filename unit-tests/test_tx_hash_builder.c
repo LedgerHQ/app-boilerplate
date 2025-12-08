@@ -7,7 +7,7 @@
 #include <cmocka.h>
 
 #include "txHashBuilder/txHashBuilder.h"
-#include "utils/hexUtils.h"
+#include "hexUtils.h"
 #include "utils/utils.h"
 
 static size_t decode_hex_buffer(const char* hex, uint8_t* dst, size_t dstSize) {

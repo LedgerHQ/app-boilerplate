@@ -18,7 +18,7 @@
 #include "transaction/tx_types.h"
 #include "transaction/deserialize.h"
 #include "securityPolicy/securityPolicy.h"
-#include "utils/hexUtils.h"
+#include "hexUtils.h"
 #include "utils/utils.h"
 #include "blake2b.h"
 

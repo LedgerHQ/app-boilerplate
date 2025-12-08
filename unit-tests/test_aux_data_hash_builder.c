@@ -7,7 +7,7 @@
 #include <cmocka.h>
 
 #include "auxDataHashBuilder/auxDataHashBuilder.h"
-#include "utils/hexUtils.h"
+#include "hexUtils.h"
 
 static void decode_hex_bytes(const char* hex, uint8_t* outBuffer, size_t outSize) {
     size_t decodedLen = 0;

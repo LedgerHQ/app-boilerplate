@@ -10,7 +10,7 @@
 #include "addressUtils/addressUtilsByron.h"
 #include "addressUtils/bip44.h"
 #include "constants.h"
-#include "utils/hexUtils.h"
+#include "hexUtils.h"
 
 #define HD HARDENED_BIP32
 #define MAX_ADDRESS_LENGTH 128

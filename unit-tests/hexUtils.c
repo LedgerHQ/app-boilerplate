@@ -56,21 +56,21 @@ bool decode_hex(const char* inStr, uint8_t* outBuffer, size_t outMaxSize, size_t
     return true;
 }
 
-static const char HEX_ALPHABET[] = "0123456789abcdef";
+// Test utility: encode bytes to lowercase hex (for testing purposes)
+// Returns 0 on success, -1 if buffer too small (matching SDK's bytes_to_lowercase_hex behavior)
+int test_bytes_to_lowercase_hex(char* out, size_t outl, const uint8_t* bytes, size_t bytesLength) {
+    const char* hex = "0123456789abcdef";
 
-// returns the length of the string written to out
-size_t encode_hex(const uint8_t* bytes, size_t bytesLength, char* out, size_t outMaxSize) {
-    LEDGER_ASSERT(bytesLength < BUFFER_SIZE_PARANOIA, "bytesLength too large");
-    LEDGER_ASSERT(outMaxSize < BUFFER_SIZE_PARANOIA, "outMaxSize too large");
-    LEDGER_ASSERT(outMaxSize >= 2 * bytesLength + 1, "outMaxSize too small");
-
-    size_t i = 0;
-    for (; i < bytesLength; i++) {
-        out[2 * i] = HEX_ALPHABET[bytes[i] >> 4];
-        out[2 * i + 1] = HEX_ALPHABET[bytes[i] & 0x0F];
+    if (outl < 2 * bytesLength + 1) {
+        if (outl > 0) *out = '\0';
+        return -1;
     }
-    LEDGER_ASSERT(i == bytesLength, "loop counter mismatch");
-    out[2 * i] = '\0';
 
-    return 2 * bytesLength;
+    for (size_t i = 0; i < bytesLength; i++) {
+        *out++ = hex[(bytes[i] >> 4) & 0xf];
+        *out++ = hex[bytes[i] & 0xf];
+    }
+    *out = 0;
+    return 0;
 }
+

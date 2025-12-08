@@ -8,7 +8,7 @@
 #include <cmocka.h>
 
 #include "base58.h"
-#include "utils/hexUtils.h"
+#include "hexUtils.h"
 
 static void test_base58_empty(void **state) {
     (void) state;

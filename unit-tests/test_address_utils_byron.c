@@ -8,7 +8,7 @@
 #include <cmocka.h>
 
 #include "addressUtils/addressUtilsByron.h"
-#include "utils/hexUtils.h"
+#include "hexUtils.h"
 #include "constants.h"
 
 // Test case for successful protocol magic extraction

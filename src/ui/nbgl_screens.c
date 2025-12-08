@@ -2,7 +2,7 @@
 #include "constants.h"
 #include "types.h"
 #include "addressUtils/bech32.h"
-#include "hexUtils.h"
+#include "os_utils.h"
 #include "utils/ipUtils.h"
 #include "textUtils.h"
 // #include "signTx.h"
@@ -43,9 +43,9 @@ void ui_getHexBufferScreen(char* line,
 
     explicit_bzero(line, lineSize);
 
-    size_t length = encode_hex(buffer, bufferSize, line, lineSize);
-    ASSERT(length == strlen(line));
-    ASSERT(length == 2 * bufferSize);
+    int result = bytes_to_lowercase_hex(line, lineSize, buffer, bufferSize);
+    ASSERT(result == 0);  // SDK returns 0 on success, -1 if output buffer too small
+    ASSERT(strlen(line) == 2 * bufferSize);
 }
 
 void ui_getPathScreen(char* line, const size_t lineSize, const bip44_path_t* path) {
@@ -610,9 +610,9 @@ void ui_getInputScreen(char* line,
     char txHex[2 * TX_HASH_LENGTH + 1] = {0};
     explicit_bzero(txHex, SIZEOF(txHex));
 
-    size_t length = encode_hex(inputData->txHashBuffer, TX_HASH_LENGTH, txHex, SIZEOF(txHex));
-    ASSERT(length == strlen(txHex));
-    ASSERT(length == 2 * TX_HASH_LENGTH);
+    int result = bytes_to_lowercase_hex(txHex, SIZEOF(txHex), inputData->txHashBuffer, TX_HASH_LENGTH);
+    ASSERT(result == 0);  // SDK returns 0 on success, -1 if output buffer too small
+    ASSERT(strlen(txHex) == 2 * TX_HASH_LENGTH);
 
     explicit_bzero(line, lineSize);
 

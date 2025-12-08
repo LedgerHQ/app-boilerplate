@@ -8,7 +8,7 @@
 #include <cmocka.h>
 
 #include "hash.h"
-#include "utils/hexUtils.h"
+#include "hexUtils.h"
 
 // Test blake2b_512 functions using the mocks
 static void test_blake2b_512_empty(void **state) {

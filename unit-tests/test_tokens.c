@@ -8,7 +8,7 @@
 #include <cmocka.h>
 
 #include "app_tokens/app_tokens.h"
-#include "utils/hexUtils.h"
+#include "hexUtils.h"
 
 // Test asset fingerprint derivation (CIP-14)
 static void test_asset_fingerprint(void **state) {

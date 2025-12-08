@@ -7,7 +7,7 @@
 
 #include <cmocka.h>
 
-#include "utils/hexUtils.h"
+#include "hexUtils.h"
 
 static void test_hex_nibble_parsing(void **state) {
     (void) state;
@@ -91,12 +91,12 @@ static void test_decode_hex(void **state) {
 static void test_encode_hex(void **state) {
     (void) state;
 
-    // Test basic hex encoding
+    // Test basic hex encoding (using test utility)
     const uint8_t bytes[] = {0x48, 0x65, 0x6c, 0x6c, 0x6f};  // "Hello"
     char hexStr[20];
-    size_t len = encode_hex(bytes, sizeof(bytes), hexStr, sizeof(hexStr));
+    int result = test_bytes_to_lowercase_hex(hexStr, sizeof(hexStr), bytes, sizeof(bytes));
 
-    assert_int_equal(len, 10);  // 5 bytes * 2 chars per byte
+    assert_int_equal(result, 0);  // Returns 0 on success
     assert_string_equal(hexStr, "48656c6c6f");
 }
 
@@ -108,8 +108,9 @@ static void test_hex_roundtrip(void **state) {
     char hexStr[20];
     uint8_t decoded[10];
 
-    size_t encLen = encode_hex(original, sizeof(original), hexStr, sizeof(hexStr));
-    assert_int_equal(encLen, 12);
+    int encResult = test_bytes_to_lowercase_hex(hexStr, sizeof(hexStr), original, sizeof(original));
+    assert_int_equal(encResult, 0);  // Returns 0 on success
+    assert_string_equal(hexStr, "deadbeefcafe");
 
     size_t decLen;
     bool success = decode_hex(hexStr, decoded, sizeof(decoded), &decLen);

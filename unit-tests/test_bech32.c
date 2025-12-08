@@ -8,7 +8,7 @@
 #include <cmocka.h>
 
 #include "addressUtils/bech32.h"
-#include "utils/hexUtils.h"
+#include "hexUtils.h"
 
 static void test_bech32_empty_prefix(void **state) {
     (void) state;
