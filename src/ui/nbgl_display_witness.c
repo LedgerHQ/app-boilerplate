@@ -51,7 +51,7 @@ static void witness_review_choice(bool confirm) {
         // User rejected the witness - abort further witness processing
         tx_context_cleanup();
 
-        send_error_and_reset(SW_DENY);
+        send_error_and_reset(SWO_CONDITIONS_NOT_SATISFIED);
         nbgl_useCaseStatus("Witness\ndenied", true, ui_menu_main);
     } else {
         finalize_witness();
@@ -65,7 +65,7 @@ int ui_display_witness(const bip44_path_t* witnessPath, security_policy_t securi
     if (G_context.state.tx_state != TX_STATE_APPROVED || G_context.req_type != REQUEST_SIGN_TRANSACTION) {
         TRACE("Bad state detected - returning error");
         tx_context_cleanup();
-        return send_error_and_reset(SW_BAD_STATE);
+        return send_error_and_reset(SWO_BAD_STATE);
     }
 
     // Allocate display buffer for witness path using UI tracking system
@@ -75,7 +75,7 @@ int ui_display_witness(const bip44_path_t* witnessPath, security_policy_t securi
         TRACE("Failed to allocate witness path string");
         ui_cleanup_tracked_allocations();
         tx_context_cleanup();
-        return send_error_and_reset(SW_DISPLAY_BIP32_PATH_FAIL);
+        return send_error_and_reset(SWO_DISPLAY_BIP32_PATH_FAIL);
     }
 
     // Set warning if needed
@@ -99,7 +99,7 @@ int ui_display_witness(const bip44_path_t* witnessPath, security_policy_t securi
             // Catch any truly unknown or unexpected policy values
             ASSERT(false);
             ui_cleanup_tracked_allocations();
-            return send_error_and_reset(SW_BAD_STATE);
+            return send_error_and_reset(SWO_BAD_STATE);
     }
 
     TRACE("isUnusual: %d", isUnusual);

@@ -94,7 +94,7 @@ int ui_display_opcert(security_policy_t securityPolicy) {
 
     if (G_context.req_type != REQUEST_SIGN_OPCERT || G_context.state.opcert_state != OPCERT_STATE_PARSED) {
         TRACE("Bad state detected - returning error");
-        return send_error_and_reset(SW_BAD_STATE);
+        return send_error_and_reset(SWO_BAD_STATE);
     }
 
     const parsed_opcert_t* opcert = &G_context.opcert_info.opcert;
@@ -104,7 +104,7 @@ int ui_display_opcert(security_policy_t securityPolicy) {
     if (poolColdKeyPathStr == NULL) {
         TRACE("Failed to allocate poolColdKeyPathStr");
         opcert_buffer_cleanup();
-        return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
+        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
     ui_getPathScreen(poolColdKeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1, &opcert->poolColdKeyPath);
 
@@ -113,7 +113,7 @@ int ui_display_opcert(security_policy_t securityPolicy) {
     if (poolKeyHashStr == NULL) {
         TRACE("Failed to allocate poolKeyHashStr");
         opcert_buffer_cleanup();
-        return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
+        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
     uint8_t poolKeyHash[POOL_KEY_HASH_LENGTH] = {0};
     bip44_pathToKeyHash(&opcert->poolColdKeyPath, poolKeyHash, SIZEOF(poolKeyHash));
@@ -128,7 +128,7 @@ int ui_display_opcert(security_policy_t securityPolicy) {
     if (kesKeyStr == NULL) {
         TRACE("Failed to allocate kesKeyStr");
         opcert_buffer_cleanup();
-        return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
+        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
     ui_getBech32Screen(kesKeyStr,
                         BECH32_STRING_SIZE_MAX,
@@ -141,12 +141,12 @@ int ui_display_opcert(security_policy_t securityPolicy) {
     if (kesPeriodStr == NULL) {
         TRACE("Failed to allocate kesPeriodStr");
         opcert_buffer_cleanup();
-        return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
+        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
     if (!format_u64(kesPeriodStr, MAX_UINT64_STRING_SIZE, opcert->kesPeriod)) {
         TRACE("Failed to format KES period");
         opcert_buffer_cleanup();
-        return send_error_and_reset(SW_DISPLAY_AMOUNT_FAIL);
+        return send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
     }
 
     // Allocate and fill issue counter
@@ -154,19 +154,19 @@ int ui_display_opcert(security_policy_t securityPolicy) {
     if (issueCounterStr == NULL) {
         TRACE("Failed to allocate issueCounterStr");
         opcert_buffer_cleanup();
-        return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
+        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
     if (!format_u64(issueCounterStr, MAX_UINT64_STRING_SIZE, opcert->issueCounter)) {
         TRACE("Failed to format issue counter");
         opcert_buffer_cleanup();
-        return send_error_and_reset(SW_DISPLAY_AMOUNT_FAIL);
+        return send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
     }
 
     // Setup data to display
     if (!ui_pairs_init(5)) {
         TRACE("Failed to initialize pairs");
         opcert_buffer_cleanup();
-        return send_error_and_reset(SW_DISPLAY_AMOUNT_FAIL);
+        return send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
         // TODO not sure if this is sufficient or some other "ui_after_error" should be called
     }
     g_pairs[0].item = "Pool cold key path";
@@ -191,7 +191,7 @@ int ui_display_opcert(security_policy_t securityPolicy) {
             if (g_warning == NULL) {
                 TRACE("Failed to allocate warning structure");
                 opcert_buffer_cleanup();
-                return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
+                return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
             }
             // TODO not sure about proper icons
             g_warning->introDetails = &warningDetails;

@@ -1,5 +1,6 @@
 #include "utils/assert.h"
 #include "hexUtils.h"
+#include <string.h>
 
 bool hex_parseNibble(const char c, uint8_t* out_nibble) {
     if (c >= '0' && c <= '9') {

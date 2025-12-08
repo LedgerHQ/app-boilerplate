@@ -82,13 +82,13 @@ int apdu_dispatcher(const command_t *cmd) {
                   expected_ins, G_context.req_type, cmd->ins);
             // Reset to idle state (Option B: reset on rejection)
             G_context.req_type = REQUEST_NONE;
-            return io_send_sw(ERR_STILL_IN_CALL);
+            return io_send_sw(SWO_COMMAND_NOT_ALLOWED);
         }
         TRACE("Same instruction continuing: ins=%d", cmd->ins);
     }
 
     if (cmd->cla != CLA) {
-        return io_send_sw(SW_CLA_NOT_SUPPORTED);
+        return io_send_sw(SWO_INVALID_CLA);
     }
 
     buffer_t buf = {0};
@@ -96,28 +96,28 @@ int apdu_dispatcher(const command_t *cmd) {
     switch (cmd->ins) {
         case INS_GET_SERIAL:
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
-                return io_send_sw(SW_WRONG_P1P2);
+                return io_send_sw(SWO_INCORRECT_P1_P2);
             }
 
             return handler_get_serial();
 
         case INS_GET_VERSION:
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
-                return io_send_sw(SW_WRONG_P1P2);
+                return io_send_sw(SWO_INCORRECT_P1_P2);
             }
 
             return handler_get_version();
 
         case INS_GET_APP_NAME:
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
-                return io_send_sw(SW_WRONG_P1P2);
+                return io_send_sw(SWO_INCORRECT_P1_P2);
             }
 
             return handler_get_app_name();
 
         case INS_GET_PUBLIC_KEY:
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
-                return io_send_sw(SW_WRONG_P1P2);
+                return io_send_sw(SWO_INCORRECT_P1_P2);
             }
 
             buf.ptr = cmd->data;
@@ -131,11 +131,11 @@ int apdu_dispatcher(const command_t *cmd) {
             if (cmd->p1 == 0x0f) {
                 // Witness signing - P2 must be unused
                 if (cmd->p2 != P2_UNUSED) {
-                    return io_send_sw(SW_WRONG_P1P2);
+                    return io_send_sw(SWO_INCORRECT_P1_P2);
                 }
 
                 if (!cmd->data) {
-                    return io_send_sw(SW_WRONG_DATA_LENGTH);
+                    return io_send_sw(SWO_WRONG_DATA_LENGTH);
                 }
 
                 buf.ptr = cmd->data;
@@ -151,16 +151,16 @@ int apdu_dispatcher(const command_t *cmd) {
 
             // P2 must be unused for all transaction APDU types
             if (cmd->p2 != P2_UNUSED) {
-                return io_send_sw(SW_WRONG_P1P2);
+                return io_send_sw(SWO_INCORRECT_P1_P2);
             }
 
             // Validate P1 value
             if (cmd->p1 != P1_TX_INIT && cmd->p1 != P1_TX_DATA_CHUNK && cmd->p1 != P1_TX_CHUNK_LAST) {
-                return io_send_sw(SW_WRONG_P1P2);
+                return io_send_sw(SWO_INCORRECT_P1_P2);
             }
 
             if (!cmd->data) {
-                return io_send_sw(SW_WRONG_DATA_LENGTH);
+                return io_send_sw(SWO_WRONG_DATA_LENGTH);
             }
 
             buf.ptr = cmd->data;
@@ -174,7 +174,7 @@ int apdu_dispatcher(const command_t *cmd) {
 
         case INS_SIGN_OPCERT:
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
-                return io_send_sw(SW_WRONG_P1P2);
+                return io_send_sw(SWO_INCORRECT_P1_P2);
             }
             buf.ptr = cmd->data;
             buf.size = cmd->lc;
@@ -183,6 +183,6 @@ int apdu_dispatcher(const command_t *cmd) {
             return handler_sign_opcert(&buf);
 
         default:
-            return io_send_sw(SW_INS_NOT_SUPPORTED);
+            return io_send_sw(SWO_INVALID_INS);
     }
 }

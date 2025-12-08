@@ -50,7 +50,7 @@ int handler_sign_opcert(buffer_t *cdata) {
 
     G_context.opcert_info.raw_opcert_len = cdata->size;
     if (!buffer_move(cdata, G_context.opcert_info.raw_opcert, sizeof(G_context.opcert_info.raw_opcert))) {
-        return send_error_and_reset(SW_WRONG_OPCERT_LENGTH);
+        return send_error_and_reset(SWO_INVALID_OPCERT_LENGTH);
     }
 
     buffer_t buf = {.ptr = G_context.opcert_info.raw_opcert,
@@ -61,7 +61,7 @@ int handler_sign_opcert(buffer_t *cdata) {
     opcert_parser_status_e status = opcert_deserialize(&buf, &G_context.opcert_info.opcert);
     TRACE("Opcert parsing status: %d\n", status);
     if (status != PARSING_OK) {
-        return send_error_and_reset(SW_OPCERT_PARSING_FAIL);
+        return send_error_and_reset(SWO_OPCERT_PARSING_FAIL);
     }
     G_context.state.opcert_state = OPCERT_STATE_PARSED;
     const parsed_opcert_t* opcert = &G_context.opcert_info.opcert;
@@ -73,7 +73,7 @@ int handler_sign_opcert(buffer_t *cdata) {
         TRACE("Security policy DENY - rejecting operation");
         nbgl_useCaseStatus("Operational certificate denied", false, ui_menu_main);
         // TODO make sure the constants are defined in a proper place
-        return send_error_and_reset(ERR_REJECTED_BY_POLICY);
+        return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
     }
 
     ui_display_opcert(policy);
@@ -85,7 +85,7 @@ void finalize_sign_opcert(bool confirmed) {
     if (!confirmed) {
         G_context.state.opcert_state = OPCERT_STATE_NONE;
         G_context.req_type = REQUEST_NONE;  // Reset to idle
-        io_send_sw(SW_DENY);
+        io_send_sw(SWO_CONDITIONS_NOT_SATISFIED);
         return;
     }
 
@@ -120,12 +120,12 @@ void finalize_sign_opcert(bool confirmed) {
     if (r != 0) {
         G_context.state.opcert_state = OPCERT_STATE_NONE;
         G_context.req_type = REQUEST_NONE;  // Reset to idle
-        io_send_sw(SW_SIGNATURE_FAIL);
+        io_send_sw(SWO_SIGNATURE_FAIL);
     } else {
         io_send_response_pointer(
             G_context.opcert_info.signature,
             SIZEOF(G_context.opcert_info.signature),
-            SW_OK
+            SWO_SUCCESS
         );
         G_context.state.opcert_state = OPCERT_STATE_NONE;  // Reset to idle after sending
         G_context.req_type = REQUEST_NONE;

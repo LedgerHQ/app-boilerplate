@@ -59,109 +59,109 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
     // Read and validate options (fixed header)
     uint64_t options;
     if (!buffer_read_u64(cdata, &options, BE)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
     bool tagCborSets = options & TX_OPTIONS_TAG_CBOR_SETS;
     options &= ~TX_OPTIONS_TAG_CBOR_SETS;
     if (options != 0) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
     G_context.tx_info.transaction.tagCborSets = tagCborSets;
 
     // Read network parameters and signing mode
     if (!buffer_read_u8(cdata, &G_context.tx_info.transaction.networkId) ||
         !buffer_read_u32(cdata, &G_context.tx_info.transaction.protocolMagic, BE)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
     uint8_t txSigningMode;
     if (!buffer_read_u8(cdata, &txSigningMode)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
     G_context.tx_info.transaction.txSigningMode = (sign_tx_signingmode_t) txSigningMode;
 
     // Read transaction structure counts (fields 0-1: inputs and outputs, always present)
     if (!buffer_read_u16(cdata, &G_context.tx_info.transaction.num_inputs, BE) ||
         !buffer_read_u16(cdata, &G_context.tx_info.transaction.num_outputs, BE)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
     // Field 3 (TTL) - optional
     uint8_t includeTtlByte;
     if (!buffer_read_u8(cdata, &includeTtlByte)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
     if (!parseIncluded(includeTtlByte, &G_context.tx_info.transaction.includeTtl)) {
-        return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+        return send_error_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
 
     // Field 4 (certificates) - optional, not implemented yet
     uint16_t num_certificates_dummy;
     if (!buffer_read_u16(cdata, &num_certificates_dummy, BE)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
     // Field 5 (withdrawals) - optional
     if (!buffer_read_u16(cdata, &G_context.tx_info.transaction.num_withdrawals, BE)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
     // Field 7 (auxiliary data hash) - optional, not implemented yet
     uint8_t includeAuxDataHashByte;
     bool includeAuxDataHash = false;
     if (!buffer_read_u8(cdata, &includeAuxDataHashByte)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
     if (!parseIncluded(includeAuxDataHashByte, &includeAuxDataHash)) {
-        return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+        return send_error_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
     // TODO: Store includeAuxDataHash when auxiliary data is implemented
 
     // Field 8 (validity interval start) - optional
     uint8_t includeValidityIntervalStartByte;
     if (!buffer_read_u8(cdata, &includeValidityIntervalStartByte)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
     if (!parseIncluded(includeValidityIntervalStartByte, &G_context.tx_info.transaction.includeValidityIntervalStart)) {
-        return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+        return send_error_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
 
     // Field 9 (mint) - optional
     if (!buffer_read_u16(cdata, &G_context.tx_info.transaction.num_mint_asset_groups, BE)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
     // Field 11 (script data hash) - optional, not implemented yet
     uint8_t includeScriptDataHashByte;
     bool includeScriptDataHash = false;
     if (!buffer_read_u8(cdata, &includeScriptDataHashByte)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
     if (!parseIncluded(includeScriptDataHashByte, &includeScriptDataHash)) {
-        return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+        return send_error_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
     // TODO: Store includeScriptDataHash when script data hash is implemented
 
     // Field 13 (collateral inputs) - optional, not implemented yet
     uint16_t num_collateral_inputs_dummy;
     if (!buffer_read_u16(cdata, &num_collateral_inputs_dummy, BE)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
     // Field 14 (required signers) - optional, not implemented yet
     uint16_t num_required_signers_dummy;
     if (!buffer_read_u16(cdata, &num_required_signers_dummy, BE)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
     // Field 15 (network ID) - optional, not implemented yet
     uint8_t includeNetworkIdByte;
     bool includeNetworkId = false;
     if (!buffer_read_u8(cdata, &includeNetworkIdByte)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
     if (!parseIncluded(includeNetworkIdByte, &includeNetworkId)) {
-        return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+        return send_error_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
     // TODO: Store includeNetworkId when network ID is implemented
 
@@ -169,10 +169,10 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
     uint8_t includeCollateralOutputByte;
     bool includeCollateralOutput = false;
     if (!buffer_read_u8(cdata, &includeCollateralOutputByte)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
     if (!parseIncluded(includeCollateralOutputByte, &includeCollateralOutput)) {
-        return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+        return send_error_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
     // TODO: Store includeCollateralOutput when collateral output is implemented
 
@@ -180,33 +180,33 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
     uint8_t includeTotalCollateralByte;
     bool includeTotalCollateral = false;
     if (!buffer_read_u8(cdata, &includeTotalCollateralByte)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
     if (!parseIncluded(includeTotalCollateralByte, &includeTotalCollateral)) {
-        return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+        return send_error_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
     // TODO: Store includeTotalCollateral when total collateral is implemented
 
     // Field 18 (reference inputs) - optional, not implemented yet
     uint16_t num_reference_inputs_dummy;
     if (!buffer_read_u16(cdata, &num_reference_inputs_dummy, BE)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
     // Field 19 (voting procedures) - optional, not implemented yet
     uint16_t num_voting_procedures_dummy;
     if (!buffer_read_u16(cdata, &num_voting_procedures_dummy, BE)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
     // Field 21 (treasury) - optional, not implemented yet
     uint8_t includeTreasuryByte;
     bool includeTreasury = false;
     if (!buffer_read_u8(cdata, &includeTreasuryByte)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
     if (!parseIncluded(includeTreasuryByte, &includeTreasury)) {
-        return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+        return send_error_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
     // TODO: Store includeTreasury when treasury is implemented
 
@@ -214,16 +214,16 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
     uint8_t includeDonationByte;
     bool includeDonation = false;
     if (!buffer_read_u8(cdata, &includeDonationByte)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
     if (!parseIncluded(includeDonationByte, &includeDonation)) {
-        return send_error_and_reset(SW_TX_PARSING_FAIL_INCLUSION_FLAG);
+        return send_error_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
     // TODO: Store includeDonation when donation is implemented
 
     // Read number of witnesses
     if (!buffer_read_u16(cdata, &G_context.tx_info.num_witnesses, BE)) {
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
     TRACE("TX Mode=%d, Network: ID=%d, Magic=%d, Inputs=%d, Outputs=%d, Withdrawals=%d, Mint=%d, TTL=%d, VIS=%d, Witnesses=%d",
@@ -263,7 +263,7 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
 
     if (init_policy == POLICY_DENY) {
         TRACE("Security policy DENY - rejecting transaction init");
-        return send_error_and_reset(ERR_REJECTED_BY_POLICY);
+        return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
     }
 
     // Show spinner to indicate transaction data is being processed
@@ -273,18 +273,18 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
     G_context.state.tx_state = TX_STATE_CHUNKS;
     TRACE("Transaction initialized, waiting for data chunks");
 
-    return io_send_sw(SW_OK);
+    return io_send_sw(SWO_SUCCESS);
 }
 
 /**
  * Helper: Accumulate transaction data chunks into buffer
- * Returns SW_OK if more chunks expected, or falls through to parse if final chunk
+ * Returns SWO_SUCCESS if more chunks expected, or falls through to parse if final chunk
  */
 static int handle_tx_data_chunk(buffer_t *cdata, bool more) {
     // Validate we're in the correct state for receiving chunks
     if (G_context.state.tx_state != TX_STATE_CHUNKS) {
         TRACE("Invalid state for chunk reception: expected TX_STATE_CHUNKS, got %d", G_context.state.tx_state);
-        return send_error_and_reset(SW_BAD_STATE);
+        return send_error_and_reset(SWO_BAD_STATE);
     }
 
     // Allocate buffer on first data chunk
@@ -295,7 +295,7 @@ static int handle_tx_data_chunk(buffer_t *cdata, bool more) {
         if (G_context.tx_info.raw_tx == NULL) {
             TRACE("Failed to allocate %d byte transaction buffer!", TX_BUFFER_SIZE);
             app_mem_dump_stats();
-            return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
+            return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
         }
         TRACE("Transaction buffer allocated: %d bytes at %p", TX_BUFFER_SIZE, G_context.tx_info.raw_tx);
     }
@@ -304,7 +304,7 @@ static int handle_tx_data_chunk(buffer_t *cdata, bool more) {
     if (G_context.tx_info.raw_tx_len + cdata->size > TX_BUFFER_SIZE) {
         TRACE("Transaction too large: current=%d, chunk=%d, max=%d",
               G_context.tx_info.raw_tx_len, cdata->size, TX_BUFFER_SIZE);
-        return send_error_and_reset(SW_WRONG_TX_LENGTH);
+        return send_error_and_reset(SWO_INVALID_TX_LENGTH);
     }
 
     // Copy chunk data
@@ -312,17 +312,17 @@ static int handle_tx_data_chunk(buffer_t *cdata, bool more) {
                      G_context.tx_info.raw_tx + G_context.tx_info.raw_tx_len,
                      cdata->size)) {
         TRACE("Failed to copy transaction chunk");
-        return send_error_and_reset(SW_TX_PARSING_FAIL);
+        return send_error_and_reset(SWO_TX_PARSING_FAIL);
     }
     G_context.tx_info.raw_tx_len += cdata->size;
     TRACE("Copied %d bytes, total: %d", cdata->size, G_context.tx_info.raw_tx_len);
 
     if (more) {
-        return io_send_sw(SW_OK);
+        return io_send_sw(SWO_SUCCESS);
     }
 
     // Final chunk - will be handled by caller
-    return SW_OK;
+    return SWO_SUCCESS;
 }
 
 /**
@@ -343,18 +343,18 @@ static int parse_and_hash_transaction(void) {
         switch (status) {
             case INPUTS_PARSING_ERROR:
             case INPUTS_COUNT_PARSING_ERROR:
-                return send_error_and_reset(SW_TX_PARSING_FAIL_INPUTS);
+                return send_error_and_reset(SWO_TX_PARSING_FAIL_INPUTS);
             case OUTPUTS_PARSING_ERROR:
             case OUTPUTS_COUNT_PARSING_ERROR:
             case OUTPUT_DESTINATION_TYPE_ERROR:
             case OUTPUT_ADDRESS_SIZE_ERROR:
-                return send_error_and_reset(SW_TX_PARSING_FAIL_OUTPUTS);
+                return send_error_and_reset(SWO_TX_PARSING_FAIL_OUTPUTS);
             case FEE_PARSING_ERROR:
-                return send_error_and_reset(SW_TX_PARSING_FAIL_FEE);
+                return send_error_and_reset(SWO_TX_PARSING_FAIL_FEE);
             case TO_PARSING_ERROR:
-                return send_error_and_reset(SW_TX_PARSING_FAIL_TTL);
+                return send_error_and_reset(SWO_TX_PARSING_FAIL_TTL);
             default:
-                return send_error_and_reset(SW_TX_PARSING_FAIL);
+                return send_error_and_reset(SWO_TX_PARSING_FAIL);
         }
     }
 
@@ -383,7 +383,7 @@ static int parse_and_hash_transaction(void) {
                            G_context.tx_info.transaction.protocolMagic)) {
             TRACE("Warning allocation failed");
             tx_context_cleanup();
-            return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
+            return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
         }
     }
 
@@ -442,7 +442,7 @@ static int parse_and_hash_transaction(void) {
         } else if (output_item->output_data.destination.type == DESTINATION_DEVICE_OWNED) {
             uint8_t *address_bytes = (uint8_t *) app_mem_alloc(MAX_ADDRESS_SIZE);
             if (address_bytes == NULL) {
-                return send_error_and_reset(SW_TX_PARSING_FAIL);
+                return send_error_and_reset(SWO_TX_PARSING_FAIL);
             }
 
             TRACE("Deriving device-owned address: type=%d, paymentPath.len=%u, staking=%d",
@@ -460,7 +460,7 @@ static int parse_and_hash_transaction(void) {
 
             if (address_size == 0 || address_size > MAX_ADDRESS_SIZE) {
                 app_mem_free(address_bytes);
-                return send_error_and_reset(SW_TX_PARSING_FAIL);
+                return send_error_and_reset(SWO_TX_PARSING_FAIL);
             }
 
             // After derivation, treat the result as a third-party address for CBOR hashing
@@ -543,11 +543,11 @@ static int parse_and_hash_transaction(void) {
                     break;
                 }
                 default:
-                    return send_error_and_reset(SW_TX_PARSING_FAIL);
+                    return send_error_and_reset(SWO_TX_PARSING_FAIL);
             }
 
             if (reward_addr_len == 0 || reward_addr_len != REWARD_ACCOUNT_SIZE) {
-                return send_error_and_reset(SW_TX_PARSING_FAIL);
+                return send_error_and_reset(SWO_TX_PARSING_FAIL);
             }
 
             // Add withdrawal to hash builder
@@ -600,7 +600,7 @@ static int parse_and_hash_transaction(void) {
 
     TRACE("Hash: %.*H", sizeof(G_context.tx_info.tx_hash), G_context.tx_info.tx_hash);
 
-    return SW_OK;
+    return SWO_SUCCESS;
 }
 
 int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
@@ -612,18 +612,18 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
 
     } else {  // parse transaction data chunks
         if (G_context.req_type != REQUEST_SIGN_TRANSACTION) {
-            return send_error_and_reset(SW_BAD_STATE);
+            return send_error_and_reset(SWO_BAD_STATE);
         }
 
         // Handle chunk accumulation
         int result = handle_tx_data_chunk(cdata, more);
-        if (more || result != SW_OK) {
+        if (more || result != SWO_SUCCESS) {
             return result;
         }
 
         // Final chunk - parse and build hash
         int parse_result = parse_and_hash_transaction();
-        if (parse_result != SW_OK) {
+        if (parse_result != SWO_SUCCESS) {
             return parse_result;
         }
 
@@ -639,7 +639,7 @@ void finalize_witness()
     io_send_response_pointer(
         G_context.tx_info.witness_signature,
         ED25519_SIGNATURE_LENGTH,
-        SW_OK
+        SWO_SUCCESS
     );
     G_context.tx_info.current_witness++;
     if (G_context.tx_info.current_witness == G_context.tx_info.num_witnesses) {
@@ -656,13 +656,13 @@ int handler_sign_tx_witness(buffer_t *cdata) {
     // Verify we're in correct state for witness signing
     if (G_context.req_type != REQUEST_SIGN_TRANSACTION) {
         TRACE("Bad request type for witness signing: %d", G_context.req_type);
-        return send_error_and_reset(SW_BAD_STATE);
+        return send_error_and_reset(SWO_BAD_STATE);
     }
 
     if (G_context.state.tx_state != TX_STATE_APPROVED) {
         TRACE("Bad state for witness signing: expected TX_STATE_APPROVED, got %d", G_context.state.tx_state);
         tx_context_cleanup();
-        return send_error_and_reset(SW_BAD_STATE);
+        return send_error_and_reset(SWO_BAD_STATE);
     }
 
     // Check that we haven't exceeded the expected number of witnesses
@@ -672,14 +672,14 @@ int handler_sign_tx_witness(buffer_t *cdata) {
               G_context.tx_info.num_witnesses
         );
         tx_context_cleanup();
-        return send_error_and_reset(SW_BAD_STATE);
+        return send_error_and_reset(SWO_BAD_STATE);
     }
 
     // Parse witness path from APDU data
     // buffer_read_bip44_path reads the length byte and all path components
     if (!buffer_read_bip44_path(cdata, &G_context.tx_info.witness_path)) {
         tx_context_cleanup();
-        return send_error_and_reset(SW_WRONG_DATA_LENGTH);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
     TRACE("Witness %d: path length=%d",
@@ -712,7 +712,7 @@ int handler_sign_tx_witness(buffer_t *cdata) {
     if (policy == POLICY_DENY) {
         TRACE("Security policy DENY - rejecting witness");
         tx_context_cleanup();
-        return send_error_and_reset(ERR_REJECTED_BY_POLICY);
+        return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
     }
 
     // Sign the transaction hash with the witness path
@@ -739,6 +739,6 @@ int handler_sign_tx_witness(buffer_t *cdata) {
         default:
             ASSERT(false);
             tx_context_cleanup();
-            return send_error_and_reset(SW_BAD_STATE);
+            return send_error_and_reset(SWO_BAD_STATE);
     }
 }

@@ -68,17 +68,17 @@ void ui_menu_main(void) {
 
 // Display helper that immediately approves the transaction and sends the hash back
 int ui_display_transaction(void) {
-    io_send_response_pointer(G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash), SW_OK);
+    io_send_response_pointer(G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash), SWO_SUCCESS);
     G_context.state.tx_state = TX_STATE_APPROVED;
     G_context.req_type = REQUEST_NONE;
-    return SW_OK;
+    return SWO_SUCCESS;
 }
 
 int ui_display_witness(const bip44_path_t *witnessPath, security_policy_t securityPolicy) {
     (void) witnessPath;
     (void) securityPolicy;
     finalize_witness();
-    return SW_OK;
+    return SWO_SUCCESS;
 }
 
 // app_mem_* implementations backed by malloc/free
@@ -1135,7 +1135,7 @@ static void run_sign_tx_fixture(const sign_tx_fixture_t *fixture) {
             .size = chunk_len,
             .offset = 0,
         };
-        assert_int_equal(handler_sign_tx(&chunk_buf, segment->p1, segment->more), SW_OK);
+        assert_int_equal(handler_sign_tx(&chunk_buf, segment->p1, segment->more), SWO_SUCCESS);
     }
 
     uint8_t tx_body_raw[50000];
@@ -1146,7 +1146,7 @@ static void run_sign_tx_fixture(const sign_tx_fixture_t *fixture) {
     assert_int_equal(blake2b(expected_hash, TX_HASH_LENGTH, tx_body_raw, tx_body_len), 0);
     assert_int_equal(g_last_response_len, TX_HASH_LENGTH);
     assert_memory_equal(g_last_response, expected_hash, TX_HASH_LENGTH);
-    assert_int_equal(g_last_response_sw, SW_OK);
+    assert_int_equal(g_last_response_sw, SWO_SUCCESS);
     assert_int_equal(G_context.req_type, REQUEST_NONE);
 
     tx_context_cleanup();

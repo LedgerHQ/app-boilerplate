@@ -19,19 +19,13 @@
 
 #include "deserialize.h"
 #include "utils.h"
+#include "utils/assert.h"
 #include "utils/textUtils.h"
 #include "utils/buffer_utils.h"
 #include "types.h"
 #include "tx_output_types.h"
 #include "addressUtils/addressUtilsShelley.h"
 #include "globals.h"
-
-#if defined(TEST) || defined(FUZZ)
-#include "assert.h"
-#define LEDGER_ASSERT(x, y) assert(x)
-#else
-#include "ledger_assert.h"
-#endif
 
 parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
     LEDGER_ASSERT(buf != NULL, "NULL buf");

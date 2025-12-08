@@ -39,5 +39,5 @@ int handler_get_serial(void) {
     // Verify we got the expected length
     ASSERT(len == SERIAL_LENGTH);
 
-    return io_send_response_pointer(serial, SERIAL_LENGTH, SW_OK);
+    return io_send_response_pointer(serial, SERIAL_LENGTH, SWO_SUCCESS);
 }

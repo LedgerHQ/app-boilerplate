@@ -79,7 +79,7 @@ void app_main() {
         // Parse APDU command from G_io_apdu_buffer
         if (!apdu_parser(&cmd, G_io_apdu_buffer, input_len)) {
             TRACE("BAD LENGTH: %.*H", input_len, G_io_apdu_buffer);
-            io_send_sw(SW_WRONG_DATA_LENGTH);
+            io_send_sw(SWO_WRONG_DATA_LENGTH);
             continue;
         }
 

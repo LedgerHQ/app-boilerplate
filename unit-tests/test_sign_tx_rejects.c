@@ -565,7 +565,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: enforce protocol magic validation in handler
         .skip_reason = "Protocol magic validation not enforced",
@@ -577,7 +577,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_INVALID_DATA,
+        .expected_sw = SWO_INVALID_NETWORK_ID,
         .expect_init_failure = true,
         // TODO: enforce network ID validation in handler
         .skip_reason = "Network ID validation not enforced",
@@ -589,7 +589,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: pool registration signing mode not implemented yet
         .skip_reason = "Pool registration signing mode unsupported",
@@ -601,7 +601,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: pool registration signing mode not implemented yet
         .skip_reason = "Pool registration signing mode unsupported",
@@ -613,7 +613,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: pool registration signing mode not implemented yet
         .skip_reason = "Pool registration signing mode unsupported",
@@ -625,7 +625,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: pool registration signing mode not implemented yet
         .skip_reason = "Pool registration signing mode unsupported",
@@ -637,7 +637,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: pool registration signing mode not implemented yet
         .skip_reason = "Pool registration signing mode unsupported",
@@ -649,7 +649,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: pool registration signing mode not implemented yet
         .skip_reason = "Pool registration signing mode unsupported",
@@ -661,7 +661,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: pool registration signing mode not implemented yet
         .skip_reason = "Pool registration signing mode unsupported",
@@ -673,7 +673,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: pool registration signing mode not implemented yet
         .skip_reason = "Pool registration signing mode unsupported",
@@ -685,7 +685,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: collateral inputs not supported yet
         .skip_reason = "Collateral inputs not supported",
@@ -697,7 +697,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: collateral inputs not supported yet
         .skip_reason = "Collateral inputs not supported",
@@ -709,7 +709,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: collateral inputs not supported yet
         .skip_reason = "Collateral inputs not supported",
@@ -721,7 +721,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: collateral inputs not supported yet
         .skip_reason = "Collateral inputs not supported",
@@ -733,7 +733,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: required signers not supported yet
         .skip_reason = "Required signers not supported",
@@ -745,7 +745,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: required signers not supported yet
         .skip_reason = "Required signers not supported",
@@ -757,7 +757,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0102010000000001010000",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: collateral outputs not supported yet
         .skip_reason = "Collateral outputs not supported",
@@ -769,7 +769,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0102010000000001010000",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: collateral outputs not supported yet
         .skip_reason = "Collateral outputs not supported",
@@ -781,7 +781,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0102010000000001010001",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: collateral outputs not supported yet
         .skip_reason = "Collateral outputs not supported",
@@ -793,7 +793,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0102010000000001010000",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: collateral outputs not supported yet
         .skip_reason = "Collateral outputs not supported",
@@ -805,7 +805,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101020000000001010000",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: total collateral not supported yet
         .skip_reason = "Total collateral not supported",
@@ -817,7 +817,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101020000000001010000",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: total collateral not supported yet
         .skip_reason = "Total collateral not supported",
@@ -829,7 +829,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101020000000001010001",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: total collateral not supported yet
         .skip_reason = "Total collateral not supported",
@@ -841,7 +841,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101020000000001010000",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: total collateral not supported yet
         .skip_reason = "Total collateral not supported",
@@ -853,7 +853,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010001000001010000",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: reference inputs not supported yet
         .skip_reason = "Reference inputs not supported",
@@ -865,7 +865,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010001000001010000",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: reference inputs not supported yet
         .skip_reason = "Reference inputs not supported",
@@ -877,7 +877,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010001000001010001",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: reference inputs not supported yet
         .skip_reason = "Reference inputs not supported",
@@ -889,7 +889,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010001000001010000",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: reference inputs not supported yet
         .skip_reason = "Reference inputs not supported",
@@ -901,7 +901,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_ADDRESS_REWARD_ADDRESS_KEY,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_ADDRESS_REWARD_ADDRESS_KEY),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Address parameter policy not implemented
         .skip_reason = "Address parameter policy not implemented",
@@ -913,7 +913,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_ADDRESS_REWARD_ADDRESS_SCRIPT,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_ADDRESS_REWARD_ADDRESS_SCRIPT),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Address parameter policy not implemented
         .skip_reason = "Address parameter policy not implemented",
@@ -925,7 +925,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_ADDRESS_NO_SPENDING_PATH_ORDINARY_TX_1,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_ADDRESS_NO_SPENDING_PATH_ORDINARY_TX_1),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Address parameter policy not implemented
         .skip_reason = "Address parameter policy not implemented",
@@ -937,7 +937,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_ADDRESS_NO_SPENDING_PATH_ORDINARY_TX_2,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_ADDRESS_NO_SPENDING_PATH_ORDINARY_TX_2),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Address parameter policy not implemented
         .skip_reason = "Address parameter policy not implemented",
@@ -949,7 +949,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_ADDRESS_POOL_OPERATOR_SPENDING_CHOICE_NOT_PATH,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_ADDRESS_POOL_OPERATOR_SPENDING_CHOICE_NOT_PATH),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Address parameter policy not implemented
         .skip_reason = "Address parameter policy not implemented",
@@ -961,7 +961,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_ADDRESS_MULTISIG_UNCONDITIONALLY,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_ADDRESS_MULTISIG_UNCONDITIONALLY),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Address parameter policy not implemented
         .skip_reason = "Address parameter policy not implemented",
@@ -973,7 +973,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = SIGN_TX_SEGMENTS_REJECT_ADDRESS_POOL_OWNER_UNCONDITIONALLY,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_ADDRESS_POOL_OWNER_UNCONDITIONALLY),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Address parameter policy not implemented
         .skip_reason = "Address parameter policy not implemented",
@@ -985,7 +985,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_STAKING_SCRIPT_HASH_IN_ORDINARY_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_STAKING_SCRIPT_HASH_IN_ORDINARY_TX),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Certificate staking policy not implemented
         .skip_reason = "Certificate staking policy not implemented",
@@ -997,7 +997,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_WITHDRAWAL_SCRIPT_HASH_AS_STAKE_CREDENTIAL_IN_ORDINARY_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_WITHDRAWAL_SCRIPT_HASH_AS_STAKE_CREDENTIAL_IN_ORDINARY_TX),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Withdrawal policy not implemented
         .skip_reason = "Withdrawal policy not implemented",
@@ -1009,7 +1009,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_WITHDRAWAL_NON_STAKING_PATH_AS_STAKE_CREDENTIAL_IN_ORDINARY_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_WITHDRAWAL_NON_STAKING_PATH_AS_STAKE_CREDENTIAL_IN_ORDINARY_TX),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Withdrawal policy not implemented
         .skip_reason = "Withdrawal policy not implemented",
@@ -1021,7 +1021,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_WITHDRAWAL_STAKING_PATH_AS_STAKE_CREDENTIAL_IN_MULTISIG_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_WITHDRAWAL_STAKING_PATH_AS_STAKE_CREDENTIAL_IN_MULTISIG_TX),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Withdrawal policy not implemented
         .skip_reason = "Withdrawal policy not implemented",
@@ -1033,7 +1033,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010002",
         .chunks = SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_CHANGE_OUTPUT_AND_WITHDRAWAL_ACCOUNT_MISMATCH,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_CHANGE_OUTPUT_AND_WITHDRAWAL_ACCOUNT_MISMATCH),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Single-account policy not implemented
         .skip_reason = "Single-account policy not implemented",
@@ -1045,7 +1045,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010003",
         .chunks = SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_STAKE_DEREGISTRATION_CERTIFICATE_AND_WITHDRAWAL_ACCOUNT_MISMATCH,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_STAKE_DEREGISTRATION_CERTIFICATE_AND_WITHDRAWAL_ACCOUNT_MISMATCH),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Single-account policy not implemented
         .skip_reason = "Single-account policy not implemented",
@@ -1057,7 +1057,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_ORDINARY_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_ORDINARY_TX),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Certificate serialization not implemented
         .skip_reason = "Certificate serialization not implemented",
@@ -1069,7 +1069,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_MULTISIG_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_MULTISIG_TX),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Certificate serialization not implemented
         .skip_reason = "Certificate serialization not implemented",
@@ -1081,7 +1081,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_PLUTUS_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_PLUTUS_TX),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Certificate serialization not implemented
         .skip_reason = "Certificate serialization not implemented",
@@ -1093,7 +1093,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_POOL_RETIRE_NON_POOL_COLD_KEY_IN_ORDINARY_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_POOL_RETIRE_NON_POOL_COLD_KEY_IN_ORDINARY_TX),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Certificate serialization not implemented
         .skip_reason = "Certificate serialization not implemented",
@@ -1105,7 +1105,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = SIGN_TX_SEGMENTS_REJECT_INVALID_CERT_POOL_REGISTRATION_WITH_NO_OWNERS,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_INVALID_CERT_POOL_REGISTRATION_WITH_NO_OWNERS),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Certificate serialization not implemented
         .skip_reason = "Certificate serialization not implemented",
@@ -1117,7 +1117,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = SIGN_TX_SEGMENTS_REJECT_POOL_ID_PATH_SENT_IN_FOR_POOL_REGISTRATION_OWNER_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_POOL_ID_PATH_SENT_IN_FOR_POOL_REGISTRATION_OWNER_TX),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Pool registration parsing not implemented
         .skip_reason = "Pool registration parsing not implemented",
@@ -1129,7 +1129,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = SIGN_TX_SEGMENTS_REJECT_POOL_ID_HASH_SENT_IN_FOR_POOL_REGISTRATION_OPERATOR_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_POOL_ID_HASH_SENT_IN_FOR_POOL_REGISTRATION_OPERATOR_TX),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Pool registration parsing not implemented
         .skip_reason = "Pool registration parsing not implemented",
@@ -1141,7 +1141,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = SIGN_TX_SEGMENTS_REJECT_POOL_OWNER_NON_STAKING_PATH_FOR_POOL_REGISTRATION_OWNER_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_POOL_OWNER_NON_STAKING_PATH_FOR_POOL_REGISTRATION_OWNER_TX),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Pool registration parsing not implemented
         .skip_reason = "Pool registration parsing not implemented",
@@ -1153,7 +1153,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = SIGN_TX_SEGMENTS_REJECT_OUTPUT_POOL_OPERATOR_DATUM_HASH,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_OUTPUT_POOL_OPERATOR_DATUM_HASH),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Output policy not implemented
         .skip_reason = "Output policy not implemented",
@@ -1165,7 +1165,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = SIGN_TX_SEGMENTS_REJECT_OUTPUT_POOL_OPERATOR_DATUM_INLINE,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_OUTPUT_POOL_OPERATOR_DATUM_INLINE),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Output policy not implemented
         .skip_reason = "Output policy not implemented",
@@ -1177,7 +1177,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = SIGN_TX_SEGMENTS_REJECT_OUTPUT_POOL_OPERATOR_REFERENCE_SCRIPT,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_OUTPUT_POOL_OPERATOR_REFERENCE_SCRIPT),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Output policy not implemented
         .skip_reason = "Output policy not implemented",
@@ -1189,7 +1189,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = SIGN_TX_SEGMENTS_REJECT_OUTPUT_POOL_OWNER_DATUM_HASH,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_OUTPUT_POOL_OWNER_DATUM_HASH),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Output policy not implemented
         .skip_reason = "Output policy not implemented",
@@ -1201,7 +1201,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = SIGN_TX_SEGMENTS_REJECT_OUTPUT_POOL_OWNER_DATUM_INLINE,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_OUTPUT_POOL_OWNER_DATUM_INLINE),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Output policy not implemented
         .skip_reason = "Output policy not implemented",
@@ -1213,7 +1213,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = SIGN_TX_SEGMENTS_REJECT_OUTPUT_POOL_OWNER_REFERENCE_SCRIPT,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_OUTPUT_POOL_OWNER_REFERENCE_SCRIPT),
-        .expected_sw = ERR_REJECTED_BY_POLICY,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Output policy not implemented
         .skip_reason = "Output policy not implemented",
@@ -1248,7 +1248,7 @@ static void run_sign_tx_reject_fixture(const sign_tx_reject_fixture_t *fixture) 
     }
 
     assert_int_equal(init_rc, 0);
-    assert_int_equal(g_last_sw, SW_OK);
+    assert_int_equal(g_last_sw, SWO_SUCCESS);
     assert_int_equal(G_context.req_type, REQUEST_SIGN_TRANSACTION);
     assert_int_equal(G_context.state.tx_state, TX_STATE_CHUNKS);
 
@@ -1270,7 +1270,7 @@ static void run_sign_tx_reject_fixture(const sign_tx_reject_fixture_t *fixture) 
             failure_seen = true;
             break;
         }
-        assert_int_equal(chunk_rc, SW_OK);
+        assert_int_equal(chunk_rc, SWO_SUCCESS);
     }
 
     assert_true(failure_seen);
@@ -1292,12 +1292,33 @@ static void test_sign_tx_reject_fixture(void **state) {
 int main(void) {
     const size_t test_count = ARRAY_LEN(SIGN_TX_REJECT_FIXTURES);
     struct CMUnitTest tests[ARRAY_LEN(SIGN_TX_REJECT_FIXTURES)];
+    size_t skipped_count = 0;
+
     for (size_t i = 0; i < test_count; i++) {
         tests[i] = (struct CMUnitTest) {
             .name = SIGN_TX_REJECT_FIXTURES[i].name,
             .test_func = test_sign_tx_reject_fixture,
             .initial_state = (void *) &SIGN_TX_REJECT_FIXTURES[i],
         };
+        if (SIGN_TX_REJECT_FIXTURES[i].skip_reason != NULL) {
+            skipped_count++;
+        }
     }
-    return cmocka_run_group_tests(tests, NULL, NULL);
+
+    int result = cmocka_run_group_tests(tests, NULL, NULL);
+
+    if (skipped_count > 0) {
+        print_message("\n");
+        print_message("================================================================================\n");
+        print_message("WARNING: %zu/%zu TESTS WERE SKIPPED!\n", skipped_count, test_count);
+        print_message("================================================================================\n");
+        print_message("\nThese tests are not yet implemented. See skip_reason in test fixtures.\n");
+        print_message("Test coverage is incomplete until all skipped tests are enabled.\n");
+        print_message("================================================================================\n");
+        print_message("\n");
+        // Return non-zero to make test harness visible of skipped tests
+        return 1;
+    }
+
+    return result;
 }

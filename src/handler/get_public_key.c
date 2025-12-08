@@ -46,7 +46,7 @@ int handler_get_public_key(buffer_t *cdata) {
 
     if (!buffer_read_bip44_path(cdata, &G_context.pk_info.path)) {
         TRACE();
-        return send_error_and_reset(SW_BIP44_PATH_PARSING_FAIL);
+        return send_error_and_reset(SWO_BIP44_PATH_PARSING_FAIL);
     }
 
     // Check security policy
@@ -57,7 +57,7 @@ int handler_get_public_key(buffer_t *cdata) {
         TRACE("Security policy DENY - rejecting operation");
         nbgl_useCaseStatus("Export of public key denied", false, ui_menu_main);
         // TODO make sure the constants are defined properly
-        return send_error_and_reset(ERR_REJECTED_BY_POLICY);
+        return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
     }
 
     {
@@ -75,13 +75,13 @@ void finalize_pubkey_export(bool confirmed) {
 
     if (!confirmed) {
         G_context.req_type = REQUEST_NONE;  // Reset to idle
-        io_send_sw(SW_DENY);
+        io_send_sw(SWO_CONDITIONS_NOT_SATISFIED);
         return;
     }
 
     ASSERT(G_context.req_type == REQUEST_EXPORT_PUBKEY);
 
     // Send the extended public key back to the client
-    io_send_response_pointer((uint8_t*) &G_context.pk_info.extPubKey, SIZEOF(G_context.pk_info.extPubKey), SW_OK);
+    io_send_response_pointer((uint8_t*) &G_context.pk_info.extPubKey, SIZEOF(G_context.pk_info.extPubKey), SWO_SUCCESS);
     G_context.req_type = REQUEST_NONE;  // Reset to idle after sending
 }

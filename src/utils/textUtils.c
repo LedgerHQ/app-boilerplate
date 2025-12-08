@@ -1,6 +1,7 @@
 #include "utils/assert.h"
 #include "utils/utils.h"
 #include "textUtils.h"
+#include <string.h>
 
 #define WRITE_CHAR(ptr, end, c) \
     {                           \

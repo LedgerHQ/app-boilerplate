@@ -66,7 +66,7 @@ int ui_display_pubkey(security_policy_t securityPolicy) {
 
     if (G_context.req_type != REQUEST_EXPORT_PUBKEY) {
         TRACE("Bad request type detected - returning error");
-        return send_error_and_reset(SW_BAD_STATE);
+        return send_error_and_reset(SWO_BAD_STATE);
     }
 
     pubkey_ctx_t* pk = &G_context.pk_info;
@@ -75,7 +75,7 @@ int ui_display_pubkey(security_policy_t securityPolicy) {
     pubkeyPathStr = (char *) ui_mem_alloc(BIP44_PATH_STRING_SIZE_MAX + 1);
     if (pubkeyPathStr == NULL) {
         ui_cleanup_tracked_allocations();
-        return send_error_and_reset(SW_INSUFFICIENT_MEMORY);
+        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
     ui_getPathScreen(pubkeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1, &pk->path);
 
