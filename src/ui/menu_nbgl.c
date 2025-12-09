@@ -19,6 +19,7 @@
 #include "os.h"
 #include "glyphs.h"
 #include "nbgl_use_case.h"
+#include "main_std_app.h"
 
 #include "globals.h"
 #include "menu.h"
@@ -28,11 +29,6 @@
 //  -----------------------------------------------------------
 //  ----------------------- HOME PAGE -------------------------
 //  -----------------------------------------------------------
-
-void app_quit(void) {
-    // exit app here
-    os_sched_exit(-1);
-}
 
 //  -----------------------------------------------------------
 //  --------------------- SETTINGS MENU -----------------------
@@ -118,5 +114,5 @@ void ui_menu_main(void) {
                                 &settingContents,
                                 &infoList,
                                 NULL,
-                                app_quit);
+                                app_exit);
 }
