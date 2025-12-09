@@ -36,7 +36,7 @@
 #include "menu.h"
 #include "memory/mem_utils.h"
 #include "memory/mem.h"
-#include "transaction/deserialize.h"
+#include "transaction/tx_parse.h"
 #include "ui_utils.h"
 #include "handler/sign_tx.h"
 

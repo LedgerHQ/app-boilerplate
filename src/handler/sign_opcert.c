@@ -31,7 +31,7 @@
 #include "utils/cardano_os_utils.h"
 #include "display.h"
 #include "opcert_types.h"
-#include "parse_opcert.h"
+#include "opcert_parse.h"
 #include "securityPolicy.h"
 #include "messageSigning.h"
 #include "buffer_utils.h"
@@ -58,7 +58,7 @@ int handler_sign_opcert(buffer_t *cdata) {
                     .offset = 0};
     TRACE_BUFFER(buf.ptr, buf.size);
 
-    opcert_parser_status_e status = opcert_deserialize(&buf, &G_context.opcert_info.opcert);
+    opcert_parser_status_e status = parse_opcert(&buf, &G_context.opcert_info.opcert);
     TRACE("Opcert parsing status: %d\n", status);
     if (status != PARSING_OK) {
         return send_error_and_reset(SWO_OPCERT_PARSING_FAIL);

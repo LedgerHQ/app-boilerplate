@@ -17,7 +17,7 @@
 #include "buffer.h"
 #include "memory/mem.h"
 
-#include "deserialize.h"
+#include "tx_parse.h"
 #include "utils.h"
 #include "utils/assert.h"
 #include "utils/textUtils.h"
@@ -27,7 +27,7 @@
 #include "addressUtils/addressUtilsShelley.h"
 #include "globals.h"
 
-parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx) {
+parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
     LEDGER_ASSERT(buf != NULL, "NULL buf");
     LEDGER_ASSERT(tx != NULL, "NULL tx");
 

@@ -16,7 +16,7 @@
 #include "globals.h"
 #include "constants.h"
 #include "transaction/tx_types.h"
-#include "transaction/deserialize.h"
+#include "transaction/tx_parse.h"
 #include "securityPolicy/securityPolicy.h"
 #include "hexUtils.h"
 #include "utils/utils.h"

@@ -42,7 +42,7 @@ typedef enum {
  *
  * @see tx_context_cleanup
  */
-parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx);
+parser_status_e parse_tx(buffer_t *buf, transaction_t *tx);
 
 /**
  * Cleanup all dynamically allocated structures in transaction.
@@ -53,7 +53,7 @@ parser_status_e transaction_deserialize(buffer_t *buf, transaction_t *tx);
  * transactions.
  *
  * USAGE CONTRACT:
- * - Call this after transaction_deserialize() on ALL code paths (success and error)
+ * - Call this after parse_tx() on ALL code paths (success and error)
  * - Call this in any error path that returns early from transaction processing
  */
 void tx_context_cleanup(void);

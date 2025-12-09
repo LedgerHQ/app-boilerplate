@@ -106,7 +106,7 @@ add_executable(test_sign_tx_handler
     mock_globals.c
     ../src/memory/flist.c
     ../src/handler/sign_tx.c
-    ../src/transaction/deserialize.c
+    ../src/transaction/tx_parse.c
     ../src/transaction/tx_utils.c
     ../src/transaction/tx_warnings.c
     ../src/securityPolicy/securityPolicy.c
@@ -171,10 +171,6 @@ target_link_libraries(hash_mocks_lib PUBLIC c)
 # Link hash_mocks to crypto libs
 target_link_libraries(hash_mocks_lib PUBLIC blake2b_lib sha3_lib)
 
-# add_library(tokens_lib SHARED ../src/tokens/tokens.c)  # TODO: needs keyDerivation.h and crypto mocks
-# add_library(transaction_deserialize SHARED ../src/transaction/deserialize.c)  # TODO: uncomment when needed
-# add_library(transaction_serialize SHARED ../src/transaction/serialize.c)      # TODO: uncomment when needed
-# add_library(transaction_utils SHARED ../src/transaction/utils.c)              # TODO: uncomment when needed
 
 # Link test executables
 target_link_libraries(test_hex_utils PUBLIC cmocka gcov hex_utils)
@@ -287,7 +283,7 @@ add_executable(test_sign_tx_rejects
     mock_globals.c
     ../src/memory/flist.c
     ../src/handler/sign_tx.c
-    ../src/transaction/deserialize.c
+    ../src/transaction/tx_parse.c
     ../src/transaction/tx_utils.c
     ../src/transaction/tx_warnings.c
     ../src/securityPolicy/securityPolicy.c

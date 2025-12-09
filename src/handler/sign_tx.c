@@ -31,7 +31,7 @@
 #include "tx_types.h"
 #include "tx_output_types.h"
 #include "tx_warnings.h"
-#include "deserialize.h"
+#include "tx_parse.h"
 #include "memory/mem.h"
 #include "constants.h"
 #include "types.h"
@@ -334,7 +334,7 @@ static int parse_and_hash_transaction(void) {
                     .size = G_context.tx_info.raw_tx_len,
                     .offset = 0};
 
-    parser_status_e status = transaction_deserialize(&buf, &G_context.tx_info.transaction);
+    parser_status_e status = parse_tx(&buf, &G_context.tx_info.transaction);
     TRACE("Parsing status: %d", status);
     if (status != PARSING_OK) {
         tx_context_cleanup();

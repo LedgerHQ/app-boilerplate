@@ -34,7 +34,7 @@
 #include "menu.h"
 #include "addressUtils/addressUtilsShelley.h"
 #include "nbgl_screens.h"
-#include "transaction/deserialize.h"
+#include "transaction/tx_parse.h"
 #include "utils/textUtils.h"
 #include "ui_utils.h"
 

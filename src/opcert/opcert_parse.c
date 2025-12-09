@@ -16,13 +16,13 @@
  *****************************************************************************/
 #include "buffer.h"
 
-#include "parse_opcert.h"
+#include "opcert_parse.h"
 #include "utils/utils.h"
 #include "utils/buffer_utils.h"
 #include "opcert_types.h"
 #include "assert.h"
 
-opcert_parser_status_e opcert_deserialize(buffer_t *buf, parsed_opcert_t *opcert)
+opcert_parser_status_e parse_opcert(buffer_t *buf, parsed_opcert_t *opcert)
 {
     LEDGER_ASSERT(buf != NULL, "NULL buf");
     LEDGER_ASSERT(opcert != NULL, "NULL opcert");

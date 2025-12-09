@@ -24,4 +24,4 @@ typedef enum {
  * @return PARSING_OK if success, error status otherwise.
  *
  */
-opcert_parser_status_e opcert_deserialize(buffer_t *buf, parsed_opcert_t *opcert);
+opcert_parser_status_e parse_opcert(buffer_t *buf, parsed_opcert_t *opcert);
