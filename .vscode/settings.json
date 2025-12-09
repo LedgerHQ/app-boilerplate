@@ -22,6 +22,20 @@
             "test_sign_tx_short_tx_blind_sign",
             "test_sign_tx_long_tx",
             "test_sign_tx_refused",
+            "test_sign_token_tx",
+            "test_sign_token_tx_unknown_token",
+            "test_sign_token_tx_refused",
+            "test_sign_token_tx_long_memo",
+            "test_provide_dynamic_token_valid_new",
+            "test_provide_dynamic_token_override_hardcoded",
+            "test_provide_dynamic_token_wrong_coin_type",
+            "test_provide_dynamic_token_missing_tuid",
+            "test_provide_dynamic_token_unknown_tuid_tag",
+            "test_provide_dynamic_token_persist_across_regular_tx",
+            "test_provide_dynamic_token_multiple_sequential",
+            "test_provide_dynamic_token_max_ticker_length",
+            "test_provide_dynamic_token_zero_decimals",
+            "test_provide_dynamic_token_wrong_tuid_size",
             "test_version"
         ]
     }
