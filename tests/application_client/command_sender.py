@@ -1,4 +1,3 @@
-from enum import IntEnum
 from typing import Generator, Optional
 from contextlib import contextmanager
 
@@ -6,27 +5,7 @@ from ragger.backend.interface import BackendInterface, RAPDU
 
 from standalone.input_files.signOpCert import OpCertTestCase
 from application_client.command_builder import CommandBuilder, InsType
-
-
-class Errors(IntEnum):
-    SW_DENY                    = 0x6985
-    SW_WRONG_P1P2              = 0x6A86
-    SW_WRONG_DATA_LENGTH       = 0x6A87
-    SW_INS_NOT_SUPPORTED       = 0x6D00
-    SW_CLA_NOT_SUPPORTED       = 0x6E00
-    SW_WRONG_RESPONSE_LENGTH   = 0xB000
-    SW_DISPLAY_BIP32_PATH_FAIL = 0xB001
-    SW_DISPLAY_ADDRESS_FAIL    = 0xB002
-    SW_DISPLAY_AMOUNT_FAIL     = 0xB003
-    SW_WRONG_TX_LENGTH         = 0xB004
-    SW_TX_PARSING_FAIL         = 0xB005
-    SW_TX_HASH_FAIL            = 0xB006
-    SW_BAD_STATE               = 0xB007
-    SW_SIGNATURE_FAIL          = 0xB008
-    SW_WRONG_AMOUNT            = 0xC000
-    SW_WRONG_ADDRESS           = 0xC000
-    SW_SUCCESS                 = 0x9000
-    SW_REJECTED_BY_POLICY      = 0x6E10
+from application_client.status_words import StatusWord
 
 
 class CommandSender:
@@ -207,7 +186,7 @@ class CommandSender:
         # Send all intermediate chunks synchronously
         for chunk in chunks[:-1]:
             response = self._exchange(chunk)
-            if response.status != Errors.SW_SUCCESS:
+            if response.status != StatusWord.SWO_SUCCESS:
                 raise AssertionError(f"Intermediate chunk failed: {hex(response.status)}")
 
         # Send final chunk asynchronously (for UI navigation)
@@ -224,4 +203,3 @@ class CommandSender:
             Response APDU with signature
         """
         return self._exchange(self._cmd_builder.sign_tx_witness(path))
-

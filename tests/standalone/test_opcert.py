@@ -12,7 +12,7 @@ from ragger.backend import BackendInterface
 from ragger.navigator import Navigator, NavInsID
 from ragger.navigator.navigation_scenario import NavigateWithScenario
 
-from application_client.app_def import Errors
+from application_client.status_words import StatusWord
 from application_client.command_sender import CommandSender
 
 from standalone.input_files.signOpCert import opCertTestCases, OpCertTestCase
@@ -47,7 +47,7 @@ def test_opCert(device: Device,
                 scenario_navigator.review_approve(do_comparison=False)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
     msg = bytes()
     msg += bytes.fromhex(testCase.opCert.kesPublicKeyHex)

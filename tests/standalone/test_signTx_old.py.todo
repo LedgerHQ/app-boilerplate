@@ -14,7 +14,8 @@ from ragger.navigator import Navigator, NavInsID
 from ragger.navigator.navigation_scenario import NavigateWithScenario
 from ragger.error import ExceptionRAPDU
 
-from application_client.app_def import Errors, NetworkIds
+from application_client.app_def import NetworkIds
+from application_client.status_words import StatusWord
 from application_client.command_sender import CommandSender
 from application_client.command_builder import P1Type, P2Type
 
@@ -171,7 +172,7 @@ def _signTx_init(device: Device,
         navigator.navigate(moves)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_setAuxiliaryData(device: Device,
@@ -203,14 +204,14 @@ def _signTx_setAuxiliaryData(device: Device,
             navigator.navigate(moves)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
     if testCase.tx.auxiliaryData.type == TxAuxiliaryDataType.ARBITRARY_HASH:
         return True
 
     assert isinstance(testCase.tx.auxiliaryData.params, TxAuxiliaryDataCIP36)
     response = client.sign_tx_aux_data_init(testCase.tx.auxiliaryData.params)
     # Check the status
-    assert response.status == Errors.SW_SUCCESS
+    assert response.status == StatusWord.SWO_SUCCESS
 
     if testCase.tx.auxiliaryData.params.voteKey:
         if device.is_nano:
@@ -222,7 +223,7 @@ def _signTx_setAuxiliaryData(device: Device,
             navigator.navigate(moves)
         # Check the status (Asynchronous)
         response = client.get_async_response()
-        assert response and response.status == Errors.SW_SUCCESS
+        assert response and response.status == StatusWord.SWO_SUCCESS
     elif testCase.tx.auxiliaryData.params.delegations:
         for delegation in testCase.tx.auxiliaryData.params.delegations:
             if device.is_nano:
@@ -236,7 +237,7 @@ def _signTx_setAuxiliaryData(device: Device,
                 navigator.navigate(moves)
             # Check the status (Asynchronous)
             response = client.get_async_response()
-            assert response and response.status == Errors.SW_SUCCESS
+            assert response and response.status == StatusWord.SWO_SUCCESS
 
     with client.sign_tx_aux_data_staking(testCase.tx.auxiliaryData.params):
         if device.is_nano:
@@ -246,7 +247,7 @@ def _signTx_setAuxiliaryData(device: Device,
         navigator.navigate(moves)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
     if device.is_nano:
         moves = [NavInsID.RIGHT_CLICK]
@@ -261,7 +262,7 @@ def _signTx_setAuxiliaryData(device: Device,
         navigator.navigate(moves)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
     with client.sign_tx_aux_data_nonce(testCase.tx.auxiliaryData.params):
         if device.is_nano:
@@ -271,11 +272,11 @@ def _signTx_setAuxiliaryData(device: Device,
         navigator.navigate(moves)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
     response = client.sign_tx_aux_data_voting_purpose(testCase.tx.auxiliaryData.params)
     # Check the status
-    assert response.status == Errors.SW_SUCCESS
+    assert response.status == StatusWord.SWO_SUCCESS
 
     with client.sign_tx_aux_data_confirm():
         if device.is_nano:
@@ -284,7 +285,7 @@ def _signTx_setAuxiliaryData(device: Device,
             scenario_navigator.address_review_approve(do_comparison=False)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
     return True
 
@@ -301,7 +302,7 @@ def _signTx_addInput(client: CommandSender,
     for txInput in testCase.tx.inputs:
         response = client.sign_tx_inputs(txInput)
         # Check the status
-        assert response.status == Errors.SW_SUCCESS
+        assert response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_addOutputs(device: Device,
@@ -380,7 +381,7 @@ def _signTx_addOutputs(device: Device,
         # Check the status (Asynchronous)
         response = client.get_async_response()
         # Check the status (Asynchronous)
-        assert response and response.status == Errors.SW_SUCCESS
+        assert response and response.status == StatusWord.SWO_SUCCESS
 
         # Send TOKEN BUNDLE
         with_nav: bool = txOutput.destination.type == TxOutputDestinationType.THIRD_PARTY
@@ -390,7 +391,7 @@ def _signTx_addOutputs(device: Device,
         if txOutput.datum is not None:
             response = client.sign_tx_outputs_datum(txOutput.datum)
             # Check the status
-            assert response and response.status == Errors.SW_SUCCESS
+            assert response and response.status == StatusWord.SWO_SUCCESS
             if txOutput.datum.type == DatumType.INLINE:
                 if len(txOutput.datum.datumHex) // 2 > MAX_SIGN_TX_CHUNK_SIZE:
                     payload = txOutput.datum.datumHex[MAX_SIGN_TX_CHUNK_SIZE * 2:]
@@ -398,21 +399,21 @@ def _signTx_addOutputs(device: Device,
                     while len(payload) > 0:
                         response = client.sign_tx_outputs_chunk(P2Type.P2_DATUM_CHUNK, payload[:max_payload_size])
                         # Check the status
-                        assert response and response.status == Errors.SW_SUCCESS
+                        assert response and response.status == StatusWord.SWO_SUCCESS
                         payload = payload[max_payload_size:]
 
         # Send REFERENCE SCRIPT
         if isinstance(txOutput, TxOutputBabbage) and txOutput.referenceScriptHex is not None:
             response = client.sign_tx_outputs_ref_script(txOutput.referenceScriptHex)
             # Check the status
-            assert response and response.status == Errors.SW_SUCCESS
+            assert response and response.status == StatusWord.SWO_SUCCESS
             if len(txOutput.referenceScriptHex) // 2 > MAX_SIGN_TX_CHUNK_SIZE:
                 payload = txOutput.referenceScriptHex[MAX_SIGN_TX_CHUNK_SIZE * 2:]
                 max_payload_size = MAX_SIGN_TX_CHUNK_SIZE * 2
                 while len(payload) > 0:
                     response = client.sign_tx_outputs_chunk(P2Type.P2_SCRIPT_CHUNK, payload[:max_payload_size])
                     # Check the status
-                    assert response and response.status == Errors.SW_SUCCESS
+                    assert response and response.status == StatusWord.SWO_SUCCESS
                     payload = payload[max_payload_size:]
 
         # Send CONFIRM
@@ -429,7 +430,7 @@ def _signTx_addOutputs(device: Device,
         # Check the status (Asynchronous)
         response = client.get_async_response()
         # Check the status (Asynchronous)
-        assert response and response.status == Errors.SW_SUCCESS
+        assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_setFee(device: Device,
@@ -463,7 +464,7 @@ def _signTx_setFee(device: Device,
             pass
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_setTtl(client: CommandSender,
@@ -478,7 +479,7 @@ def _signTx_setTtl(client: CommandSender,
         return
     response = client.sign_tx_ttl(testCase)
     # Check the status
-    assert response.status == Errors.SW_SUCCESS
+    assert response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_setCertificates(device: Device,
@@ -559,7 +560,7 @@ def _signTx_setCertificates(device: Device,
         # Check the status (Asynchronous)
         response = client.get_async_response()
         # Check the status (Asynchronous)
-        assert response and response.status == Errors.SW_SUCCESS
+        assert response and response.status == StatusWord.SWO_SUCCESS
 
         if certificate.type == CertificateType.STAKE_POOL_REGISTRATION:
             # additional data for pool certificate
@@ -576,12 +577,12 @@ def _signTx_setCertificates(device: Device,
                 navigator.navigate(moves)
             # Check the status (Asynchronous)
             response = client.get_async_response()
-            assert response and response.status == Errors.SW_SUCCESS
+            assert response and response.status == StatusWord.SWO_SUCCESS
 
             # Send POOL KEY
             response = client.sign_tx_cert_pool_reg_pool_key(certificate.params.poolKey)
             # Check the status
-            assert response.status == Errors.SW_SUCCESS
+            assert response.status == StatusWord.SWO_SUCCESS
 
             # Send VRF
             moves = []
@@ -597,7 +598,7 @@ def _signTx_setCertificates(device: Device,
                     pass
             # Check the status (Asynchronous)
             response = client.get_async_response()
-            assert response and response.status == Errors.SW_SUCCESS
+            assert response and response.status == StatusWord.SWO_SUCCESS
 
             # Send FINANCIALS
             moves = []
@@ -609,7 +610,7 @@ def _signTx_setCertificates(device: Device,
                 navigator.navigate(moves)
             # Check the status (Asynchronous)
             response = client.get_async_response()
-            assert response and response.status == Errors.SW_SUCCESS
+            assert response and response.status == StatusWord.SWO_SUCCESS
 
             # Send REWARD ACCOUNT
             moves = []
@@ -621,7 +622,7 @@ def _signTx_setCertificates(device: Device,
                 navigator.navigate(moves)
             # Check the status (Asynchronous)
             response = client.get_async_response()
-            assert response and response.status == Errors.SW_SUCCESS
+            assert response and response.status == StatusWord.SWO_SUCCESS
 
             # Send POOL OWNER
             for owner in certificate.params.poolOwners:
@@ -629,7 +630,7 @@ def _signTx_setCertificates(device: Device,
                     navigator.navigate(moves)
                 # Check the status (Asynchronous)
                 response = client.get_async_response()
-                assert response and response.status == Errors.SW_SUCCESS
+                assert response and response.status == StatusWord.SWO_SUCCESS
 
             # Send POOL RELAY
             moves = []
@@ -642,7 +643,7 @@ def _signTx_setCertificates(device: Device,
                     navigator.navigate(moves)
                 # Check the status (Asynchronous)
                 response = client.get_async_response()
-                assert response and response.status == Errors.SW_SUCCESS
+                assert response and response.status == StatusWord.SWO_SUCCESS
 
             # Send POOL METADATA
             moves = []
@@ -660,7 +661,7 @@ def _signTx_setCertificates(device: Device,
                 navigator.navigate(moves)
             # Check the status (Asynchronous)
             response = client.get_async_response()
-            assert response and response.status == Errors.SW_SUCCESS
+            assert response and response.status == StatusWord.SWO_SUCCESS
 
             # Send POOL CONFIRM
             with client.sign_tx_cert_pool_reg_confirm():
@@ -673,7 +674,7 @@ def _signTx_setCertificates(device: Device,
                     pass
             # Check the status (Asynchronous)
             response = client.get_async_response()
-            assert response and response.status == Errors.SW_SUCCESS
+            assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_setWithdrawals(client: CommandSender,
@@ -691,7 +692,7 @@ def _signTx_setWithdrawals(client: CommandSender,
         # Check the status (Asynchronous)
         response = client.get_async_response()
         # Check the status (Asynchronous)
-        assert response and response.status == Errors.SW_SUCCESS
+        assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_setValidityIntervalStart(client: CommandSender,
@@ -707,7 +708,7 @@ def _signTx_setValidityIntervalStart(client: CommandSender,
         return
     response = client.sign_tx_validity(testCase.tx.validityIntervalStart)
     # Check the status
-    assert response.status == Errors.SW_SUCCESS
+    assert response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_addTokenBundle(device: Device,
@@ -733,7 +734,7 @@ def _signTx_addTokenBundle(device: Device,
                 navigator.navigate([NavInsID.SWIPE_CENTER_TO_LEFT])
         # Check the status (Asynchronous)
         response = client.get_async_response()
-        assert response and response.status == Errors.SW_SUCCESS
+        assert response and response.status == StatusWord.SWO_SUCCESS
 
         for token in assetGroup.tokens:
             with client.sign_tx_token(p1, token):
@@ -743,7 +744,7 @@ def _signTx_addTokenBundle(device: Device,
                     pass
             # Check the status (Asynchronous)
             response = client.get_async_response()
-            assert response and response.status == Errors.SW_SUCCESS
+            assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_setMint(device: Device,
@@ -769,7 +770,7 @@ def _signTx_setMint(device: Device,
         navigator.navigate(moves)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
     _signTx_addTokenBundle(firmware, navigator, client, P1Type.P1_MINT, testCase.tx.mint)
 
@@ -780,7 +781,7 @@ def _signTx_setMint(device: Device,
             scenario_navigator.review_approve(do_comparison=False)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_setScriptDataHash(client: CommandSender,
@@ -796,7 +797,7 @@ def _signTx_setScriptDataHash(client: CommandSender,
         return
     response = client.sign_tx_script_data_hash(testCase.tx.scriptDataHash)
     # Check the status
-    assert response.status == Errors.SW_SUCCESS
+    assert response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_addVoterVotes(device: Device,
@@ -836,7 +837,7 @@ def _signTx_addVoterVotes(device: Device,
         # Check the status (Asynchronous)
         response = client.get_async_response()
         # Check the status (Asynchronous)
-        assert response and response.status == Errors.SW_SUCCESS
+        assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_addCollateralInputs(client: CommandSender,
@@ -851,7 +852,7 @@ def _signTx_addCollateralInputs(client: CommandSender,
     for txInput in testCase.tx.collateralInputs:
         response = client.sign_tx_collateral_inputs(txInput)
         # Check the status
-        assert response and response.status == Errors.SW_SUCCESS
+        assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_addCollateralOutputs(device: Device,
@@ -889,7 +890,7 @@ def _signTx_addCollateralOutputs(device: Device,
     # Check the status (Asynchronous)
     response = client.get_async_response()
     # Check the status (Asynchronous)
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
     # Send TOKEN BUNDLE
     if len(testCase.tx.collateralOutput.tokenBundle) > 0:
@@ -909,7 +910,7 @@ def _signTx_addCollateralOutputs(device: Device,
                 scenario_navigator.address_review_approve(do_comparison=False)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_addTotalCollateral(device: Device,
@@ -931,7 +932,7 @@ def _signTx_addTotalCollateral(device: Device,
     # Check the status (Asynchronous)
     response = client.get_async_response()
     # Check the status (Asynchronous)
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_addReferenceInputs(client: CommandSender,
@@ -946,7 +947,7 @@ def _signTx_addReferenceInputs(client: CommandSender,
     for txInput in testCase.tx.referenceInputs:
         response = client.sign_tx_reference_inputs(txInput)
         # Check the status
-        assert response and response.status == Errors.SW_SUCCESS
+        assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_addRequiredSigners(client: CommandSender,
@@ -961,7 +962,7 @@ def _signTx_addRequiredSigners(client: CommandSender,
     for signer in testCase.tx.requiredSigners:
         response = client.sign_tx_required_signers(signer)
         # Check the status
-        assert response and response.status == Errors.SW_SUCCESS
+        assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_addTreasury(device: Device,
@@ -985,7 +986,7 @@ def _signTx_addTreasury(device: Device,
         navigator.navigate(moves)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_addDonation(device: Device,
@@ -1009,7 +1010,7 @@ def _signTx_addDonation(device: Device,
         navigator.navigate(moves)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _signTx_confirm(device: Device,
@@ -1040,7 +1041,7 @@ def _signTx_confirm(device: Device,
             scenario_navigator.review_approve(do_comparison=False)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
     return response.data
 
 
@@ -1097,7 +1098,7 @@ def _signTx_setWitnesses(device: Device,
         # Check the status (Asynchronous)
         response = client.get_async_response()
         # Check the status (Asynchronous)
-        assert response and response.status == Errors.SW_SUCCESS
+        assert response and response.status == StatusWord.SWO_SUCCESS
         signatures.append((path, response.data))
 
     return signatures

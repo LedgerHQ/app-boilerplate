@@ -6,7 +6,7 @@
 #include "constants.h"
 #include "hash.h"
 #include "lcx_crc.h"
-#include "sw.h"
+#include "cardano_swo.h"
 #include "utils/utils.h"
 
 #define BYRON_ADDRESS_CBOR_HASH_SIZE 32

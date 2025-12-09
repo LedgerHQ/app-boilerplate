@@ -32,7 +32,7 @@
 #include "utils/utils.h"
 #include "utils/cardano_os_utils.h"
 #include "types.h"
-#include "sw.h"
+#include "cardano_swo.h"
 #include "display.h"
 #include "dispatcher.h"
 #include "securityPolicy.h"

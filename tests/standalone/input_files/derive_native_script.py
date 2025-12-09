@@ -10,7 +10,7 @@ from enum import IntEnum
 from typing import List, Optional, Union
 from dataclasses import dataclass, field
 
-from application_client.app_def import Errors
+from application_client.status_words import StatusWord
 
 
 class NativeScriptType(IntEnum):
@@ -56,7 +56,7 @@ NativeScriptParams = Union[NativeScriptParamsPubkey,
 @dataclass
 class SignedData:
     hash: Optional[str] = None
-    sw: Optional[Errors] = Errors.SW_SUCCESS
+    sw: Optional[StatusWord] = StatusWord.SWO_SUCCESS
 
 
 @dataclass
@@ -187,13 +187,13 @@ InvalidScriptTestCases = [
     ValidNativeScriptTestCase("PUBKEY - invalid key path",
                               NativeScript(NativeScriptType.PUBKEY_DEVICE_OWNED,
                                            NativeScriptParamsPubkey("m/0/0/0/0/0/0")),
-                              SignedData(sw=Errors.SW_INVALID_DATA)),
+                              SignedData(sw=StatusWord.SWO_INVALID_DATA)),
     ValidNativeScriptTestCase("N_OF_K - invalid required count (higher than number of scripts)",
                               NativeScript(NativeScriptType.N_OF_K,
                                            NativeScriptParamsNofK(1)),
-                              SignedData(sw=Errors.SW_INVALID_DATA)),
+                              SignedData(sw=StatusWord.SWO_INVALID_DATA)),
     ValidNativeScriptTestCase("PUBKEY - invalid key path",
                               NativeScript(NativeScriptType.PUBKEY_DEVICE_OWNED,
                                            NativeScriptParamsPubkey("m/0/0/0/0/0/0")),
-                              SignedData(sw=Errors.SW_INVALID_DATA)),
+                              SignedData(sw=StatusWord.SWO_INVALID_DATA)),
 ]

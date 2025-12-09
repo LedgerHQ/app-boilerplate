@@ -23,7 +23,7 @@
 #include "get_app_name.h"
 #include "constants.h"
 #include "globals.h"
-#include "sw.h"
+#include "cardano_swo.h"
 #include "types.h"
 
 int handler_get_app_name() {

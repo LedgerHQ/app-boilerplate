@@ -14,7 +14,8 @@ from ledgered.devices import Device
 from ragger.navigator import Navigator, NavInsID
 from ragger.navigator.navigation_scenario import NavigateWithScenario
 
-from application_client.app_def import Errors, AddressType, Mainnet
+from application_client.app_def import AddressType, Mainnet
+from application_client.status_words import StatusWord
 from application_client.command_sender import CommandSender
 
 from standalone.input_files.signMsg import signMsgTestCases, SignMsgTestCase, MessageAddressFieldType
@@ -77,7 +78,7 @@ def _signMsg_init(device: Device,
             navigator.navigate([NavInsID.SWIPE_CENTER_TO_LEFT])
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _signMsg_chunk(device: Device,
@@ -111,7 +112,7 @@ def _signMsg_chunk(device: Device,
                                screen_change_after_last_instruction=False)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _signMsg_confirm(device: Device,
@@ -142,7 +143,7 @@ def _signMsg_confirm(device: Device,
             scenario_navigator.address_review_approve(do_comparison=False)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
     return response.data
 
 

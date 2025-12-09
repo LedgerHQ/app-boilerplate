@@ -25,7 +25,7 @@
 #include "nbgl_use_case.h"
 
 #include "sign_tx.h"
-#include "sw.h"
+#include "cardano_swo.h"
 #include "globals.h"
 #include "display.h"
 #include "tx_types.h"

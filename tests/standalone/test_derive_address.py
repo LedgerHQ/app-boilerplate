@@ -14,7 +14,8 @@ from ragger.navigator import Navigator, NavInsID
 from ragger.navigator.navigation_scenario import NavigateWithScenario
 from ragger.error import ExceptionRAPDU
 
-from application_client.app_def import Errors, Testnet
+from application_client.app_def import Testnet
+from application_client.status_words import StatusWord
 from application_client.command_sender import CommandSender
 from application_client.command_builder import P1Type
 
@@ -52,7 +53,7 @@ def test_derive_address_byron(device: Device,
 
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
     encoded = base58.b58encode(response.data).decode()
 
     if testCase.netDesc == Testnet:
@@ -90,7 +91,7 @@ def test_derive_address_byron_show(device: Device,
 
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 @pytest.mark.parametrize(
@@ -108,7 +109,7 @@ def test_derive_address_shelley(backend: BackendInterface,
     # Send the APDU
     response = client.derive_address(P1Type.P1_RETURN, testCase)
     # Check the status (Asynchronous)
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
     assert response.data == derive_address(testCase)
 
 
@@ -145,7 +146,7 @@ def test_derive_address_shelley_confirm(device: Device,
 
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
     assert response.data == derive_address(testCase)
 
 
@@ -177,7 +178,7 @@ def test_derive_address_shelley_show(device: Device,
 
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 @pytest.fixture(name="p1", params=[P1Type.P1_RETURN, P1Type.P1_DISPLAY])
@@ -200,4 +201,4 @@ def test_derive_address_reject(backend: BackendInterface,
     with pytest.raises(ExceptionRAPDU) as err:
         # Send the APDU
         client.derive_address(p1, testCase)
-    assert err.value.status == Errors.SW_REJECTED_BY_POLICY
+    assert err.value.status == StatusWord.SWO_SECURITY_CONDITION_NOT_SATISFIED

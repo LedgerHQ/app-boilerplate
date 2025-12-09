@@ -11,7 +11,7 @@
 
 #include "handler/sign_tx.h"
 #include "buffer.h"
-#include "sw.h"
+#include "cardano_swo.h"
 #include "globals.h"
 #include "constants.h"
 #include "securityPolicy/securityPolicy.h"

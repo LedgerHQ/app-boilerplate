@@ -12,7 +12,7 @@ from ledgered.devices import Device
 from ragger.navigator import Navigator, NavInsID
 from ragger.navigator.navigation_scenario import NavigateWithScenario
 
-from application_client.app_def import Errors
+from application_client.status_words import StatusWord
 from application_client.command_sender import CommandSender
 
 from standalone.input_files.cvote import cvoteTestCases, CVoteTestCase
@@ -76,12 +76,12 @@ def _cvote_init(device: Device,
         navigator.navigate(moves)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
     # Send the CHUNK APDUs
     response = client.sign_cip36_chunk(testCase)
     # Check the status
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _cvote_confirm(device: Device,
@@ -111,7 +111,7 @@ def _cvote_confirm(device: Device,
             scenario_navigator.address_review_approve(do_comparison=False)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
     return response.data
 
 
@@ -145,5 +145,5 @@ def _cvote_witness(device: Device,
             scenario_navigator.review_approve(do_comparison=False)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
     return response.data

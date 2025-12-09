@@ -3,7 +3,7 @@
 #include "mem_utils.h"
 #include "mem.h"
 #include "io.h"
-#include "sw.h"
+#include "cardano_swo.h"
 #include "utils/utils.h"
 
 nbgl_contentTagValue_t *g_pairs = NULL;

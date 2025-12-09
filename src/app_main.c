@@ -25,7 +25,7 @@
 #include "types.h"
 #include "globals.h"
 #include "io.h"
-#include "sw.h"
+#include "cardano_swo.h"
 #include "menu.h"
 #include "dispatcher.h"
 #include "settings.h"

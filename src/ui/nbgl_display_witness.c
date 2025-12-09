@@ -30,7 +30,7 @@
 #include "globals.h"
 #include "utils/utils.h"
 #include "utils/cardano_os_utils.h"
-#include "sw.h"
+#include "cardano_swo.h"
 #include "securityPolicy.h"
 #include "nbgl_screens.h"
 #include "menu.h"

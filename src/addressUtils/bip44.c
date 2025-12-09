@@ -2,7 +2,7 @@
 #include "hash.h"
 #include "keyDerivation.h"
 #include "utils/utils.h"
-#include "sw.h"
+#include "cardano_swo.h"
 #include "read.h"
 
 enum {

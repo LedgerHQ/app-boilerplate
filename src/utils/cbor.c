@@ -1,5 +1,5 @@
 #include "cbor.h"
-#include "sw.h"
+#include "cardano_swo.h"
 #include "read.h"
 #include "write.h"
 #include "assert.h"

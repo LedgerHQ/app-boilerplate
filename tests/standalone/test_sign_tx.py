@@ -9,7 +9,7 @@ from ragger.error import ExceptionRAPDU
 from ragger.navigator import Navigator, NavInsID
 from ragger.navigator.navigation_scenario import NavigateWithScenario
 
-from application_client.app_def import Errors
+from application_client.status_words import StatusWord
 from application_client.command_sender import CommandSender
 from application_client.command_builder import gather_witness_paths
 from standalone.utils import verify_signature, idTestFunc
@@ -64,7 +64,7 @@ def test_sign_tx_simple(device: Device,
         num_mint_asset_groups=len(tx.mint),
         num_witnesses=len(witness_paths)
     )
-    assert response.status == Errors.SW_SUCCESS, f"Init failed: {hex(response.status)}"
+    assert response.status == StatusWord.SWO_SUCCESS, f"Init failed: {hex(response.status)}"
 
     # Step 2: Send transaction data chunks
     # Deserialization only happens after the final chunk is received
@@ -137,7 +137,7 @@ def test_sign_tx_simple(device: Device,
 
         response = client.get_async_response()
         assert response is not None, f"No response for witness {path_idx}: {path}"
-        assert response.status == Errors.SW_SUCCESS, f"Witness failed for {path}: {hex(response.status)}"
+        assert response.status == StatusWord.SWO_SUCCESS, f"Witness failed for {path}: {hex(response.status)}"
 
         signature = response.data
         print(f"Witness signature for {path} ({len(signature)} bytes): {signature.hex()}")

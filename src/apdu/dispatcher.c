@@ -26,7 +26,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "types.h"
-#include "sw.h"
+#include "cardano_swo.h"
 #include "utils/assert.h"
 #include "utils/utils.h"
 #include "get_serial.h"

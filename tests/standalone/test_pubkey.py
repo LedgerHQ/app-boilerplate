@@ -6,7 +6,8 @@ from ragger.navigator import Navigator, NavInsID
 from ragger.navigator.navigation_scenario import NavigateWithScenario
 from ragger.error import ExceptionRAPDU
 
-from application_client.command_sender import CommandSender, Errors
+from application_client.command_sender import CommandSender
+from application_client.status_words import StatusWord
 
 from standalone.input_files.pubkey import PubKeyTestCase, rejectTestCases, testsByron, testsShelleyUsual, testsShelleyUnusual, testsColdKeys, testsCVoteKeysUsual, testsCVoteKeysUnusual
 
@@ -43,7 +44,7 @@ def test_pubkey_confirm(device: Device,
             pass
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
     # Check the response
     _check_pubkey_result(response.data, testCase.path)
@@ -65,7 +66,7 @@ def test_pubkey_without_confirmation(backend: BackendInterface, testCase: PubKey
 
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
     # Check the response
     _check_pubkey_result(response.data, testCase.path)
@@ -86,7 +87,7 @@ def test_pubkey_reject(backend: BackendInterface,
     with pytest.raises(ExceptionRAPDU) as err:
         with client.get_pubkey_async(testCase.path):
             pass
-    assert err.value.status == Errors.SW_REJECTED_BY_POLICY
+    assert err.value.status == StatusWord.SWO_SECURITY_CONDITION_NOT_SATISFIED
 
 
 def _check_pubkey_result(data: bytes, path: str) -> None:

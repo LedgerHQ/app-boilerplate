@@ -21,7 +21,7 @@
 #include "io.h"
 
 #include "get_serial.h"
-#include "sw.h"
+#include "cardano_swo.h"
 #include "utils/assert.h"
 
 /**

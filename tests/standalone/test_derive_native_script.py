@@ -13,7 +13,7 @@ from ragger.navigator import Navigator, NavInsID
 from ragger.navigator.navigation_scenario import NavigateWithScenario
 from ragger.error import ExceptionRAPDU
 
-from application_client.app_def import Errors
+from application_client.status_words import StatusWord
 from application_client.command_sender import CommandSender
 
 from standalone.input_files.derive_native_script import ValidNativeScriptTestCases, ValidNativeScriptTestCase
@@ -105,7 +105,7 @@ def _deriveNativeScriptHash_addSimpleScript(device: Device,
                                screen_change_after_last_instruction=False)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _deriveScriptHash_startComplexScript(device: Device,
@@ -139,7 +139,7 @@ def _deriveScriptHash_startComplexScript(device: Device,
         navigator.navigate(moves)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
 
 
 def _deriveNativeScriptHash_finishWholeNativeScript(device: Device,
@@ -173,7 +173,7 @@ def _deriveNativeScriptHash_finishWholeNativeScript(device: Device,
             scenario_navigator.address_review_approve(do_comparison=False)
     # Check the status (Asynchronous)
     response = client.get_async_response()
-    assert response and response.status == Errors.SW_SUCCESS
+    assert response and response.status == StatusWord.SWO_SUCCESS
     # Check the response
     assert response.data.hex() == testCase.expected.hash
     # TODO: Generate the payload and verify the signature

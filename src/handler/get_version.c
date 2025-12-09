@@ -25,7 +25,7 @@
 #include "get_version.h"
 #include "globals.h"
 #include "constants.h"
-#include "sw.h"
+#include "cardano_swo.h"
 #include "types.h"
 
 int handler_get_version() {

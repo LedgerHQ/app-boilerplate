@@ -10,31 +10,6 @@ from dataclasses import dataclass
 from typing import Union
 
 
-class Errors(IntEnum):
-    """Application Errors definitions"""
-
-    SW_MALFORMED_REQUEST_HEADER   = 0x6E01
-    SW_BAD_CLA                    = 0x6E02
-    SW_UNKNOWN_INS                = 0x6E03
-    SW_STILL_IN_CALL              = 0x6E04
-    SW_INVALID_REQUEST_PARAMETERS = 0x6E05
-    SW_INVALID_STATE              = 0x6E06
-    SW_INVALID_DATA               = 0x6E07
-    SW_REJECTED_BY_USER           = 0x6E09
-    SW_REJECTED_BY_POLICY         = 0x6E10
-    SW_DEVICE_LOCKED              = 0x6E11
-    SW_SWAP_CHECKING_FAIL         = 0x6E13
-    SW_SUCCESS                    = 0x9000
-    SW_WRONG_DATA_LENGTH          = 0x6A87
-    SW_BAD_STATE                  = 0xB007
-    SW_TX_PARSING_FAIL            = 0xB005
-    SW_TX_PARSING_FAIL_INPUTS     = 0xB020
-    SW_TX_PARSING_FAIL_OUTPUTS    = 0xB021
-    SW_TX_PARSING_FAIL_FEE        = 0xB022
-    SW_TX_PARSING_FAIL_TTL        = 0xB023
-    SW_TX_PARSING_FAIL_INCLUSION_FLAG = 0xB024
-
-
 class ProtocolMagics(IntEnum):
     MAINNET = 0x2D964A09        # 764824073
     TESTNET = 0x2A              # 42, For integration tests
