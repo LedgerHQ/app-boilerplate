@@ -3,7 +3,7 @@
 #include "textUtils.h"
 #include "hash.h"
 #include "addressUtils/bech32.h"
-#include "utils/os_utils.h"
+#include "os.h"
 
 #define ASSET_FINGERPRINT_SIZE 20
 
@@ -110,7 +110,7 @@ size_t str_formatTokenAmountOutput(const token_group_t* tokenGroup,
     TRACE("token decimal places = %u", decimals);
     size_t length = str_formatDecimalAmount(amount, decimals, out, outSize);
 
-    const char* ticker = (tokenInfo != NULL) ? PTR_PIC(tokenInfo->ticker) : "(unknown decimals)";
+    const char* ticker = (tokenInfo != NULL) ? (const char*) PIC(tokenInfo->ticker) : "(unknown decimals)";
     TRACE("token ticker = %s", ticker);
     snprintf(out + length, outSize - length, " %s", ticker);
     length += 1 + strlen(ticker);

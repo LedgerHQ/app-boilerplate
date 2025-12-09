@@ -36,7 +36,7 @@
 #include "constants.h"
 #include "types.h"
 #include "utils/utils.h"
-#include "utils/os_utils.h"
+#include "utils/cardano_os_utils.h"
 #include "utils/cbor.h"
 #include "txHashBuilder/txHashBuilder.h"
 #include "messageSigning.h"

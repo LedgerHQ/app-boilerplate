@@ -2,7 +2,7 @@
 #include "constants.h"
 #include "types.h"
 #include "addressUtils/bech32.h"
-#include "os_utils.h"
+#include "utils/cardano_os_utils.h"
 #include "utils/ipUtils.h"
 #include "textUtils.h"
 // #include "signTx.h"
