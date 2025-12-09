@@ -1,7 +1,8 @@
 # Application Client for Functional Tests
 
 This minimalist Python client is used in the functional tests of the [boilerplate Ledger application](https://github.com/LedgerHQ/app-boilerplate).  
-It serves as a communication layer between the test framework (`pytest`) and the device-under-test (Ledger app), sending commands and parsing responses.
+It serves as a communication layer between the test framework (`pytest`) and
+the device-under-test (Ledger app), sending commands and parsing responses.
 
 ## Purpose
 
@@ -16,7 +17,8 @@ It is intentionally lightweight, focusing on what is strictly necessary to write
 ## When to Use
 
 Use this client as-is when testing the original boilerplate application.  
-When you **fork the boilerplate** to implement your own Ledger app, you can **extend or modify this client** to support your custom instruction set, encodings, and behavior.
+When you **fork the boilerplate** to implement your own Ledger app,
+you can **extend or modify this client** to support your custom instruction set, encodings, and behavior.
 
 ## Structure
 

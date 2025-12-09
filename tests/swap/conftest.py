@@ -1,6 +1,5 @@
-import pytest
-
 from pathlib import Path
+import pytest
 
 from ragger.conftest import configuration
 
