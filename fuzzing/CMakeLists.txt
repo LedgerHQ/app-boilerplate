@@ -45,13 +45,14 @@ set(CARDANO_SOURCE
     ${CARDANO_PATH}/src/handler/sign_opcert.c
     ${CARDANO_PATH}/src/handler/sign_tx.c
     ${CARDANO_PATH}/src/keyDerivation/keyDerivation.c
-    ${CARDANO_PATH}/src/mem.c
-    ${CARDANO_PATH}/src/mem_utils.c
+    ${CARDANO_PATH}/src/memory/mem.c
+    ${CARDANO_PATH}/src/memory/mem_utils.c
+    ${CARDANO_PATH}/src/memory/flist.c
     ${CARDANO_PATH}/src/messageSigning/messageSigning.c
-    ${CARDANO_PATH}/src/opcert/parse_opcert.c
+    ${CARDANO_PATH}/src/opcert/opcert_parse.c
     ${CARDANO_PATH}/src/securityPolicy/securityPolicy.c
     ${CARDANO_PATH}/src/securityPolicy/securityPolicy_privkey.c
-    ${CARDANO_PATH}/src/transaction/deserialize.c
+    ${CARDANO_PATH}/src/transaction/tx_parse.c
     ${CARDANO_PATH}/src/transaction/tx_utils.c
     ${CARDANO_PATH}/src/transaction/tx_warnings.c
     ${CARDANO_PATH}/src/txHashBuilder/txHashBuilder.c
@@ -64,9 +65,7 @@ set(CARDANO_SOURCE
     ${CARDANO_PATH}/src/ui/ui_utils.c
     ${CARDANO_PATH}/src/utils/buffer_utils.c
     ${CARDANO_PATH}/src/utils/cbor.c
-    ${CARDANO_PATH}/src/utils/hexUtils.c
     ${CARDANO_PATH}/src/utils/ipUtils.c
-    ${CARDANO_PATH}/src/utils/list.c
     ${CARDANO_PATH}/src/utils/textUtils.c
     ${BOLOS_SDK}/lib_alloc/mem_alloc.c
     ${BOLOS_SDK}/lib_standard_app/base58.c
@@ -98,6 +97,7 @@ include_directories(
     ${CARDANO_PATH}/src/crypto
     ${CARDANO_PATH}/src/handler
     ${CARDANO_PATH}/src/keyDerivation
+    ${CARDANO_PATH}/src/memory
     ${CARDANO_PATH}/src/messageSigning
     ${CARDANO_PATH}/src/opcert
     ${CARDANO_PATH}/src/securityPolicy

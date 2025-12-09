@@ -180,3 +180,25 @@ void assert_exit(bool confirm) {
     // For fuzzing, just return without exiting
     (void)confirm;
 }
+
+void __attribute__((noreturn)) app_exit(void) {
+    exit(0);
+}
+
+int bytes_to_lowercase_hex(char *out, size_t outl, const void *value, size_t len) {
+    const uint8_t *bytes = (const uint8_t *)value;
+
+    // Check if output buffer is large enough (2 chars per byte + null terminator)
+    if (outl < len * 2 + 1) {
+        return -1;
+    }
+
+    const char hex_digits[] = "0123456789abcdef";
+    for (size_t i = 0; i < len; i++) {
+        out[i * 2] = hex_digits[(bytes[i] >> 4) & 0x0F];
+        out[i * 2 + 1] = hex_digits[bytes[i] & 0x0F];
+    }
+    out[len * 2] = '\0';
+
+    return 0;
+}
