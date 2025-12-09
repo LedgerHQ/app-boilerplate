@@ -105,7 +105,7 @@ def test_sign_token_tx_unknown_token(backend: BackendInterface) -> None:
         client.sign_token_tx_sync(path=STANDARD_PATH, transaction=transaction)
 
     # Assert that we have received a parsing failure
-    assert e.value.status == Errors.SW_TX_PARSING_FAIL
+    assert e.value.status == Errors.SWO_INCORRECT_DATA
     assert len(e.value.data) == 0
 
 
@@ -127,7 +127,7 @@ def test_sign_token_tx_refused(backend: BackendInterface, scenario_navigator: Na
             scenario_navigator.review_reject()
 
     # Assert that we have received a refusal
-    assert e.value.status == Errors.SW_DENY
+    assert e.value.status == Errors.SWO_CONDITIONS_NOT_SATISFIED
     assert len(e.value.data) == 0
 
 
@@ -455,7 +455,7 @@ def test_provide_dynamic_token_multiple_sequential(backend: BackendInterface,
     with pytest.raises(ExceptionRAPDU) as e:
         client.sign_token_tx_sync(path=STANDARD_PATH, transaction=transaction_old)
 
-    assert e.value.status == Errors.SW_TX_PARSING_FAIL
+    assert e.value.status == Errors.SWO_INCORRECT_DATA
 
 
 # Test dynamic token with maximum ticker length

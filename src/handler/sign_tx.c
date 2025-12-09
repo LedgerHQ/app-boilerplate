@@ -74,7 +74,7 @@ static int check_and_sign_swap_tx(transaction_ctx_t *tx_ctx) {
  *
  * @param[in] cdata Buffer containing BIP32 path
  * @param[in] req_type Request type (CONFIRM_TRANSACTION or CONFIRM_TOKEN_TRANSACTION)
- * @return SW_OK on success, error code otherwise
+ * @return SWO_SUCCESS on success, error code otherwise
  */
 static int init_transaction_context(buffer_t *cdata, uint8_t req_type) {
     explicit_bzero(&G_context, sizeof(G_context));
@@ -83,10 +83,10 @@ static int init_transaction_context(buffer_t *cdata, uint8_t req_type) {
 
     if (!buffer_read_u8(cdata, &G_context.bip32_path_len) ||
         !buffer_read_bip32_path(cdata, G_context.bip32_path, (size_t) G_context.bip32_path_len)) {
-        return io_send_sw(SW_WRONG_DATA_LENGTH);
+        return io_send_sw(SWO_WRONG_DATA_LENGTH);
     }
 
-    return io_send_sw(SW_OK);
+    return io_send_sw(SWO_SUCCESS);
 }
 
 /**
@@ -95,20 +95,20 @@ static int init_transaction_context(buffer_t *cdata, uint8_t req_type) {
  *
  * @param[in] cdata Buffer containing transaction chunk
  * @param[in] req_type Expected request type for validation
- * @return SW_OK on success, error code otherwise
+ * @return SWO_SUCCESS on success, error code otherwise
  */
 static uint16_t accumulate_transaction_data(buffer_t *cdata, uint8_t req_type) {
     if (G_context.req_type != req_type) {
-        return SW_BAD_STATE;
+        return SWO_CONDITIONS_NOT_SATISFIED;
     }
     if (G_context.tx_info.raw_tx_len + cdata->size > sizeof(G_context.tx_info.raw_tx)) {
-        return SW_WRONG_TX_LENGTH;
+        return SWO_WRONG_DATA_LENGTH;
     }
     if (!buffer_move(cdata, G_context.tx_info.raw_tx + G_context.tx_info.raw_tx_len, cdata->size)) {
-        return SW_TX_PARSING_FAIL;
+        return SWO_INCORRECT_DATA;
     }
     G_context.tx_info.raw_tx_len += cdata->size;
-    return SW_OK;
+    return SWO_SUCCESS;
 }
 
 static uint16_t process_transaction(bool is_token_tx) {
@@ -122,7 +122,7 @@ static uint16_t process_transaction(bool is_token_tx) {
         transaction_deserialize(&buf, &G_context.tx_info.transaction, is_token_tx);
     PRINTF("Parsing status: %d.\n", status);
     if (status != PARSING_OK) {
-        return SW_TX_PARSING_FAIL;
+        return SWO_INCORRECT_DATA;
     }
 
     if (is_token_tx) {
@@ -130,7 +130,7 @@ static uint16_t process_transaction(bool is_token_tx) {
         if (!get_token_info(G_context.tx_info.transaction.token_address,
                             &G_context.tx_info.token_info)) {
             PRINTF("Token not found in database\n");
-            return SW_TX_PARSING_FAIL;
+            return SWO_INCORRECT_DATA;
         }
 
         PRINTF("Token found: %s (decimals: %d)\n",
@@ -143,10 +143,10 @@ static uint16_t process_transaction(bool is_token_tx) {
     if (cx_keccak_256_hash(G_context.tx_info.raw_tx,
                            G_context.tx_info.raw_tx_len,
                            G_context.tx_info.m_hash) != CX_OK) {
-        return SW_TX_HASH_FAIL;
+        return SWO_INCORRECT_DATA;
     }
     PRINTF("Hash: %.*H\n", sizeof(G_context.tx_info.m_hash), G_context.tx_info.m_hash);
-    return SW_OK;
+    return SWO_SUCCESS;
 }
 
 int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more, bool is_token_tx) {
@@ -157,18 +157,18 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more, bool is_token_tx)
     } else {
         // parse transaction
         uint16_t err = accumulate_transaction_data(cdata, req_type);
-        if (err != SW_OK) {
+        if (err != SWO_SUCCESS) {
             return io_send_sw(err);
         }
         if (more) {
             // more APDUs with transaction part are expected.
-            // Send a SW_OK to signal that we have received the chunk
-            return io_send_sw(SW_OK);
+            // Send a SWO_SUCCESS to signal that we have received the chunk
+            return io_send_sw(SWO_SUCCESS);
 
         } else {
             // last APDU for this transaction, let's parse, display and request a sign confirmation
             err = process_transaction(is_token_tx);
-            if (err != SW_OK) {
+            if (err != SWO_SUCCESS) {
 #ifdef HAVE_SWAP
                 if (G_called_from_swap) {
                     PRINTF("Error during transaction processing in swap context: %u\n", err);

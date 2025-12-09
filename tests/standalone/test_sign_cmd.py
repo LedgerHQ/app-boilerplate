@@ -127,5 +127,5 @@ def test_sign_tx_refused(backend: BackendInterface, scenario_navigator: Navigate
             scenario_navigator.review_reject()
 
     # Assert that we have received a refusal
-    assert e.value.status == Errors.SW_DENY
+    assert e.value.status == Errors.SWO_CONDITIONS_NOT_SATISFIED
     assert len(e.value.data) == 0

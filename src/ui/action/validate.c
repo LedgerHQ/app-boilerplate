@@ -29,7 +29,7 @@ void validate_pubkey(bool choice) {
     if (choice) {
         helper_send_response_pubkey();
     } else {
-        io_send_sw(SW_DENY);
+        io_send_sw(SWO_CONDITIONS_NOT_SATISFIED);
     }
 }
 
@@ -65,12 +65,12 @@ void validate_transaction(bool choice) {
 
         if (crypto_sign_message() != 0) {
             G_context.state = STATE_NONE;
-            io_send_sw(SW_SIGNATURE_FAIL);
+            io_send_sw(SWO_SECURITY_ISSUE);
         } else {
             helper_send_response_sig();
         }
     } else {
         G_context.state = STATE_NONE;
-        io_send_sw(SW_DENY);
+        io_send_sw(SWO_CONDITIONS_NOT_SATISFIED);
     }
 }

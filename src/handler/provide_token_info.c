@@ -183,5 +183,5 @@ int handler_provide_token_info(buffer_t *cdata) {
     // Copy validated token metadata to global storage
     set_token_info(tlv_output.magnitude, &tlv_output.ticker, &tlv_TUID_data.token_address_buffer);
 
-    return io_send_sw(SW_OK);
+    return io_send_sw(SWO_SUCCESS);
 }

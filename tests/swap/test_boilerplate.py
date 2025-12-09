@@ -54,7 +54,7 @@ class BoilerplateTests(ExchangeTestRunner):
     fake_payout_memo = "bla"
 
     # The error code we expect our application to respond when encountering errors.
-    signature_refusal_error_code = BoilerplateErrors.SW_DENY
+    signature_refusal_error_code = BoilerplateErrors.SWO_CONDITIONS_NOT_SATISFIED
     wrong_amount_error_code = BoilerplateErrors.SW_SWAP_FAIL
     wrong_destination_error_code = BoilerplateErrors.SW_SWAP_FAIL
 
@@ -283,4 +283,4 @@ class TestsBoilerplateDynamic:
         with pytest.raises(ExceptionRAPDU) as e:
             test_class.run_test("swap_valid_1")
         # Could be SW_SWAP_FAIL or other error depending on when validation happens
-        assert e.value.status in [BoilerplateErrors.SW_SWAP_FAIL, BoilerplateErrors.SW_WRONG_DATA_LENGTH]
+        assert e.value.status in [BoilerplateErrors.SW_SWAP_FAIL, BoilerplateErrors.SWO_WRONG_DATA_LENGTH]

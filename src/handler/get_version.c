@@ -42,5 +42,5 @@ int handler_get_version() {
                                                      (uint8_t) MINOR_VERSION,
                                                      (uint8_t) PATCH_VERSION},
         APPVERSION_LEN,
-        SW_OK);
+        SWO_SUCCESS);
 }

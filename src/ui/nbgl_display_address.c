@@ -49,17 +49,17 @@ static void review_choice(bool confirm) {
 int ui_display_address() {
     if (G_context.req_type != CONFIRM_ADDRESS || G_context.state != STATE_NONE) {
         G_context.state = STATE_NONE;
-        return io_send_sw(SW_BAD_STATE);
+        return io_send_sw(SWO_CONDITIONS_NOT_SATISFIED);
     }
 
     explicit_bzero(g_address, sizeof(g_address));
     uint8_t address[ADDRESS_LEN] = {0};
     if (!address_from_pubkey(G_context.pk_info.raw_public_key, address, sizeof(address))) {
-        return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
+        return io_send_sw(SWO_INCORRECT_DATA);
     }
 
     if (format_hex(address, sizeof(address), g_address, sizeof(g_address)) == -1) {
-        return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
+        return io_send_sw(SWO_INCORRECT_DATA);
     }
 
     nbgl_useCaseAddressReview(g_address,

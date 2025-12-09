@@ -374,8 +374,8 @@ None (returns 0x9000 on success)
 | SW   | Description                                           |
 | ---  | ---                                                   |
 | B009 | SW_INVALID_DYNAMIC_TOKEN - TLV parsing failed, signature verification failed, wrong coin type, or TUID validation failed |
-| 6A86 | SW_WRONG_P1P2 - P1 or P2 not zero                     |
-| 6A87 | SW_WRONG_DATA_LENGTH - Invalid TLV structure length   |
+| 6A86 | SWO_INCORRECT_P1_P2 - P1 or P2 not zero               |
+| 6A87 | SWO_WRONG_DATA_LENGTH - Invalid TLV structure length  |
 
 **Note on testing:** Speculos emulator accepts test PKI certificates for signature validation,
 but real Ledger devices reject them. This is a OS security feature independent of application code or build flags.
@@ -384,21 +384,15 @@ but real Ledger devices reject them. This is a OS security feature independent o
 
 The following standard Status Words are returned for all APDUs.
 
-| SW       | SW name                     | Description                                           |
-| ---      | ---                         | ---                                                   |
-|   6985   | SW_DENY                     | Rejected by user                                      |
-|   6A86   | SW_WRONG_P1P2               | Either P1 or P2 is incorrect                          |
-|   6A87   | SW_WRONG_DATA_LENGTH        | Lc or minimum APDU length is incorrect                |
-|   6D00   | SW_INS_NOT_SUPPORTED        | No command exists with INS                            |
-|   6E00   | SW_CLA_NOT_SUPPORTED        | Bad CLA used for this application                     |
-|   B000   | SW_WRONG_RESPONSE_LENGTH    | Wrong response length (buffer size problem)           |
-|   B001   | SW_DISPLAY_BIP32_PATH_FAIL  | BIP32 path conversion to string failed                |
-|   B002   | SW_DISPLAY_ADDRESS_FAIL     | Address conversion to string failed                   |
-|   B003   | SW_DISPLAY_AMOUNT_FAIL      | Amount conversion to string failed                    |
-|   B004   | SW_WRONG_TX_LENGTH          | Wrong raw transaction length                          |
-|   B005   | SW_TX_PARSING_FAIL          | Failed to parse raw transaction                       |
-|   B006   | SW_TX_HASH_FAIL             | Failed to compute hash digest of raw transaction      |
-|   B007   | SW_BAD_STATE                | Security issue with bad state                         |
-|   B008   | SW_SIGNATURE_FAIL           | Signature of raw transaction failed                   |
-|   B009   | SW_INVALID_DYNAMIC_TOKEN    | Dynamic token TLV parsing/validation failed           |
-|   9000   | OK                          | Success                                               |
+| SW       | SW name                      | Description                                 |
+| ---      | ---                          | ---                                         |
+|   6985   | SWO_CONDITIONS_NOT_SATISFIED | Rejected by user                            |
+|   6A86   | SWO_INCORRECT_P1_P2          | Either P1 or P2 is incorrect                |
+|   6A87   | SWO_WRONG_DATA_LENGTH        | Lc or minimum APDU length is incorrect      |
+|   6D00   | SWO_INVALID_INS              | No command exists with INS                  |
+|   6E00   | SWO_INVALID_CLA              | Bad CLA used for this application           |
+|   6A80   | SWO_INCORRECT_DATA           | Failed to parse raw transaction             |
+|   6985   | SWO_CONDITIONS_NOT_SATISFIED | Security issue with bad state               |
+|   6600   | SWO_SECURITY_ISSUE           | Signature of raw transaction failed         |
+|   B009   | SW_INVALID_DYNAMIC_TOKEN     | Dynamic token TLV parsing/validation failed |
+|   9000   | OK                           | Success                                     |
