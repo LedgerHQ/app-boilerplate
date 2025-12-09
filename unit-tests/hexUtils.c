@@ -57,6 +57,48 @@ bool decode_hex(const char* inStr, uint8_t* outBuffer, size_t outMaxSize, size_t
     return true;
 }
 
+// Helper: check if character is a separator (space, tab, newline, carriage return, underscore)
+static bool is_hex_separator(char c) {
+    return c == ' ' || c == '\n' || c == '\t' || c == '\r' || c == '_';
+}
+
+size_t hex_to_bytes(const char* hex, uint8_t* out, size_t max_size) {
+    // Count non-separator hex digits
+    size_t digits = 0;
+    for (const char *p = hex; *p != '\0'; p++) {
+        if (!is_hex_separator(*p)) {
+            digits++;
+        }
+    }
+
+    // Verify even number of hex digits
+    LEDGER_ASSERT((digits % 2) == 0, "hex_to_bytes: odd number of hex digits");
+
+    size_t out_len = digits / 2;
+    LEDGER_ASSERT(out_len <= max_size, "hex_to_bytes: output buffer too small");
+
+    // Normalize hex string by removing separators
+    char* normalized = (char*) malloc(digits + 1);
+    LEDGER_ASSERT(normalized != NULL, "hex_to_bytes: malloc failed");
+
+    size_t idx = 0;
+    for (const char *p = hex; *p != '\0'; p++) {
+        if (!is_hex_separator(*p)) {
+            normalized[idx++] = *p;
+        }
+    }
+    normalized[idx] = '\0';
+
+    // Parse normalized hex string into bytes
+    for (size_t i = 0; i < out_len; i++) {
+        LEDGER_ASSERT(hex_parseNibblePair(&normalized[2 * i], &out[i]),
+                      "hex_to_bytes: invalid hex character");
+    }
+
+    free(normalized);
+    return out_len;
+}
+
 // Test utility: encode bytes to lowercase hex (for testing purposes)
 // Returns 0 on success, -1 if buffer too small (matching SDK's bytes_to_lowercase_hex behavior)
 int test_bytes_to_lowercase_hex(char* out, size_t outl, const uint8_t* bytes, size_t bytesLength) {

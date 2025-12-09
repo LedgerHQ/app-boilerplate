@@ -115,40 +115,6 @@ static void reset_context(void) {
     g_last_sw = 0;
 }
 
-static bool is_hex_separator(char c) {
-    return c == ' ' || c == '\n' || c == '\t' || c == '\r' || c == '_';
-}
-
-static size_t hex_to_bytes(const char *hex, uint8_t *out, size_t max_size) {
-    size_t digits = 0;
-    for (const char *p = hex; *p != '\0'; p++) {
-        if (!is_hex_separator(*p)) {
-            digits++;
-        }
-    }
-    assert_true((digits % 2) == 0);
-    size_t out_len = digits / 2;
-    assert_true(out_len <= max_size);
-
-    char *normalized = (char *) malloc(digits + 1);
-    assert_non_null(normalized);
-
-    size_t idx = 0;
-    for (const char *p = hex; *p != '\0'; p++) {
-        if (!is_hex_separator(*p)) {
-            normalized[idx++] = *p;
-        }
-    }
-    normalized[idx] = '\0';
-
-    for (size_t i = 0; i < out_len; i++) {
-        assert_true(hex_parseNibblePair(&normalized[2 * i], &out[i]));
-    }
-
-    free(normalized);
-    return out_len;
-}
-
 typedef struct {
     const char *hex_payload;
     uint8_t p1;
