@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utils/list.h"
+#include "memory/flist.h"
 #include "txHashBuilder/txHashBuilder.h"
 #include "constants.h"  // For hash and policy ID constants
 

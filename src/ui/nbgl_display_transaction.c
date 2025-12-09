@@ -1,6 +1,6 @@
 /*****************************************************************************
- *   Ledger App Boilerplate.
- *   (c) 2020 Ledger SAS.
+ *   Ledger Cardano App
+ *   (c) 2025 Vacuumlabs
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,34 +16,27 @@
  *****************************************************************************/
 
 #include <stdbool.h>  // bool
-#include <string.h>   // memset
+#include <string.h>   // strlen, memmove
 
 #include "os.h"
 #include "glyphs.h"
-#include "os_io_seproxyhal.h"
 #include "nbgl_use_case.h"
 #include "io.h"
-#include "bip32.h"
-#include "format.h"
 
 #include "display.h"
 #include "constants.h"
 #include "globals.h"
-#include "utils/utils.h"
 #include "utils/cardano_os_utils.h"
 #include "cardano_swo.h"
-#include "address.h"
 #include "tx_types.h"
 #include "tx_output_types.h"
 #include "tx_warnings.h"
 #include "menu.h"
-#include "mem.h"
 #include "addressUtils/addressUtilsShelley.h"
 #include "nbgl_screens.h"
 #include "transaction/deserialize.h"
 #include "utils/textUtils.h"
 #include "ui_utils.h"
-#include "mem_utils.h"
 
 // Dynamically allocated buffers for transaction display (declared in ui_display_transaction)
 static nbgl_contentCenter_t *g_warningInfo = NULL;

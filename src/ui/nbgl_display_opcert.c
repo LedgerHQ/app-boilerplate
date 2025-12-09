@@ -1,6 +1,6 @@
 /*****************************************************************************
- *   Ledger App Boilerplate.
- *   (c) 2020 Ledger SAS.
+ *   Ledger App Cardano.
+ *   (c) 2025 Vacuumlabs
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@
 #include "securityPolicy.h"
 #include "nbgl_screens.h"
 #include "sign_opcert.h"
-#include "mem_utils.h"
+#include "memory/mem_utils.h"
 #include "ui_utils.h"
 
 // Dynamic buffers for reduced stack pressure during signing

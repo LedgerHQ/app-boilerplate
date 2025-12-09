@@ -1,6 +1,6 @@
 /*****************************************************************************
- *   Ledger App Boilerplate.
- *   (c) 2020 Ledger SAS.
+ *   Ledger App Cardano.
+ *   (c) 2025 Vacuumlabs
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@
 #include "tx_output_types.h"
 #include "tx_warnings.h"
 #include "deserialize.h"
-#include "mem.h"
+#include "memory/mem.h"
 #include "constants.h"
 #include "types.h"
 #include "utils/utils.h"

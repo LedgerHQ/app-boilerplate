@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "utils/list.h"
+#include "memory/flist.h"
 
 // Warning types for transaction signing
 typedef enum {

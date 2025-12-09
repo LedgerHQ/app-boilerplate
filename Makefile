@@ -1,6 +1,6 @@
 # ****************************************************************************
-#    Ledger App Boilerplate
-#    (c) 2023 Ledger SAS.
+#    Ledger App Cardano
+#    (c) 2025 Ledger SAS and Vacuumlabs
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -44,13 +44,13 @@ ICON_STAX = icons/icon_ada_stax.gif
 ICON_FLEX = icons/icon_ada_flex.gif
 ICON_APEX = icons/icon_ada_apex.gif
 
-ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_NANOS2))
+#ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_NANOS2))
     # With the Nano NBGL Design, the Home Screen icon is the reverse of the App icon:
     # It should be on white background, with rounded corners.
     # This definition allows SDK Makefiles to automatically generate it based on the App icon.
     # Please note that the icon is dynamically generated, and declared in the .gitignore to avoid storing it.
-    ICON_HOME_NANO = glyphs/home_boilerplate_14px.gif
-endif
+#    ICON_HOME_NANO = glyphs/home_boilerplate_14px.gif
+#endif
 
 # Application allowed derivation curves.
 # Possibles curves are: secp256k1, secp256r1, ed25519 and bls12381g1

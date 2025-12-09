@@ -5,7 +5,7 @@
 #include <stdbool.h> // bool
 
 #include "constants.h"
-#include "utils/list.h"
+#include "memory/flist.h"
 #include "addressUtils/bip44.h"
 
 #define MAX_TX_LEN   510

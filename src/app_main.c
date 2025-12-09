@@ -1,6 +1,6 @@
 /*****************************************************************************
- *   Ledger App Boilerplate.
- *   (c) 2020 Ledger SAS.
+ *   Ledger App Cardano.
+ *   (c) 2025 Ledger SAS and Vacuumlabs
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 #include "menu.h"
 #include "dispatcher.h"
 #include "settings.h"
-#include "mem.h"
+#include "memory/mem.h"
 #include "utils/utils.h"
 
 global_ctx_t G_context;

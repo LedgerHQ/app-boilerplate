@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include "globals.h"
-#include "mem.h"
+#include "memory/mem.h"
 #include "ui_utils.h"
 
 static inline void fuzzing_reset_state(void) {

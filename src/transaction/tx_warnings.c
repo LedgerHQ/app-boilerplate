@@ -1,5 +1,5 @@
 #include "tx_warnings.h"
-#include "mem.h"
+#include "memory/mem.h"
 #include <string.h>
 
 bool tx_warning_add(tx_warning_list_item_t **list_head, tx_warning_type_t type,

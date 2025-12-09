@@ -1,10 +1,26 @@
+/*******************************************************************************
+ *   Ledger Cardano App
+ *   (c) 2016-2025 Ledger
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ ********************************************************************************/
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include "os_print.h"
 #include "mem.h"
 #include "mem_utils.h"
-#include "utils/utils.h"
 
 /**
  * Format an unsigned number up to 32-bit into memory into an ASCII string.
@@ -56,12 +72,12 @@ bool mem_buffer_allocate_impl(void **buffer,
     if (size != 0) {
         // Check if the buffer is already allocated
         if (*buffer != NULL) {
-            TRACE("Buffer already allocated, freeing it before reallocating");
+            PRINTF("Buffer already allocated, freeing it before reallocating\n");
             app_mem_free_impl(*buffer, file, line);
         }
         // Allocate the Title message buffer
         if ((*buffer = app_mem_alloc_impl(size, persistent, file, line)) == NULL) {
-            TRACE("Memory allocation failed for buffer of size %u", size);
+            PRINTF("Memory allocation failed for buffer of size %u\n", size);
             return false;
         }
         explicit_bzero(*buffer, size);

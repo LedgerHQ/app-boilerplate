@@ -43,6 +43,7 @@ include_directories(mock_includes)
 include_directories(libs)
 include_directories(../src)
 include_directories(../src/utils)
+include_directories(../src/memory)
 include_directories(../src/addressUtils)
 include_directories(../src/crypto)
 include_directories(../src/transaction)
@@ -103,7 +104,7 @@ add_executable(test_tx_hash_builder
 add_executable(test_sign_tx_handler
     test_sign_tx_handler.c
     mock_globals.c
-    ../src/utils/list.c
+    ../src/memory/flist.c
     ../src/handler/sign_tx.c
     ../src/transaction/deserialize.c
     ../src/transaction/tx_utils.c
@@ -284,7 +285,7 @@ add_test(test_sign_tx_handler test_sign_tx_handler)
 add_executable(test_sign_tx_rejects
     test_sign_tx_rejects.c
     mock_globals.c
-    ../src/utils/list.c
+    ../src/memory/flist.c
     ../src/handler/sign_tx.c
     ../src/transaction/deserialize.c
     ../src/transaction/tx_utils.c
