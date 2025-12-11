@@ -47,6 +47,6 @@
  *   - Coin type must match configured SLIP-44 value (see constants.h)
  *
  * @param[in] cdata Buffer containing TLV payload
- * @return Status word (SW_OK on success, SW_INVALID_DYNAMIC_TOKEN on failure)
+ * @return Status word (SWO_SUCCESS on success, SW_INVALID_DYNAMIC_TOKEN on failure)
  */
 int handler_provide_token_info(buffer_t *cdata);

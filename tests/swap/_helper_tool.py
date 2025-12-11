@@ -47,7 +47,8 @@ def run_cmd(cmd: str,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT,
                          universal_newlines=True,
-                         cwd=cwd)
+                         cwd=cwd,
+                         check=False)
     if no_throw is False and ret.returncode:
         print(f"[run_cmd] Error {ret.returncode} raised while running cmd: {cmd}")
         print("[run_cmd] Output was:")
@@ -81,7 +82,7 @@ def clone_or_pull(repo_url: str, clone_dir: str):
         run_cmd("git submodule update --init --recursive", cwd=Path(clone_dir))
 
 def build_app(clone_dir: str, flags: str):
-    cmd = f"make clean"
+    cmd = "make clean"
     run_cmd(cmd, cwd=Path(clone_dir))
     for d in DEVICES_CONF.values():
         sdk = d["sdk"]

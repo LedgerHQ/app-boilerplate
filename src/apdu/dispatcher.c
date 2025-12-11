@@ -37,7 +37,7 @@ int apdu_dispatcher(const command_t *cmd) {
     LEDGER_ASSERT(cmd != NULL, "NULL cmd");
 
     if (cmd->cla != CLA) {
-        return io_send_sw(SW_CLA_NOT_SUPPORTED);
+        return io_send_sw(SWO_INVALID_CLA);
     }
 
     buffer_t buf = {0};
@@ -45,25 +45,25 @@ int apdu_dispatcher(const command_t *cmd) {
     switch (cmd->ins) {
         case GET_VERSION:
             if (cmd->p1 != 0 || cmd->p2 != 0) {
-                return io_send_sw(SW_WRONG_P1P2);
+                return io_send_sw(SWO_INCORRECT_P1_P2);
             }
 
             return handler_get_version();
 
         case GET_APP_NAME:
             if (cmd->p1 != 0 || cmd->p2 != 0) {
-                return io_send_sw(SW_WRONG_P1P2);
+                return io_send_sw(SWO_INCORRECT_P1_P2);
             }
 
             return handler_get_app_name();
 
         case GET_PUBLIC_KEY:
             if (cmd->p1 > 1 || cmd->p2 > 0) {
-                return io_send_sw(SW_WRONG_P1P2);
+                return io_send_sw(SWO_INCORRECT_P1_P2);
             }
 
             if (!cmd->data) {
-                return io_send_sw(SW_WRONG_DATA_LENGTH);
+                return io_send_sw(SWO_WRONG_DATA_LENGTH);
             }
 
             buf.ptr = cmd->data;
@@ -79,11 +79,11 @@ int apdu_dispatcher(const command_t *cmd) {
             if ((cmd->p1 == P1_START && cmd->p2 != P2_MORE) ||  //
                 cmd->p1 > P1_MAX ||                             //
                 (cmd->p2 != P2_LAST && cmd->p2 != P2_MORE)) {
-                return io_send_sw(SW_WRONG_P1P2);
+                return io_send_sw(SWO_INCORRECT_P1_P2);
             }
 
             if (!cmd->data) {
-                return io_send_sw(SW_WRONG_DATA_LENGTH);
+                return io_send_sw(SWO_WRONG_DATA_LENGTH);
             }
 
             buf.ptr = cmd->data;
@@ -99,11 +99,11 @@ int apdu_dispatcher(const command_t *cmd) {
 
         case PROVIDE_TOKEN_INFO:
             if (cmd->p1 != 0 || cmd->p2 != 0) {
-                return io_send_sw(SW_WRONG_P1P2);
+                return io_send_sw(SWO_INCORRECT_P1_P2);
             }
 
             if (!cmd->data) {
-                return io_send_sw(SW_WRONG_DATA_LENGTH);
+                return io_send_sw(SWO_WRONG_DATA_LENGTH);
             }
 
             buf.ptr = cmd->data;
@@ -113,6 +113,6 @@ int apdu_dispatcher(const command_t *cmd) {
             return handler_provide_token_info(&buf);
 
         default:
-            return io_send_sw(SW_INS_NOT_SUPPORTED);
+            return io_send_sw(SWO_INVALID_INS);
     }
 }

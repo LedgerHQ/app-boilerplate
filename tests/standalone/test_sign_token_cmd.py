@@ -49,7 +49,10 @@ STANDARD_PATH = "m/44'/1'/0'/0/0"
 
 # Test signing a token transaction with the first (USDC), middle (WETH) and last (LINK) tokens in the C database
 @pytest.mark.parametrize("token_name", ["USDC", "WETH", "LINK"])
-def test_sign_token_tx(backend: BackendInterface, scenario_navigator: NavigateWithScenario, test_name: str, token_name: str) -> None:
+def test_sign_token_tx(backend: BackendInterface,
+                       scenario_navigator: NavigateWithScenario,
+                       test_name: str,
+                       token_name: str) -> None:
     # Use the app interface instead of raw interface
     client = BoilerplateCommandSender(backend)
 
@@ -84,7 +87,7 @@ def test_sign_token_tx(backend: BackendInterface, scenario_navigator: NavigateWi
 
 # Test signing a token transaction with a token not in the database
 # This should fail with TX_PARSING_FAIL error
-def test_sign_token_tx_unknown_token(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
+def test_sign_token_tx_unknown_token(backend: BackendInterface) -> None:
     # Use the app interface instead of raw interface
     client = BoilerplateCommandSender(backend)
 
@@ -102,7 +105,7 @@ def test_sign_token_tx_unknown_token(backend: BackendInterface, scenario_navigat
         client.sign_token_tx_sync(path=STANDARD_PATH, transaction=transaction)
 
     # Assert that we have received a parsing failure
-    assert e.value.status == Errors.SW_TX_PARSING_FAIL
+    assert e.value.status == Errors.SWO_INCORRECT_DATA
     assert len(e.value.data) == 0
 
 
@@ -124,12 +127,13 @@ def test_sign_token_tx_refused(backend: BackendInterface, scenario_navigator: Na
             scenario_navigator.review_reject()
 
     # Assert that we have received a refusal
-    assert e.value.status == Errors.SW_DENY
+    assert e.value.status == Errors.SWO_CONDITIONS_NOT_SATISFIED
     assert len(e.value.data) == 0
 
 
 # Test signing a token transaction with a long memo (multi-chunk)
-def test_sign_token_tx_long_memo(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
+def test_sign_token_tx_long_memo(backend: BackendInterface,
+                                 scenario_navigator: NavigateWithScenario) -> None:
     # Use the app interface instead of raw interface
     client = BoilerplateCommandSender(backend)
 
@@ -165,7 +169,8 @@ def test_sign_token_tx_long_memo(backend: BackendInterface, scenario_navigator: 
 
 
 # Test providing a valid dynamic token via CAL and signing with it
-def test_provide_dynamic_token_valid_new(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
+def test_provide_dynamic_token_valid_new(backend: BackendInterface,
+                                         scenario_navigator: NavigateWithScenario) -> None:
     """Test providing a new CAL-signed token and using it to sign a transaction."""
     client = BoilerplateCommandSender(backend)
 
@@ -199,7 +204,8 @@ def test_provide_dynamic_token_valid_new(backend: BackendInterface, scenario_nav
 
 
 # Test that dynamic token overrides hardcoded database
-def test_provide_dynamic_token_override_hardcoded(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
+def test_provide_dynamic_token_override_hardcoded(backend: BackendInterface,
+                                                  scenario_navigator: NavigateWithScenario) -> None:
     """Test that CAL dynamic token takes priority over hardcoded database."""
     client = BoilerplateCommandSender(backend)
 
@@ -257,8 +263,6 @@ def test_provide_dynamic_token_wrong_coin_type(backend: BackendInterface) -> Non
 # Test providing dynamic token without TUID (malformed TLV)
 def test_provide_dynamic_token_missing_tuid(backend: BackendInterface) -> None:
     """Test that providing a token descriptor without TUID fails."""
-    client = BoilerplateCommandSender(backend)
-
     # We need to manually craft a TLV without TUID tag (0x07)
     # This requires accessing backend.exchange directly
     from application_client.tlv import format_tlv
@@ -302,8 +306,6 @@ def test_provide_dynamic_token_missing_tuid(backend: BackendInterface) -> None:
 # Test providing dynamic token with unknown TUID tag (strict validation)
 def test_provide_dynamic_token_unknown_tuid_tag(backend: BackendInterface) -> None:
     """Test that TUID with unknown sub-tags is rejected (strict validation)."""
-    client = BoilerplateCommandSender(backend)
-
     from application_client.tlv import format_tlv
     from application_client.boilerplate_keychain import sign_data, Key
     from application_client.boilerplate_command_sender import CLA, InsType
@@ -346,7 +348,8 @@ def test_provide_dynamic_token_unknown_tuid_tag(backend: BackendInterface) -> No
 
 
 # Test that dynamic token persists across regular transactions
-def test_provide_dynamic_token_persist_across_regular_tx(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
+def test_provide_dynamic_token_persist_across_regular_tx(backend: BackendInterface,
+                                                         scenario_navigator: NavigateWithScenario) -> None:
     """Test that dynamic token info persists when signing a regular (non-token) transaction."""
     client = BoilerplateCommandSender(backend)
 
@@ -400,7 +403,8 @@ def test_provide_dynamic_token_persist_across_regular_tx(backend: BackendInterfa
 
 
 # Test providing multiple different dynamic tokens (only last one should persist)
-def test_provide_dynamic_token_multiple_sequential(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
+def test_provide_dynamic_token_multiple_sequential(backend: BackendInterface,
+                                                   scenario_navigator: NavigateWithScenario) -> None:
     """Test that providing multiple dynamic tokens replaces the previous one."""
     client = BoilerplateCommandSender(backend)
 
@@ -451,11 +455,12 @@ def test_provide_dynamic_token_multiple_sequential(backend: BackendInterface, sc
     with pytest.raises(ExceptionRAPDU) as e:
         client.sign_token_tx_sync(path=STANDARD_PATH, transaction=transaction_old)
 
-    assert e.value.status == Errors.SW_TX_PARSING_FAIL
+    assert e.value.status == Errors.SWO_INCORRECT_DATA
 
 
 # Test dynamic token with maximum ticker length
-def test_provide_dynamic_token_max_ticker_length(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
+def test_provide_dynamic_token_max_ticker_length(backend: BackendInterface,
+                                                 scenario_navigator: NavigateWithScenario) -> None:
     """Test providing a dynamic token with maximum ticker length (SDK validates ≤50 chars)."""
     client = BoilerplateCommandSender(backend)
 
@@ -491,7 +496,8 @@ def test_provide_dynamic_token_max_ticker_length(backend: BackendInterface, scen
 
 
 # Test providing dynamic token with zero decimals
-def test_provide_dynamic_token_zero_decimals(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
+def test_provide_dynamic_token_zero_decimals(backend: BackendInterface,
+                                             scenario_navigator: NavigateWithScenario) -> None:
     """Test providing a dynamic token with 0 decimals (valid edge case)."""
     client = BoilerplateCommandSender(backend)
 
@@ -529,7 +535,7 @@ def test_provide_dynamic_token_wrong_tuid_size(backend: BackendInterface) -> Non
     """Test that TUID with wrong address size is rejected."""
     from application_client.tlv import format_tlv
     from application_client.boilerplate_keychain import sign_data, Key
-    from application_client.boilerplate_command_sender import CLA, InsType, Errors
+    from application_client.boilerplate_command_sender import CLA, InsType
 
     # Build TUID with 20-byte address instead of 32 bytes
     wrong_size_address = b"\x00" * 20  # Wrong size!

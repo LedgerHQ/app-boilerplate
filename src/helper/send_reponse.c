@@ -37,7 +37,7 @@ int helper_send_response_pubkey() {
     memmove(resp + offset, G_context.pk_info.chain_code, CHAINCODE_LEN);
     offset += CHAINCODE_LEN;
 
-    return io_send_response_pointer(resp, offset, SW_OK);
+    return io_send_response_pointer(resp, offset, SWO_SUCCESS);
 }
 
 int helper_send_response_sig() {
@@ -49,5 +49,5 @@ int helper_send_response_sig() {
     offset += G_context.tx_info.signature_len;
     resp[offset++] = (uint8_t) G_context.tx_info.v;
 
-    return io_send_response_pointer(resp, offset, SW_OK);
+    return io_send_response_pointer(resp, offset, SWO_SUCCESS);
 }

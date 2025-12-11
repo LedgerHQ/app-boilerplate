@@ -83,7 +83,7 @@ static int ui_display_transaction_bs_token_choice(bool is_blind_signing, bool is
                G_context.state,
                expected_req_type,
                STATE_PARSED);
-        return io_send_sw(SW_BAD_STATE);
+        return io_send_sw(SWO_CONDITIONS_NOT_SATISFIED);
     }
 
     // Format amount
@@ -92,7 +92,7 @@ static int ui_display_transaction_bs_token_choice(bool is_blind_signing, bool is
     uint8_t decimals =
         is_token_signing ? G_context.tx_info.token_info.decimals : EXPONENT_SMALLEST_UNIT;
     if (!format_fpu64(amount, sizeof(amount), G_context.tx_info.transaction.value, decimals)) {
-        return io_send_sw(SW_DISPLAY_AMOUNT_FAIL);
+        return io_send_sw(SWO_INCORRECT_DATA);
     }
 
     if (is_token_signing) {
@@ -109,7 +109,7 @@ static int ui_display_transaction_bs_token_choice(bool is_blind_signing, bool is
     // Format address
     if (format_hex(G_context.tx_info.transaction.to, ADDRESS_LEN, g_address, sizeof(g_address)) ==
         -1) {
-        return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
+        return io_send_sw(SWO_INCORRECT_DATA);
     }
 
     // Setup pairs based on transaction type

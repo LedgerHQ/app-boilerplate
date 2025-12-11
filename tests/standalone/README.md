@@ -1,7 +1,8 @@
 # Standalone Functional Tests
 
 This directory contains the **standalone functional test suite** for the Ledger application.  
-It is intended to validate the application’s behavior in a **generic context**, when launched directly from the device's dashboard.
+It is intended to validate the application’s behavior in a **generic context**,
+when launched directly from the device's dashboard.
 
 These tests are written using:
 

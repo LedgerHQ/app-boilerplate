@@ -72,6 +72,7 @@ The input data is the RLP encoded transaction streamed to the device in 255 byte
 | E0  | 06   | Chunk index  | More chunks  | variable | variable |
 
 **P1 - Chunk index:**
+
 - `0x00`: First chunk (contains BIP32 path)
 - `0x01`: Second chunk
 - `0x02`: Third chunk
@@ -79,20 +80,22 @@ The input data is the RLP encoded transaction streamed to the device in 255 byte
 - `0xFF`: Maximum chunk index
 
 **P2 - More chunks flag:**
+
 - `0x00`: Last chunk (no more data)
 - `0x80`: More chunks to follow
 
 ##### `Examples`
 
-**Example 1: Single APDU (small transaction)**
+###### Example 1: Single APDU (small transaction)
 
 When the entire transaction (including BIP32 path) fits in one APDU:
-```
+
+```console
 P1:   00  (first chunk)
 P2:   00  (last chunk, no more data)
 ```
 
-**Example 2: Three APDUs (large transaction)**
+###### Example 2: Three APDUs (large transaction)
 
 When transaction data requires chunking across multiple APDUs:
 
@@ -143,6 +146,7 @@ The tokens and the token transaction format are made up for showcase purposes.
 | E0  | 07   | Chunk index  | More chunks  | variable | variable |
 
 **P1 - Chunk index:**
+
 - `0x00`: First chunk (contains BIP32 path)
 - `0x01`: Second chunk
 - `0x02`: Third chunk
@@ -150,20 +154,22 @@ The tokens and the token transaction format are made up for showcase purposes.
 - `0xFF`: Maximum chunk index
 
 **P2 - More chunks flag:**
+
 - `0x00`: Last chunk (no more data)
 - `0x80`: More chunks to follow
 
 ##### `Examples`
 
-**Example 1: Single APDU (small transaction)**
+###### Example 1: Single APDU (small transaction)
 
 When the entire transaction (including BIP32 path) fits in one APDU:
-```
+
+```console
 P1:   00  (first chunk)
 P2:   00  (last chunk, no more data)
 ```
 
-**Example 2: Three APDUs (large transaction)**
+###### Example 2: Three APDUs (large transaction)
 
 When transaction data requires chunking across multiple APDUs:
 
@@ -189,6 +195,7 @@ When transaction data requires chunking across multiple APDUs:
 ##### `Transaction format`
 
 The token transaction has the following format:
+
 - Nonce (8 bytes, big endian)
 - To address (20 bytes)
 - Token address (32 bytes) - must be in the token database
@@ -259,20 +266,30 @@ None
 #### Description
 
 This command provides dynamic token metadata to the device via a CAL (Crypto Asset List) signed descriptor.
-The descriptor is a TLV-encoded message signed by the CAL (a Ledger HSM) and the signature is validated using the device's PKI certificate infrastructure.
+The descriptor is a TLV-encoded message signed by the CAL (a Ledger HSM) and the signature
+is validated using the device's PKI certificate infrastructure.
 
-Once provided, the dynamic token information takes priority over the hardcoded token database for subsequent token transaction signing. The token metadata persists in RAM across commands (including regular transactions) until the app exits or a new token is provided.
+Once provided, the dynamic token information takes priority over the hardcoded token database
+for subsequent token transaction signing. The token metadata persists in RAM across
+commands (including regular transactions) until the app exits or a new token is provided.
 
 This enables tokens to be added without firmware updates.
 
 **IMPORTANT FOR THIRD-PARTY DEVELOPERS:**
-- For this feature to work on a given application, the CAL needs to maintain the knowledge of the relevant tokens. This feature thus **requires coordination with Ledger teams** before implementation. Please reach out before implementing it.
+
+- For this feature to work on a given application, the CAL needs to maintain the knowledge
+  of the relevant tokens. This feature thus **requires coordination with Ledger teams**
+  before implementation. Please reach out before implementing it.
 - The hardcoded token database is a simpler token management method as it only involves the application.
 
 Security model
-- The CAL key must first be whitelisted with correct permissions on the device PKI, this is done by sending a certificate with the OS APDU header (starting by 0xB006)
-- We can then send the TLV signed with the CAL key, the os_pki_verify lib call will ensure the TLV is signed by a whitelisted authority (the onboarded CAL key).
-- In the test framework, we created a local fake CAL key and crafted a certificate with TEST permissions. It be accepted by Speculos but not by a real device.
+
+- The CAL key must first be whitelisted with correct permissions on the device PKI,
+  this is done by sending a certificate with the OS APDU header (starting by 0xB006)
+- We can then send the TLV signed with the CAL key, the os_pki_verify lib call will
+  ensure the TLV is signed by a whitelisted authority (the onboarded CAL key).
+- In the test framework, we created a local fake CAL key and crafted a certificate
+  with TEST permissions. It be accepted by Speculos but not by a real device.
 
 #### Token Lookup Priority
 
@@ -287,6 +304,7 @@ This means CAL-provided tokens **override** hardcoded database entries with the 
 #### Persistence Behavior
 
 The dynamic token information is stored in RAM only (not in NVM) and persists across commands:
+
 - Persists across `SIGN_TX` (regular transactions)
 - Persists across `SIGN_TOKEN_TX` (token transactions)
 - Persists across `GET_PUBLIC_KEY` and other read-only commands
@@ -304,7 +322,8 @@ The dynamic token information is stored in RAM only (not in NVM) and persists ac
 
 ##### `Input data`
 
-The input data is a TLV-encoded descriptor with the following outer tags (all tags required, order matters for signature verification):
+The input data is a TLV-encoded descriptor with the following outer tags
+(all tags required, order matters for signature verification):
 
 | Tag  | Name           | Length  | Description                                       |
 | ---  | ---            | ---     | ---                                               |
@@ -327,7 +346,8 @@ In the Boilerplate made up implementation it contains a single tag:
 
 **Signature construction:**
 The signature (tag 0x08) is computed over all tags EXCEPT tag 0x08 itself.
-In production context, the CAL is responsible for this signature. In our test framework, we use a mock CAL to dynamically craft signatures.
+In production context, the CAL is responsible for this signature.
+In our test framework, we use a mock CAL to dynamically craft signatures.
 
 ##### `Output data`
 
@@ -335,7 +355,7 @@ None (returns 0x9000 on success)
 
 ##### `Example TLV structure`
 
-```
+```console
 01 01 90                    # STRUCTURE_TYPE = DYNAMIC_TOKEN (0x90)
 02 01 01                    # VERSION = 1
 03 04 80 00 80 01           # CHAIN_ID = 0x80008001 (hardened 0x8001)
@@ -354,30 +374,25 @@ None (returns 0x9000 on success)
 | SW   | Description                                           |
 | ---  | ---                                                   |
 | B009 | SW_INVALID_DYNAMIC_TOKEN - TLV parsing failed, signature verification failed, wrong coin type, or TUID validation failed |
-| 6A86 | SW_WRONG_P1P2 - P1 or P2 not zero                     |
-| 6A87 | SW_WRONG_DATA_LENGTH - Invalid TLV structure length   |
+| 6A86 | SWO_INCORRECT_P1_P2 - P1 or P2 not zero               |
+| 6A87 | SWO_WRONG_DATA_LENGTH - Invalid TLV structure length  |
 
-**Note on testing:** Speculos emulator accepts test PKI certificates for signature validation, but real Ledger devices reject them. This is a OS security feature independent of application code or build flags.
+**Note on testing:** Speculos emulator accepts test PKI certificates for signature validation,
+but real Ledger devices reject them. This is a OS security feature independent of application code or build flags.
 
 ## Status Words
 
 The following standard Status Words are returned for all APDUs.
 
-| SW       | SW name                     | Description                                           |
-| ---      | ---                         | ---                                                   |
-|   6985   | SW_DENY                     | Rejected by user                                      |
-|   6A86   | SW_WRONG_P1P2               | Either P1 or P2 is incorrect                          |
-|   6A87   | SW_WRONG_DATA_LENGTH        | Lc or minimum APDU length is incorrect                |
-|   6D00   | SW_INS_NOT_SUPPORTED        | No command exists with INS                            |
-|   6E00   | SW_CLA_NOT_SUPPORTED        | Bad CLA used for this application                     |
-|   B000   | SW_WRONG_RESPONSE_LENGTH    | Wrong response length (buffer size problem)           |
-|   B001   | SW_DISPLAY_BIP32_PATH_FAIL  | BIP32 path conversion to string failed                |
-|   B002   | SW_DISPLAY_ADDRESS_FAIL     | Address conversion to string failed                   |
-|   B003   | SW_DISPLAY_AMOUNT_FAIL      | Amount conversion to string failed                    |
-|   B004   | SW_WRONG_TX_LENGTH          | Wrong raw transaction length                          |
-|   B005   | SW_TX_PARSING_FAIL          | Failed to parse raw transaction                       |
-|   B006   | SW_TX_HASH_FAIL             | Failed to compute hash digest of raw transaction      |
-|   B007   | SW_BAD_STATE                | Security issue with bad state                         |
-|   B008   | SW_SIGNATURE_FAIL           | Signature of raw transaction failed                   |
-|   B009   | SW_INVALID_DYNAMIC_TOKEN    | Dynamic token TLV parsing/validation failed           |
-|   9000   | OK                          | Success                                               |
+| SW       | SW name                      | Description                                 |
+| ---      | ---                          | ---                                         |
+|   6985   | SWO_CONDITIONS_NOT_SATISFIED | Rejected by user                            |
+|   6A86   | SWO_INCORRECT_P1_P2          | Either P1 or P2 is incorrect                |
+|   6A87   | SWO_WRONG_DATA_LENGTH        | Lc or minimum APDU length is incorrect      |
+|   6D00   | SWO_INVALID_INS              | No command exists with INS                  |
+|   6E00   | SWO_INVALID_CLA              | Bad CLA used for this application           |
+|   6A80   | SWO_INCORRECT_DATA           | Failed to parse raw transaction             |
+|   6985   | SWO_CONDITIONS_NOT_SATISFIED | Security issue with bad state               |
+|   6600   | SWO_SECURITY_ISSUE           | Signature of raw transaction failed         |
+|   B009   | SW_INVALID_DYNAMIC_TOKEN     | Dynamic token TLV parsing/validation failed |
+|   9000   | OK                           | Success                                     |
