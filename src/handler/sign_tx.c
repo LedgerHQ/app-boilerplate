@@ -351,8 +351,14 @@ static int parse_and_hash_transaction(void) {
                 return send_error_and_reset(SWO_TX_PARSING_FAIL_OUTPUTS);
             case FEE_PARSING_ERROR:
                 return send_error_and_reset(SWO_TX_PARSING_FAIL_FEE);
-            case TO_PARSING_ERROR:
+            case TTL_PARSING_ERROR:
                 return send_error_and_reset(SWO_TX_PARSING_FAIL_TTL);
+            case VALIDITY_INTERVAL_START_PARSING_ERROR:
+                return send_error_and_reset(SWO_TX_PARSING_FAIL_VALIDITY_INTERVAL_START);
+            case TX_SIZE_TOO_LARGE_ERROR:
+                return send_error_and_reset(SWO_INVALID_TX_LENGTH);
+            case TX_BUFFER_NOT_FULLY_CONSUMED_ERROR:
+                return send_error_and_reset(SWO_TX_PARSING_FAIL_BUFFER_NOT_FULLY_CONSUMED);
             default:
                 return send_error_and_reset(SWO_TX_PARSING_FAIL);
         }

@@ -32,7 +32,7 @@ parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
     LEDGER_ASSERT(tx != NULL, "NULL tx");
 
     if (buf->size > MAX_TX_LEN) {
-        return WRONG_LENGTH_ERROR;
+        return TX_SIZE_TOO_LARGE_ERROR;
     }
 
     // Initialize inputs list
@@ -444,14 +444,14 @@ parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
     // TTL value (optional, only if includeTtl is true)
     if (tx->includeTtl) {
         if (!buffer_read_u64(buf, &tx->ttl, BE)) {
-            return TO_PARSING_ERROR;  // Reuse TO_PARSING_ERROR for TTL
+            return TTL_PARSING_ERROR;
         }
     }
 
     // Validity interval start value (optional, only if includeValidityIntervalStart is true)
     if (tx->includeValidityIntervalStart) {
         if (!buffer_read_u64(buf, &tx->validityIntervalStart, BE)) {
-            return TO_PARSING_ERROR;  // Reuse TO_PARSING_ERROR for VIS
+            return VALIDITY_INTERVAL_START_PARSING_ERROR;
         }
     }
 
@@ -599,7 +599,7 @@ parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
         flist_push_back(&tx->withdrawals, (s_flist_node *) item);
     }
 
-    return (buf->offset == buf->size) ? PARSING_OK : WRONG_LENGTH_ERROR;
+    return (buf->offset == buf->size) ? PARSING_OK : TX_BUFFER_NOT_FULLY_CONSUMED_ERROR;
 }
 
 /// Clean up dynamically allocated memory in transaction outputs (including list items)
