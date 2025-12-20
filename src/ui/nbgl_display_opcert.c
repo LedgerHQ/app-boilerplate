@@ -23,6 +23,7 @@
 #include "nbgl_use_case.h"
 #include "io.h"
 #include "addressUtils/bip44.h"
+#include "addressUtils/bech32.h"
 #include "format.h"
 
 #include "display.h"
@@ -48,20 +49,6 @@ static char *issueCounterStr = NULL;
 static nbgl_warning_t *g_warning = NULL;
 
 // Centered info for the main warning screen.
-static const nbgl_contentCenter_t warningInfo = {
-  .icon          = &WARNING_ICON,
-  .title         = "Suspicious derivation path",
-  .description   = "Pool cold key path seems unusual"
-};
-
-// Details page shown when the user taps the top-right icon.
-static const nbgl_warningDetails_t warningDetails = {
-  .title                   = "Suspicious derivation path",
-  .type                    = CENTERED_INFO_WARNING,
-  .centeredInfo.icon       = &WARNING_ICON,
-  .centeredInfo.title      = "Suspicious derivation path",
-  .centeredInfo.description= "Pool cold key path seems unusual"
-};
 
 /**
  * Cleanup dynamically allocated buffers
@@ -88,7 +75,7 @@ static void opcert_review_choice(bool confirm) {
     }
 }
 
-int ui_display_opcert(security_policy_t securityPolicy) {
+int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings) {
     TRACE("=== ui_display_opcert START ===");
     TRACE("securityPolicy: %d", securityPolicy);
 
@@ -117,11 +104,17 @@ int ui_display_opcert(security_policy_t securityPolicy) {
     }
     uint8_t poolKeyHash[POOL_KEY_HASH_LENGTH] = {0};
     bip44_pathToKeyHash(&opcert->poolColdKeyPath, poolKeyHash, SIZEOF(poolKeyHash));
-    ui_getBech32Screen(poolKeyHashStr,
-                        BECH32_STRING_SIZE_MAX,
-                        "pool",
-                        poolKeyHash,
-                        SIZEOF(poolKeyHash));
+    const size_t pool_key_len = bech32_encode(
+        "pool",
+        poolKeyHash,
+        SIZEOF(poolKeyHash),
+        poolKeyHashStr,
+        BECH32_STRING_SIZE_MAX);
+    if (pool_key_len == 0 || pool_key_len >= BECH32_STRING_SIZE_MAX) {
+        TRACE("Failed to encode pool key hash");
+        opcert_buffer_cleanup();
+        return send_error_and_reset(SWO_DISPLAY_ADDRESS_FAIL);
+    }
 
     // Allocate and fill KES public key
     kesKeyStr = (char *) ui_mem_alloc(BECH32_STRING_SIZE_MAX);
@@ -130,11 +123,17 @@ int ui_display_opcert(security_policy_t securityPolicy) {
         opcert_buffer_cleanup();
         return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
-    ui_getBech32Screen(kesKeyStr,
-                        BECH32_STRING_SIZE_MAX,
-                        "kes_vk",
-                        opcert->kesPublicKey,
-                        KES_PUBLIC_KEY_LENGTH);
+    const size_t kes_key_len = bech32_encode(
+        "kes_vk",
+        opcert->kesPublicKey,
+        KES_PUBLIC_KEY_LENGTH,
+        kesKeyStr,
+        BECH32_STRING_SIZE_MAX);
+    if (kes_key_len == 0 || kes_key_len >= BECH32_STRING_SIZE_MAX) {
+        TRACE("Failed to encode KES key");
+        opcert_buffer_cleanup();
+        return send_error_and_reset(SWO_DISPLAY_ADDRESS_FAIL);
+    }
 
     // Allocate and fill KES period
     kesPeriodStr = (char *) ui_mem_alloc(MAX_UINT64_STRING_SIZE);
@@ -183,34 +182,73 @@ int ui_display_opcert(security_policy_t securityPolicy) {
     // set warning if needed
     const nbgl_warning_t* warningPtr = NULL;
     TRACE("Security policy received: %d", securityPolicy);
-    switch (securityPolicy) {
-        case POLICY_PROMPT_WARN_UNUSUAL:
-            TRACE("Setting up warning for POLICY_PROMPT_WARN_UNUSUAL");
-            // Allocate warning structure dynamically
-            g_warning = (nbgl_warning_t *) ui_mem_alloc(sizeof(nbgl_warning_t));
-            if (g_warning == NULL) {
-                TRACE("Failed to allocate warning structure");
-                opcert_buffer_cleanup();
-                return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+    const warning_definition_t* warning_defs[WARNING_BIT_COUNT];
+    size_t warning_count =
+        warning_bits_to_definitions(warnings, warning_defs, WARNING_BIT_COUNT);
+    const warning_definition_t* def = NULL;
+    const char* warning_title = NULL;
+    const char* warning_description = NULL;
+    bool warning_available = false;
+
+    if (warning_bits_has(warnings, WARNING_BIT_UNUSUAL_KEY_DERIVATION_PATH)) {
+        warning_title = (const char*) PIC("Unusual pool cold key path");
+        warning_description =
+            (const char*) PIC("Pool cold key derivation path is outside the standard account/index range.");
+        warning_available = true;
+    } else if (warning_count > 0) {
+        def = (const warning_definition_t*) PIC(warning_defs[0]);
+        if (def == NULL) {
+            TRACE("Warning definition missing");
+        } else {
+            TRACE("Setting up warning for bit %d", def->bit);
+            warning_title = (const char*) PIC(def->title);
+            warning_description = (const char*) PIC(def->description);
+            if (warning_title == NULL || warning_description == NULL) {
+                TRACE("Warning title or description missing");
+            } else {
+                warning_available = true;
             }
-            // TODO not sure about proper icons
-            g_warning->introDetails = &warningDetails;
-            g_warning->reviewDetails = &warningDetails;
-            g_warning->info = &warningInfo;
-            g_warning->introTopRightIcon = &WARNING_ICON;
-            g_warning->reviewTopRightIcon = &WARNING_ICON;
-            warningPtr = g_warning;
-            break;
+        }
+    }
 
-        case POLICY_PROMPT_BEFORE_RESPONSE:
-            TRACE("NO WARNING - POLICY_PROMPT_BEFORE_RESPONSE");
-            break;
+    if (warning_available) {
+        nbgl_contentCenter_t* info = (nbgl_contentCenter_t *) ui_mem_alloc(sizeof(nbgl_contentCenter_t));
+        if (info == NULL) {
+            TRACE("Failed to allocate warning info");
+            opcert_buffer_cleanup();
+            return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+        }
+        nbgl_warningDetails_t* details =
+            (nbgl_warningDetails_t *) ui_mem_alloc(sizeof(nbgl_warningDetails_t));
+        if (details == NULL) {
+            TRACE("Failed to allocate warning details");
+            opcert_buffer_cleanup();
+            return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+        }
+        g_warning = (nbgl_warning_t *) ui_mem_alloc(sizeof(nbgl_warning_t));
+        if (g_warning == NULL) {
+            TRACE("Failed to allocate warning structure");
+            opcert_buffer_cleanup();
+            return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+        }
 
-        default:
-            TRACE("UNEXPECTED SECURITY POLICY: %d", securityPolicy);
-            // Catch any truly unknown or unexpected policy values.
-            ASSERT(false);
-            break;
+        info->icon = &WARNING_ICON;
+        info->title = warning_title;
+        info->description = warning_description;
+
+        details->title = warning_title;
+        details->type = CENTERED_INFO_WARNING;
+        details->centeredInfo.icon = &WARNING_ICON;
+        details->centeredInfo.title = warning_title;
+        details->centeredInfo.description = warning_description;
+
+        g_warning->introDetails = details;
+        g_warning->reviewDetails = details;
+        g_warning->info = info;
+        g_warning->introTopRightIcon = &WARNING_ICON;
+        g_warning->reviewTopRightIcon = &WARNING_ICON;
+
+        warningPtr = g_warning;
     }
 
     nbgl_useCaseAdvancedReview(TYPE_OPERATION,

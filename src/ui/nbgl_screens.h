@@ -6,17 +6,6 @@
 // #include "signTxPoolRegistration.h"
 #include "addressUtils/bech32.h"
 
-__noinline_due_to_stack__ void ui_getBech32Screen(char* line,
-                                                  const size_t lineSize,
-                                                  const char* bech32Prefix,
-                                                  const uint8_t* buffer,
-                                                  size_t bufferSize);
-
-__noinline_due_to_stack__ void ui_getHexBufferScreen(char* line,
-                                                     const size_t lineSize,
-                                                     const uint8_t* buffer,
-                                                     size_t bufferSize);
-
 __noinline_due_to_stack__ void ui_getPathScreen(char* line,
                                                 const size_t lineSize,
                                                 const bip44_path_t* path);

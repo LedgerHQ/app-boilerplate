@@ -50,7 +50,9 @@ int handler_get_public_key(buffer_t *cdata) {
     }
 
     // Check security policy
-    security_policy_t policy = policyForGetExtendedPublicKey(&G_context.pk_info.path);
+    warning_bits_t warnings;
+    warning_bits_init(&warnings);
+    security_policy_t policy = policyForGetExtendedPublicKey(&G_context.pk_info.path, &warnings);
     TRACE("Security policy: %d", (int) policy);
     // maybe not here? TODO
     if (policy == POLICY_DENY) {
@@ -67,7 +69,7 @@ int handler_get_public_key(buffer_t *cdata) {
         }
     }
 
-    return ui_display_pubkey(policy);
+    return ui_display_pubkey(policy, warnings);
 }
 
 void finalize_pubkey_export(bool confirmed) {

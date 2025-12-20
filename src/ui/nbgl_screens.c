@@ -9,45 +9,6 @@
 // #include "signTxPoolRegistration.h"
 #include "app_tokens/app_tokens.h"
 
-// encodes a buffer into bech32 and displays it (works for bufferSize <= 150 and prefix length <=
-// 12)
-void ui_getBech32Screen(char* line,
-                        const size_t lineSize,
-                        const char* bech32Prefix,
-                        const uint8_t* buffer,
-                        size_t bufferSize) {
-    {
-        // assert inputs
-        ASSERT(strlen(bech32Prefix) > 0);
-        ASSERT(strlen(bech32Prefix) <= BECH32_PREFIX_LENGTH_MAX);
-
-        ASSERT(bufferSize <= BECH32_BUFFER_SIZE_MAX);
-    }
-
-    explicit_bzero(line, lineSize);
-
-    {
-        size_t len = bech32_encode(bech32Prefix, buffer, bufferSize, line, lineSize);
-
-        ASSERT(len == strlen(line));
-        ASSERT(len + 1 < lineSize);
-    }
-}
-
-void ui_getHexBufferScreen(char* line,
-                           const size_t lineSize,
-                           const uint8_t* buffer,
-                           size_t bufferSize) {
-    ASSERT(bufferSize > 0);
-    ASSERT(bufferSize <= 32);  // this is used for hashes, all are <= 32 bytes
-
-    explicit_bzero(line, lineSize);
-
-    int result = bytes_to_lowercase_hex(line, lineSize, buffer, bufferSize);
-    ASSERT(result == 0);  // SDK returns 0 on success, -1 if output buffer too small
-    ASSERT(strlen(line) == 2 * bufferSize);
-}
-
 void ui_getPathScreen(char* line, const size_t lineSize, const bip44_path_t* path) {
     explicit_bzero(line, lineSize);
     bip44_printToStr(path, line, lineSize);
@@ -270,11 +231,15 @@ void ui_getPaymentInfoScreen(char* line1,
 
         case PAYMENT_SCRIPT_HASH: {
             snprintf(line1, line1Size, "Payment script hash");
-            ui_getBech32Screen(line2,
-                               line2Size,
-                               "script",
-                               addressParams->paymentScriptHash,
-                               SIZEOF(addressParams->paymentScriptHash));
+            {
+                const size_t len = bech32_encode("script",
+                                                 addressParams->paymentScriptHash,
+                                                 SIZEOF(addressParams->paymentScriptHash),
+                                                 line2,
+                                                 line2Size);
+                ASSERT(len > 0);
+                ASSERT(len + 1 < line2Size);
+            }
             return;
         }
 
@@ -326,21 +291,29 @@ void ui_getStakingInfoScreen(char* line1,
 
         case STAKING_KEY_HASH: {
             strncpy(line1, STAKING_HEADING_KEY_HASH, line1Size);
-            bech32_encode("stake_vkh",  // shared keys never go into address directly
-                          addressParams->stakingKeyHash,
-                          SIZEOF(addressParams->stakingKeyHash),
-                          line2,
-                          line2Size);
+            {
+                const size_t len = bech32_encode("stake_vkh",  // shared keys never go into address directly
+                                                 addressParams->stakingKeyHash,
+                                                 SIZEOF(addressParams->stakingKeyHash),
+                                                 line2,
+                                                 line2Size);
+                ASSERT(len > 0);
+                ASSERT(len + 1 < line2Size);
+            }
             break;
         }
 
         case STAKING_SCRIPT_HASH: {
             strncpy(line1, STAKING_HEADING_SCRIPT_HASH, line1Size);
-            bech32_encode("script",
-                          addressParams->stakingScriptHash,
-                          SIZEOF(addressParams->stakingScriptHash),
-                          line2,
-                          line2Size);
+            {
+                const size_t len = bech32_encode("script",
+                                                 addressParams->stakingScriptHash,
+                                                 SIZEOF(addressParams->stakingScriptHash),
+                                                 line2,
+                                                 line2Size);
+                ASSERT(len > 0);
+                ASSERT(len + 1 < line2Size);
+            }
             break;
         }
 

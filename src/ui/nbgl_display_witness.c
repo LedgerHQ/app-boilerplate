@@ -58,7 +58,9 @@ static void witness_review_choice(bool confirm) {
     }
 }
 
-int ui_display_witness(const bip44_path_t* witnessPath, security_policy_t securityPolicy) {
+int ui_display_witness(const bip44_path_t* witnessPath,
+                       security_policy_t securityPolicy,
+                       warning_bits_t warnings) {
     TRACE("=== ui_display_witness START ===");
     TRACE("securityPolicy: %d", securityPolicy);
 
@@ -78,28 +80,12 @@ int ui_display_witness(const bip44_path_t* witnessPath, security_policy_t securi
         return send_error_and_reset(SWO_DISPLAY_BIP32_PATH_FAIL);
     }
 
-    // Set warning if needed
-    bool isUnusual = false;
-    switch (securityPolicy) {
-        case POLICY_PROMPT_WARN_UNUSUAL:
-            isUnusual = true;
-            break;
+    bool isUnusual = warning_bits_has(warnings, WARNING_BIT_UNUSUAL_KEY_DERIVATION_PATH);
 
-        case POLICY_SHOW_BEFORE_RESPONSE:
-            // No warning, just display the witness path
-            isUnusual = false;
-            break;
-
-        case POLICY_PROMPT_BEFORE_RESPONSE:
-            // No warning, just prompt for confirmation
-            isUnusual = false;
-            break;
-
-        default:
-            // Catch any truly unknown or unexpected policy values
-            ASSERT(false);
-            ui_cleanup_tracked_allocations();
-            return send_error_and_reset(SWO_BAD_STATE);
+    if (securityPolicy != POLICY_SHOW) {
+        ASSERT(false);
+        ui_cleanup_tracked_allocations();
+        return send_error_and_reset(SWO_BAD_STATE);
     }
 
     TRACE("isUnusual: %d", isUnusual);

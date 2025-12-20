@@ -74,9 +74,12 @@ int ui_display_transaction(void) {
     return SWO_SUCCESS;
 }
 
-int ui_display_witness(const bip44_path_t *witnessPath, security_policy_t securityPolicy) {
+int ui_display_witness(const bip44_path_t *witnessPath,
+                       security_policy_t securityPolicy,
+                       warning_bits_t warnings) {
     (void) witnessPath;
     (void) securityPolicy;
+    (void) warnings;
     finalize_witness();
     return SWO_SUCCESS;
 }

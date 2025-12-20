@@ -36,6 +36,16 @@ typedef void (*action_validate_cb)(bool);
 int ui_display_transaction(void);
 
 /**
+ * Build NBGL buffers for transaction review (pairs + warnings).
+ *
+ * @return error code if memory/resources are insufficient.
+ */
+int ui_prepare_transaction_review(void);
+
+const nbgl_warning_t *ui_get_prepared_warning(void);
+void ui_clear_prepared_warning(void);
+
+/**
  * Cleanup NBGL display buffers and warnings
  * Includes warning structures, g_pairs array, and tracked per-output/withdrawal strings
  * Safe to call even if warnings were never allocated (handles NULL gracefully)
@@ -47,6 +57,8 @@ int ui_display_transaction(void);
  */
 void tx_review_cleanup(void);
 
-int ui_display_opcert(security_policy_t securityPolicy);
-int ui_display_pubkey(security_policy_t securityPolicy);
-int ui_display_witness(const bip44_path_t* witnessPath, security_policy_t securityPolicy);
+int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings);
+int ui_display_pubkey(security_policy_t securityPolicy, warning_bits_t warnings);
+int ui_display_witness(const bip44_path_t* witnessPath,
+                       security_policy_t securityPolicy,
+                       warning_bits_t warnings);

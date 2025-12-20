@@ -60,7 +60,7 @@ static void pubkey_review_choice(bool confirm) {
     }
 }
 
-int ui_display_pubkey(security_policy_t securityPolicy) {
+int ui_display_pubkey(security_policy_t securityPolicy, warning_bits_t warnings) {
     TRACE("=== ui_display_pubkey START ===");
     TRACE("securityPolicy: %d", securityPolicy);
 
@@ -80,20 +80,14 @@ int ui_display_pubkey(security_policy_t securityPolicy) {
     ui_getPathScreen(pubkeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1, &pk->path);
 
     // set warning if needed
-    bool isUnusual = false;
+    bool isUnusual = warning_bits_has(warnings, WARNING_BIT_UNUSUAL_KEY_DERIVATION_PATH);
+
     switch (securityPolicy) {
-        case POLICY_PROMPT_WARN_UNUSUAL:
+        case POLICY_SHOW:
             pk->silentExport = false;
-            isUnusual = true;
             break;
 
-        case POLICY_PROMPT_BEFORE_RESPONSE:
-            pk->silentExport = false;
-            // no warning, nothing to do
-            break;
-
-        case POLICY_ALLOW_WITHOUT_PROMPT:
-            // This policy should only be returned when silent export is allowed
+        case POLICY_HIDE:
             ASSERT(is_silent_pubkey_export_allowed());
             pk->silentExport = true;
             finalize_pubkey_export(true);
@@ -101,7 +95,6 @@ int ui_display_pubkey(security_policy_t securityPolicy) {
             return 0;
 
         default:
-            // Catch any truly unknown or unexpected policy values.
             ASSERT(false);
             ui_cleanup_tracked_allocations();
             return 0;

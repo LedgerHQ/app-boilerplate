@@ -9,6 +9,7 @@
 
 #include "constants.h"
 #include "tx_types.h"
+#include "securityPolicy/securityWarnings.h"
 #include "opcert_types.h"
 #include "keyDerivation.h"
 #include "parser.h"  // command_t from SDK
@@ -29,10 +30,13 @@ typedef enum {
  * Enumeration with transaction signing state.
  */
 typedef enum {
-    TX_STATE_NONE,      /// No transaction being processed (truly idle)
-    TX_STATE_CHUNKS,    /// Actively receiving transaction data chunks
-    TX_STATE_PARSED,    /// Transaction data parsed and ready for approval
-    TX_STATE_APPROVED   /// User approved, waiting for witness signatures
+    TX_STATE_NONE,         /// No transaction being processed (truly idle)
+    TX_STATE_CHUNKS,       /// Actively receiving transaction data chunks
+    TX_STATE_RECEIVED,     /// All chunks received and awaiting parse
+    TX_STATE_PARSED,       /// Transaction data parsed and ready for hashing
+    TX_STATE_HASHED,       /// Transaction hash + UI plan prepared
+    TX_STATE_UI_PREPARED,  /// UI strings and warnings ready for display
+    TX_STATE_APPROVED      /// User approved, waiting for witness signatures
 } tx_state_e;
 
 /**
@@ -240,8 +244,8 @@ typedef struct {
     // Single account security model - ensures all witnesses use same account
     single_account_data_t single_account_data;  /// tracks account for multi-witness transactions
 
-    // Warning collection (flist head) - network warnings only for now
-    void* warning_list;                   /// head of warning flist (tx_warning_list_item_t)
+    warning_bits_t warning_bits;          /// accumulated transaction warnings (bitmask)
+    uint16_t planned_ui_pairs;            /// planned number of UI pairs for transaction review
 } transaction_ctx_t;
 
 /**

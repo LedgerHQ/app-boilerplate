@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 #include "io.h"
 #include "globals.h"
 
@@ -15,8 +17,4 @@
  * @param sw Status word to return to the host
  * @return Result of io_send_sw()
  */
-static inline int send_error_and_reset(uint16_t sw) {
-    G_context.req_type = REQUEST_NONE;
-    explicit_bzero(&G_context.state, sizeof(G_context.state));
-    return io_send_sw(sw);
-}
+int send_error_and_reset(uint16_t sw);

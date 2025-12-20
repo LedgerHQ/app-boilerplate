@@ -20,7 +20,7 @@ security_policy_t policyForDerivePrivateKey(const bip44_path_t* path) {
 
         case PATH_CVOTE_ACCOUNT:
         case PATH_CVOTE_KEY:
-            return POLICY_ALLOW_WITHOUT_PROMPT;
+            return POLICY_HIDE;
 
         default:
             return POLICY_DENY;

@@ -54,6 +54,7 @@ include_directories(../src/apdu)
 include_directories(../src/txHashBuilder)
 include_directories($ENV{BOLOS_SDK}/lib_standard_app)
 include_directories($ENV{BOLOS_SDK}/include)
+include_directories($ENV{BOLOS_SDK}/lib_alloc)
 include_directories($ENV{BOLOS_SDK}/lib_cxng/include)
 include_directories($ENV{BOLOS_SDK}/lib_nbgl/include)
 
@@ -101,6 +102,28 @@ add_executable(test_tx_hash_builder
     test_tx_hash_builder.c
     ../src/txHashBuilder/txHashBuilder.c
 )
+add_executable(test_tx_prepare
+    test_tx_prepare.c
+    mock_globals.c
+    ../src/transaction/tx_prepare.c
+    ../src/transaction/tx_utils.c
+    ../src/txHashBuilder/txHashBuilder.c
+    ../src/addressUtils/addressUtilsShelley.c
+    ../src/addressUtils/addressUtilsByron.c
+    ../src/addressUtils/bip44.c
+    ../src/securityPolicy/securityPolicy.c
+    ../src/securityPolicy/securityPolicy_privkey.c
+    ../src/keyDerivation/keyDerivation.c
+    ../src/memory/mem.c
+    ../src/memory/mem_utils.c
+    ../src/ui/ui_utils.c
+    ../src/ui/tx_review_prepare.c
+    ../src/utils/cardano_os_utils.c
+    mock_sources/mem_alloc_stub.c
+    mock_sources/glyphs_mock.c
+    mock_sources/display_stub.c
+    mock_sources/hex_stub.c
+)
 add_executable(test_sign_tx_handler
     test_sign_tx_handler.c
     mock_globals.c
@@ -108,7 +131,6 @@ add_executable(test_sign_tx_handler
     ../src/handler/sign_tx.c
     ../src/transaction/tx_parse.c
     ../src/transaction/tx_utils.c
-    ../src/transaction/tx_warnings.c
     ../src/securityPolicy/securityPolicy.c
     ../src/securityPolicy/securityPolicy_privkey.c
     ../src/messageSigning/messageSigning.c
@@ -116,6 +138,14 @@ add_executable(test_sign_tx_handler
     ../src/addressUtils/addressUtilsShelley.c
     ../src/addressUtils/addressUtilsByron.c
     ../src/txHashBuilder/txHashBuilder.c
+    ../src/transaction/tx_prepare.c
+    ../src/ui/tx_review_prepare.c
+    ../src/ui/ui_utils.c
+    ../src/utils/cardano_os_utils.c
+    ../src/memory/mem_utils.c
+    mock_sources/glyphs_mock.c
+    mock_sources/display_stub.c
+    mock_sources/hex_stub.c
 )
 # add_executable(test_tokens test_tokens.c)  # TODO: needs crypto mocks (keyDerivation.h, etc.)
 # add_executable(test_tx_parser test_tx_parser.c)  # TODO: create this file
@@ -253,6 +283,29 @@ target_link_libraries(test_tx_hash_builder
         varint
         bip32
 )
+target_link_libraries(test_tx_prepare
+    PUBLIC
+        cmocka
+        gcov
+        hex_utils
+        text_utils
+        blake2b_lib
+        sha3_lib
+        hash_mocks_lib
+        cbor_lib
+        base58
+        bech32_lib
+        bip44_real
+        buffer_utils_lib
+        buffer
+        write
+        read
+        varint
+        bip32
+        format
+        crypto_mocks_lib
+        cx_crc_support
+)
 add_test(test_tx_hash_builder test_tx_hash_builder)
 target_link_libraries(test_sign_tx_handler
     PUBLIC
@@ -285,7 +338,6 @@ add_executable(test_sign_tx_rejects
     ../src/handler/sign_tx.c
     ../src/transaction/tx_parse.c
     ../src/transaction/tx_utils.c
-    ../src/transaction/tx_warnings.c
     ../src/securityPolicy/securityPolicy.c
     ../src/securityPolicy/securityPolicy_privkey.c
     ../src/messageSigning/messageSigning.c
@@ -293,6 +345,17 @@ add_executable(test_sign_tx_rejects
     ../src/addressUtils/addressUtilsShelley.c
     ../src/addressUtils/addressUtilsByron.c
     ../src/txHashBuilder/txHashBuilder.c
+    ../src/transaction/tx_prepare.c
+    ../src/ui/tx_review_prepare.c
+    ../src/ui/ui_utils.c
+    ../src/utils/cardano_os_utils.c
+    ../src/memory/mem_utils.c
+    # mem implementation is provided by test fixtures (test_sign_tx_rejects.c) to avoid
+    # duplicate allocator state in mocks.
+    mock_sources/mem_alloc_stub.c
+    mock_sources/glyphs_mock.c
+    mock_sources/display_stub.c
+    mock_sources/hex_stub.c
 )
 target_link_libraries(test_sign_tx_rejects
     PUBLIC

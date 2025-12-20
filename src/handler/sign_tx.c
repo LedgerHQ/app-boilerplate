@@ -30,7 +30,6 @@
 #include "display.h"
 #include "tx_types.h"
 #include "tx_output_types.h"
-#include "tx_warnings.h"
 #include "tx_parse.h"
 #include "memory/mem.h"
 #include "constants.h"
@@ -46,6 +45,7 @@
 #include "addressUtils/addressUtilsShelley.h"
 #include "transaction/tx_utils.h"
 #include "ui/menu.h"
+#include "transaction/tx_prepare.h"
 
 /**
  * Helper: Initialize transaction from P1_TX_INIT APDU
@@ -54,7 +54,8 @@
 static int handle_tx_init_apdu(buffer_t *cdata) {
     G_context.tx_info.raw_tx = NULL;
     G_context.tx_info.raw_tx_len = 0;
-    G_context.tx_info.warning_list = NULL;
+    warning_bits_init(&G_context.tx_info.warning_bits);
+    G_context.tx_info.planned_ui_pairs = 0;
 
     // Read and validate options (fixed header)
     uint64_t options;
@@ -257,7 +258,8 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         0,      // numReferenceInputs - not implemented yet
         0,      // numVotingProcedures - not implemented yet
         false,  // includeTreasury - not implemented yet
-        false); // includeDonation - not implemented yet
+        false,  // includeDonation - not implemented yet
+        &G_context.tx_info.warning_bits);
 
     TRACE("Transaction init security policy: %d", (int) init_policy);
 
@@ -325,11 +327,8 @@ static int handle_tx_data_chunk(buffer_t *cdata, bool more) {
     return SWO_SUCCESS;
 }
 
-/**
- * Helper: Parse transaction, build hash, and prepare for UI display
- * Handles all cleanup on parse errors
- */
-static int parse_and_hash_transaction(void) {
+static int parse_transaction_buffer(void) {
+    LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_RECEIVED, "Parsing invoked at wrong state");
     buffer_t buf = {.ptr = G_context.tx_info.raw_tx,
                     .size = G_context.tx_info.raw_tx_len,
                     .offset = 0};
@@ -338,8 +337,6 @@ static int parse_and_hash_transaction(void) {
     TRACE("Parsing status: %d", status);
     if (status != PARSING_OK) {
         tx_context_cleanup();
-
-        // Return appropriate error based on parse failure type
         switch (status) {
             case INPUTS_PARSING_ERROR:
             case INPUTS_COUNT_PARSING_ERROR:
@@ -364,9 +361,6 @@ static int parse_and_hash_transaction(void) {
         }
     }
 
-    // Transition from CHUNKS to PARSED state
-    G_context.state.tx_state = TX_STATE_PARSED;
-
     // Fill in Byron protocol magic for DEVICE_OWNED outputs
     s_flist_node *output_node = G_context.tx_info.transaction.outputs;
     while (output_node != NULL) {
@@ -383,228 +377,8 @@ static int parse_and_hash_transaction(void) {
     if (G_context.tx_info.transaction.fee > HIGH_FEE_WARNING_THRESHOLD) {
         TRACE("High fee detected: %llu lovelace (threshold: %u lovelace)",
               G_context.tx_info.transaction.fee, HIGH_FEE_WARNING_THRESHOLD);
-        if (!tx_warning_add((tx_warning_list_item_t **)&G_context.tx_info.warning_list,
-                           TX_WARNING_HIGH_FEE,
-                           G_context.tx_info.transaction.networkId,
-                           G_context.tx_info.transaction.protocolMagic)) {
-            TRACE("Warning allocation failed");
-            tx_context_cleanup();
-            return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
-        }
+        warning_bits_set(&G_context.tx_info.warning_bits, WARNING_BIT_HIGH_FEE);
     }
-
-    // Build transaction hash
-    tx_hash_builder_t txHashBuilder;
-    explicit_bzero(&txHashBuilder, sizeof(txHashBuilder));
-
-    txHashBuilder_init(&txHashBuilder,
-                      G_context.tx_info.transaction.tagCborSets,
-                      G_context.tx_info.transaction.num_inputs,
-                      G_context.tx_info.transaction.num_outputs,
-                      G_context.tx_info.transaction.includeTtl,
-                      0,      // numCertificates
-                      G_context.tx_info.transaction.num_withdrawals,
-                      false,  // includeAuxData
-                      G_context.tx_info.transaction.includeValidityIntervalStart,
-                      G_context.tx_info.transaction.num_mint_asset_groups > 0,  // includeMint
-                      false,  // includeScriptDataHash
-                      0,      // numCollateralInputs
-                      0,      // numRequiredSigners
-                      false,  // includeNetworkId
-                      false,  // includeCollateralOutput
-                      false,  // includeTotalCollateral
-                      0,      // numReferenceInputs
-                      0,      // numVotingProcedures
-                      false,  // includeTreasury
-                      false); // includeDonation
-
-    // Add inputs
-    txHashBuilder_enterInputs(&txHashBuilder);
-    s_flist_node *input_node = G_context.tx_info.transaction.inputs;
-    while (input_node != NULL) {
-        tx_input_list_item_t *item = (tx_input_list_item_t *) input_node;
-        txHashBuilder_addInput(&txHashBuilder, (const tx_input_t*)&item->input_data);
-        input_node = input_node->next;
-    }
-
-    // Add outputs
-    txHashBuilder_enterOutputs(&txHashBuilder);
-    output_node = G_context.tx_info.transaction.outputs;
-    while (output_node != NULL) {
-        tx_output_list_item_t *output_item = (tx_output_list_item_t *) output_node;
-
-        tx_output_description_t output_desc;
-        output_desc.format = output_item->output_data.format;
-        output_desc.amount = output_item->output_data.adaAmount;
-        output_desc.numAssetGroups = output_item->output_data.numAssetGroups;
-        output_desc.includeDatum = (output_item->output_data.datum.type != 0xFF);
-        output_desc.includeRefScript = output_item->output_data.hasRefScript;
-
-        if (output_item->output_data.destination.type == DESTINATION_THIRD_PARTY) {
-            output_desc.destination.type = DESTINATION_THIRD_PARTY;
-            output_desc.destination.address.buffer = output_item->output_data.destination.address.buffer;
-            output_desc.destination.address.size = output_item->output_data.destination.address.size;
-            txHashBuilder_addOutput_topLevelData(&txHashBuilder, &output_desc);
-        } else if (output_item->output_data.destination.type == DESTINATION_DEVICE_OWNED) {
-            uint8_t *address_bytes = (uint8_t *) app_mem_alloc(MAX_ADDRESS_SIZE);
-            if (address_bytes == NULL) {
-                return send_error_and_reset(SWO_TX_PARSING_FAIL);
-            }
-
-            TRACE("Deriving device-owned address: type=%d, paymentPath.len=%u, staking=%d",
-                  output_item->output_data.destination.params.type,
-                  output_item->output_data.destination.params.paymentKeyPath.length,
-                  output_item->output_data.destination.params.stakingDataSource);
-
-            size_t address_size = deriveAddress(
-                &output_item->output_data.destination.params,
-                address_bytes,
-                MAX_ADDRESS_SIZE
-            );
-
-            TRACE("Derived address size=%u: %.*H", address_size, address_size, address_bytes);
-
-            if (address_size == 0 || address_size > MAX_ADDRESS_SIZE) {
-                app_mem_free(address_bytes);
-                return send_error_and_reset(SWO_TX_PARSING_FAIL);
-            }
-
-            // After derivation, treat the result as a third-party address for CBOR hashing
-            output_desc.destination.type = DESTINATION_THIRD_PARTY;
-            output_desc.destination.address.buffer = address_bytes;
-            output_desc.destination.address.size = address_size;
-            txHashBuilder_addOutput_topLevelData(&txHashBuilder, &output_desc);
-            app_mem_free(address_bytes);
-        }
-
-        // Add asset groups and tokens for this output
-        for (uint16_t ag = 0; ag < output_item->output_data.numAssetGroups; ag++) {
-            asset_group_t *group = &output_item->output_data.assetGroups[ag];
-            txHashBuilder_addOutput_tokenGroup(&txHashBuilder,
-                                               group->policyId,
-                                               MINTING_POLICY_ID_SIZE,
-                                               group->numTokens);
-
-            for (uint16_t tk = 0; tk < group->numTokens; tk++) {
-                output_token_t *token = &group->tokens[tk];
-                txHashBuilder_addOutput_token(&txHashBuilder,
-                                              token->assetName,
-                                              token->assetNameLen,
-                                              (uint64_t)token->amount);
-            }
-        }
-
-        output_node = output_node->next;
-    }
-
-    // Add fee
-    txHashBuilder_addFee(&txHashBuilder, G_context.tx_info.transaction.fee);
-
-    // Add TTL if included
-    if (G_context.tx_info.transaction.includeTtl) {
-        txHashBuilder_addTtl(&txHashBuilder, G_context.tx_info.transaction.ttl);
-    }
-
-    // Add withdrawals if present
-    if (G_context.tx_info.transaction.num_withdrawals > 0) {
-        txHashBuilder_enterWithdrawals(&txHashBuilder);
-        s_flist_node *withdrawal_node = G_context.tx_info.transaction.withdrawals;
-        while (withdrawal_node != NULL) {
-            tx_withdrawal_list_item_t *withdrawal_item = (tx_withdrawal_list_item_t *) withdrawal_node;
-
-            // Construct reward address from withdrawal credential
-            uint8_t reward_address[REWARD_ACCOUNT_SIZE];
-            size_t reward_addr_len = 0;
-
-            switch (withdrawal_item->withdrawal_data.stakeCredential.type) {
-                case EXT_CREDENTIAL_KEY_PATH: {
-                    reward_addr_len = constructRewardAddressFromKeyPath(
-                        &withdrawal_item->withdrawal_data.stakeCredential.keyPath,
-                        G_context.tx_info.transaction.networkId,
-                        reward_address,
-                        sizeof(reward_address)
-                    );
-                    break;
-                }
-                case EXT_CREDENTIAL_KEY_HASH: {
-                    reward_addr_len = constructRewardAddressFromHash(
-                        G_context.tx_info.transaction.networkId,
-                        REWARD_HASH_SOURCE_KEY,
-                        withdrawal_item->withdrawal_data.stakeCredential.keyHash,
-                        ADDRESS_KEY_HASH_LENGTH,
-                        reward_address,
-                        sizeof(reward_address)
-                    );
-                    break;
-                }
-                case EXT_CREDENTIAL_SCRIPT_HASH: {
-                    reward_addr_len = constructRewardAddressFromHash(
-                        G_context.tx_info.transaction.networkId,
-                        REWARD_HASH_SOURCE_SCRIPT,
-                        withdrawal_item->withdrawal_data.stakeCredential.scriptHash,
-                        SCRIPT_HASH_LENGTH,
-                        reward_address,
-                        sizeof(reward_address)
-                    );
-                    break;
-                }
-                default:
-                    return send_error_and_reset(SWO_TX_PARSING_FAIL);
-            }
-
-            if (reward_addr_len == 0 || reward_addr_len != REWARD_ACCOUNT_SIZE) {
-                return send_error_and_reset(SWO_TX_PARSING_FAIL);
-            }
-
-            // Add withdrawal to hash builder
-            txHashBuilder_addWithdrawal(&txHashBuilder,
-                                       reward_address,
-                                       reward_addr_len,
-                                       withdrawal_item->withdrawal_data.amount);
-
-            withdrawal_node = withdrawal_node->next;
-        }
-    }
-
-    // Add validity interval start if included
-    if (G_context.tx_info.transaction.includeValidityIntervalStart) {
-        txHashBuilder_addValidityIntervalStart(&txHashBuilder,
-                                               G_context.tx_info.transaction.validityIntervalStart);
-    }
-
-    // Add mint if present
-    if (G_context.tx_info.transaction.num_mint_asset_groups > 0) {
-        txHashBuilder_enterMint(&txHashBuilder);
-        txHashBuilder_addMint_topLevelData(&txHashBuilder,
-                                           G_context.tx_info.transaction.num_mint_asset_groups);
-
-        s_flist_node *mint_node = G_context.tx_info.transaction.mint_asset_groups;
-        while (mint_node != NULL) {
-            mint_asset_group_list_item_t *mint_item = (mint_asset_group_list_item_t *) mint_node;
-
-            txHashBuilder_addMint_tokenGroup(&txHashBuilder,
-                                             mint_item->asset_group.policyId,
-                                             MINTING_POLICY_ID_SIZE,
-                                             mint_item->asset_group.numTokens);
-
-            for (uint16_t tk = 0; tk < mint_item->asset_group.numTokens; tk++) {
-                mint_token_t *token = &mint_item->asset_group.tokens[tk];
-                txHashBuilder_addMint_token(&txHashBuilder,
-                                            token->assetName,
-                                            token->assetNameLen,
-                                            (uint64_t)token->amount);
-            }
-
-            mint_node = mint_node->next;
-        }
-    }
-
-    // Finalize hash
-    txHashBuilder_finalize(&txHashBuilder,
-                          G_context.tx_info.tx_hash,
-                          sizeof(G_context.tx_info.tx_hash));
-
-    TRACE("Hash: %.*H", sizeof(G_context.tx_info.tx_hash), G_context.tx_info.tx_hash);
 
     return SWO_SUCCESS;
 }
@@ -628,12 +402,33 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
         }
 
         // Final chunk - parse and build hash
-        int parse_result = parse_and_hash_transaction();
+        LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_CHUNKS, "Bad state before parse");
+        G_context.state.tx_state = TX_STATE_RECEIVED;
+        int parse_result = parse_transaction_buffer();
         if (parse_result != SWO_SUCCESS) {
             return parse_result;
         }
+        G_context.state.tx_state = TX_STATE_PARSED;
+        tx_ui_plan_t ui_plan = {0};
+        int plan_result = compute_tx_hash_and_plan_ui(&ui_plan);
+        if (plan_result != SWO_SUCCESS) {
+            tx_context_cleanup();
+            return plan_result;
+        }
 
-        // Display transaction for user confirmation
+        G_context.state.tx_state = TX_STATE_HASHED;
+
+        LEDGER_ASSERT(ui_plan.pair_count > 0, "Invalid UI plan");
+        G_context.tx_info.planned_ui_pairs = ui_plan.pair_count;
+
+        int ui_prep_result = ui_prepare_transaction_review();
+        if (ui_prep_result != SWO_SUCCESS) {
+            tx_review_cleanup();
+            tx_context_cleanup();
+            return ui_prep_result;
+        }
+
+        G_context.state.tx_state = TX_STATE_UI_PREPARED;
         return ui_display_transaction();
     }
 }
@@ -705,11 +500,14 @@ int handler_sign_tx_witness(buffer_t *cdata) {
         poolOwnerPath = NULL;
     }
 
+    warning_bits_t witness_warnings;
+    warning_bits_init(&witness_warnings);
     security_policy_t policy = policyForSignTxWitness(
         G_context.tx_info.transaction.txSigningMode,
         &G_context.tx_info.witness_path,
         mintPresent,
-        poolOwnerPath
+        poolOwnerPath,
+        &witness_warnings
     );
 
     TRACE("Witness security policy: %d", (int) policy);
@@ -730,21 +528,16 @@ int handler_sign_tx_witness(buffer_t *cdata) {
 
     TRACE("Witness signature: %.*H", ED25519_SIGNATURE_LENGTH, G_context.tx_info.witness_signature);
 
-    // Handle witness based on security policy
-    switch (policy) {
-        case POLICY_SHOW_BEFORE_RESPONSE:
-        case POLICY_PROMPT_BEFORE_RESPONSE:
-        case POLICY_PROMPT_WARN_UNUSUAL:
-            // Display witness path and request user confirmation
-            return ui_display_witness(&G_context.tx_info.witness_path, policy);
-
-        case POLICY_ALLOW_WITHOUT_PROMPT:
-            finalize_witness();
-            return 0;
-
-        default:
-            ASSERT(false);
-            tx_context_cleanup();
-            return send_error_and_reset(SWO_BAD_STATE);
+    if (policy == POLICY_HIDE) {
+        finalize_witness();
+        return 0;
     }
+
+    if (policy == POLICY_SHOW) {
+        return ui_display_witness(&G_context.tx_info.witness_path, policy, witness_warnings);
+    }
+
+    ASSERT(false);
+    tx_context_cleanup();
+    return send_error_and_reset(SWO_BAD_STATE);
 }

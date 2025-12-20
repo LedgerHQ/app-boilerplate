@@ -67,7 +67,9 @@ int handler_sign_opcert(buffer_t *cdata) {
     const parsed_opcert_t* opcert = &G_context.opcert_info.opcert;
 
     // Check security policy
-    security_policy_t policy = policyForSignOpCert(&opcert->poolColdKeyPath);
+    warning_bits_t warnings = 0;
+    warning_bits_init(&warnings);
+    security_policy_t policy = policyForSignOpCert(&opcert->poolColdKeyPath, &warnings);
     TRACE("Security policy: %d\n", policy);
     if (policy == POLICY_DENY) {
         TRACE("Security policy DENY - rejecting operation");
@@ -76,7 +78,7 @@ int handler_sign_opcert(buffer_t *cdata) {
         return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
     }
 
-    ui_display_opcert(policy);
+    ui_display_opcert(policy, warnings);
 
     return 0;
 }

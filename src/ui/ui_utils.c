@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "nbgl_use_case.h"
 #include "ui_utils.h"
 #include "memory/mem_utils.h"
@@ -5,9 +7,12 @@
 #include "io.h"
 #include "cardano_swo.h"
 #include "utils/utils.h"
+#include "utils/assert.h"
 
 nbgl_contentTagValue_t *g_pairs = NULL;
 nbgl_contentTagValueList_t *g_pairsList = NULL;
+
+static uint16_t g_next_pair_index = 0;
 
 /**
  * Allocation tracker for UI buffers to prevent memory leaks
@@ -71,6 +76,40 @@ void *ui_mem_alloc(size_t size) {
 void ui_pairs_cleanup(void) {
     mem_buffer_cleanup((void **) &g_pairs);
     mem_buffer_cleanup((void **) &g_pairsList);
+    g_next_pair_index = 0;
+}
+
+bool ui_pairs_add(const char* label, char* tmp_buf) {
+    LEDGER_ASSERT(label != NULL, "NULL label");
+    LEDGER_ASSERT(tmp_buf != NULL, "NULL buffer");
+
+    if (g_pairs == NULL || g_pairsList == NULL) {
+        TRACE("Pairs storage not initialized");
+        app_mem_free(tmp_buf);
+        return false;
+    }
+
+    if (g_next_pair_index >= g_pairsList->nbPairs) {
+        TRACE("Pairs list overflow: %u/%u", g_next_pair_index, g_pairsList->nbPairs);
+        app_mem_free(tmp_buf);
+        return false;
+    }
+
+    size_t len = strlen(tmp_buf);
+    char *shrinked = (char *) ui_mem_alloc(len + 1);
+    if (shrinked == NULL) {
+        TRACE("Failed to allocate shrunk string");
+        app_mem_free(tmp_buf);
+        return false;
+    }
+
+    memcpy(shrinked, tmp_buf, len + 1);
+    app_mem_free(tmp_buf);
+
+    g_pairs[g_next_pair_index].item = label;
+    g_pairs[g_next_pair_index].value = shrinked;
+    g_next_pair_index++;
+    return true;
 }
 
 /**
@@ -90,6 +129,7 @@ bool ui_pairs_init(uint8_t nbPairs) {
     }
     g_pairsList->nbPairs = nbPairs;
     g_pairsList->pairs = g_pairs;
+    g_next_pair_index = 0;
     return true;
 error:
     ui_pairs_cleanup();

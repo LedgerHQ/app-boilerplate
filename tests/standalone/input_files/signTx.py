@@ -1118,7 +1118,8 @@ testsByron: List[SignTxTestCase] = [
                                42,
                                10),
                    TransactionSigningMode.ORDINARY_TRANSACTION,
-                   "a400818258201af8fa0b754ff99253d983894e63a2b09cbb56c833ba18c3384210163f63dcfc00018182582f82d818582583581c709bfb5d9733cbdd72f520cd2c8b9f8f942da5e6cd0b6994e1803b0aa10242182a001aef14e76d1a002dd2e802182a030a"),
+                   "a400818258201af8fa0b754ff99253d983894e63a2b09cbb56c833ba18c3384210163f63dcfc00018182582f82d818582583581c709bfb5d9733cbdd72f520cd2c8b9f8f942da5e6cd0b6994e1803b0aa10242182a001aef14e76d1a002dd2e802182a030a",
+                   has_warning=True),
 ]
 
 testsShelleyNoCertificates: List[SignTxTestCase] = [
@@ -1129,7 +1130,8 @@ testsShelleyNoCertificates: List[SignTxTestCase] = [
                                42,
                                10),
                    TransactionSigningMode.ORDINARY_TRANSACTION,
-                   "a400818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018002182a030a"),
+                   "a400818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018002182a030a",
+                   has_warning=True),
     SignTxTestCase("Sign_tx_with_258_tag_on_inputs",
                    Transaction(Mainnet,
                                [inputs["utxoShelley"]],
@@ -1138,7 +1140,7 @@ testsShelleyNoCertificates: List[SignTxTestCase] = [
                                10),
                    TransactionSigningMode.ORDINARY_TRANSACTION,
                    "a400d90102818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018002182a030a",
-                   True),
+                   has_warning=True),
      SignTxTestCase("Sign_tx_without_change_address",
                    Transaction(Mainnet,
                                [inputs["utxoShelley"]],
@@ -1582,7 +1584,8 @@ testsMary: List[SignTxTestCase] = [
                                10,
                                mint=mints["mintAmountVariety"]),
                    TransactionSigningMode.ORDINARY_TRANSACTION,
-                   "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018002182a030a09a1581c7eae28af2208be856f7a119668ae52a49b73725e326dc16579dcc373a44000581c1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df20920581c1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df20a1b7fffffffffffffff581c1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df20b3b7fffffffffffffff"),
+                   "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018002182a030a09a1581c7eae28af2208be856f7a119668ae52a49b73725e326dc16579dcc373a44000581c1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df20920581c1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df20a1b7fffffffffffffff581c1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df20b3b7fffffffffffffff",
+                   has_warning=True),
     SignTxTestCase("Sign_tx_with_mint_with_decimal_places",
                    Transaction(Mainnet,
                                [inputs["utxoShelley"]],

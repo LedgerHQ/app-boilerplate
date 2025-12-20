@@ -1,5 +1,9 @@
 #pragma once
 
+#include <stddef.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "constants.h"
 #include "addressUtilsShelley.h"
 #include "addressUtils/bip44.h"
@@ -12,9 +16,21 @@
 #include "signTx.h"
 */
 
+#include "securityWarnings.h"
+
+typedef struct {
+    warning_bit_e bit;
+    const char* title;
+    const char* description;
+} warning_definition_t;
+
+size_t warning_bits_to_definitions(warning_bits_t warnings,
+                                   const warning_definition_t** definitions,
+                                   size_t max_definitions);
+
 security_policy_t policyForDerivePrivateKey(const bip44_path_t* path);
 
-security_policy_t policyForGetExtendedPublicKey(const bip44_path_t* path);
+security_policy_t policyForGetExtendedPublicKey(const bip44_path_t* path, warning_bits_t* warnings);
 
 security_policy_t policyForShowDeriveAddress(const addressParams_t* addressParams);
 security_policy_t policyForReturnDeriveAddress(const addressParams_t* addressParams);
@@ -46,7 +62,8 @@ security_policy_t policyForSignTxInit(sign_tx_signingmode_t txSigningMode,
                                       uint16_t numReferenceInputs,
                                       uint16_t numVotingProcedures,
                                       bool includeTreasury,
-                                      bool includeDonation);
+                                      bool includeDonation,
+                                      warning_bits_t* warnings);
 
 security_policy_t policyForSignTxInput(sign_tx_signingmode_t txSigningMode);
 
@@ -55,11 +72,13 @@ bool needsMissingDatumWarning(const tx_output_destination_t* destination, bool i
 security_policy_t policyForSignTxOutputAddressBytes(const tx_output_description_t* output,
                                                     sign_tx_signingmode_t txSigningMode,
                                                     const uint8_t networkId,
-                                                    const uint32_t protocolMagic);
+                                                    const uint32_t protocolMagic,
+                                                    warning_bits_t* warnings);
 security_policy_t policyForSignTxOutputAddressParams(const tx_output_description_t* output,
                                                      sign_tx_signingmode_t txSigningMode,
                                                      const uint8_t networkId,
-                                                     const uint32_t protocolMagic);
+                                                     const uint32_t protocolMagic,
+                                                     warning_bits_t* warnings);
 security_policy_t policyForSignTxOutputDatumHash(security_policy_t outputPolicy);
 
 security_policy_t policyForSignTxOutputRefScript(security_policy_t outputPolicy);
@@ -134,7 +153,8 @@ security_policy_t policyForSignTxStakePoolRegistrationConfirm(uint32_t numOwners
 */
 
 security_policy_t policyForSignTxWithdrawal(sign_tx_signingmode_t txSigningMode,
-                                            const ext_credential_t* stakeCredential);
+                                            const ext_credential_t* stakeCredential,
+                                            warning_bits_t* warnings);
 
 /*
 security_policy_t policyForSignTxAuxData(aux_data_type_t auxDataType);
@@ -158,7 +178,8 @@ security_policy_t policyForSignTxRequiredSigner(const sign_tx_signingmode_t txSi
 security_policy_t policyForSignTxWitness(sign_tx_signingmode_t txSigningMode,
                                          const bip44_path_t* witnessPath,
                                          bool mintPresent,
-                                         const bip44_path_t* poolOwnerPath);
+                                         const bip44_path_t* poolOwnerPath,
+                                         warning_bits_t* warnings);
 
 /*
 
@@ -177,7 +198,8 @@ security_policy_t policyForSignTxConfirm();
 
 */
 
-security_policy_t policyForSignOpCert(const bip44_path_t* poolColdKeyPathSpec);
+security_policy_t policyForSignOpCert(const bip44_path_t* poolColdKeyPathSpec,
+                                      warning_bits_t* warnings);
 
 /*
 
