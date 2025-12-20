@@ -22,10 +22,10 @@
 #include "io.h"
 #include "ledger_assert.h"
 
+#include "parser.h"
 #include "dispatcher.h"
-#include "constants.h"
 #include "globals.h"
-#include "types.h"
+#include "apdu/apdu_constants.h"
 #include "cardano_swo.h"
 #include "utils/assert.h"
 #include "utils/utils.h"

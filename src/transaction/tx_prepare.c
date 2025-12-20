@@ -9,9 +9,8 @@
 #include "cardano_swo.h"
 #include "globals.h"
 #include "addressUtils/addressUtilsShelley.h"
-#include "constants.h"
 #include "tx_output_types.h"
-#include "txHashBuilder/txHashBuilder.h"
+#include "transaction/tx_hash_builder.h"
 #include "memory/mem.h"
 #include "securityPolicy/securityPolicy.h"
 #include "securityPolicy/securityWarnings.h"
@@ -156,6 +155,12 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
     }
 
     txHashBuilder_addFee(&txHashBuilder, G_context.tx_info.transaction.fee);
+    security_policy_t fee_policy = policyForSignTxFee(G_context.tx_info.transaction.txSigningMode,
+                                                      G_context.tx_info.transaction.fee,
+                                                      &G_context.tx_info.warning_bits);
+    if (fee_policy == POLICY_DENY) {
+        return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+    }
     if (G_context.tx_info.transaction.includeTtl) {
         txHashBuilder_addTtl(&txHashBuilder, G_context.tx_info.transaction.ttl);
     }

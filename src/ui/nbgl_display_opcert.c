@@ -27,7 +27,7 @@
 #include "format.h"
 
 #include "display.h"
-#include "constants.h"
+#include "ui/ui_constants.h"
 #include "globals.h"
 #include "utils/utils.h"
 #include "utils/cardano_os_utils.h"

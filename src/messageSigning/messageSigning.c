@@ -1,7 +1,6 @@
 #include "cx.h"
 
 #include "messageSigning.h"
-#include "constants.h"
 #include "addressUtils/bip44.h"
 #include "securityPolicy.h"
 #include "crypto.h"

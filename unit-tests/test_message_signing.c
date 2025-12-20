@@ -6,9 +6,9 @@
 
 #include <cmocka.h>
 
+#include "cardano_constants.h"
 #include "messageSigning/messageSigning.h"
 #include "addressUtils/bip44.h"
-#include "constants.h"
 #include "cx.h"
 
 #define HD HARDENED_BIP32

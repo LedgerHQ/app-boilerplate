@@ -18,9 +18,9 @@
 #include <string.h>   // explicit_bzero
 #include <stdbool.h>  // bool
 
+#include "cardano_constants.h"
 #include "cx.h"
 #include "os.h"
-#include "constants.h"
 
 static cx_err_t crypto_init_privkey(const uint32_t* path,
                                     size_t path_len,

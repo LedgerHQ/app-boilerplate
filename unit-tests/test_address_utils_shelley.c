@@ -9,7 +9,6 @@
 #include "addressUtils/addressUtilsShelley.h"
 #include "addressUtils/addressUtilsByron.h"
 #include "addressUtils/bip44.h"
-#include "constants.h"
 #include "hexUtils.h"
 
 #define HD HARDENED_BIP32

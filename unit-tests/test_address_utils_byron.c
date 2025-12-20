@@ -7,9 +7,9 @@
 
 #include <cmocka.h>
 
+#include "cardano_constants.h"
 #include "addressUtils/addressUtilsByron.h"
 #include "hexUtils.h"
-#include "constants.h"
 
 // Test case for successful protocol magic extraction
 static void testcase_extractProtocolMagicSucceeds(const char* addressHex, uint32_t expectedProtocolMagic) {

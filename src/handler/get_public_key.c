@@ -29,9 +29,9 @@
 
 #include "get_public_key.h"
 #include "globals.h"
+#include "keyDerivation.h"
 #include "utils/utils.h"
 #include "utils/cardano_os_utils.h"
-#include "types.h"
 #include "cardano_swo.h"
 #include "display.h"
 #include "dispatcher.h"

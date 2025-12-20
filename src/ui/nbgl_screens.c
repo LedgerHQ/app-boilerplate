@@ -1,6 +1,4 @@
 #include "nbgl_screens.h"
-#include "constants.h"
-#include "types.h"
 #include "addressUtils/bech32.h"
 #include "utils/cardano_os_utils.h"
 #include "utils/ipUtils.h"

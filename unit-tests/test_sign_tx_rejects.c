@@ -13,7 +13,6 @@
 #include "buffer.h"
 #include "cardano_swo.h"
 #include "globals.h"
-#include "constants.h"
 #include "securityPolicy/securityPolicy.h"
 #include "transaction/tx_utils.h"
 #include "transaction/tx_parse.h"

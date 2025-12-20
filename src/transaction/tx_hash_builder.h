@@ -1,116 +1,9 @@
 #pragma once
 
-#include "constants.h"
-#include "types.h"
 #include "hash.h"
-#include "addressUtilsShelley.h"
-
-typedef enum {
-    CREDENTIAL_KEY_HASH = 0,
-    CREDENTIAL_SCRIPT_HASH = 1,
-} credential_type_t;
-
-typedef struct {
-    credential_type_t type;
-    union {
-        uint8_t keyHash[ADDRESS_KEY_HASH_LENGTH];
-        uint8_t scriptHash[SCRIPT_HASH_LENGTH];
-    };
-} credential_t;
-
-typedef enum {
-    DREP_KEY_HASH = 0,
-    DREP_SCRIPT_HASH = 1,
-    DREP_ALWAYS_ABSTAIN = 2,
-    DREP_ALWAYS_NO_CONFIDENCE = 3,
-} drep_type_t;
-
-typedef struct {
-    drep_type_t type;
-    union {
-        uint8_t keyHash[ADDRESS_KEY_HASH_LENGTH];
-        uint8_t scriptHash[SCRIPT_HASH_LENGTH];
-    };
-} drep_t;
-
-typedef struct {
-    bool isIncluded;
-    uint8_t url[ANCHOR_URL_LENGTH_MAX];
-    size_t urlLength;
-    uint8_t hash[ANCHOR_HASH_LENGTH];
-} anchor_t;
-
-typedef enum {
-    ARRAY_LEGACY = 0,  // legacy_transaction_output
-    MAP_BABBAGE = 1    // post_alonzo_transaction_output
-} tx_output_serialization_format_t;
-
-typedef enum {
-    DATUM_HASH = 0,
-    DATUM_INLINE = 1,
-} datum_type_t;
-
-typedef enum {
-    DESTINATION_THIRD_PARTY = 1,
-    DESTINATION_DEVICE_OWNED = 2,
-} tx_output_destination_type_t;
-
-typedef struct {
-    tx_output_destination_type_t type;
-    union {
-        struct {
-            uint8_t buffer[MAX_ADDRESS_SIZE];
-            size_t size;
-        } address;
-        addressParams_t params;
-    };
-} tx_output_destination_storage_t;
-
-// consistent with tx_output_destination_storage_t
-// but only contains address buffer pointer instead of the actual buffer
-// or address params pointer instead of actual params
-typedef struct {
-    tx_output_destination_type_t type;
-    union {
-        struct {
-            uint8_t* buffer;
-            size_t size;
-        } address;
-        addressParams_t* params;
-    };
-} tx_output_destination_t;
-
-typedef enum {
-    VOTER_COMMITTEE_HOT_KEY_HASH = 0,
-    VOTER_COMMITTEE_HOT_SCRIPT_HASH = 1,
-    VOTER_DREP_KEY_HASH = 2,
-    VOTER_DREP_SCRIPT_HASH = 3,
-    VOTER_STAKE_POOL_KEY_HASH = 4,
-} voter_type_t;
-
-typedef struct {
-    voter_type_t type;
-    union {
-        uint8_t keyHash[ADDRESS_KEY_HASH_LENGTH];
-        uint8_t scriptHash[SCRIPT_HASH_LENGTH];
-    };
-} voter_t;
-
-typedef struct {
-    uint8_t txHashBuffer[TX_HASH_LENGTH];
-    uint32_t govActionIndex;
-} gov_action_id_t;
-
-typedef enum {
-    VOTE_NO = 0,
-    VOTE_YES = 1,
-    VOTE_ABSTAIN = 2,
-} vote_t;
-
-typedef struct {
-    vote_t vote;
-    anchor_t anchor;
-} voting_procedure_t;
+#include "addressUtils/addressUtilsShelley.h"
+#include "transaction/tx.h"
+#include "transaction/tx_output_types.h"
 
 enum {
     TX_BODY_KEY_INPUTS = 0,
@@ -326,40 +219,40 @@ void txHashBuilder_enterCertificates(tx_hash_builder_t* builder);
 
 void txHashBuilder_addCertificate_stakingOld(tx_hash_builder_t* builder,
                                              const certificate_type_t certificateType,
-                                             const credential_t* stakingCredential);
+                                             const ext_credential_t* stakingCredential);
 void txHashBuilder_addCertificate_staking(tx_hash_builder_t* builder,
                                           const certificate_type_t certificateType,
-                                          const credential_t* stakeCredential,
+                                          const ext_credential_t* stakeCredential,
                                           uint64_t deposit);
 
 void txHashBuilder_addCertificate_stakeDelegation(tx_hash_builder_t* builder,
-                                                  const credential_t* stakeCredential,
+                                                  const ext_credential_t* stakeCredential,
                                                   const uint8_t* poolKeyHash,
                                                   size_t poolKeyHashSize);
 
 void txHashBuilder_addCertificate_voteDelegation(tx_hash_builder_t* builder,
-                                                 const credential_t* stakeCredential,
-                                                 const drep_t* drep);
+                                                 const ext_credential_t* stakeCredential,
+                                                 const ext_drep_t* drep);
 
 void txHashBuilder_addCertificate_committeeAuthHot(tx_hash_builder_t* builder,
-                                                   const credential_t* coldCredential,
-                                                   const credential_t* hotCredential);
+                                                   const ext_credential_t* coldCredential,
+                                                   const ext_credential_t* hotCredential);
 
 void txHashBuilder_addCertificate_committeeResign(tx_hash_builder_t* builder,
-                                                  const credential_t* coldCredential,
+                                                  const ext_credential_t* coldCredential,
                                                   const anchor_t* anchor);
 
 void txHashBuilder_addCertificate_dRepRegistration(tx_hash_builder_t* builder,
-                                                   const credential_t* dRepCredential,
+                                                   const ext_credential_t* dRepCredential,
                                                    uint64_t deposit,
                                                    const anchor_t* anchor);
 
 void txHashBuilder_addCertificate_dRepDeregistration(tx_hash_builder_t* builder,
-                                                     const credential_t* dRepCredential,
+                                                     const ext_credential_t* dRepCredential,
                                                      uint64_t deposit);
 
 void txHashBuilder_addCertificate_dRepUpdate(tx_hash_builder_t* builder,
-                                             const credential_t* dRepCredential,
+                                             const ext_credential_t* dRepCredential,
                                              const anchor_t* anchor);
 
 void txHashBuilder_addCertificate_poolRetirement(tx_hash_builder_t* builder,

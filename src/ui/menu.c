@@ -24,7 +24,7 @@
 #include "globals.h"
 #include "menu.h"
 #include "display.h"
-#include "settings.h"
+#include "cardano_settings.h"
 
 //  -----------------------------------------------------------
 //  ----------------------- HOME PAGE -------------------------

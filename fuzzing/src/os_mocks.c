@@ -7,7 +7,6 @@
 #include <ux.h>
 
 #include "buffer.h"
-#include "types.h"
 #include "globals.h"
 
 int io_send_sw(uint16_t sw) {

@@ -5,6 +5,7 @@
 
 #include "dispatcher.h"
 #include "fuzz_helpers.h"
+#include "apdu/apdu_constants.h"
 
 /**
  * Fuzzing harness for operational certificate signing.
@@ -14,7 +15,7 @@
  * against malformed input.
  *
  * Expected APDU format:
- *   CLA = 0xE0 (Cardano app)
+ *   CLA = 0xD7 (Cardano app)
  *   INS = 0x08 (SIGN_OPCERT)
  *   P1  = 0x00 (unused)
  *   P2  = 0x00 (unused)

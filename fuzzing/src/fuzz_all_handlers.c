@@ -5,6 +5,7 @@
 
 #include "dispatcher.h"
 #include "fuzz_helpers.h"
+#include "apdu/apdu_constants.h"
 
 /**
  * Unified fuzzing harness for all APDU commands.
@@ -14,7 +15,7 @@
  * It simulates real device behavior where multiple commands may be sent in sequence.
  *
  * APDU format:
- *   CLA = 0xE0 (Cardano app)
+ *   CLA = 0xD7 (Cardano app)
  *   INS = any valid instruction
  *   P1  = varies by instruction
  *   P2  = varies by instruction

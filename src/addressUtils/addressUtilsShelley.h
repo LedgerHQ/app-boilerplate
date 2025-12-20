@@ -1,9 +1,21 @@
 #pragma once
 
-#include "constants.h"
-#include "types.h"
+#include "cardano_constants.h"
 #include "addressUtils/bip44.h"
 #include "utils/utils.h"
+
+typedef enum {
+    KEY_REFERENCE_PATH = 1,  // device-owned path reference
+    KEY_REFERENCE_HASH = 2,  // third-party key hash
+} key_reference_type_t;
+
+typedef struct {
+    key_reference_type_t keyReferenceType;
+    union {
+        bip44_path_t path;
+        uint8_t hashBuffer[REWARD_ACCOUNT_SIZE];
+    };
+} reward_account_t;
 
 typedef enum {
     // base address contains explicit payment info (key hash / script hash)
@@ -28,6 +40,10 @@ typedef enum {
     REWARD_KEY = 0xE,                         // 0b1110
     REWARD_SCRIPT = 0xF,                      // 0b1111
 } address_type_t;
+
+#define MAX_ADDRESS_SIZE              128
+#define MAX_HUMAN_ADDRESS_SIZE        150
+#define MAX_HUMAN_REWARD_ACCOUNT_SIZE 65
 
 uint8_t getAddressHeader(const uint8_t* addressBuffer, size_t addressSize);
 

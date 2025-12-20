@@ -54,8 +54,8 @@ set(CARDANO_SOURCE
     ${CARDANO_PATH}/src/securityPolicy/securityPolicy_privkey.c
     ${CARDANO_PATH}/src/transaction/tx_parse.c
     ${CARDANO_PATH}/src/transaction/tx_utils.c
-    ${CARDANO_PATH}/src/txHashBuilder/txHashBuilder.c
-    ${CARDANO_PATH}/src/ui/menu_nbgl.c
+    ${CARDANO_PATH}/src/transaction/tx_hash_builder.c
+    ${CARDANO_PATH}/src/ui/menu.c
     ${CARDANO_PATH}/src/ui/nbgl_display_opcert.c
     ${CARDANO_PATH}/src/ui/nbgl_display_pubkey.c
     ${CARDANO_PATH}/src/ui/nbgl_display_transaction.c

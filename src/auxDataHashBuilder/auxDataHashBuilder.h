@@ -1,6 +1,5 @@
 #pragma once
 
-#include "constants.h"
 #if defined(TEST)
 #include "hash.h"
 #else

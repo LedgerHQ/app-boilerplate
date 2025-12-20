@@ -1,5 +1,6 @@
 #include "auxDataHashBuilder/auxDataHashBuilder.h"
 
+#include "cardano_constants.h"
 #include "cbor.h"
 #include "utils/utils.h"
 

@@ -1,77 +1,106 @@
 #pragma once
 
-#include "memory/flist.h"
-#include "txHashBuilder/txHashBuilder.h"
-#include "constants.h"  // For hash and policy ID constants
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
-// Maximum limits for output elements
+#include "cardano_constants.h"
+#include "memory/flist.h"
+#include "addressUtils/addressUtilsShelley.h"
+
 #define MAX_ASSET_GROUPS_PER_OUTPUT 10
 #define MAX_TOKENS_PER_ASSET_GROUP 20
 #define MAX_DATUM_INLINE_SIZE 256
 #define MAX_REF_SCRIPT_SIZE 512
-#define ASSET_NAME_HASH_SIZE 32  // Blake2b-256 hash for asset name
-#define ASSET_NAME_DISPLAY_SIZE 32  // Maximum asset name length for display
+#define ASSET_NAME_HASH_SIZE 32
+#define ASSET_NAME_DISPLAY_SIZE 32
 
-// Token within an asset group
-// Note: named output_token_t to avoid conflict with cbor_token_t alias token_t
 typedef struct {
-    uint8_t assetNameHash[ASSET_NAME_HASH_SIZE];  // Blake2b-224 hash of asset name (28 bytes used)
-    uint8_t assetNameLen;                          // Length of original asset name (0-32)
-    uint8_t assetName[ASSET_NAME_DISPLAY_SIZE];   // Original asset name (for display)
-    int64_t amount;                                // Can be positive (mint) or negative (burn)
+    uint8_t policyId[MINTING_POLICY_ID_SIZE];
+} token_group_t;
+
+typedef struct {
+    uint8_t assetNameBytes[ASSET_NAME_SIZE_MAX];
+    size_t assetNameSize;
+    uint64_t amount;
+} output_token_amount_t;
+
+typedef enum {
+    ARRAY_LEGACY = 0,
+    MAP_BABBAGE = 1
+} tx_output_serialization_format_t;
+
+typedef enum {
+    DATUM_HASH = 0,
+    DATUM_INLINE = 1,
+} datum_type_t;
+
+typedef enum {
+    DESTINATION_THIRD_PARTY = 1,
+    DESTINATION_DEVICE_OWNED = 2,
+} tx_output_destination_type_t;
+
+typedef struct {
+    tx_output_destination_type_t type;
+    union {
+        struct {
+            uint8_t buffer[MAX_ADDRESS_SIZE];
+            size_t size;
+        } address;
+        addressParams_t params;
+    };
+} tx_output_destination_storage_t;
+
+typedef struct {
+    tx_output_destination_type_t type;
+    union {
+        struct {
+            uint8_t* buffer;
+            size_t size;
+        } address;
+        addressParams_t* params;
+    };
+} tx_output_destination_t;
+
+typedef struct {
+    uint8_t assetNameHash[ASSET_NAME_HASH_SIZE];
+    uint8_t assetNameLen;
+    uint8_t assetName[ASSET_NAME_DISPLAY_SIZE];
+    int64_t amount;
 } output_token_t;
 
-// Asset group (policy ID + tokens)
 typedef struct {
-    uint8_t policyId[MINTING_POLICY_ID_SIZE];     // Policy ID
-    uint16_t numTokens;                            // Number of tokens in this group
-    output_token_t* tokens;                        // Dynamically allocated array of tokens
+    uint8_t policyId[MINTING_POLICY_ID_SIZE];
+    uint16_t numTokens;
+    output_token_t* tokens;
 } asset_group_t;
 
-// Datum structure - contains union of hash and inline data
-// Uses datum_type_t values from txHashBuilder for compatibility
-// Wire format: 0=NONE, 1=HASH, 2=INLINE
-// Internal format: 0xFF=NONE (marker), 0=DATUM_HASH, 1=DATUM_INLINE
 typedef struct {
-    datum_type_t type;                             // Internal: 0=HASH, 1=INLINE (from txHashBuilder), or 0xFF=NONE
+    datum_type_t type;
     union {
-        uint8_t hash[OUTPUT_DATUM_HASH_LENGTH];    // For DATUM_HASH
+        uint8_t hash[OUTPUT_DATUM_HASH_LENGTH];
         struct {
             uint16_t size;
-            uint8_t* data;      // Dynamically allocated for DATUM_INLINE
+            uint8_t* data;
         } inline_data;
     };
 } output_datum_t;
 
-// Helper macro to check if datum is present
-#define OUTPUT_DATUM_IS_PRESENT(datum) ((datum).type != 0xFF)
-
-// Reference script structure
 typedef struct {
     uint16_t size;
-    uint8_t* data;              // Dynamically allocated
+    uint8_t* data;
 } ref_script_t;
 
-// Output list item with flist node
-// Contains destination, amount, tokens, datum, ref script, and format
 typedef struct {
-    s_flist_node node;      /// flist node for linked list
+    s_flist_node node;
     struct {
         tx_output_destination_storage_t destination;
         uint64_t adaAmount;
-
-        // Token bundle
         uint16_t numAssetGroups;
-        asset_group_t* assetGroups;  // Dynamically allocated array
-
-        // Datum
+        asset_group_t* assetGroups;
         output_datum_t datum;
-
-        // Reference script
         bool hasRefScript;
         ref_script_t refScript;
-
-        // Output format
-        tx_output_serialization_format_t format;  /// ARRAY_LEGACY or MAP_BABBAGE
+        tx_output_serialization_format_t format;
     } output_data;
 } tx_output_list_item_t;

@@ -69,7 +69,10 @@
  * @param[out] result Pointer to store the result (true if included, false otherwise)
  * @return true if parsing succeeded, false if value is invalid
  */
-#include "constants.h"
+typedef enum {
+    ITEM_INCLUDED_NO = 1,   // Field is not included
+    ITEM_INCLUDED_YES = 2,  // Field is included
+} item_included_e;
 
 static inline bool parseIncluded(uint8_t value, bool* result) {
     switch (value) {

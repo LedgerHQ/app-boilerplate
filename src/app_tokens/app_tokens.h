@@ -1,6 +1,6 @@
 #pragma once
 
-#include "types.h"
+#include "transaction/tx_output_types.h"
 #include "utils/utils.h"
 
 __noinline_due_to_stack__ size_t deriveAssetFingerprintBech32(const uint8_t* policyId,

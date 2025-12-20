@@ -1,6 +1,8 @@
 #pragma once
 
 #include "addressUtilsShelley.h"
+#include "transaction/tx_output_types.h"
+#include "transaction/tx_certificate_types.h"
 // #include "signTx.h"
 // #include "signTxOutput.h"
 // #include "signTxPoolRegistration.h"

@@ -36,10 +36,8 @@ void ui_track_allocation(void *ptr) {
     if (ptr == NULL) {
         return;
     }
-    if (g_allocation_tracker.count >= MAX_UI_ALLOCATIONS) {
-        TRACE("WARNING: Allocation tracker full, buffer %p may not be cleaned up", ptr);
-        return;
-    }
+    LEDGER_ASSERT(g_allocation_tracker.count < MAX_UI_ALLOCATIONS,
+                  "UI allocation tracker overflow");
     g_allocation_tracker.ptrs[g_allocation_tracker.count++] = ptr;
 }
 

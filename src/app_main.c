@@ -22,13 +22,12 @@
 #include "ux.h"
 #include "parser.h"  // command_t, apdu_parser
 
-#include "types.h"
 #include "globals.h"
 #include "io.h"
 #include "cardano_swo.h"
 #include "menu.h"
 #include "dispatcher.h"
-#include "settings.h"
+#include "cardano_settings.h"
 #include "memory/mem.h"
 #include "utils/utils.h"
 

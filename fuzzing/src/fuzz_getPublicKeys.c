@@ -5,6 +5,7 @@
 
 #include "dispatcher.h"
 #include "fuzz_helpers.h"
+#include "apdu/apdu_constants.h"
 
 /**
  * Fuzzing harness for public key derivation.
@@ -14,7 +15,7 @@
  * for robustness against malformed input.
  *
  * Expected APDU format:
- *   CLA = 0xE0 (Cardano app)
+ *   CLA = 0xD7 (Cardano app)
  *   INS = 0x02 (GET_PUBLIC_KEY)
  *   P1  = 0x00 (unused)
  *   P2  = 0x00 (unused)

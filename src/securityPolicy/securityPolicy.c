@@ -1,14 +1,14 @@
 #include <stddef.h>
 
 #include "os.h"
-#include "constants.h"
-#include "types.h"
 #include "addressUtilsShelley.h"
 #include "addressUtilsByron.h"
-#include "settings.h"
+#include "cardano_settings.h"
 #include "addressUtils/bip44.h"
-#include "txHashBuilder.h"
+#include "transaction/tx_hash_builder.h"
 #include "transaction/tx_utils.h"
+
+#define HIGH_FEE_WARNING_THRESHOLD 5000000
 
 #include "securityPolicy.h"
 
@@ -868,30 +868,6 @@ security_policy_t policyForSignTxCollateralOutputConfirm(security_policy_t outpu
     DENY();
 }
 
-// For transaction fee
-security_policy_t policyForSignTxFee(sign_tx_signingmode_t txSigningMode,
-                                     uint64_t fee MARK_UNUSED) {
-    switch (txSigningMode) {
-        case SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR:
-        case SIGN_TX_SIGNINGMODE_ORDINARY_TX:
-        case SIGN_TX_SIGNINGMODE_MULTISIG_TX:
-        case SIGN_TX_SIGNINGMODE_PLUTUS_TX:
-            // always show the fee if it is paid by the signer
-            SHOW();
-            break;
-
-        case SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER:
-            // fees are paid by the operator and are thus irrelevant for owners
-            HIDE();
-            break;
-
-        default:
-            ASSERT(false);
-    }
-
-    DENY();  // should not be reached
-}
-
 // For transaction TTL
 security_policy_t policyForSignTxTtl(uint32_t ttl MARK_UNUSED) {
     SHOW_IF(is_expert_mode());
@@ -1445,11 +1421,40 @@ static inline security_policy_t _ordinaryWitnessPolicy(const bip44_path_t* path,
     }
 }
 
+security_policy_t policyForSignTxFee(sign_tx_signingmode_t txSigningMode,
+                                     uint64_t fee,
+                                     warning_bits_t* warnings) {
+    LEDGER_ASSERT(warnings != NULL, "NULL warnings");
+
+    switch (txSigningMode) {
+        case SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR:
+        case SIGN_TX_SIGNINGMODE_ORDINARY_TX:
+        case SIGN_TX_SIGNINGMODE_MULTISIG_TX:
+        case SIGN_TX_SIGNINGMODE_PLUTUS_TX:
+            // always show the fee if it is paid by the signer
+            if (fee > HIGH_FEE_WARNING_THRESHOLD) {
+                warning_bits_set(warnings, WARNING_BIT_HIGH_FEE);
+            }
+            SHOW();
+
+        case SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER:
+            // fees are paid by the operator and are thus irrelevant for owners
+            HIDE();
+            break;
+
+        default:
+            ASSERT(false);
+    }
+
+    DENY();  // should not be reached
+}
+
 static inline security_policy_t _multisigWitnessPolicy(const bip44_path_t* path,
                                                        bool mintPresent,
                                                        warning_bits_t* warnings) {
     LEDGER_ASSERT(path != NULL, "NULL path");
     LEDGER_ASSERT(warnings != NULL, "NULL warnings");
+
     switch (bip44_classifyPath(path)) {
         case PATH_MULTISIG_PAYMENT_KEY:
         case PATH_MULTISIG_STAKING_KEY:

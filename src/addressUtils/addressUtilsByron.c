@@ -3,7 +3,7 @@
 #include "addressUtilsByron.h"
 #include "keyDerivation/keyDerivation.h"
 #include "cbor.h"
-#include "constants.h"
+#include "cardano_constants.h"
 #include "hash.h"
 #include "lcx_crc.h"
 #include "cardano_swo.h"

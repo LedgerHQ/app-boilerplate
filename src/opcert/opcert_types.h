@@ -15,3 +15,9 @@ typedef struct {
     uint64_t issueCounter;
     bip44_path_t poolColdKeyPath;
 } parsed_opcert_t;
+
+typedef enum {
+    OPCERT_STATE_NONE,      /// idle
+    OPCERT_STATE_PARSED,    /// parsed and waiting for approval
+    OPCERT_STATE_APPROVED   /// user approved, waiting for signature
+} opcert_state_e;

@@ -26,7 +26,6 @@
 #include "format.h"
 
 #include "display.h"
-#include "constants.h"
 #include "globals.h"
 #include "utils/utils.h"
 #include "utils/cardano_os_utils.h"
@@ -38,7 +37,7 @@
 #include "get_public_key.h"
 #include "memory/mem_utils.h"
 #include "ui_utils.h"
-#include "settings.h"
+#include "cardano_settings.h"
 
 static char *pubkeyPathStr = NULL;
 

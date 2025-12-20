@@ -6,6 +6,7 @@
 
 #include <cmocka.h>
 
+#include "cardano_constants.h"
 #include "auxDataHashBuilder/auxDataHashBuilder.h"
 #include "hexUtils.h"
 

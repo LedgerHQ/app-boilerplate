@@ -3,11 +3,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "cardano_constants.h"
 #include "cx.h"
 
 #include "decorators.h"
 #include "crypto.h"
-#include "constants.h"
 #include "keyDerivation/keyDerivation.h"
 #include "crypto_mock_data.h"
 

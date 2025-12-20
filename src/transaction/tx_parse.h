@@ -2,7 +2,7 @@
 
 #include "buffer.h"
 
-#include "types.h"
+#include "transaction/tx.h"
 
 typedef enum {
     PARSING_OK = 1,
@@ -44,6 +44,8 @@ typedef enum {
  * @see tx_context_cleanup
  */
 parser_status_e parse_tx(buffer_t *buf, transaction_t *tx);
+
+int tx_handle_parse_error(parser_status_e status);
 
 /**
  * Cleanup all dynamically allocated structures in transaction.

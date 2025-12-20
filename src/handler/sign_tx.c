@@ -28,16 +28,14 @@
 #include "cardano_swo.h"
 #include "globals.h"
 #include "display.h"
-#include "tx_types.h"
+#include "transaction/tx.h"
 #include "tx_output_types.h"
 #include "tx_parse.h"
 #include "memory/mem.h"
-#include "constants.h"
-#include "types.h"
 #include "utils/utils.h"
 #include "utils/cardano_os_utils.h"
 #include "utils/cbor.h"
-#include "txHashBuilder/txHashBuilder.h"
+#include "transaction/tx_hash_builder.h"
 #include "messageSigning.h"
 #include "securityPolicy/securityPolicy.h"
 #include "dispatcher.h"
@@ -327,62 +325,6 @@ static int handle_tx_data_chunk(buffer_t *cdata, bool more) {
     return SWO_SUCCESS;
 }
 
-static int parse_transaction_buffer(void) {
-    LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_RECEIVED, "Parsing invoked at wrong state");
-    buffer_t buf = {.ptr = G_context.tx_info.raw_tx,
-                    .size = G_context.tx_info.raw_tx_len,
-                    .offset = 0};
-
-    parser_status_e status = parse_tx(&buf, &G_context.tx_info.transaction);
-    TRACE("Parsing status: %d", status);
-    if (status != PARSING_OK) {
-        tx_context_cleanup();
-        switch (status) {
-            case INPUTS_PARSING_ERROR:
-            case INPUTS_COUNT_PARSING_ERROR:
-                return send_error_and_reset(SWO_TX_PARSING_FAIL_INPUTS);
-            case OUTPUTS_PARSING_ERROR:
-            case OUTPUTS_COUNT_PARSING_ERROR:
-            case OUTPUT_DESTINATION_TYPE_ERROR:
-            case OUTPUT_ADDRESS_SIZE_ERROR:
-                return send_error_and_reset(SWO_TX_PARSING_FAIL_OUTPUTS);
-            case FEE_PARSING_ERROR:
-                return send_error_and_reset(SWO_TX_PARSING_FAIL_FEE);
-            case TTL_PARSING_ERROR:
-                return send_error_and_reset(SWO_TX_PARSING_FAIL_TTL);
-            case VALIDITY_INTERVAL_START_PARSING_ERROR:
-                return send_error_and_reset(SWO_TX_PARSING_FAIL_VALIDITY_INTERVAL_START);
-            case TX_SIZE_TOO_LARGE_ERROR:
-                return send_error_and_reset(SWO_INVALID_TX_LENGTH);
-            case TX_BUFFER_NOT_FULLY_CONSUMED_ERROR:
-                return send_error_and_reset(SWO_TX_PARSING_FAIL_BUFFER_NOT_FULLY_CONSUMED);
-            default:
-                return send_error_and_reset(SWO_TX_PARSING_FAIL);
-        }
-    }
-
-    // Fill in Byron protocol magic for DEVICE_OWNED outputs
-    s_flist_node *output_node = G_context.tx_info.transaction.outputs;
-    while (output_node != NULL) {
-        tx_output_list_item_t *output_item = (tx_output_list_item_t *) output_node;
-        if (output_item->output_data.destination.type == DESTINATION_DEVICE_OWNED &&
-            output_item->output_data.destination.params.type == BYRON) {
-            output_item->output_data.destination.params.protocolMagic =
-                G_context.tx_info.transaction.protocolMagic;
-        }
-        output_node = output_node->next;
-    }
-
-    // Check for high fee warning
-    if (G_context.tx_info.transaction.fee > HIGH_FEE_WARNING_THRESHOLD) {
-        TRACE("High fee detected: %llu lovelace (threshold: %u lovelace)",
-              G_context.tx_info.transaction.fee, HIGH_FEE_WARNING_THRESHOLD);
-        warning_bits_set(&G_context.tx_info.warning_bits, WARNING_BIT_HIGH_FEE);
-    }
-
-    return SWO_SUCCESS;
-}
-
 int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
     if (chunk_type == P1_TX_INIT) {
         explicit_bzero(&G_context, sizeof(G_context));
@@ -404,9 +346,16 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
         // Final chunk - parse and build hash
         LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_CHUNKS, "Bad state before parse");
         G_context.state.tx_state = TX_STATE_RECEIVED;
-        int parse_result = parse_transaction_buffer();
-        if (parse_result != SWO_SUCCESS) {
-            return parse_result;
+
+        buffer_t buf = {
+            .ptr = G_context.tx_info.raw_tx,
+            .size = G_context.tx_info.raw_tx_len,
+            .offset = 0
+        };
+
+        parser_status_e parse_status = parse_tx(&buf, &G_context.tx_info.transaction);
+        if (parse_status != PARSING_OK) {
+            return tx_handle_parse_error(parse_status);
         }
         G_context.state.tx_state = TX_STATE_PARSED;
         tx_ui_plan_t ui_plan = {0};

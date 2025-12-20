@@ -14,8 +14,7 @@
  */
 // TODO max cardano tx size is 16K, but our format of non-serialized (not CBOR) tx might be bigger or smaller, needs to be checked
 // up to 19K is possible to alloc, but we want this minimal
-#define TX_BUFFER_SIZE (16 * 1024)
-
+#include "transaction/tx_constants.h"
 /**
  * Handler for SIGN_TX command. If successfully parse BIP32 path
  * and transaction, sign transaction and send APDU response.

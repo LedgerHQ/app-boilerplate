@@ -4,12 +4,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "constants.h"
-#include "addressUtilsShelley.h"
+#include "addressUtils/addressUtilsShelley.h"
 #include "addressUtils/bip44.h"
 #include "securityPolicyType.h"
-#include "txHashBuilder/txHashBuilder.h"
-#include "transaction/tx_types.h"
+#include "transaction/tx_hash_builder.h"
+#include "transaction/tx.h"
 /*
 #include "signTxPoolRegistration.h"
 #include "signTxAuxData.h"
@@ -34,6 +33,10 @@ security_policy_t policyForGetExtendedPublicKey(const bip44_path_t* path, warnin
 
 security_policy_t policyForShowDeriveAddress(const addressParams_t* addressParams);
 security_policy_t policyForReturnDeriveAddress(const addressParams_t* addressParams);
+
+ security_policy_t policyForSignTxFee(sign_tx_signingmode_t txSigningMode,
+                                       uint64_t fee,
+                                       warning_bits_t* warnings);
 
 bool isNetworkUsual(uint32_t networkId, uint32_t protocolMagic);
 bool isTxNetworkIdVerifiable(bool includeNetworkId,
@@ -104,8 +107,6 @@ security_policy_t policyForSignTxCollateralOutputTokens(security_policy_t output
                                                         const tx_output_description_t* output);
 security_policy_t policyForSignTxCollateralOutputConfirm(security_policy_t outputPolicy,
                                                          uint64_t numAssetGroups);
-
-security_policy_t policyForSignTxFee(sign_tx_signingmode_t txSigningMode, uint64_t fee);
 
 security_policy_t policyForSignTxTtl(uint32_t ttl);
 

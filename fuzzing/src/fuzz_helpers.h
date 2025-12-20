@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef explicit_bzero
+#define explicit_bzero(addr, size) memset((addr), 0, (size))
+#endif
+
 #include "globals.h"
 #include "memory/mem.h"
 #include "ui_utils.h"

@@ -9,9 +9,9 @@
 #include "nbgl_use_case.h"
 #include "cardano_swo.h"
 #include "globals.h"
-#include "constants.h"
+#include "ui/ui_constants.h"
 #include "tx_output_types.h"
-#include "transaction/tx_types.h"
+#include "transaction/tx.h"
 #include "addressUtils/addressUtilsShelley.h"
 #include "memory/mem.h"
 #include "securityPolicy/securityPolicy.h"
@@ -137,13 +137,13 @@ static int ui_materialize_strings(void) {
                 return status;
             }
 
-            char *amount_tmp = ui_alloc_temp(MAX_AMOUNT_DISPLAY_SIZE);
+            char *amount_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_SIZE);
             if (amount_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
             str_formatAdaAmount(output_item->output_data.adaAmount,
                                 amount_tmp,
-                                MAX_AMOUNT_DISPLAY_SIZE);
+                                MAX_ADA_AMOUNT_STRING_SIZE);
             status = ui_add_pair_or_fail("Amount", amount_tmp);
             if (status != SWO_SUCCESS) {
                 return status;

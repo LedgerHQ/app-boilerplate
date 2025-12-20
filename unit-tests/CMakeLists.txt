@@ -100,14 +100,14 @@ add_executable(test_aux_data_hash_builder
 )
 add_executable(test_tx_hash_builder
     test_tx_hash_builder.c
-    ../src/txHashBuilder/txHashBuilder.c
+    ../src/transaction/tx_hash_builder.c
 )
 add_executable(test_tx_prepare
     test_tx_prepare.c
     mock_globals.c
     ../src/transaction/tx_prepare.c
     ../src/transaction/tx_utils.c
-    ../src/txHashBuilder/txHashBuilder.c
+    ../src/transaction/tx_hash_builder.c
     ../src/addressUtils/addressUtilsShelley.c
     ../src/addressUtils/addressUtilsByron.c
     ../src/addressUtils/bip44.c
@@ -137,7 +137,7 @@ add_executable(test_sign_tx_handler
     ../src/keyDerivation/keyDerivation.c
     ../src/addressUtils/addressUtilsShelley.c
     ../src/addressUtils/addressUtilsByron.c
-    ../src/txHashBuilder/txHashBuilder.c
+    ../src/transaction/tx_hash_builder.c
     ../src/transaction/tx_prepare.c
     ../src/ui/tx_review_prepare.c
     ../src/ui/ui_utils.c
@@ -344,7 +344,7 @@ add_executable(test_sign_tx_rejects
     ../src/keyDerivation/keyDerivation.c
     ../src/addressUtils/addressUtilsShelley.c
     ../src/addressUtils/addressUtilsByron.c
-    ../src/txHashBuilder/txHashBuilder.c
+    ../src/transaction/tx_hash_builder.c
     ../src/transaction/tx_prepare.c
     ../src/ui/tx_review_prepare.c
     ../src/ui/ui_utils.c

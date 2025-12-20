@@ -17,15 +17,20 @@
 #include "buffer.h"
 #include "memory/mem.h"
 
+#include "cardano_swo.h"
+#include "utils/cardano_os_utils.h"
 #include "tx_parse.h"
+#include "transaction/tx.h"
 #include "utils.h"
 #include "utils/assert.h"
 #include "utils/textUtils.h"
 #include "utils/buffer_utils.h"
-#include "types.h"
+#include "transaction/tx_constants.h"
 #include "tx_output_types.h"
 #include "addressUtils/addressUtilsShelley.h"
 #include "globals.h"
+
+static uint16_t _map_parser_status_to_swo(parser_status_e status);
 
 static parser_status_e parse_tx_inputs(buffer_t *buf, transaction_t *tx);
 static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx);
@@ -89,6 +94,38 @@ parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
         return TX_BUFFER_NOT_FULLY_CONSUMED_ERROR;
     }
     return PARSING_OK;
+}
+
+static uint16_t _map_parser_status_to_swo(parser_status_e status) {
+    switch (status) {
+        case INPUTS_PARSING_ERROR:
+        case INPUTS_COUNT_PARSING_ERROR:
+            return SWO_TX_PARSING_FAIL_INPUTS;
+        case OUTPUTS_PARSING_ERROR:
+        case OUTPUTS_COUNT_PARSING_ERROR:
+        case OUTPUT_DESTINATION_TYPE_ERROR:
+        case OUTPUT_ADDRESS_SIZE_ERROR:
+        case WITHDRAWALS_PARSING_ERROR:
+            return SWO_TX_PARSING_FAIL_OUTPUTS;
+        case FEE_PARSING_ERROR:
+            return SWO_TX_PARSING_FAIL_FEE;
+        case TTL_PARSING_ERROR:
+            return SWO_TX_PARSING_FAIL_TTL;
+        case VALIDITY_INTERVAL_START_PARSING_ERROR:
+            return SWO_TX_PARSING_FAIL_VALIDITY_INTERVAL_START;
+        case TX_SIZE_TOO_LARGE_ERROR:
+            return SWO_INVALID_TX_LENGTH;
+        case TX_BUFFER_NOT_FULLY_CONSUMED_ERROR:
+            return SWO_TX_PARSING_FAIL_BUFFER_NOT_FULLY_CONSUMED;
+        default:
+            return SWO_TX_PARSING_FAIL;
+    }
+}
+
+int tx_handle_parse_error(parser_status_e status) {
+    LEDGER_ASSERT(status != PARSING_OK, "tx_parse received PARSING_OK");
+    tx_context_cleanup();
+    return send_error_and_reset(_map_parser_status_to_swo(status));
 }
 
 static parser_status_e parse_tx_inputs(buffer_t *buf, transaction_t *tx) {

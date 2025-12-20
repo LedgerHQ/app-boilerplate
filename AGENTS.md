@@ -55,6 +55,8 @@ Style:
 Use longer more clear variable names.
 Correctness and security are paramount. Use lots of STATIC_ASSERT and LEDGER_ASSERT wherever appropriate, check in this way for function parameters, invariants in loops and state machine checks, etc. Make sure no memory bugs, overflows etc. appear. Use TRACE liberally to help debugging (prefer against PRINTF). Memory is scarce, so data stored in global context during whole transaction processing (e.g. in raw tx buffer) should really be needed repeatedly, and not just temporarily created/destroyed at a single point. Never use forward declarations, instead suggest how to better organize imports (must be confirmed before coding).
 
+IMPORTANT: you must not remove original comments that explain crucial details; if you see a comment that does not make sense or is useless, just suggest removing it and wait for confirmation.
+
 Additional resources:
 BOLOS SDK (underlying library for system calls, crypto, nbgl lib):
 ../../ledger/ledger-secure-sdk
