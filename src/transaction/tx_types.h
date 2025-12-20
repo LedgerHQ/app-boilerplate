@@ -7,9 +7,7 @@
 #include "constants.h"
 #include "memory/flist.h"
 #include "addressUtils/bip44.h"
-
-#define MAX_TX_LEN   510
-#define ADDRESS_LEN  20
+#include "handler/sign_tx.h"
 
 
 // Hash and account constants (from cardano.h to avoid circular includes)

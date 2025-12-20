@@ -31,7 +31,7 @@ parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
     LEDGER_ASSERT(buf != NULL, "NULL buf");
     LEDGER_ASSERT(tx != NULL, "NULL tx");
 
-    if (buf->size > MAX_TX_LEN) {
+    if (buf->size > TX_BUFFER_SIZE) {
         return TX_SIZE_TOO_LARGE_ERROR;
     }
 
