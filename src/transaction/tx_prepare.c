@@ -1,13 +1,16 @@
 #include <stddef.h>  // NULL
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "tx_prepare.h"
 
 #include "os.h"
 #include "app_tokens/app_tokens.h"
 #include "cardano_swo.h"
+#include "cardano_settings.h"
 #include "globals.h"
+#include "addressUtils/bip44.h"
 #include "addressUtils/addressUtilsShelley.h"
 #include "tx_output_types.h"
 #include "transaction/tx_hash_builder.h"
@@ -20,9 +23,44 @@
 
 #define UI_PAIR_LIMIT 250
 
+/**
+ * Convert ext_credential_t to a version suitable for tx hash building.
+ * Converts KEY_PATH to KEY_HASH, leaves KEY_HASH and SCRIPT_HASH unchanged.
+ * Returns a credential that can be passed to txHashBuilder functions.
+ * Does NOT modify the input credential (needed for security policies and UI).
+ */
+static ext_credential_t _credentialForTxHash(const ext_credential_t* credential) {
+    ext_credential_t result = *credential;
+
+    if (credential->type == EXT_CREDENTIAL_KEY_PATH) {
+        result.type = EXT_CREDENTIAL_KEY_HASH;
+        bip44_pathToKeyHash(&credential->keyPath, result.keyHash, sizeof(result.keyHash));
+    }
+
+    return result;
+}
+
+/**
+ * Convert ext_drep_t to a version suitable for tx hash building.
+ * Converts KEY_PATH to KEY_HASH, leaves other types unchanged.
+ * Does NOT modify the input drep.
+ */
+static ext_drep_t _drepForTxHash(const ext_drep_t* drep) {
+    ext_drep_t result = *drep;
+
+    if (drep->type == EXT_DREP_KEY_PATH) {
+        result.type = EXT_DREP_KEY_HASH;
+        bip44_pathToKeyHash(&drep->keyPath, result.keyHash, sizeof(result.keyHash));
+    }
+
+    return result;
+}
+
 int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
     LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_PARSED, "Hash planning invoked at wrong state");
     LEDGER_ASSERT(plan != NULL, "NULL plan");
+
+    TRACE("Expert mode: %d", is_expert_mode());
 
     plan->pair_count = 2;  // fee + tx hash
     if (G_context.tx_info.transaction.includeTtl) {
@@ -84,7 +122,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                       G_context.tx_info.transaction.num_inputs,
                       G_context.tx_info.transaction.num_outputs,
                       G_context.tx_info.transaction.includeTtl,
-                      0,
+                      G_context.tx_info.transaction.num_certificates,
                       G_context.tx_info.transaction.num_withdrawals,
                       false,
                       G_context.tx_info.transaction.includeValidityIntervalStart,
@@ -217,6 +255,289 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
     }
     if (G_context.tx_info.transaction.includeTtl) {
         txHashBuilder_addTtl(&txHashBuilder, G_context.tx_info.transaction.ttl);
+    }
+
+    if (G_context.tx_info.transaction.num_certificates > 0) {
+        // Initialize certificate state in hash builder
+        txHashBuilder_enterCertificates(&txHashBuilder);
+
+        s_flist_node *certificate_node = G_context.tx_info.transaction.certificates;
+        while (certificate_node != NULL) {
+            tx_certificate_list_item_t *certificate_item =
+                (tx_certificate_list_item_t *) certificate_node;
+
+            // First check generic policy (only for DENY - validates certificate type is allowed in this signing mode)
+            security_policy_t generic_policy = policyForSignTxCertificate(
+                G_context.tx_info.transaction.txSigningMode,
+                certificate_item->certificate_data.type
+            );
+            switch (generic_policy) {
+                case POLICY_DENY:
+                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                case POLICY_SHOW:
+                case POLICY_HIDE:
+                    break;  // Continue to type-specific policy check
+            }
+
+            // Then check type-specific policy for SHOW/HIDE decision and UI pair counting
+            security_policy_t cert_policy = POLICY_HIDE;
+
+            switch (certificate_item->certificate_data.type) {
+                case CERTIFICATE_STAKE_REGISTRATION:
+                case CERTIFICATE_STAKE_DEREGISTRATION:
+                case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
+                case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY: {
+                    cert_policy = policyForSignTxCertificateStaking(
+                        G_context.tx_info.transaction.txSigningMode,
+                        certificate_item->certificate_data.type,
+                        &certificate_item->certificate_data.stakeCredential
+                    );
+                    switch (cert_policy) {
+                        case POLICY_DENY:
+                            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        case POLICY_SHOW:
+                            if (certificate_item->certificate_data.type == CERTIFICATE_STAKE_REGISTRATION ||
+                                certificate_item->certificate_data.type == CERTIFICATE_STAKE_DEREGISTRATION) {
+                                plan->pair_count += 3;  // cert# + type + stake credential
+                            } else {
+                                plan->pair_count += 4;  // cert# + type + stake credential + deposit
+                            }
+                            break;
+                        case POLICY_HIDE:
+                            break;
+                    }
+                    break;
+                }
+                case CERTIFICATE_STAKE_DELEGATION: {
+                    cert_policy = policyForSignTxCertificateStaking(
+                        G_context.tx_info.transaction.txSigningMode,
+                        certificate_item->certificate_data.type,
+                        &certificate_item->certificate_data.stakeCredential
+                    );
+                    switch (cert_policy) {
+                        case POLICY_DENY:
+                            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        case POLICY_SHOW:
+                            plan->pair_count += 4;  // cert# + type + stake credential + pool keyhash
+                            break;
+                        case POLICY_HIDE:
+                            break;
+                    }
+                    break;
+                }
+                case CERTIFICATE_VOTE_DELEGATION: {
+                    cert_policy = policyForSignTxCertificateVoteDelegation(
+                        G_context.tx_info.transaction.txSigningMode,
+                        &certificate_item->certificate_data.stakeCredential,
+                        &certificate_item->certificate_data.drep
+                    );
+                    switch (cert_policy) {
+                        case POLICY_DENY:
+                            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        case POLICY_SHOW:
+                            plan->pair_count += 3;  // cert# + type + stake credential (DRep not shown)
+                            break;
+                        case POLICY_HIDE:
+                            break;
+                    }
+                    break;
+                }
+                case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT: {
+                    cert_policy = policyForSignTxCertificateCommitteeAuth(
+                        G_context.tx_info.transaction.txSigningMode,
+                        &certificate_item->certificate_data.coldCredential,
+                        &certificate_item->certificate_data.hotCredential
+                    );
+                    switch (cert_policy) {
+                        case POLICY_DENY:
+                            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        case POLICY_SHOW:
+                            plan->pair_count += 2;  // cert# + type only
+                            break;
+                        case POLICY_HIDE:
+                            break;
+                    }
+                    break;
+                }
+                case CERTIFICATE_RESIGN_COMMITTEE_COLD: {
+                    cert_policy = policyForSignTxCertificateCommitteeResign(
+                        G_context.tx_info.transaction.txSigningMode,
+                        &certificate_item->certificate_data.coldCredential
+                    );
+                    switch (cert_policy) {
+                        case POLICY_DENY:
+                            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        case POLICY_SHOW:
+                            plan->pair_count += 2;  // cert# + type only
+                            break;
+                        case POLICY_HIDE:
+                            break;
+                    }
+                    break;
+                }
+                case CERTIFICATE_DREP_REGISTRATION:
+                case CERTIFICATE_DREP_DEREGISTRATION:
+                case CERTIFICATE_DREP_UPDATE: {
+                    cert_policy = policyForSignTxCertificateDRep(
+                        G_context.tx_info.transaction.txSigningMode,
+                        &certificate_item->certificate_data.dRepCredential
+                    );
+                    switch (cert_policy) {
+                        case POLICY_DENY:
+                            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        case POLICY_SHOW:
+                            plan->pair_count += 2;  // cert# + type only
+                            break;
+                        case POLICY_HIDE:
+                            break;
+                    }
+                    break;
+                }
+                case CERTIFICATE_STAKE_POOL_RETIREMENT: {
+                    cert_policy = policyForSignTxCertificateStakePoolRetirement(
+                        G_context.tx_info.transaction.txSigningMode,
+                        &certificate_item->certificate_data.poolCredential,
+                        certificate_item->certificate_data.retirementEpoch
+                    );
+                    switch (cert_policy) {
+                        case POLICY_DENY:
+                            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        case POLICY_SHOW:
+                            plan->pair_count += 3;  // cert# + type + retirement epoch
+                            break;
+                        case POLICY_HIDE:
+                            break;
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+
+            switch (certificate_item->certificate_data.type) {
+                case CERTIFICATE_STAKE_REGISTRATION:
+                case CERTIFICATE_STAKE_DEREGISTRATION: {
+                    ext_credential_t stakeCred = _credentialForTxHash(&certificate_item->certificate_data.stakeCredential);
+                    txHashBuilder_addCertificate_stakingOld(
+                        &txHashBuilder,
+                        certificate_item->certificate_data.type,
+                        &stakeCred
+                    );
+                    break;
+                }
+                case CERTIFICATE_STAKE_DELEGATION: {
+                    ext_credential_t stakeCred = _credentialForTxHash(&certificate_item->certificate_data.stakeCredential);
+                    txHashBuilder_addCertificate_stakeDelegation(
+                        &txHashBuilder,
+                        &stakeCred,
+                        certificate_item->certificate_data.poolKeyHash,
+                        POOL_KEY_HASH_LENGTH
+                    );
+                    break;
+                }
+                case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
+                case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY: {
+                    ext_credential_t stakeCred = _credentialForTxHash(&certificate_item->certificate_data.stakeCredential);
+                    txHashBuilder_addCertificate_staking(
+                        &txHashBuilder,
+                        certificate_item->certificate_data.type,
+                        &stakeCred,
+                        certificate_item->certificate_data.deposit
+                    );
+                    break;
+                }
+                case CERTIFICATE_STAKE_POOL_RETIREMENT: {
+                    const ext_credential_t* poolCred = &certificate_item->certificate_data.poolCredential;
+                    uint8_t poolKeyHash[POOL_KEY_HASH_LENGTH];
+                    TRACE("Pool retirement credential type = %d", poolCred->type);
+                    switch (poolCred->type) {
+                        case EXT_CREDENTIAL_KEY_PATH:
+                            TRACE("Pool retirement key path length = %u", poolCred->keyPath.length);
+                            bip44_pathToKeyHash(&poolCred->keyPath, poolKeyHash, sizeof(poolKeyHash));
+                            break;
+                        case EXT_CREDENTIAL_KEY_HASH: {
+                            TRACE("Pool retirement credential key hash first byte = %02x", poolCred->keyHash[0]);
+                            STATIC_ASSERT(ADDRESS_KEY_HASH_LENGTH == POOL_KEY_HASH_LENGTH,
+                                          "pool credential hash size mismatch");
+                            memcpy(poolKeyHash, poolCred->keyHash, POOL_KEY_HASH_LENGTH);
+                            break;
+                        }
+                        default:
+                            LEDGER_ASSERT(false, "Unsupported pool credential type for retirement");
+                    }
+                    TRACE("Derived pool key hash first byte = %02x", poolKeyHash[0]);
+                    txHashBuilder_addCertificate_poolRetirement(
+                        &txHashBuilder,
+                        poolKeyHash,
+                        POOL_KEY_HASH_LENGTH,
+                        certificate_item->certificate_data.retirementEpoch
+                    );
+                    break;
+                }
+                case CERTIFICATE_VOTE_DELEGATION: {
+                    ext_credential_t stakeCred = _credentialForTxHash(&certificate_item->certificate_data.stakeCredential);
+                    ext_drep_t drep = _drepForTxHash(&certificate_item->certificate_data.drep);
+                    txHashBuilder_addCertificate_voteDelegation(
+                        &txHashBuilder,
+                        &stakeCred,
+                        &drep
+                    );
+                    break;
+                }
+                case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT: {
+                    ext_credential_t coldCred = _credentialForTxHash(&certificate_item->certificate_data.coldCredential);
+                    ext_credential_t hotCred = _credentialForTxHash(&certificate_item->certificate_data.hotCredential);
+                    txHashBuilder_addCertificate_committeeAuthHot(
+                        &txHashBuilder,
+                        &coldCred,
+                        &hotCred
+                    );
+                    break;
+                }
+                case CERTIFICATE_RESIGN_COMMITTEE_COLD: {
+                    ext_credential_t coldCred = _credentialForTxHash(&certificate_item->certificate_data.coldCredential);
+                    txHashBuilder_addCertificate_committeeResign(
+                        &txHashBuilder,
+                        &coldCred,
+                        &certificate_item->certificate_data.anchor
+                    );
+                    break;
+                }
+                case CERTIFICATE_DREP_REGISTRATION: {
+                    ext_credential_t drepCred = _credentialForTxHash(&certificate_item->certificate_data.dRepCredential);
+                    txHashBuilder_addCertificate_dRepRegistration(
+                        &txHashBuilder,
+                        &drepCred,
+                        certificate_item->certificate_data.deposit,
+                        &certificate_item->certificate_data.anchor
+                    );
+                    break;
+                }
+                case CERTIFICATE_DREP_DEREGISTRATION: {
+                    ext_credential_t drepCred = _credentialForTxHash(&certificate_item->certificate_data.dRepCredential);
+                    txHashBuilder_addCertificate_dRepDeregistration(
+                        &txHashBuilder,
+                        &drepCred,
+                        certificate_item->certificate_data.deposit
+                    );
+                    break;
+                }
+                case CERTIFICATE_DREP_UPDATE: {
+                    ext_credential_t drepCred = _credentialForTxHash(&certificate_item->certificate_data.dRepCredential);
+                    txHashBuilder_addCertificate_dRepUpdate(
+                        &txHashBuilder,
+                        &drepCred,
+                        &certificate_item->certificate_data.anchor
+                    );
+                    break;
+                }
+                default:
+                    // Pool registration not in scope
+                    return send_error_and_reset(SWO_TX_PARSING_FAIL);
+            }
+
+            certificate_node = certificate_node->next;
+        }
     }
 
     if (G_context.tx_info.transaction.num_withdrawals > 0) {

@@ -21,6 +21,7 @@
 #include "utils/cardano_os_utils.h"
 #include "utils/buffer_utils.h"
 #include "tx_parse.h"
+#include "tx_parse_certificates.h"
 #include "transaction/tx.h"
 #include "utils.h"
 #include "utils/assert.h"
@@ -33,7 +34,9 @@ static uint16_t _map_parser_status_to_swo(parser_status_e status);
 static parser_status_e parse_tx_inputs(buffer_t *buf, transaction_t *tx);
 static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx);
 static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx);
+static parser_status_e parse_tx_certificates(buffer_t *buf, transaction_t *tx);
 static parser_status_e parse_tx_withdrawals(buffer_t *buf, transaction_t *tx);
+
 parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
     LEDGER_ASSERT(buf != NULL, "NULL buf");
     LEDGER_ASSERT(buf->ptr != NULL, "NULL buffer ptr");
@@ -47,6 +50,7 @@ parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
     tx->inputs = NULL;
     tx->outputs = NULL;
     tx->withdrawals = NULL;
+    tx->certificates = NULL;
     tx->mint_asset_groups = NULL;
 
     parser_status_e status;
@@ -69,6 +73,11 @@ parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
         if (!buffer_read_u64(buf, &tx->ttl, BE)) {
             return TTL_PARSING_ERROR;
         }
+    }
+
+    status = parse_tx_certificates(buf, tx);
+    if (status != PARSING_OK) {
+        return status;
     }
 
     if (tx->includeValidityIntervalStart) {
@@ -105,6 +114,8 @@ static uint16_t _map_parser_status_to_swo(parser_status_e status) {
         case OUTPUT_ADDRESS_SIZE_ERROR:
         case WITHDRAWALS_PARSING_ERROR:
             return SWO_TX_PARSING_FAIL_OUTPUTS;
+        case CERTIFICATES_PARSING_ERROR:
+            return SWO_TX_PARSING_FAIL_CERTIFICATES;
         case FEE_PARSING_ERROR:
             return SWO_TX_PARSING_FAIL_FEE;
         case TTL_PARSING_ERROR:
@@ -123,7 +134,9 @@ static uint16_t _map_parser_status_to_swo(parser_status_e status) {
 int tx_handle_parse_error(parser_status_e status) {
     LEDGER_ASSERT(status != PARSING_OK, "tx_parse received PARSING_OK");
     tx_context_cleanup();
-    return send_error_and_reset(_map_parser_status_to_swo(status));
+    uint16_t swo = _map_parser_status_to_swo(status);
+    TRACE("tx_handle_parse_error status=%d swo=0x%04x", status, swo);
+    return send_error_and_reset(swo);
 }
 
 static parser_status_e parse_tx_inputs(buffer_t *buf, transaction_t *tx) {
@@ -515,6 +528,84 @@ static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
     return PARSING_OK;
 }
 
+/// Parse certificate data structure supporting multiple certificate types
+static parser_status_e parse_tx_certificates(buffer_t *buf, transaction_t *tx) {
+    for (uint16_t i = 0; i < tx->num_certificates; i++) {
+        tx_certificate_list_item_t *item = (tx_certificate_list_item_t *) app_mem_alloc(sizeof(tx_certificate_list_item_t));
+        if (item == NULL) {
+            return CERTIFICATES_PARSING_ERROR;
+        }
+
+        // Read certificate type
+        uint8_t cert_type_wire;
+        if (!buffer_read_u8(buf, &cert_type_wire)) {
+            return CERTIFICATES_PARSING_ERROR;
+        }
+        certificate_type_t cert_type = (certificate_type_t) cert_type_wire;
+        TRACE("Deserialize: Certificate %u type=%u", i, cert_type_wire);
+
+        // Parse certificate data based on type
+        parser_status_e status = PARSING_OK;
+        switch (cert_type) {
+            case CERTIFICATE_STAKE_REGISTRATION:
+            case CERTIFICATE_STAKE_DEREGISTRATION:
+                status = parse_certificate_stake_registration_deregistration(buf, cert_type, &item->certificate_data);
+                break;
+
+            case CERTIFICATE_STAKE_DELEGATION:
+                status = parse_certificate_stake_delegation(buf, &item->certificate_data);
+                break;
+
+            case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
+            case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY:
+                status = parse_certificate_stake_registration_deregistration_conway(buf, cert_type, &item->certificate_data);
+                break;
+
+            case CERTIFICATE_STAKE_POOL_RETIREMENT:
+                status = parse_certificate_stake_pool_retirement(buf, &item->certificate_data);
+                break;
+
+            case CERTIFICATE_VOTE_DELEGATION:
+                status = parse_certificate_vote_delegation(buf, &item->certificate_data);
+                break;
+
+            case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT:
+                status = parse_certificate_authorize_committee_hot(buf, &item->certificate_data);
+                break;
+
+            case CERTIFICATE_RESIGN_COMMITTEE_COLD:
+                status = parse_certificate_resign_committee_cold(buf, &item->certificate_data);
+                break;
+
+            case CERTIFICATE_DREP_REGISTRATION:
+                status = parse_certificate_drep_registration(buf, &item->certificate_data);
+                break;
+
+            case CERTIFICATE_DREP_DEREGISTRATION:
+                status = parse_certificate_drep_deregistration(buf, &item->certificate_data);
+                break;
+
+            case CERTIFICATE_DREP_UPDATE:
+                status = parse_certificate_drep_update(buf, &item->certificate_data);
+                break;
+
+        default:
+            // Pool registration not in scope for this implementation
+            status = CERTIFICATES_PARSING_ERROR;
+            break;
+        }
+
+        if (status != PARSING_OK) {
+            TRACE("Certificate parse failure: type=%u status=%d", cert_type_wire, status);
+            return status;
+        }
+
+        item->node.next = NULL;
+        flist_push_back(&tx->certificates, (s_flist_node *) item);
+    }
+    return PARSING_OK;
+}
+
 static parser_status_e parse_tx_withdrawals(buffer_t *buf, transaction_t *tx) {
     for (uint16_t i = 0; i < tx->num_withdrawals; i++) {
         tx_withdrawal_list_item_t *item = (tx_withdrawal_list_item_t *) app_mem_alloc(sizeof(tx_withdrawal_list_item_t));
@@ -624,7 +715,21 @@ void transaction_free_outputs(transaction_t *tx) {
     tx->outputs = NULL;
 }
 
-/// Clean up dynamically allocated memory in transaction withdrawals (including list items)
+/// Clean up dynamically allocated memory in transaction certificates (including list items)
+void transaction_free_certificates(transaction_t *tx) {
+    LEDGER_ASSERT(tx != NULL, "NULL tx");
+
+    s_flist_node *certificate_node = tx->certificates;
+    while (certificate_node != NULL) {
+        // Certificate items don't have additional allocated memory
+        // (credential data is stored inline in the union)
+        s_flist_node *next = certificate_node->next;
+        app_mem_free(certificate_node);
+        certificate_node = next;
+    }
+    tx->certificates = NULL;
+}
+
 void transaction_free_withdrawals(transaction_t *tx) {
     LEDGER_ASSERT(tx != NULL, "NULL tx");
 
@@ -677,6 +782,9 @@ void tx_context_cleanup(void) {
 
     // Free all output items with their associated data (asset groups, datums, ref scripts)
     transaction_free_outputs(tx);
+
+    // Free all certificate items
+    transaction_free_certificates(tx);
 
     // Free all mint asset groups with their tokens
     transaction_free_mint(tx);

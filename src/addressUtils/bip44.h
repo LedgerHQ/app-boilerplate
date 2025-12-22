@@ -143,9 +143,9 @@ void bip44_pathToKeyHash(const bip44_path_t* pathSpec,
 
 bool bip44_pathsEqual(const bip44_path_t* lhs, const bip44_path_t* rhs);
 
-#ifdef DEVEL
+#ifdef HAVE_PRINTF
 void bip44_PRINTF(const bip44_path_t* pathSpec);
 #define BIP44_PRINTF(PATH) bip44_PRINTF(PATH)
 #else
 #define BIP44_PRINTF(PATH)
-#endif  // DEVEL
+#endif  // HAVE_PRINTF

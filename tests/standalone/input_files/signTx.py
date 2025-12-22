@@ -292,7 +292,7 @@ class DRepUpdateParams:
 
 @dataclass
 class PoolRetirementParams:
-    poolKeyPath: str
+    poolCredential: CredentialParams
     retirementEpoch: int
 
 @dataclass
@@ -922,7 +922,9 @@ certificates: dict[str, Certificate] = {
                                                                                [poolKeys["stakingPathOwner0"]],
                                                                                [])),
     "poolRetirementParam": Certificate(CertificateType.STAKE_POOL_RETIREMENT,
-                                                        PoolRetirementParams("m/1853'/1815'/0'/1'", 42)),
+                                                        PoolRetirementParams(CredentialParams(CredentialParamsType.KEY_PATH,
+                                                                                              "m/1853'/1815'/0'/1'"),
+                                                                              42)),
     "stakeRegistrationPathParam": Certificate(CertificateType.STAKE_REGISTRATION,
                                                         StakeRegistrationParams(CredentialParams(CredentialParamsType.KEY_PATH,
                                                                                                  "m/1852'/1815'/0'/2/0"))),
@@ -1220,7 +1222,7 @@ testsShelleyNoCertificates: List[SignTxTestCase] = [
 ]
 
 testsShelleyWithCertificates: List[SignTxTestCase] = [
-    SignTxTestCase("Sign_tx_with_a_stake_registration_path_certificate_---_pre-Conway",
+    SignTxTestCase("Sign_tx_with_a_stake_registration_path_certificate_pre-Conway",
                    Transaction(Mainnet,
                                [inputs["utxoShelley"]],
                                [outputs["externalByronMainnet"]],
@@ -1231,7 +1233,7 @@ testsShelleyWithCertificates: List[SignTxTestCase] = [
                                                                                                   "m/1852'/1815'/0'/2/0")))]),
                    TransactionSigningMode.ORDINARY_TRANSACTION,
                    "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018182582b82d818582183581c9e1c71de652ec8b85fec296f0685ca3988781c94a2e1a5d89d92f45fa0001a0d0c25611a002dd2e802182a030a048182008200581c1d227aefa4b773149170885aadba30aab3127cc611ddbc4999def61c"),
-    SignTxTestCase("Sign_tx_with_a_stake_deregistration_path_certificate_---_pre-Conway",
+    SignTxTestCase("Sign_tx_with_a_stake_deregistration_path_certificate_pre-Conway",
                    Transaction(Mainnet,
                                [inputs["utxoShelley"]],
                                [outputs["externalByronMainnet"]],
@@ -1275,7 +1277,9 @@ testsShelleyWithCertificates: List[SignTxTestCase] = [
                                42,
                                10,
                                certificates=[Certificate(CertificateType.STAKE_POOL_RETIREMENT,
-                                                         PoolRetirementParams("m/1853'/1815'/0'/0'", 10)),
+                                                         PoolRetirementParams(CredentialParams(CredentialParamsType.KEY_PATH,
+                                                                                               "m/1853'/1815'/0'/0'"),
+                                                                              10)),
                                              Certificate(CertificateType.STAKE_REGISTRATION,
                                                          StakeRegistrationParams(CredentialParams(CredentialParamsType.KEY_PATH,
                                                                                                   "m/1852'/1815'/0'/2/0")))]),
@@ -1288,7 +1292,9 @@ testsShelleyWithCertificates: List[SignTxTestCase] = [
                                42,
                                10,
                                certificates=[Certificate(CertificateType.STAKE_POOL_RETIREMENT,
-                                                         PoolRetirementParams("m/1853'/1815'/0'/0'", 10)),
+                                                         PoolRetirementParams(CredentialParams(CredentialParamsType.KEY_PATH,
+                                                                                               "m/1853'/1815'/0'/0'"),
+                                                                              10)),
                                              Certificate(CertificateType.STAKE_DEREGISTRATION,
                                                          StakeRegistrationParams(CredentialParams(CredentialParamsType.KEY_PATH,
                                                                           "m/1852'/1815'/0'/2/0")))]),
@@ -1297,7 +1303,7 @@ testsShelleyWithCertificates: List[SignTxTestCase] = [
 ]
 
 testsConwayWithCertificates: List[SignTxTestCase] = [
-    SignTxTestCase("Sign_tx_with_a_stake_registration_path_certificate_---_Conway",
+    SignTxTestCase("Sign_tx_with_a_stake_registration_path_certificate_Conway",
                    Transaction(Mainnet,
                                [inputs["utxoShelley"]],
                                [outputs["externalByronMainnet"]],
@@ -1309,7 +1315,7 @@ testsConwayWithCertificates: List[SignTxTestCase] = [
                                                                                        17))]),
                    TransactionSigningMode.ORDINARY_TRANSACTION,
                    "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018182582b82d818582183581c9e1c71de652ec8b85fec296f0685ca3988781c94a2e1a5d89d92f45fa0001a0d0c25611a002dd2e802182a030a048183078200581c1d227aefa4b773149170885aadba30aab3127cc611ddbc4999def61c11"),
-    SignTxTestCase("Sign_tx_with_a_stake_deregistration_path_certificate_---_Conway",
+    SignTxTestCase("Sign_tx_with_a_stake_deregistration_path_certificate_Conway",
                    Transaction(Mainnet,
                                [inputs["utxoShelley"]],
                                [outputs["externalByronMainnet"]],

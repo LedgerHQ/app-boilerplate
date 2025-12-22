@@ -93,7 +93,7 @@ class CommandSender:
 
     def sign_tx_init_simple(self, options: int, tx_signing_mode: int, network_id: int,
                            protocol_magic: int, num_inputs: int, num_outputs: int, include_ttl: bool,
-                           num_withdrawals: int = 0, include_validity_interval_start: bool = False,
+                           num_certificates: int = 0, num_withdrawals: int = 0, include_validity_interval_start: bool = False,
                            num_mint_asset_groups: int = 0, num_witnesses: int = 0) -> RAPDU:
         """APDU Sign TX Init (simple chunked mode)
 
@@ -105,6 +105,7 @@ class CommandSender:
             num_inputs (int): Number of inputs
             num_outputs (int): Number of outputs
             include_ttl (bool): Whether TTL is included
+            num_certificates (int): Number of certificates (default 0)
             num_withdrawals (int): Number of withdrawals (default 0)
             include_validity_interval_start (bool): Whether validity interval start is included (default False)
             num_mint_asset_groups (int): Number of mint asset groups (default 0)
@@ -127,8 +128,8 @@ class CommandSender:
 
         # Field 3 (TTL) - optional
         data.append(0x02 if include_ttl else 0x01)
-        # Field 4 (certificates) - placeholder, always 0 for now
-        data.extend((0).to_bytes(2, 'big'))
+        # Field 4 (certificates) - optional
+        data.extend(num_certificates.to_bytes(2, 'big'))
         # Field 5 (withdrawals) - optional
         data.extend(num_withdrawals.to_bytes(2, 'big'))
 

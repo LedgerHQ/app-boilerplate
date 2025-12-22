@@ -53,6 +53,7 @@ set(CARDANO_SOURCE
     ${CARDANO_PATH}/src/securityPolicy/securityPolicy.c
     ${CARDANO_PATH}/src/securityPolicy/securityPolicy_privkey.c
     ${CARDANO_PATH}/src/transaction/tx_parse.c
+    ${CARDANO_PATH}/src/transaction/tx_parse_certificates.c
     ${CARDANO_PATH}/src/transaction/tx_prepare.c
     ${CARDANO_PATH}/src/transaction/tx_utils.c
     ${CARDANO_PATH}/src/transaction/tx_hash_builder.c

@@ -1,7 +1,8 @@
 #include <stdint.h>
+#include <stdio.h>
 
 int io_send_sw(uint16_t sw) {
-    (void) sw;
+    fprintf(stderr, "[mock io_send_sw] sw=0x%04x\n", sw);
     return 0;
 }
 

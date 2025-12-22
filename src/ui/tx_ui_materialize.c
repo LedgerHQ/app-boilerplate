@@ -252,6 +252,377 @@ static int ui_materialize_strings(void) {
         }
     }
 
+    // Display certificates
+    uint16_t certificate_num = 1;
+    s_flist_node *certificate_node = tx->certificates;
+    while (certificate_node != NULL) {
+        tx_certificate_list_item_t *certificate_item =
+            (tx_certificate_list_item_t *) certificate_node;
+        s_flist_node *next = certificate_node->next;
+
+        security_policy_t policy = policyForSignTxCertificateStaking(
+            tx->txSigningMode,
+            certificate_item->certificate_data.type,
+            &certificate_item->certificate_data.stakeCredential
+        );
+
+        switch (policy) {
+            case POLICY_DENY:
+                LEDGER_ASSERT(false, "Certificate denied during UI");
+                break;
+            case POLICY_SHOW: {
+                char *cert_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH);
+                if (cert_num_tmp == NULL) {
+                    return SWO_INSUFFICIENT_MEMORY;
+                }
+                snprintf(cert_num_tmp, MAX_UINT64_STRING_LENGTH, "#%d", certificate_num);
+                status = ui_add_pair_or_fail("Certificate", cert_num_tmp);
+                if (status != SWO_SUCCESS) {
+                    return status;
+                }
+
+                // Certificate type
+                const char *cert_type_name = NULL;
+                switch (certificate_item->certificate_data.type) {
+                    case CERTIFICATE_STAKE_REGISTRATION:
+                        cert_type_name = "Stake Registration";
+                        break;
+                    case CERTIFICATE_STAKE_DEREGISTRATION:
+                        cert_type_name = "Stake Deregistration";
+                        break;
+                    case CERTIFICATE_STAKE_DELEGATION:
+                        cert_type_name = "Stake Delegation";
+                        break;
+                    case CERTIFICATE_STAKE_POOL_RETIREMENT:
+                        cert_type_name = "Pool Retirement";
+                        break;
+                    case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
+                        cert_type_name = "Stake Registration (Conway)";
+                        break;
+                    case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY:
+                        cert_type_name = "Stake Deregistration (Conway)";
+                        break;
+                    case CERTIFICATE_VOTE_DELEGATION:
+                        cert_type_name = "Vote Delegation";
+                        break;
+                    case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT:
+                        cert_type_name = "Committee Authorization";
+                        break;
+                    case CERTIFICATE_RESIGN_COMMITTEE_COLD:
+                        cert_type_name = "Committee Resignation";
+                        break;
+                    case CERTIFICATE_DREP_REGISTRATION:
+                        cert_type_name = "DRep Registration";
+                        break;
+                    case CERTIFICATE_DREP_DEREGISTRATION:
+                        cert_type_name = "DRep Deregistration";
+                        break;
+                    case CERTIFICATE_DREP_UPDATE:
+                        cert_type_name = "DRep Update";
+                        break;
+                    default:
+                        cert_type_name = "Unknown";
+                        break;
+                }
+                status = ui_add_pair_or_fail("Type", (char *) cert_type_name);
+                if (status != SWO_SUCCESS) {
+                    return status;
+                }
+
+                // Certificate-specific fields
+                char *addr_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
+                if (addr_tmp == NULL) {
+                    return SWO_INSUFFICIENT_MEMORY;
+                }
+
+                switch (certificate_item->certificate_data.type) {
+                    case CERTIFICATE_STAKE_REGISTRATION:
+                    case CERTIFICATE_STAKE_DEREGISTRATION: {
+                        // Display stake credential
+                        uint8_t reward_addr_bytes[REWARD_ACCOUNT_LENGTH];
+                        size_t reward_addr_len = 0;
+
+                        switch (certificate_item->certificate_data.stakeCredential.type) {
+                            case EXT_CREDENTIAL_KEY_PATH:
+                                reward_addr_len = constructRewardAddressFromKeyPath(
+                                    &certificate_item->certificate_data.stakeCredential.keyPath,
+                                    tx->networkId,
+                                    reward_addr_bytes,
+                                    sizeof(reward_addr_bytes)
+                                );
+                                break;
+                            case EXT_CREDENTIAL_KEY_HASH:
+                                reward_addr_len = constructRewardAddressFromHash(
+                                    tx->networkId,
+                                    REWARD_HASH_SOURCE_KEY,
+                                    certificate_item->certificate_data.stakeCredential.keyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    reward_addr_bytes,
+                                    sizeof(reward_addr_bytes)
+                                );
+                                break;
+                            case EXT_CREDENTIAL_SCRIPT_HASH:
+                                reward_addr_len = constructRewardAddressFromHash(
+                                    tx->networkId,
+                                    REWARD_HASH_SOURCE_SCRIPT,
+                                    certificate_item->certificate_data.stakeCredential.scriptHash,
+                                    SCRIPT_HASH_LENGTH,
+                                    reward_addr_bytes,
+                                    sizeof(reward_addr_bytes)
+                                );
+                                break;
+                            default:
+                                return SWO_TX_PARSING_FAIL;
+                        }
+
+                        LEDGER_ASSERT(reward_addr_len > 0, "Reward addr derivation failed");
+                        bool reward_formatted = format_address_human_readable(
+                            reward_addr_bytes,
+                            reward_addr_len,
+                            addr_tmp,
+                            MAX_HUMAN_ADDRESS_LENGTH
+                        );
+                        ASSERT(reward_formatted);
+                        status = ui_add_pair_or_fail("Stake credential", addr_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+                        break;
+                    }
+
+                    case CERTIFICATE_STAKE_DELEGATION: {
+                        // Display stake credential
+                        uint8_t reward_addr_bytes[REWARD_ACCOUNT_LENGTH];
+                        size_t reward_addr_len = 0;
+
+                        switch (certificate_item->certificate_data.stakeCredential.type) {
+                            case EXT_CREDENTIAL_KEY_PATH:
+                                reward_addr_len = constructRewardAddressFromKeyPath(
+                                    &certificate_item->certificate_data.stakeCredential.keyPath,
+                                    tx->networkId,
+                                    reward_addr_bytes,
+                                    sizeof(reward_addr_bytes)
+                                );
+                                break;
+                            case EXT_CREDENTIAL_KEY_HASH:
+                                reward_addr_len = constructRewardAddressFromHash(
+                                    tx->networkId,
+                                    REWARD_HASH_SOURCE_KEY,
+                                    certificate_item->certificate_data.stakeCredential.keyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    reward_addr_bytes,
+                                    sizeof(reward_addr_bytes)
+                                );
+                                break;
+                            case EXT_CREDENTIAL_SCRIPT_HASH:
+                                reward_addr_len = constructRewardAddressFromHash(
+                                    tx->networkId,
+                                    REWARD_HASH_SOURCE_SCRIPT,
+                                    certificate_item->certificate_data.stakeCredential.scriptHash,
+                                    SCRIPT_HASH_LENGTH,
+                                    reward_addr_bytes,
+                                    sizeof(reward_addr_bytes)
+                                );
+                                break;
+                            default:
+                                return SWO_TX_PARSING_FAIL;
+                        }
+
+                        LEDGER_ASSERT(reward_addr_len > 0, "Reward addr derivation failed");
+                        bool reward_formatted = format_address_human_readable(
+                            reward_addr_bytes,
+                            reward_addr_len,
+                            addr_tmp,
+                            MAX_HUMAN_ADDRESS_LENGTH
+                        );
+                        ASSERT(reward_formatted);
+                        status = ui_add_pair_or_fail("Stake credential", addr_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+
+                        // Display pool key hash
+                        char *pool_hash_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
+                        if (pool_hash_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
+                        bool pool_formatted = format_address_human_readable(
+                            certificate_item->certificate_data.poolKeyHash,
+                            POOL_KEY_HASH_LENGTH,
+                            pool_hash_tmp,
+                            MAX_HUMAN_ADDRESS_LENGTH
+                        );
+                        ASSERT(pool_formatted);
+                        status = ui_add_pair_or_fail("Pool keyhash", pool_hash_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+                        break;
+                    }
+
+                    case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
+                    case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY: {
+                        // Display stake credential
+                        uint8_t reward_addr_bytes[REWARD_ACCOUNT_LENGTH];
+                        size_t reward_addr_len = 0;
+
+                        switch (certificate_item->certificate_data.stakeCredential.type) {
+                            case EXT_CREDENTIAL_KEY_PATH:
+                                reward_addr_len = constructRewardAddressFromKeyPath(
+                                    &certificate_item->certificate_data.stakeCredential.keyPath,
+                                    tx->networkId,
+                                    reward_addr_bytes,
+                                    sizeof(reward_addr_bytes)
+                                );
+                                break;
+                            case EXT_CREDENTIAL_KEY_HASH:
+                                reward_addr_len = constructRewardAddressFromHash(
+                                    tx->networkId,
+                                    REWARD_HASH_SOURCE_KEY,
+                                    certificate_item->certificate_data.stakeCredential.keyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    reward_addr_bytes,
+                                    sizeof(reward_addr_bytes)
+                                );
+                                break;
+                            case EXT_CREDENTIAL_SCRIPT_HASH:
+                                reward_addr_len = constructRewardAddressFromHash(
+                                    tx->networkId,
+                                    REWARD_HASH_SOURCE_SCRIPT,
+                                    certificate_item->certificate_data.stakeCredential.scriptHash,
+                                    SCRIPT_HASH_LENGTH,
+                                    reward_addr_bytes,
+                                    sizeof(reward_addr_bytes)
+                                );
+                                break;
+                            default:
+                                return SWO_TX_PARSING_FAIL;
+                        }
+
+                        LEDGER_ASSERT(reward_addr_len > 0, "Reward addr derivation failed");
+                        bool reward_formatted = format_address_human_readable(
+                            reward_addr_bytes,
+                            reward_addr_len,
+                            addr_tmp,
+                            MAX_HUMAN_ADDRESS_LENGTH
+                        );
+                        ASSERT(reward_formatted);
+                        status = ui_add_pair_or_fail("Stake credential", addr_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+
+                        // Display deposit
+                        char *deposit_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH);
+                        if (deposit_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
+                        bool deposit_formatted = str_formatAdaAmount(
+                            certificate_item->certificate_data.deposit,
+                            deposit_tmp,
+                            MAX_ADA_AMOUNT_STRING_LENGTH
+                        );
+                        ASSERT(deposit_formatted);
+                        status = ui_add_pair_or_fail("Deposit", deposit_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+                        break;
+                    }
+
+                    case CERTIFICATE_STAKE_POOL_RETIREMENT: {
+                        // Display retirement epoch
+                        char *epoch_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH);
+                        if (epoch_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
+                        snprintf(epoch_tmp, MAX_UINT64_STRING_LENGTH, "%llu",
+                                (unsigned long long) certificate_item->certificate_data.retirementEpoch);
+                        status = ui_add_pair_or_fail("Retirement epoch", epoch_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+                        break;
+                    }
+
+                    case CERTIFICATE_VOTE_DELEGATION: {
+                        // Display stake credential
+                        uint8_t reward_addr_bytes[REWARD_ACCOUNT_LENGTH];
+                        size_t reward_addr_len = 0;
+
+                        switch (certificate_item->certificate_data.stakeCredential.type) {
+                            case EXT_CREDENTIAL_KEY_PATH:
+                                reward_addr_len = constructRewardAddressFromKeyPath(
+                                    &certificate_item->certificate_data.stakeCredential.keyPath,
+                                    tx->networkId,
+                                    reward_addr_bytes,
+                                    sizeof(reward_addr_bytes)
+                                );
+                                break;
+                            case EXT_CREDENTIAL_KEY_HASH:
+                                reward_addr_len = constructRewardAddressFromHash(
+                                    tx->networkId,
+                                    REWARD_HASH_SOURCE_KEY,
+                                    certificate_item->certificate_data.stakeCredential.keyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    reward_addr_bytes,
+                                    sizeof(reward_addr_bytes)
+                                );
+                                break;
+                            case EXT_CREDENTIAL_SCRIPT_HASH:
+                                reward_addr_len = constructRewardAddressFromHash(
+                                    tx->networkId,
+                                    REWARD_HASH_SOURCE_SCRIPT,
+                                    certificate_item->certificate_data.stakeCredential.scriptHash,
+                                    SCRIPT_HASH_LENGTH,
+                                    reward_addr_bytes,
+                                    sizeof(reward_addr_bytes)
+                                );
+                                break;
+                            default:
+                                return SWO_TX_PARSING_FAIL;
+                        }
+
+                        LEDGER_ASSERT(reward_addr_len > 0, "Reward addr derivation failed");
+                        bool reward_formatted = format_address_human_readable(
+                            reward_addr_bytes,
+                            reward_addr_len,
+                            addr_tmp,
+                            MAX_HUMAN_ADDRESS_LENGTH
+                        );
+                        ASSERT(reward_formatted);
+                        status = ui_add_pair_or_fail("Stake credential", addr_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+                        // DRep display not implemented for simplicity
+                        break;
+                    }
+
+                    case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT:
+                    case CERTIFICATE_RESIGN_COMMITTEE_COLD:
+                    case CERTIFICATE_DREP_REGISTRATION:
+                    case CERTIFICATE_DREP_DEREGISTRATION:
+                    case CERTIFICATE_DREP_UPDATE:
+                        // These certificate types not fully displayed in basic view
+                        break;
+
+                    default:
+                        return SWO_TX_PARSING_FAIL;
+                }
+
+                certificate_num++;
+            }
+            break;
+            case POLICY_HIDE:
+                break;
+        }
+
+        app_mem_free(certificate_item);
+        certificate_node = next;
+    }
+    tx->certificates = NULL;
+
     uint16_t withdrawal_num = 1;
     s_flist_node *withdrawal_node = tx->withdrawals;
     while (withdrawal_node != NULL) {

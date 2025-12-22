@@ -627,11 +627,11 @@ bool bip44_pathsEqual(const bip44_path_t* lhs, const bip44_path_t* rhs) {
     return true;
 }
 
-#ifdef DEVEL
+#ifdef HAVE_PRINTF
 void bip44_PRINTF(const bip44_path_t* pathSpec) {
     char tmp[BIP44_PATH_STRING_SIZE_MAX + 1] = {0};
     bool success = format_bip44_path(pathSpec, tmp, SIZEOF(tmp));
     ASSERT(success);
     TRACE("%s", tmp);
 }
-#endif  // DEVEL
+#endif  // HAVE_PRINTF

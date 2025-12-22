@@ -22,6 +22,7 @@
 #include "utils/utils.h"
 
 bool violatesSingleAccountOrStoreIt(const bip44_path_t* path) {
+    LEDGER_ASSERT(path != NULL, "NULL path in single-account check");
     TRACE("Considering path");
     BIP44_PRINTF(path);
     TRACE("");

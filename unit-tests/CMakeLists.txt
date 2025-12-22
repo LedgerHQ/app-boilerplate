@@ -59,6 +59,7 @@ include_directories($ENV{BOLOS_SDK}/lib_cxng/include)
 include_directories($ENV{BOLOS_SDK}/lib_nbgl/include)
 
 add_compile_definitions(HAVE_CRC)
+add_compile_definitions(HAVE_PRINTF)
 add_compile_definitions(APPNAME=\"Cardano\")
 add_compile_definitions(APPVERSION=\"8.0.0\")
 add_compile_definitions(MAJOR_VERSION=8)
@@ -144,6 +145,7 @@ add_executable(test_sign_tx_handler
     ../src/memory/flist.c
     ../src/handler/sign_tx.c
     ../src/transaction/tx_parse.c
+    ../src/transaction/tx_parse_certificates.c
     ../src/transaction/tx_utils.c
     ../src/securityPolicy/securityPolicy.c
     ../src/securityPolicy/securityPolicy_privkey.c
@@ -163,6 +165,27 @@ add_executable(test_sign_tx_handler
     mock_sources/display_stub.c
     mock_sources/hex_stub.c
     mock_sources/io_stub.c
+)
+
+set(TEST_EXECUTABLES
+    test_hex_utils
+    test_base58
+    test_bech32
+    test_text_utils
+    test_bip44
+    test_cbor
+    test_buffer_utils
+    test_ip_utils
+    test_hash
+    test_apdu_info
+    test_address_utils_byron
+    test_address_utils_shelley
+    test_key_derivation
+    test_message_signing
+    test_aux_data_hash_builder
+    test_tx_hash_builder
+    test_tx_prepare
+    test_sign_tx_handler
 )
 # add_executable(test_tokens test_tokens.c)  # TODO: needs crypto mocks (keyDerivation.h, etc.)
 # add_executable(test_tx_parser test_tx_parser.c)  # TODO: create this file
@@ -200,6 +223,8 @@ add_library(crypto_mocks_lib SHARED
     mocks/crypto_mocks.c
 )
 target_link_libraries(crypto_mocks_lib PUBLIC c)
+add_library(mock_printf STATIC mock_sources/printf_stub.c)
+target_link_libraries(mock_printf PUBLIC c)
 add_library(cx_crc_support SHARED
     $ENV{BOLOS_SDK}/lib_cxng/src/cx_crc16.c
     $ENV{BOLOS_SDK}/lib_cxng/src/cx_crc32.c
@@ -349,12 +374,17 @@ target_link_libraries(test_sign_tx_handler
 )
 add_test(test_sign_tx_handler test_sign_tx_handler)
 
+foreach(target IN LISTS TEST_EXECUTABLES)
+    target_link_libraries(${target} PUBLIC mock_printf)
+endforeach()
+
 add_executable(test_sign_tx_rejects
     test_sign_tx_rejects.c
     mock_globals.c
     ../src/memory/flist.c
     ../src/handler/sign_tx.c
     ../src/transaction/tx_parse.c
+    ../src/transaction/tx_parse_certificates.c
     ../src/transaction/tx_utils.c
     ../src/securityPolicy/securityPolicy.c
     ../src/securityPolicy/securityPolicy_privkey.c
@@ -398,6 +428,7 @@ target_link_libraries(test_sign_tx_rejects
         bip32
         cx_crc_support
 )
+target_link_libraries(test_sign_tx_rejects PUBLIC mock_printf)
 add_test(test_sign_tx_rejects test_sign_tx_rejects)
 # target_link_libraries(test_tokens PUBLIC cmocka gcov tokens_lib bech32_lib hex_utils)  # TODO: when tokens_lib is ready
 

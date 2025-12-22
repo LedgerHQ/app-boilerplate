@@ -13,14 +13,15 @@ from application_client.status_words import StatusWord
 from application_client.command_sender import CommandSender
 from application_client.command_builder import gather_witness_paths
 from standalone.utils import verify_signature, idTestFunc
-from standalone.input_files.signTx import (testsByron, testsMary, testsShelleyNoCertificates, SignTxTestCase,
-                                            TxAuxiliaryDataType, ThirdPartyAddressParams,
-                                            TransactionSigningMode)
+from standalone.input_files.signTx import (testsByron, testsMary, testsShelleyNoCertificates, testsShelleyWithCertificates, testsConwayWithCertificates,
+                                           SignTxTestCase,
+                                           TxAuxiliaryDataType, ThirdPartyAddressParams,
+                                           TransactionSigningMode)
 
 
 @pytest.mark.parametrize(
     "testCase",
-    testsByron + testsMary + testsShelleyNoCertificates,
+    testsByron + testsMary + testsShelleyNoCertificates + testsShelleyWithCertificates + testsConwayWithCertificates,
     ids=idTestFunc
 )
 def test_sign_tx_simple(device: Device,
@@ -59,6 +60,7 @@ def test_sign_tx_simple(device: Device,
         num_inputs=len(tx.inputs),
         num_outputs=len(tx.outputs),
         include_ttl=tx.ttl is not None,
+        num_certificates=len(tx.certificates),
         num_withdrawals=len(tx.withdrawals),
         include_validity_interval_start=tx.validityIntervalStart is not None,
         num_mint_asset_groups=len(tx.mint),

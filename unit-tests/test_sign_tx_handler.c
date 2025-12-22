@@ -1030,8 +1030,6 @@ static const sign_tx_fixture_t SIGN_TX_FIXTURES[] = {
         "0A048182008201581C122A946B9AD3D2DDF029D3A828F0468AECE76895F15C9E"
         "FBD69B4277",
         .expected_num_witnesses = 2,
-        // TODO: implement certificate serialization for multisig flows
-        .skip_reason = "Certificate serialization not implemented",
     },
     {
         // Source: tests/standalone/input_files/signTx.py (testsMultisig[3])
@@ -1050,8 +1048,6 @@ static const sign_tx_fixture_t SIGN_TX_FIXTURES[] = {
         "FBD69B4277581CF61C42CBF7C8C53AF3F520508212AD3E72F674F957FE23FF0A"
         "CB4973",
         .expected_num_witnesses = 2,
-        // TODO: implement certificate serialization for multisig flows
-        .skip_reason = "Certificate serialization not implemented",
     },
     {
         // Source: tests/standalone/input_files/signTx.py (testsMultisig[4])
@@ -1069,9 +1065,8 @@ static const sign_tx_fixture_t SIGN_TX_FIXTURES[] = {
         "0A048182018201581C122A946B9AD3D2DDF029D3A828F0468AECE76895F15C9E"
         "FBD69B4277",
         .expected_num_witnesses = 2,
-        // TODO: implement certificate serialization for multisig flows
-        .skip_reason = "Certificate serialization not implemented",
     },
+    // Certificate serialization tests with fixed seed (from Ragger integration tests)
 };
 
 // ----------------------------------------------------------------------

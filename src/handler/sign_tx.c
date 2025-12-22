@@ -105,9 +105,8 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         return send_error_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
 
-    // Field 4 (certificates) - optional, not implemented yet
-    uint16_t num_certificates_dummy;
-    if (!buffer_read_u16(cdata, &num_certificates_dummy, BE)) {
+    // Field 4 (certificates) - optional
+    if (!buffer_read_u16(cdata, &G_context.tx_info.transaction.num_certificates, BE)) {
         return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
@@ -255,7 +254,7 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         G_context.tx_info.transaction.networkId,
         G_context.tx_info.transaction.protocolMagic,
         G_context.tx_info.transaction.num_outputs,
-        0,      // numCertificates - not implemented yet
+        G_context.tx_info.transaction.num_certificates,
         G_context.tx_info.transaction.num_withdrawals,
         false,  // includeMint - not implemented yet
         false,  // includeScriptDataHash - not implemented yet
@@ -292,6 +291,7 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
  * Returns SWO_SUCCESS if more chunks expected, or falls through to parse if final chunk
  */
 static int handle_tx_data_chunk(buffer_t *cdata, bool more) {
+    TRACE("SWO_SUCCESS constant = 0x%04x", SWO_SUCCESS);
     // Validate we're in the correct state for receiving chunks
     if (G_context.state.tx_state != TX_STATE_CHUNKS) {
         TRACE("Invalid state for chunk reception: expected TX_STATE_CHUNKS, got %d", G_context.state.tx_state);
@@ -350,6 +350,7 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
 
         // Handle chunk accumulation
         int result = handle_tx_data_chunk(cdata, more);
+        TRACE("chunk result=0x%04x, more=%d", result, more);
         if (more || result != SWO_SUCCESS) {
             return result;
         }
@@ -391,7 +392,9 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
         }
 
         G_context.state.tx_state = TX_STATE_UI_PREPARED;
-        return ui_display_transaction();
+        int ui_result = ui_display_transaction();
+        TRACE("ui_display_transaction result=0x%04x", ui_result);
+        return ui_result;
     }
 }
 

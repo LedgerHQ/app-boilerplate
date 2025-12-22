@@ -79,6 +79,40 @@ typedef struct {
     withdrawal_data_t withdrawal_data;
 } tx_withdrawal_list_item_t;
 
+// Certificate data structure supporting multiple certificate types
+// Fields are used selectively depending on certificate type:
+// - STAKE_REGISTRATION/DEREGISTRATION: stakeCredential
+// - STAKE_REGISTRATION_CONWAY/DEREGISTRATION_CONWAY: stakeCredential, deposit
+// - STAKE_DELEGATION: stakeCredential, poolKeyHash
+// - STAKE_POOL_RETIREMENT: poolCredential, retirementEpoch
+// - VOTE_DELEGATION: stakeCredential, drep
+// - AUTHORIZE_COMMITTEE_HOT: coldCredential, hotCredential
+// - RESIGN_COMMITTEE_COLD: coldCredential, anchor
+// - DREP_REGISTRATION/UPDATE: dRepCredential, deposit (reg only), anchor
+// - DREP_DEREGISTRATION: dRepCredential, deposit
+typedef struct {
+    certificate_type_t type;
+    union {
+        ext_credential_t stakeCredential;
+        ext_credential_t coldCredential;
+        ext_credential_t dRepCredential;
+        ext_credential_t poolCredential;
+    };
+    union {
+        ext_credential_t hotCredential;
+        uint8_t poolKeyHash[POOL_KEY_HASH_LENGTH];
+        uint64_t deposit;
+        uint64_t retirementEpoch;
+        ext_drep_t drep;
+    };
+    anchor_t anchor;  // For committee resign, DRep registration/update
+} certificate_data_t;
+
+typedef struct {
+    s_flist_node node;
+    certificate_data_t certificate_data;
+} tx_certificate_list_item_t;
+
 typedef struct {
     // signing / network metadata
     sign_tx_signingmode_t txSigningMode;
@@ -98,7 +132,8 @@ typedef struct {
     bool includeTtl;                    // key 3
     uint64_t ttl;
 
-    // certificates (key 4) handled elsewhere
+    uint16_t num_certificates;          // key 4
+    s_flist_node* certificates;
 
     uint16_t num_withdrawals;           // key 5
     s_flist_node* withdrawals;

@@ -17,6 +17,7 @@ typedef enum {
     WITHDRAWALS_PARSING_ERROR = -15,
     TTL_PARSING_ERROR = -16,
     VALIDITY_INTERVAL_START_PARSING_ERROR = -17,
+    CERTIFICATES_PARSING_ERROR = -19,
     TX_BUFFER_NOT_FULLY_CONSUMED_ERROR = -18
 } parser_status_e;
 
@@ -51,7 +52,7 @@ int tx_handle_parse_error(parser_status_e status);
  * Cleanup all dynamically allocated structures in transaction.
  *
  * Operates on G_context.tx_info.transaction. Frees all allocated transaction elements
- * (inputs, outputs, withdrawals, etc.) and their nested allocations (asset groups/tokens,
+ * (inputs, outputs, withdrawals, certificates, etc.) and their nested allocations (asset groups/tokens,
  * inline datums, reference scripts). Safe to call multiple times or on partially-initialized
  * transactions.
  *
