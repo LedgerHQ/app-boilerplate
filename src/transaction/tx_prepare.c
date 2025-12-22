@@ -26,7 +26,28 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
 
     plan->pair_count = 2;  // fee + tx hash
     if (G_context.tx_info.transaction.includeTtl) {
-        plan->pair_count++;
+        security_policy_t ttl_policy = policyForSignTxTtl(G_context.tx_info.transaction.ttl);
+        switch (ttl_policy) {
+            case POLICY_DENY:
+                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            case POLICY_SHOW:
+                plan->pair_count++;
+                break;
+            case POLICY_HIDE:
+                break;
+        }
+    }
+    if (G_context.tx_info.transaction.includeValidityIntervalStart) {
+        security_policy_t validity_interval_start_policy = policyForSignTxValidityIntervalStart();
+        switch (validity_interval_start_policy) {
+            case POLICY_DENY:
+                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            case POLICY_SHOW:
+                plan->pair_count++;
+                break;
+            case POLICY_HIDE:
+                break;
+        }
     }
 
     tx_hash_builder_t txHashBuilder;
@@ -101,12 +122,15 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             );
         }
 
-        if (output_policy == POLICY_DENY) {
-            TRACE("Output security policy denied");
-            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
-        }
-        if (output_policy == POLICY_SHOW) {
-            plan->pair_count += 3;
+        switch (output_policy) {
+            case POLICY_DENY:
+                TRACE("Output security policy denied");
+                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            case POLICY_SHOW:
+                plan->pair_count += 3;
+                break;
+            case POLICY_HIDE:
+                break;
         }
 
         if (output_item->output_data.destination.type == DESTINATION_THIRD_PARTY) {
@@ -158,8 +182,12 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
     security_policy_t fee_policy = policyForSignTxFee(G_context.tx_info.transaction.txSigningMode,
                                                       G_context.tx_info.transaction.fee,
                                                       &G_context.tx_info.warning_bits);
-    if (fee_policy == POLICY_DENY) {
-        return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+    switch (fee_policy) {
+        case POLICY_DENY:
+            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+        case POLICY_SHOW:
+        case POLICY_HIDE:
+            break;
     }
     if (G_context.tx_info.transaction.includeTtl) {
         txHashBuilder_addTtl(&txHashBuilder, G_context.tx_info.transaction.ttl);
@@ -178,13 +206,15 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                 &G_context.tx_info.warning_bits
             );
 
-            if (withdrawal_policy == POLICY_DENY) {
-                TRACE("Withdrawal security policy denied");
-                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
-            }
-
-            if (withdrawal_policy == POLICY_SHOW) {
-                plan->pair_count += 3;
+            switch (withdrawal_policy) {
+                case POLICY_DENY:
+                    TRACE("Withdrawal security policy denied");
+                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                case POLICY_SHOW:
+                    plan->pair_count += 3;
+                    break;
+                case POLICY_HIDE:
+                    break;
             }
 
             uint8_t reward_address[REWARD_ACCOUNT_SIZE];

@@ -39,7 +39,12 @@ void str_traceInt64(int64_t number);
 #define TRACE_INT64(NUMBER)
 #endif  // DEVEL
 
-size_t str_formatValidityBoundary(uint64_t slotNumber, char* out, size_t outSize);
+size_t str_formatValidityBoundaryMainnet(uint64_t slotNumber, char* out, size_t outSize);
+size_t str_formatValidityBoundary(uint64_t slotNumber,
+                                  uint8_t networkId,
+                                  uint32_t protocolMagic,
+                                  char* out,
+                                  size_t outSize);
 
 // IP address and port formatting functions
 // Note: These need tx_certificate_types.h for ipv4_t, ipv6_t, ipport_t types

@@ -2,6 +2,7 @@
 #include "utils/utils.h"
 #include "textUtils.h"
 #include "utils/ipUtils.h"
+#include "cardano_constants.h"
 #include <string.h>
 #include <stdint.h>
 
@@ -130,7 +131,7 @@ static struct {
     uint64_t slotsInEpoch;
 } EPOCH_SLOTS_CONFIG[] = {{4492800, 208, 432000}, {0, 0, 21600}};
 
-size_t str_formatValidityBoundary(uint64_t slotNumber, char* out, size_t outSize) {
+size_t str_formatValidityBoundaryMainnet(uint64_t slotNumber, char* out, size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
 
     explicit_bzero(out, outSize);
@@ -166,6 +167,31 @@ size_t str_formatValidityBoundary(uint64_t slotNumber, char* out, size_t outSize
     ASSERT(len + 1 < outSize);
 
     return strlen(out);
+}
+
+size_t str_formatValidityBoundary(uint64_t slotNumber,
+                                  uint8_t networkId,
+                                  uint32_t protocolMagic,
+                                  char* out,
+                                  size_t outSize) {
+    ASSERT(outSize < BUFFER_SIZE_PARANOIA);
+
+    explicit_bzero(out, outSize);
+
+    // Determine if we can use the nicer mainnet formatting
+    // Note: Epoch/slot calculations are valid only for mainnet,
+    // as they depend on network params that could differ for testnets
+    if ((networkId == MAINNET_NETWORK_ID) && (protocolMagic == MAINNET_PROTOCOL_MAGIC)) {
+        // Use pretty formatting for mainnet (epoch / slot)
+        return str_formatValidityBoundaryMainnet(slotNumber, out, outSize);
+    } else {
+        // Use simple uint64 formatting for non-mainnet
+        bool success = format_u64(out, outSize, slotNumber);
+        ASSERT(success);
+        size_t len = strlen(out);
+        ASSERT(len + 1 < outSize);
+        return len;
+    }
 }
 
 // check if a non-null-terminated buffer contains printable ASCII between 33 and 126 (inclusive)

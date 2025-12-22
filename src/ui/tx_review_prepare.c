@@ -87,8 +87,12 @@ static int ui_materialize_strings(void) {
 
         LEDGER_ASSERT(policy != POLICY_DENY, "Output policy changed between parse and UI");
 
-        if (policy == POLICY_SHOW) {
-            char *output_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_SIZE);
+        switch (policy) {
+            case POLICY_DENY:
+                // Already asserted above, this case should never be reached
+                break;
+            case POLICY_SHOW: {
+                char *output_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_SIZE);
             if (output_num_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
@@ -149,7 +153,11 @@ static int ui_materialize_strings(void) {
                 return status;
             }
 
-            output_num++;
+                output_num++;
+            }
+            break;
+            case POLICY_HIDE:
+                break;
         }
 
         if (output_item->output_data.assetGroups != NULL) {
@@ -183,16 +191,50 @@ static int ui_materialize_strings(void) {
     }
 
     if (tx->includeTtl) {
-        char *ttl_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_SIZE);
-        if (ttl_tmp == NULL) {
-            return SWO_INSUFFICIENT_MEMORY;
+        security_policy_t ttl_policy = policyForSignTxTtl(tx->ttl);
+        LEDGER_ASSERT(ttl_policy != POLICY_DENY, "TTL policy changed between parse and UI");
+        switch (ttl_policy) {
+            case POLICY_DENY:
+                // Already asserted above, this case should never be reached
+                break;
+            case POLICY_SHOW: {
+                char *ttl_tmp = ui_alloc_temp(MAX_VALIDITY_BOUNDARY_STRING_SIZE);
+                if (ttl_tmp == NULL) {
+                    return SWO_INSUFFICIENT_MEMORY;
+                }
+                str_formatValidityBoundary(tx->ttl, tx->networkId, tx->protocolMagic, ttl_tmp, MAX_VALIDITY_BOUNDARY_STRING_SIZE);
+                status = ui_add_pair_or_fail("TTL", ttl_tmp);
+                if (status != SWO_SUCCESS) {
+                    return status;
+                }
+                break;
+            }
+            case POLICY_HIDE:
+                break;
         }
-        explicit_bzero(ttl_tmp, MAX_ADA_AMOUNT_STRING_SIZE);
-        bool success = format_u64(ttl_tmp, MAX_ADA_AMOUNT_STRING_SIZE, tx->ttl);
-        ASSERT(success);
-        status = ui_add_pair_or_fail("TTL", ttl_tmp);
-        if (status != SWO_SUCCESS) {
-            return status;
+    }
+
+    if (tx->includeValidityIntervalStart) {
+        security_policy_t validity_interval_start_policy = policyForSignTxValidityIntervalStart();
+        LEDGER_ASSERT(validity_interval_start_policy != POLICY_DENY, "Validity interval start policy changed between parse and UI");
+        switch (validity_interval_start_policy) {
+            case POLICY_DENY:
+                // Already asserted above, this case should never be reached
+                break;
+            case POLICY_SHOW: {
+                char *validity_interval_start_tmp = ui_alloc_temp(MAX_VALIDITY_BOUNDARY_STRING_SIZE);
+                if (validity_interval_start_tmp == NULL) {
+                    return SWO_INSUFFICIENT_MEMORY;
+                }
+                str_formatValidityBoundary(tx->validityIntervalStart, tx->networkId, tx->protocolMagic, validity_interval_start_tmp, MAX_VALIDITY_BOUNDARY_STRING_SIZE);
+                status = ui_add_pair_or_fail("Validity interval start", validity_interval_start_tmp);
+                if (status != SWO_SUCCESS) {
+                    return status;
+                }
+                break;
+            }
+            case POLICY_HIDE:
+                break;
         }
     }
 
@@ -210,8 +252,12 @@ static int ui_materialize_strings(void) {
         );
         LEDGER_ASSERT(policy != POLICY_DENY, "Withdrawal policy changed between parse and UI");
 
-        if (policy == POLICY_SHOW) {
-            char *withdrawal_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_SIZE);
+        switch (policy) {
+            case POLICY_DENY:
+                // Already asserted above, this case should never be reached
+                break;
+            case POLICY_SHOW: {
+                char *withdrawal_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_SIZE);
             if (withdrawal_num_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
@@ -294,7 +340,11 @@ static int ui_materialize_strings(void) {
                 return status;
             }
 
-            withdrawal_num++;
+                withdrawal_num++;
+            }
+            break;
+            case POLICY_HIDE:
+                break;
         }
 
         app_mem_free(withdrawal_item);

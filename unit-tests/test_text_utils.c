@@ -10,6 +10,7 @@
 
 #include "utils/textUtils.h"
 #include "utils/ipUtils.h"
+#include "cardano_constants.h"
 
 // Test str_formatDecimalAmount
 static void test_format_decimal_basic(void **state) {
@@ -66,8 +67,8 @@ static void test_format_ada_basic(void **state) {
     }
 }
 
-// Test str_formatValidityBoundary (TTL/slot formatting)
-static void test_format_validity_boundary(void **state) {
+// Test str_formatValidityBoundaryMainnet (mainnet-specific TTL/slot formatting)
+static void test_format_validity_boundary_mainnet(void **state) {
     (void) state;
 
     struct {
@@ -87,9 +88,38 @@ static void test_format_validity_boundary(void **state) {
 
     for (size_t i = 0; i < sizeof(testVectors) / sizeof(testVectors[0]); i++) {
         char tmp[100] = {0};
-        size_t len = str_formatValidityBoundary(testVectors[i].slotNumber, tmp, sizeof(tmp));
+        size_t len = str_formatValidityBoundaryMainnet(testVectors[i].slotNumber, tmp, sizeof(tmp));
         assert_int_equal(len, strlen(testVectors[i].expected));
         assert_string_equal(tmp, testVectors[i].expected);
+    }
+}
+
+// Test str_formatValidityBoundary (TTL/slot formatting with network detection)
+static void test_format_validity_boundary(void **state) {
+    (void) state;
+
+    // Test mainnet (should use pretty formatting)
+    {
+        char tmp[100] = {0};
+        size_t len = str_formatValidityBoundary(4492800, MAINNET_NETWORK_ID, MAINNET_PROTOCOL_MAGIC, tmp, sizeof(tmp));
+        assert_string_equal(tmp, "epoch 208 / slot 0");
+        assert_int_equal(len, strlen("epoch 208 / slot 0"));
+    }
+
+    // Test testnet (should use simple uint64 formatting)
+    {
+        char tmp[100] = {0};
+        size_t len = str_formatValidityBoundary(12345, TESTNET_NETWORK_ID, TESTNET_PROTOCOL_MAGIC_LEGACY, tmp, sizeof(tmp));
+        assert_string_equal(tmp, "12345");
+        assert_int_equal(len, strlen("12345"));
+    }
+
+    // Test mainnet with wrong protocol magic (should use simple formatting)
+    {
+        char tmp[100] = {0};
+        size_t len = str_formatValidityBoundary(12345, MAINNET_NETWORK_ID, TESTNET_PROTOCOL_MAGIC_LEGACY, tmp, sizeof(tmp));
+        assert_string_equal(tmp, "12345");
+        assert_int_equal(len, strlen("12345"));
     }
 }
 
@@ -335,6 +365,7 @@ int main(void) {
         cmocka_unit_test(test_abs_int64),
         cmocka_unit_test(test_format_decimal_basic),
         cmocka_unit_test(test_format_ada_basic),
+        cmocka_unit_test(test_format_validity_boundary_mainnet),
         cmocka_unit_test(test_format_validity_boundary),
         cmocka_unit_test(test_format_uint64),
         cmocka_unit_test(test_format_int64),

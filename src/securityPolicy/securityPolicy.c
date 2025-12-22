@@ -1619,11 +1619,15 @@ security_policy_t policyForSignTxAuxData(aux_data_type_t auxDataType) {
     DENY();  // should not be reached
 }
 
+*/
+
 // For transaction validity interval start
 security_policy_t policyForSignTxValidityIntervalStart() {
     SHOW_IF(is_expert_mode());
-    ALLOW();
+    HIDE();
 }
+
+/*
 
 // For transaction mint field
 security_policy_t policyForSignTxMintInit(const sign_tx_signingmode_t txSigningMode) {

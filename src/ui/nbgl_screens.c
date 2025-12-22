@@ -335,23 +335,6 @@ void ui_getAssetFingerprintScreen(char* line,
 }
 
 
-void ui_getValidityBoundaryScreen(char* line,
-                                  const size_t lineSize,
-                                  uint64_t boundary,
-                                  uint8_t networkId,
-                                  uint32_t protocolMagic) {
-    explicit_bzero(line, lineSize);
-    if ((networkId == MAINNET_NETWORK_ID) && (protocolMagic == MAINNET_PROTOCOL_MAGIC)) {
-        // nicer formatting could only be used for mainnet
-        // since it depends on network params that could differ for testnets
-        str_formatValidityBoundary(boundary, line, lineSize);
-    } else {
-        bool success = format_u64(line, lineSize, boundary);
-        ASSERT(success);
-    }
-}
-
-
 void ui_getPoolMarginScreen(char* line1,
                             size_t lineSize,
                             uint64_t marginNumerator,

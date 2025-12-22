@@ -55,13 +55,6 @@ __noinline_due_to_stack__ void ui_getAssetFingerprintScreen(char* line,
                                                             size_t assetNameSize);
 
 
-__noinline_due_to_stack__ void ui_getValidityBoundaryScreen(char* line,
-                                                            const size_t lineSize,
-                                                            uint64_t boundary,
-                                                            uint8_t networkId,
-                                                            uint32_t protocolMagic);
-
-
 __noinline_due_to_stack__ void ui_getPoolMarginScreen(char* line1,
                                                       const size_t lineSize,
                                                       uint64_t marginNumerator,
