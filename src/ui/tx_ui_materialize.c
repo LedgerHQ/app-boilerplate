@@ -133,13 +133,10 @@ static int ui_materialize_strings(void) {
                 }
             }
 
-            if (!address_formatted) {
-                return SWO_DISPLAY_ADDRESS_FAIL;
-            }
+            LEDGER_ASSERT(address_formatted, "Address formatting failed");
             size_t address_len = strlen(address_tmp);
-            if (address_len == 0 || address_len + 1 >= MAX_HUMAN_ADDRESS_SIZE) {
-                return SWO_DISPLAY_ADDRESS_FAIL;
-            }
+            LEDGER_ASSERT(address_len > 0, "Address length zero");
+            LEDGER_ASSERT(address_len + 1 < MAX_HUMAN_ADDRESS_SIZE, "Address truncated");
 
             status = ui_add_pair_or_fail("Address", address_tmp);
             if (status != SWO_SUCCESS) {
@@ -339,9 +336,7 @@ static int ui_materialize_strings(void) {
                     return SWO_TX_PARSING_FAIL;
             }
 
-            if (reward_addr_len == 0) {
-                return SWO_DISPLAY_ADDRESS_FAIL;
-            }
+            LEDGER_ASSERT(reward_addr_len > 0, "Reward addr derivation failed");
 
             bool reward_formatted =
                 format_address_human_readable(reward_addr_bytes,
@@ -350,9 +345,8 @@ static int ui_materialize_strings(void) {
                                               MAX_HUMAN_ADDRESS_SIZE);
             ASSERT(reward_formatted);
             size_t reward_display_len = strlen(reward_account_tmp);
-            if (reward_display_len == 0 || reward_display_len + 1 >= MAX_HUMAN_ADDRESS_SIZE) {
-                return SWO_DISPLAY_ADDRESS_FAIL;
-            }
+            LEDGER_ASSERT(reward_display_len > 0, "Reward addr length zero");
+            LEDGER_ASSERT(reward_display_len + 1 < MAX_HUMAN_ADDRESS_SIZE, "Reward addr truncated");
 
             status = ui_add_pair_or_fail("Reward account", reward_account_tmp);
             if (status != SWO_SUCCESS) {
@@ -417,9 +411,7 @@ static int ui_materialize_strings(void) {
                         token->assetNameLen,
                         fingerprint_tmp,
                         MAX_TOKEN_FINGERPRINT_STRING_SIZE);
-                    if (fingerprint_len == 0) {
-                        return SWO_DISPLAY_ADDRESS_FAIL;
-                    }
+                    LEDGER_ASSERT(fingerprint_len > 0, "Fingerprint derivation failed");
                     status = ui_add_pair_or_fail("Mint fingerprint", fingerprint_tmp);
                     if (status != SWO_SUCCESS) {
                         return status;
@@ -481,12 +473,11 @@ static int ui_materialize_strings(void) {
     if (hash_tmp == NULL) {
         return SWO_INSUFFICIENT_MEMORY;
     }
-    if (bytes_to_lowercase_hex(hash_tmp,
-                               MAX_TX_HASH_DISPLAY_SIZE,
-                               G_context.tx_info.tx_hash,
-                               sizeof(G_context.tx_info.tx_hash)) != 0) {
-        return SWO_DISPLAY_ADDRESS_FAIL;
-    }
+    int hex_status = bytes_to_lowercase_hex(hash_tmp,
+                                            MAX_TX_HASH_DISPLAY_SIZE,
+                                            G_context.tx_info.tx_hash,
+                                            sizeof(G_context.tx_info.tx_hash));
+    LEDGER_ASSERT(hex_status == 0, "Tx hash hex formatting failed");
     status = ui_add_pair_or_fail("Transaction hash", hash_tmp);
     if (status != SWO_SUCCESS) {
         return status;
