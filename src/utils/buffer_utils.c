@@ -86,6 +86,19 @@ bool buffer_write_cbor_token(write_buffer_t *buffer, uint8_t type, uint64_t valu
     return write_buffer_seek_cur(buffer, written);
 }
 
+bool buffer_read_bytes(buffer_t *buffer, uint8_t *destBuffer, size_t n) {
+    LEDGER_ASSERT(buffer != NULL, "NULL buffer");
+    LEDGER_ASSERT(buffer->ptr != NULL, "NULL buffer ptr");
+    LEDGER_ASSERT(destBuffer != NULL, "NULL destination");
+
+    if (!buffer_can_read(buffer, n)) {
+        return false;
+    }
+
+    memmove(destBuffer, buffer->ptr + buffer->offset, n);
+    return buffer_seek_cur(buffer, n);
+}
+
 bool buffer_read_bytes_ptr(buffer_t *buffer, uint8_t **destBuffer, size_t n) {
     LEDGER_ASSERT(buffer != NULL, "NULL buffer");
 

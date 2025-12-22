@@ -347,6 +347,8 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
         LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_CHUNKS, "Bad state before parse");
         G_context.state.tx_state = TX_STATE_RECEIVED;
 
+        LEDGER_ASSERT(G_context.tx_info.raw_tx != NULL, "Raw transaction buffer missing");
+
         buffer_t buf = {
             .ptr = G_context.tx_info.raw_tx,
             .size = G_context.tx_info.raw_tx_len,

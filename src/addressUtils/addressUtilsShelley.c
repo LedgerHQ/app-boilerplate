@@ -558,7 +558,7 @@ bool buffer_parseAddressParams(buffer_t* buffer, addressParams_t* params) {
         case ENTERPRISE_SCRIPT: {
             STATIC_ASSERT(SIZEOF(params->paymentScriptHash) == SCRIPT_HASH_LENGTH,
                           "Wrong address key hash length");
-            if (!buffer_move(buffer, params->paymentScriptHash, SCRIPT_HASH_LENGTH)) {
+            if (!buffer_read_bytes(buffer, params->paymentScriptHash, SCRIPT_HASH_LENGTH)) {
                 return false;
             }
             TRACE("Payment script hash: ");
@@ -604,7 +604,7 @@ bool buffer_parseAddressParams(buffer_t* buffer, addressParams_t* params) {
         case STAKING_KEY_HASH: {
             STATIC_ASSERT(SIZEOF(params->stakingKeyHash) == ADDRESS_KEY_HASH_LENGTH,
                           "Wrong address key hash length");
-            if (!buffer_move(buffer, params->stakingKeyHash, ADDRESS_KEY_HASH_LENGTH)) {
+            if (!buffer_read_bytes(buffer, params->stakingKeyHash, ADDRESS_KEY_HASH_LENGTH)) {
                 return false;
             }
             TRACE("Stake key hash: ");
@@ -615,7 +615,7 @@ bool buffer_parseAddressParams(buffer_t* buffer, addressParams_t* params) {
         case STAKING_SCRIPT_HASH: {
             STATIC_ASSERT(SIZEOF(params->stakingScriptHash) == SCRIPT_HASH_LENGTH,
                           "Wrong script hash length");
-            if (!buffer_move(buffer, params->stakingScriptHash, SCRIPT_HASH_LENGTH)) {
+            if (!buffer_read_bytes(buffer, params->stakingScriptHash, SCRIPT_HASH_LENGTH)) {
                 return false;
             }
             TRACE("Stake script hash: ");

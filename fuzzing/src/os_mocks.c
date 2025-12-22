@@ -7,7 +7,11 @@
 #include <ux.h>
 
 #include "buffer.h"
+#include "cardano_constants.h"
 #include "globals.h"
+#include "transaction/tx_prepare.h"
+
+typedef struct nbgl_warning_s nbgl_warning_t;
 
 int io_send_sw(uint16_t sw) {
     (void) sw;
@@ -45,8 +49,6 @@ int io_send_response_buffers(const buffer_t *buffer_list, size_t buffer_count, u
 void nvm_write(void *dst_adr, void *src_adr, unsigned int src_len) {
     memcpy(dst_adr, src_adr, src_len);
 }
-
-typedef char tx_output_destination_t;
 
 bool swap_check_validity(uint64_t amount, tx_output_destination_t *destination) {
     return true;

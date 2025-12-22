@@ -19,26 +19,24 @@
 
 #include "cardano_swo.h"
 #include "utils/cardano_os_utils.h"
+#include "utils/buffer_utils.h"
 #include "tx_parse.h"
 #include "transaction/tx.h"
 #include "utils.h"
 #include "utils/assert.h"
 #include "utils/textUtils.h"
-#include "utils/buffer_utils.h"
 #include "transaction/tx_constants.h"
 #include "tx_output_types.h"
-#include "addressUtils/addressUtilsShelley.h"
 #include "globals.h"
-
 static uint16_t _map_parser_status_to_swo(parser_status_e status);
 
 static parser_status_e parse_tx_inputs(buffer_t *buf, transaction_t *tx);
 static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx);
 static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx);
 static parser_status_e parse_tx_withdrawals(buffer_t *buf, transaction_t *tx);
-
 parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
     LEDGER_ASSERT(buf != NULL, "NULL buf");
+    LEDGER_ASSERT(buf->ptr != NULL, "NULL buffer ptr");
     LEDGER_ASSERT(tx != NULL, "NULL tx");
 
     if (buf->size > TX_BUFFER_SIZE) {
@@ -135,11 +133,11 @@ static parser_status_e parse_tx_inputs(buffer_t *buf, transaction_t *tx) {
             return INPUTS_PARSING_ERROR;
         }
 
-        uint8_t *txHash = (uint8_t *) (buf->ptr + buf->offset);
-        if (!buffer_seek_cur(buf, TX_HASH_LENGTH)) {
+        STATIC_ASSERT(SIZEOF(item->input_data.txHashBuffer) == TX_HASH_LENGTH,
+                      "tx input hash buffer size mismatch");
+        if (!buffer_read_bytes(buf, item->input_data.txHashBuffer, TX_HASH_LENGTH)) {
             return INPUTS_PARSING_ERROR;
         }
-        memmove(item->input_data.txHashBuffer, txHash, TX_HASH_LENGTH);
 
         if (!buffer_read_u32(buf, &item->input_data.index, BE)) {
             return INPUTS_PARSING_ERROR;
@@ -181,11 +179,11 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
             }
             item->output_data.destination.address.size = addr_size;
 
-            uint8_t *addr = (uint8_t *) (buf->ptr + buf->offset);
-            if (!buffer_seek_cur(buf, addr_size)) {
+            STATIC_ASSERT(SIZEOF(item->output_data.destination.address.buffer) == MAX_ADDRESS_SIZE,
+                          "destination address buffer size mismatch");
+            if (!buffer_read_bytes(buf, item->output_data.destination.address.buffer, addr_size)) {
                 return OUTPUTS_PARSING_ERROR;
             }
-            memmove(item->output_data.destination.address.buffer, addr, addr_size);
 
         } else if (dest_type == DESTINATION_DEVICE_OWNED) {
             uint8_t addr_type;
@@ -213,11 +211,13 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                     TRACE("Deserialize: Payment path, length=%u", item->output_data.destination.params.paymentKeyPath.length);
                     break;
                 case PAYMENT_SCRIPT_HASH: {
-                    uint8_t *payment_hash = (uint8_t *) (buf->ptr + buf->offset);
-                    if (!buffer_seek_cur(buf, SCRIPT_HASH_LENGTH)) {
+                    STATIC_ASSERT(SIZEOF(item->output_data.destination.params.paymentScriptHash) == SCRIPT_HASH_LENGTH,
+                                  "payment script hash size mismatch");
+                    if (!buffer_read_bytes(buf,
+                                           item->output_data.destination.params.paymentScriptHash,
+                                           SCRIPT_HASH_LENGTH)) {
                         return OUTPUTS_PARSING_ERROR;
                     }
-                    memmove(item->output_data.destination.params.paymentScriptHash, payment_hash, SCRIPT_HASH_LENGTH);
                     TRACE("Deserialize: Payment script hash");
                     break;
                 }
@@ -238,29 +238,34 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                     }
                     break;
                 case STAKING_KEY_HASH: {
-                    uint8_t *hash_ptr = (uint8_t *) (buf->ptr + buf->offset);
-                    if (!buffer_seek_cur(buf, ADDRESS_KEY_HASH_LENGTH)) {
+                    STATIC_ASSERT(SIZEOF(item->output_data.destination.params.stakingKeyHash) == ADDRESS_KEY_HASH_LENGTH,
+                                  "staking key hash size mismatch");
+                    if (!buffer_read_bytes(buf,
+                                           item->output_data.destination.params.stakingKeyHash,
+                                           ADDRESS_KEY_HASH_LENGTH)) {
                         return OUTPUTS_PARSING_ERROR;
                     }
-                    memmove(item->output_data.destination.params.stakingKeyHash, hash_ptr, ADDRESS_KEY_HASH_LENGTH);
                     break;
                 }
                 case STAKING_SCRIPT_HASH: {
-                    uint8_t *hash_ptr = (uint8_t *) (buf->ptr + buf->offset);
-                    if (!buffer_seek_cur(buf, SCRIPT_HASH_LENGTH)) {
+                    STATIC_ASSERT(SIZEOF(item->output_data.destination.params.stakingScriptHash) == SCRIPT_HASH_LENGTH,
+                                  "staking script hash size mismatch");
+                    if (!buffer_read_bytes(buf,
+                                           item->output_data.destination.params.stakingScriptHash,
+                                           SCRIPT_HASH_LENGTH)) {
                         return OUTPUTS_PARSING_ERROR;
                     }
-                    memmove(item->output_data.destination.params.stakingScriptHash, hash_ptr, SCRIPT_HASH_LENGTH);
                     break;
                 }
                 case BLOCKCHAIN_POINTER: {
-                    uint8_t *ptr_data = (uint8_t *) (buf->ptr + buf->offset);
-                    if (!buffer_seek_cur(buf, sizeof(blockchainPointer_t))) {
+                    STATIC_ASSERT(SIZEOF(item->output_data.destination.params.stakingKeyBlockchainPointer) == sizeof(blockchainPointer_t),
+                                  "staking blockchain pointer size mismatch");
+                    if (!buffer_read_bytes(
+                            buf,
+                            (uint8_t *) &item->output_data.destination.params.stakingKeyBlockchainPointer,
+                            sizeof(blockchainPointer_t))) {
                         return OUTPUTS_PARSING_ERROR;
                     }
-                    memmove(&item->output_data.destination.params.stakingKeyBlockchainPointer,
-                           ptr_data,
-                           sizeof(blockchainPointer_t));
                     break;
                 }
                 case NO_STAKING:
@@ -305,11 +310,11 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
 
             for (uint16_t ag = 0; ag < item->output_data.numAssetGroups; ag++) {
                 asset_group_t *group = &item->output_data.assetGroups[ag];
-                uint8_t *policy_id = (uint8_t *) (buf->ptr + buf->offset);
-                if (!buffer_seek_cur(buf, MINTING_POLICY_ID_SIZE)) {
+                STATIC_ASSERT(SIZEOF(group->policyId) == MINTING_POLICY_ID_SIZE,
+                              "asset group policy size mismatch");
+                if (!buffer_read_bytes(buf, group->policyId, MINTING_POLICY_ID_SIZE)) {
                     return OUTPUTS_PARSING_ERROR;
                 }
-                memmove(group->policyId, policy_id, MINTING_POLICY_ID_SIZE);
                 TRACE("Deserialize: Asset group %u: policy ID read", ag);
 
                 if (!buffer_read_u16(buf, &group->numTokens, BE)) {
@@ -330,16 +335,16 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                     if (!buffer_read_u8(buf, &token->assetNameLen)) {
                         return OUTPUTS_PARSING_ERROR;
                     }
-                    if (token->assetNameLen > 32) {
+                    if (token->assetNameLen > ASSET_NAME_DISPLAY_SIZE) {
                         return OUTPUTS_PARSING_ERROR;
                     }
 
                     if (token->assetNameLen > 0) {
-                        uint8_t *asset_name = (uint8_t *) (buf->ptr + buf->offset);
-                        if (!buffer_seek_cur(buf, token->assetNameLen)) {
+                        STATIC_ASSERT(SIZEOF(token->assetName) == ASSET_NAME_DISPLAY_SIZE,
+                                      "output token asset buffer size mismatch");
+                        if (!buffer_read_bytes(buf, token->assetName, token->assetNameLen)) {
                             return OUTPUTS_PARSING_ERROR;
                         }
-                        memmove(token->assetName, asset_name, token->assetNameLen);
                     }
 
                     if (!buffer_read_u64(buf, (uint64_t*)&token->amount, BE)) {
@@ -375,11 +380,13 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
             case 0:
                 break;
             case 1: {
-                uint8_t *hash_ptr = (uint8_t *) (buf->ptr + buf->offset);
-                if (!buffer_seek_cur(buf, OUTPUT_DATUM_HASH_LENGTH)) {
+                STATIC_ASSERT(SIZEOF(item->output_data.datum.hash) == OUTPUT_DATUM_HASH_LENGTH,
+                              "datum hash size mismatch");
+                if (!buffer_read_bytes(buf,
+                                       item->output_data.datum.hash,
+                                       OUTPUT_DATUM_HASH_LENGTH)) {
                     return OUTPUTS_PARSING_ERROR;
                 }
-                memmove(item->output_data.datum.hash, hash_ptr, OUTPUT_DATUM_HASH_LENGTH);
                 TRACE("Deserialize: Datum hash read");
                 break;
             }
@@ -398,11 +405,11 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                     return OUTPUTS_PARSING_ERROR;
                 }
 
-                uint8_t *datum_ptr = (uint8_t *) (buf->ptr + buf->offset);
-                if (!buffer_seek_cur(buf, datum_size)) {
+                if (!buffer_read_bytes(buf,
+                                       item->output_data.datum.inline_data.data,
+                                       datum_size)) {
                     return OUTPUTS_PARSING_ERROR;
                 }
-                memmove(item->output_data.datum.inline_data.data, datum_ptr, datum_size);
                 TRACE("Deserialize: Inline datum read: %u bytes", datum_size);
                 break;
             }
@@ -432,11 +439,9 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                 return OUTPUTS_PARSING_ERROR;
             }
 
-            uint8_t *script_ptr = (uint8_t *) (buf->ptr + buf->offset);
-            if (!buffer_seek_cur(buf, script_size)) {
+            if (!buffer_read_bytes(buf, item->output_data.refScript.data, script_size)) {
                 return OUTPUTS_PARSING_ERROR;
             }
-            memmove(item->output_data.refScript.data, script_ptr, script_size);
             TRACE("Deserialize: Reference script read: %u bytes", script_size);
         }
 
@@ -459,11 +464,11 @@ static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
             return OUTPUTS_PARSING_ERROR;
         }
 
-        uint8_t *policy_id = (uint8_t *) (buf->ptr + buf->offset);
-        if (!buffer_seek_cur(buf, MINTING_POLICY_ID_SIZE)) {
+        STATIC_ASSERT(SIZEOF(item->asset_group.policyId) == MINTING_POLICY_ID_SIZE,
+                      "mint asset group policy size mismatch");
+        if (!buffer_read_bytes(buf, item->asset_group.policyId, MINTING_POLICY_ID_SIZE)) {
             return OUTPUTS_PARSING_ERROR;
         }
-        memmove(item->asset_group.policyId, policy_id, MINTING_POLICY_ID_SIZE);
         TRACE("Deserialize: Mint asset group %u: policy ID read", ag);
 
         if (!buffer_read_u16(buf, &item->asset_group.numTokens, BE)) {
@@ -489,11 +494,11 @@ static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
             }
 
             if (token->assetNameLen > 0) {
-                uint8_t *asset_name = (uint8_t *) (buf->ptr + buf->offset);
-                if (!buffer_seek_cur(buf, token->assetNameLen)) {
+                STATIC_ASSERT(SIZEOF(token->assetName) == MAX_MINT_ASSET_NAME_LEN,
+                              "mint token asset buffer size mismatch");
+                if (!buffer_read_bytes(buf, token->assetName, token->assetNameLen)) {
                     return OUTPUTS_PARSING_ERROR;
                 }
-                memmove(token->assetName, asset_name, token->assetNameLen);
             }
 
             if (!buffer_read_u64(buf, (uint64_t*)&token->amount, BE)) {
@@ -550,20 +555,24 @@ static parser_status_e parse_tx_withdrawals(buffer_t *buf, transaction_t *tx) {
                 TRACE("Deserialize: Withdrawal %u key path, length=%u", i, item->withdrawal_data.stakeCredential.keyPath.length);
                 break;
             case EXT_CREDENTIAL_KEY_HASH: {
-                uint8_t *hash_ptr = (uint8_t *) (buf->ptr + buf->offset);
-                if (!buffer_seek_cur(buf, ADDRESS_KEY_HASH_LENGTH)) {
+                STATIC_ASSERT(SIZEOF(item->withdrawal_data.stakeCredential.keyHash) == ADDRESS_KEY_HASH_LENGTH,
+                              "credential key hash size mismatch");
+                if (!buffer_read_bytes(buf,
+                                       item->withdrawal_data.stakeCredential.keyHash,
+                                       ADDRESS_KEY_HASH_LENGTH)) {
                     return WITHDRAWALS_PARSING_ERROR;
                 }
-                memmove(item->withdrawal_data.stakeCredential.keyHash, hash_ptr, ADDRESS_KEY_HASH_LENGTH);
                 TRACE("Deserialize: Withdrawal %u key hash", i);
                 break;
             }
             case EXT_CREDENTIAL_SCRIPT_HASH: {
-                uint8_t *hash_ptr = (uint8_t *) (buf->ptr + buf->offset);
-                if (!buffer_seek_cur(buf, SCRIPT_HASH_LENGTH)) {
+                STATIC_ASSERT(SIZEOF(item->withdrawal_data.stakeCredential.scriptHash) == SCRIPT_HASH_LENGTH,
+                              "credential script hash size mismatch");
+                if (!buffer_read_bytes(buf,
+                                       item->withdrawal_data.stakeCredential.scriptHash,
+                                       SCRIPT_HASH_LENGTH)) {
                     return WITHDRAWALS_PARSING_ERROR;
                 }
-                memmove(item->withdrawal_data.stakeCredential.scriptHash, hash_ptr, SCRIPT_HASH_LENGTH);
                 TRACE("Deserialize: Withdrawal %u script hash", i);
                 break;
             }

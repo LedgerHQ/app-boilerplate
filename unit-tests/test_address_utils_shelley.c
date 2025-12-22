@@ -9,6 +9,7 @@
 #include "addressUtils/addressUtilsShelley.h"
 #include "addressUtils/addressUtilsByron.h"
 #include "addressUtils/bip44.h"
+#include "buffer.h"
 #include "hexUtils.h"
 
 #define HD HARDENED_BIP32
@@ -196,9 +197,135 @@ static void test_address_derivation(void **state) {
         "435a53103829a7382c2ab76111fb69f13e69d616824c62058e44f1a8b3000000");
 }
 
+static void test_buffer_parse_address_params_payment_script_hash(void **state) {
+    (void) state;
+    uint8_t serialized[1 + 1 + SCRIPT_HASH_LENGTH + 1 + ADDRESS_KEY_HASH_LENGTH] = {0};
+    size_t offset = 0;
+
+    serialized[offset++] = BASE_PAYMENT_SCRIPT_STAKE_KEY;
+    serialized[offset++] = 0x05;  // arbitrary network id
+
+    for (size_t i = 0; i < SCRIPT_HASH_LENGTH; i++) {
+        serialized[offset++] = (uint8_t) (0xA0 + i);
+    }
+
+    serialized[offset++] = STAKING_KEY_HASH;
+    for (size_t i = 0; i < ADDRESS_KEY_HASH_LENGTH; i++) {
+        serialized[offset++] = (uint8_t) (0x10 + i);
+    }
+
+    buffer_t buf = {
+        .ptr = serialized,
+        .size = offset,
+        .offset = 0,
+    };
+    addressParams_t params = {0};
+    assert_true(buffer_parseAddressParams(&buf, &params));
+    assert_int_equal(buf.offset, buf.size);
+    assert_int_equal(params.type, BASE_PAYMENT_SCRIPT_STAKE_KEY);
+    assert_int_equal(params.networkId, 0x05);
+    assert_memory_equal(params.paymentScriptHash, serialized + 2, SCRIPT_HASH_LENGTH);
+    assert_int_equal(params.stakingDataSource, STAKING_KEY_HASH);
+    assert_memory_equal(params.stakingKeyHash,
+                        serialized + 2 + SCRIPT_HASH_LENGTH + 1,
+                        ADDRESS_KEY_HASH_LENGTH);
+}
+
+static void test_buffer_parse_address_params_payment_script_hash_with_pointer(void **state) {
+    (void) state;
+    uint8_t serialized[1 + 1 + SCRIPT_HASH_LENGTH + 1 + sizeof(blockchainPointer_t)] = {0};
+    size_t offset = 0;
+
+    serialized[offset++] = POINTER_SCRIPT;
+    serialized[offset++] = 0x01;
+
+    for (size_t i = 0; i < SCRIPT_HASH_LENGTH; i++) {
+        serialized[offset++] = (uint8_t) (0x40 + i);
+    }
+
+    serialized[offset++] = BLOCKCHAIN_POINTER;
+
+    uint32_t blockIndex = 0x11223344;
+    uint32_t txIndex = 0x55667788;
+    uint32_t certIndex = 0x99AABBCC;
+    serialized[offset++] = (uint8_t) (blockIndex >> 24);
+    serialized[offset++] = (uint8_t) (blockIndex >> 16);
+    serialized[offset++] = (uint8_t) (blockIndex >> 8);
+    serialized[offset++] = (uint8_t) (blockIndex);
+    serialized[offset++] = (uint8_t) (txIndex >> 24);
+    serialized[offset++] = (uint8_t) (txIndex >> 16);
+    serialized[offset++] = (uint8_t) (txIndex >> 8);
+    serialized[offset++] = (uint8_t) (txIndex);
+    serialized[offset++] = (uint8_t) (certIndex >> 24);
+    serialized[offset++] = (uint8_t) (certIndex >> 16);
+    serialized[offset++] = (uint8_t) (certIndex >> 8);
+    serialized[offset++] = (uint8_t) (certIndex);
+
+    buffer_t buf = {
+        .ptr = serialized,
+        .size = offset,
+        .offset = 0,
+    };
+    addressParams_t params = {0};
+    assert_true(buffer_parseAddressParams(&buf, &params));
+    assert_int_equal(buf.offset, buf.size);
+    assert_int_equal(params.type, POINTER_SCRIPT);
+    assert_int_equal(params.networkId, 0x01);
+    assert_memory_equal(params.paymentScriptHash, serialized + 2, SCRIPT_HASH_LENGTH);
+    assert_int_equal(params.stakingDataSource, BLOCKCHAIN_POINTER);
+    assert_int_equal(params.stakingKeyBlockchainPointer.blockIndex, blockIndex);
+    assert_int_equal(params.stakingKeyBlockchainPointer.txIndex, txIndex);
+    assert_int_equal(params.stakingKeyBlockchainPointer.certificateIndex, certIndex);
+}
+
+static void test_buffer_parse_address_params_payment_script_hash_with_stake_path(void **state) {
+    (void) state;
+    const uint32_t staking_path[] = {HD + 1852, HD + 1815, HD + 0, 2, 0};
+    enum { STAKING_PATH_LEN = ARRAY_LEN(staking_path) };
+
+    uint8_t serialized[1 + 1 + SCRIPT_HASH_LENGTH + 1 + 1 + STAKING_PATH_LEN * 4] = {0};
+    size_t offset = 0;
+
+    serialized[offset++] = BASE_PAYMENT_SCRIPT_STAKE_KEY;
+    serialized[offset++] = 0x02;
+
+    for (size_t i = 0; i < SCRIPT_HASH_LENGTH; i++) {
+        serialized[offset++] = (uint8_t) (0xB0 + i);
+    }
+
+    serialized[offset++] = STAKING_KEY_PATH;
+    serialized[offset++] = (uint8_t) STAKING_PATH_LEN;
+    for (size_t i = 0; i < STAKING_PATH_LEN; i++) {
+        serialized[offset++] = (uint8_t) (staking_path[i] >> 24);
+        serialized[offset++] = (uint8_t) (staking_path[i] >> 16);
+        serialized[offset++] = (uint8_t) (staking_path[i] >> 8);
+        serialized[offset++] = (uint8_t) (staking_path[i]);
+    }
+
+    buffer_t buf = {
+        .ptr = serialized,
+        .size = offset,
+        .offset = 0,
+    };
+    addressParams_t params = {0};
+    assert_true(buffer_parseAddressParams(&buf, &params));
+    assert_int_equal(buf.offset, buf.size);
+    assert_int_equal(params.type, BASE_PAYMENT_SCRIPT_STAKE_KEY);
+    assert_int_equal(params.networkId, 0x02);
+    assert_memory_equal(params.paymentScriptHash, serialized + 2, SCRIPT_HASH_LENGTH);
+    assert_int_equal(params.stakingDataSource, STAKING_KEY_PATH);
+    assert_int_equal(params.stakingKeyPath.length, STAKING_PATH_LEN);
+    for (size_t i = 0; i < STAKING_PATH_LEN; i++) {
+        assert_int_equal(params.stakingKeyPath.path[i], staking_path[i]);
+    }
+}
+
 int main(void) {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_address_derivation),
+        cmocka_unit_test(test_buffer_parse_address_params_payment_script_hash),
+        cmocka_unit_test(test_buffer_parse_address_params_payment_script_hash_with_pointer),
+        cmocka_unit_test(test_buffer_parse_address_params_payment_script_hash_with_stake_path),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

@@ -95,6 +95,29 @@ static void test_buffer_write_cbor_token(void **state) {
     assert_int_equal(tiny.offset, 0);
 }
 
+static void test_buffer_read_bytes(void **state) {
+    (void) state;
+    uint8_t raw[] = {0xAA, 0xBB, 0xCC, 0xDD};
+    buffer_t buf = {
+        .ptr = raw,
+        .size = sizeof(raw),
+        .offset = 0,
+    };
+
+    uint8_t slice[2] = {0};
+    assert_true(buffer_read_bytes(&buf, slice, sizeof(slice)));
+    assert_memory_equal(slice, raw, sizeof(slice));
+    assert_int_equal(buf.offset, 2);
+
+    assert_true(buffer_read_bytes(&buf, slice, sizeof(slice)));
+    assert_memory_equal(slice, raw + 2, sizeof(slice));
+    assert_int_equal(buf.offset, 4);
+
+    // Attempt to read past the end should fail and leave offset unchanged
+    assert_false(buffer_read_bytes(&buf, slice, 1));
+    assert_int_equal(buf.offset, 4);
+}
+
 static void test_buffer_read_bytes_ptr(void **state) {
     (void) state;
     uint8_t raw[] = {0xAA, 0xBB, 0xCC, 0xDD};
@@ -125,6 +148,7 @@ int main(void) {
         cmocka_unit_test(test_buffer_write_u32_u64),
         cmocka_unit_test(test_buffer_write_bytes),
         cmocka_unit_test(test_buffer_write_cbor_token),
+        cmocka_unit_test(test_buffer_read_bytes),
         cmocka_unit_test(test_buffer_read_bytes_ptr),
     };
 
