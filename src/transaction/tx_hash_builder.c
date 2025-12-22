@@ -425,7 +425,7 @@ __noinline_due_to_stack__ static void addTokenGroup(tx_hash_builder_t* builder,
     ASSERT(builder->outputData.multiassetData.remainingAssetGroups > 0);
     builder->outputData.multiassetData.remainingAssetGroups--;
 
-    ASSERT(policyIdSize == MINTING_POLICY_ID_SIZE);
+    ASSERT(policyIdSize == MINTING_POLICY_ID_LENGTH);
 
     ASSERT(numTokens > 0);
     builder->outputData.multiassetData.remainingTokens = numTokens;
@@ -467,7 +467,7 @@ __noinline_due_to_stack__ static void addToken(tx_hash_builder_t* builder,
     ASSERT(builder->outputData.multiassetData.remainingTokens > 0);
     builder->outputData.multiassetData.remainingTokens--;
 
-    ASSERT(assetNameSize <= ASSET_NAME_SIZE_MAX);
+    ASSERT(assetNameSize <= MAX_ASSET_NAME_LENGTH);
     {
         // add a map entry:
         // Bytes[asset_name]
@@ -1135,7 +1135,7 @@ void txHashBuilder_poolRegistrationCertificate_rewardAccount(tx_hash_builder_t* 
 
     ASSERT(builder->state == TX_HASH_BUILDER_IN_CERTIFICATES_POOL_FINANCIALS);
 
-    ASSERT(rewardAccountSize == REWARD_ACCOUNT_SIZE);
+    ASSERT(rewardAccountSize == REWARD_ACCOUNT_LENGTH);
 
     //   Bytes[rewardAccount]
     {
@@ -1224,10 +1224,10 @@ static void _relay_addIpv4(tx_hash_builder_t* builder, const ipv4_t* ipv4) {
     if (ipv4->isNull) {
         BUILDER_APPEND_CBOR(CBOR_TYPE_NULL, 0);
     } else {
-        STATIC_ASSERT(sizeof(ipv4->ip) == IPV4_SIZE,
+        STATIC_ASSERT(sizeof(ipv4->ip) == IPV4_LENGTH,
                       "wrong ipv4 size");  // SIZEOF does not work for 4-byte buffers
-        BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, IPV4_SIZE);
-        BUILDER_APPEND_DATA(ipv4->ip, IPV4_SIZE);
+        BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, IPV4_LENGTH);
+        BUILDER_APPEND_DATA(ipv4->ip, IPV4_LENGTH);
     }
 }
 
@@ -1242,14 +1242,14 @@ static void _relay_addIpv6(tx_hash_builder_t* builder, const ipv6_t* ipv6) {
     if (ipv6->isNull) {
         BUILDER_APPEND_CBOR(CBOR_TYPE_NULL, 0);
     } else {
-        STATIC_ASSERT(SIZEOF(ipv6->ip) == IPV6_SIZE, "wrong ipv6 size");
-        BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, IPV6_SIZE);
+        STATIC_ASSERT(SIZEOF(ipv6->ip) == IPV6_LENGTH, "wrong ipv6 size");
+        BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, IPV6_LENGTH);
 
         // serialized as 4 big-endian uint32
         // we need a local copy of the data to make the following pointer tricks work
         // the copy is created by memmove instead of struct assignment to avoid compiler optimizing
         // it away
-        uint8_t ipBuffer[IPV6_SIZE] = {0};
+        uint8_t ipBuffer[IPV6_LENGTH] = {0};
         memmove(ipBuffer, ipv6->ip, SIZEOF(ipBuffer));
         STATIC_ASSERT(SIZEOF(ipBuffer) == 16, "wrong ipv6 size");
 
@@ -1269,7 +1269,7 @@ static void _relay_addDnsName(tx_hash_builder_t* builder, const pool_relay_t* re
 
     ASSERT(builder->state == TX_HASH_BUILDER_IN_CERTIFICATES_POOL_RELAYS);
 
-    ASSERT(relay->dnsNameSize <= DNS_NAME_SIZE_MAX);
+    ASSERT(relay->dnsNameSize <= MAX_DNS_NAME_LENGTH);
 
     //   Text[dnsName]
     {
@@ -1451,7 +1451,7 @@ void txHashBuilder_addWithdrawal(tx_hash_builder_t* builder,
     ASSERT(builder->remainingWithdrawals > 0);
     builder->remainingWithdrawals--;
 
-    ASSERT(rewardAddressSize == REWARD_ACCOUNT_SIZE);
+    ASSERT(rewardAddressSize == REWARD_ACCOUNT_LENGTH);
 
     // map entry
     //   Bytes[address]

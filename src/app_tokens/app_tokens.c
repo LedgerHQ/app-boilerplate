@@ -13,11 +13,11 @@ void deriveAssetFingerprintBytes(const uint8_t* policyId,
                                  size_t assetNameSize,
                                  uint8_t* fingerprintBuffer,
                                  size_t fingerprintBufferSize) {
-    ASSERT(policyIdSize == MINTING_POLICY_ID_SIZE);
-    ASSERT(assetNameSize <= ASSET_NAME_SIZE_MAX);
+    ASSERT(policyIdSize == MINTING_POLICY_ID_LENGTH);
+    ASSERT(assetNameSize <= MAX_ASSET_NAME_LENGTH);
     ASSERT(fingerprintBufferSize >= ASSET_FINGERPRINT_SIZE);
 
-    uint8_t hashInput[MINTING_POLICY_ID_SIZE + ASSET_NAME_SIZE_MAX] = {0};
+    uint8_t hashInput[MINTING_POLICY_ID_LENGTH + MAX_ASSET_NAME_LENGTH] = {0};
     const size_t hashInputSize = policyIdSize + assetNameSize;
     {
         write_buffer_t buf = buffer_init(hashInput, SIZEOF(hashInput));
@@ -41,8 +41,8 @@ size_t deriveAssetFingerprintBech32(const uint8_t* policyId,
                                     size_t assetNameSize,
                                     char* fingerprint,
                                     size_t fingerprintMaxSize) {
-    ASSERT(policyIdSize == MINTING_POLICY_ID_SIZE);
-    ASSERT(assetNameSize <= ASSET_NAME_SIZE_MAX);
+    ASSERT(policyIdSize == MINTING_POLICY_ID_LENGTH);
+    ASSERT(assetNameSize <= MAX_ASSET_NAME_LENGTH);
 
     uint8_t fingerprintBuffer[ASSET_FINGERPRINT_SIZE];
     deriveAssetFingerprintBytes(policyId,
@@ -77,7 +77,7 @@ const token_info_t tokenInfos[] = {
 static const token_info_t* _getTokenInfo(const token_group_t* tokenGroup,
                                          const uint8_t* assetNameBytes,
                                          size_t assetNameSize) {
-    ASSERT(assetNameSize <= ASSET_NAME_SIZE_MAX);
+    ASSERT(assetNameSize <= MAX_ASSET_NAME_LENGTH);
 
     uint8_t fingerprintBuffer[ASSET_FINGERPRINT_SIZE];
     deriveAssetFingerprintBytes(tokenGroup->policyId,
@@ -102,7 +102,7 @@ bool str_formatTokenAmountOutput(const token_group_t* tokenGroup,
                                  uint64_t amount,
                                  char* out,
                                  size_t outSize) {
-    ASSERT(assetNameSize <= ASSET_NAME_SIZE_MAX);
+    ASSERT(assetNameSize <= MAX_ASSET_NAME_LENGTH);
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
 
     explicit_bzero(out, outSize);

@@ -93,17 +93,17 @@ static int ui_materialize_strings(void) {
                 // Already asserted above, this case should never be reached
                 break;
             case POLICY_SHOW: {
-                char *output_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_SIZE);
+                char *output_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH);
             if (output_num_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
-            snprintf(output_num_tmp, MAX_UINT64_STRING_SIZE, "#%d", output_num);
+            snprintf(output_num_tmp, MAX_UINT64_STRING_LENGTH, "#%d", output_num);
             status = ui_add_pair_or_fail("Output", output_num_tmp);
             if (status != SWO_SUCCESS) {
                 return status;
             }
 
-            char *address_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_SIZE);
+            char *address_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
             if (address_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
@@ -114,10 +114,10 @@ static int ui_materialize_strings(void) {
                     output_item->output_data.destination.address.buffer,
                     output_item->output_data.destination.address.size,
                     address_tmp,
-                    MAX_HUMAN_ADDRESS_SIZE
+                    MAX_HUMAN_ADDRESS_LENGTH
                 );
             } else {
-                uint8_t address_bytes[MAX_ADDRESS_SIZE];
+                uint8_t address_bytes[MAX_ADDRESS_LENGTH];
                 size_t derived_len = deriveAddress(
                     &output_item->output_data.destination.params,
                     address_bytes,
@@ -128,7 +128,7 @@ static int ui_materialize_strings(void) {
                         address_bytes,
                         derived_len,
                         address_tmp,
-                        MAX_HUMAN_ADDRESS_SIZE
+                        MAX_HUMAN_ADDRESS_LENGTH
                     );
                 }
             }
@@ -136,20 +136,20 @@ static int ui_materialize_strings(void) {
             LEDGER_ASSERT(address_formatted, "Address formatting failed");
             size_t address_len = strlen(address_tmp);
             LEDGER_ASSERT(address_len > 0, "Address length zero");
-            LEDGER_ASSERT(address_len + 1 < MAX_HUMAN_ADDRESS_SIZE, "Address truncated");
+            LEDGER_ASSERT(address_len + 1 < MAX_HUMAN_ADDRESS_LENGTH, "Address truncated");
 
             status = ui_add_pair_or_fail("Address", address_tmp);
             if (status != SWO_SUCCESS) {
                 return status;
             }
 
-            char *amount_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_SIZE);
+            char *amount_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH);
             if (amount_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
             bool amount_formatted = str_formatAdaAmount(output_item->output_data.adaAmount,
                                                         amount_tmp,
-                                                        MAX_ADA_AMOUNT_STRING_SIZE);
+                                                        MAX_ADA_AMOUNT_STRING_LENGTH);
             ASSERT(amount_formatted);
             status = ui_add_pair_or_fail("Amount", amount_tmp);
             if (status != SWO_SUCCESS) {
@@ -183,11 +183,11 @@ static int ui_materialize_strings(void) {
     }
     tx->outputs = NULL;
 
-    char *fee_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_SIZE);
+    char *fee_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH);
     if (fee_tmp == NULL) {
         return SWO_INSUFFICIENT_MEMORY;
     }
-    bool fee_formatted = str_formatAdaAmount(tx->fee, fee_tmp, MAX_ADA_AMOUNT_STRING_SIZE);
+    bool fee_formatted = str_formatAdaAmount(tx->fee, fee_tmp, MAX_ADA_AMOUNT_STRING_LENGTH);
     ASSERT(fee_formatted);
     status = ui_add_pair_or_fail("Fee", fee_tmp);
     if (status != SWO_SUCCESS) {
@@ -202,7 +202,7 @@ static int ui_materialize_strings(void) {
                 // Already asserted above, this case should never be reached
                 break;
             case POLICY_SHOW: {
-                char *ttl_tmp = ui_alloc_temp(MAX_VALIDITY_BOUNDARY_STRING_SIZE);
+                char *ttl_tmp = ui_alloc_temp(MAX_VALIDITY_BOUNDARY_STRING_LENGTH);
                 if (ttl_tmp == NULL) {
                     return SWO_INSUFFICIENT_MEMORY;
                 }
@@ -210,7 +210,7 @@ static int ui_materialize_strings(void) {
                                                                 tx->networkId,
                                                                 tx->protocolMagic,
                                                                 ttl_tmp,
-                                                                MAX_VALIDITY_BOUNDARY_STRING_SIZE);
+                                                                MAX_VALIDITY_BOUNDARY_STRING_LENGTH);
                 ASSERT(ttl_formatted);
                 status = ui_add_pair_or_fail("TTL", ttl_tmp);
                 if (status != SWO_SUCCESS) {
@@ -231,7 +231,7 @@ static int ui_materialize_strings(void) {
                 // Already asserted above, this case should never be reached
                 break;
             case POLICY_SHOW: {
-                char *validity_interval_start_tmp = ui_alloc_temp(MAX_VALIDITY_BOUNDARY_STRING_SIZE);
+                char *validity_interval_start_tmp = ui_alloc_temp(MAX_VALIDITY_BOUNDARY_STRING_LENGTH);
                 if (validity_interval_start_tmp == NULL) {
                     return SWO_INSUFFICIENT_MEMORY;
                 }
@@ -239,7 +239,7 @@ static int ui_materialize_strings(void) {
                                                                 tx->networkId,
                                                                 tx->protocolMagic,
                                                                 validity_interval_start_tmp,
-                                                                MAX_VALIDITY_BOUNDARY_STRING_SIZE);
+                                                                MAX_VALIDITY_BOUNDARY_STRING_LENGTH);
                 ASSERT(vis_formatted);
                 status = ui_add_pair_or_fail("Validity interval start", validity_interval_start_tmp);
                 if (status != SWO_SUCCESS) {
@@ -271,36 +271,36 @@ static int ui_materialize_strings(void) {
                 // Already asserted above, this case should never be reached
                 break;
             case POLICY_SHOW: {
-                char *withdrawal_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_SIZE);
+                char *withdrawal_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH);
             if (withdrawal_num_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
-            snprintf(withdrawal_num_tmp, MAX_UINT64_STRING_SIZE, "#%d", withdrawal_num);
+            snprintf(withdrawal_num_tmp, MAX_UINT64_STRING_LENGTH, "#%d", withdrawal_num);
             status = ui_add_pair_or_fail("Withdrawal", withdrawal_num_tmp);
             if (status != SWO_SUCCESS) {
                 return status;
             }
 
-            char *withdrawal_amount_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_SIZE);
+            char *withdrawal_amount_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH);
             if (withdrawal_amount_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
             bool withdrawal_amount_formatted =
                 str_formatAdaAmount(withdrawal_item->withdrawal_data.amount,
                                     withdrawal_amount_tmp,
-                                    MAX_ADA_AMOUNT_STRING_SIZE);
+                                    MAX_ADA_AMOUNT_STRING_LENGTH);
             ASSERT(withdrawal_amount_formatted);
             status = ui_add_pair_or_fail("Amount", withdrawal_amount_tmp);
             if (status != SWO_SUCCESS) {
                 return status;
             }
 
-            char *reward_account_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_SIZE);
+            char *reward_account_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
             if (reward_account_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
 
-            uint8_t reward_addr_bytes[REWARD_ACCOUNT_SIZE];
+            uint8_t reward_addr_bytes[REWARD_ACCOUNT_LENGTH];
             size_t reward_addr_len = 0;
 
             switch (withdrawal_item->withdrawal_data.stakeCredential.type) {
@@ -342,11 +342,11 @@ static int ui_materialize_strings(void) {
                 format_address_human_readable(reward_addr_bytes,
                                               reward_addr_len,
                                               reward_account_tmp,
-                                              MAX_HUMAN_ADDRESS_SIZE);
+                                              MAX_HUMAN_ADDRESS_LENGTH);
             ASSERT(reward_formatted);
             size_t reward_display_len = strlen(reward_account_tmp);
             LEDGER_ASSERT(reward_display_len > 0, "Reward addr length zero");
-            LEDGER_ASSERT(reward_display_len + 1 < MAX_HUMAN_ADDRESS_SIZE, "Reward addr truncated");
+            LEDGER_ASSERT(reward_display_len + 1 < MAX_HUMAN_ADDRESS_LENGTH, "Reward addr truncated");
 
             status = ui_add_pair_or_fail("Reward account", reward_account_tmp);
             if (status != SWO_SUCCESS) {
@@ -369,12 +369,12 @@ static int ui_materialize_strings(void) {
         security_policy_t mint_policy = policyForSignTxMintInit(tx->txSigningMode);
         LEDGER_ASSERT(mint_policy != POLICY_DENY, "Mint denied during UI");
         if (mint_policy == POLICY_SHOW) {
-            char *summary_tmp = ui_alloc_temp(MAX_MINT_SUMMARY_STRING_SIZE);
+            char *summary_tmp = ui_alloc_temp(MAX_MINT_SUMMARY_STRING_LENGTH);
             if (summary_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
             snprintf(summary_tmp,
-                     MAX_MINT_SUMMARY_STRING_SIZE,
+                     MAX_MINT_SUMMARY_STRING_LENGTH,
                      "%u asset group%s",
                      tx->num_mint_asset_groups,
                      (tx->num_mint_asset_groups == 1) ? "" : "s");
@@ -400,7 +400,7 @@ static int ui_materialize_strings(void) {
                 for (uint16_t tk = 0; tk < item->asset_group.numTokens; tk++) {
                     mint_token_t *token = &item->asset_group.tokens[tk];
 
-                    char *fingerprint_tmp = ui_alloc_temp(MAX_TOKEN_FINGERPRINT_STRING_SIZE);
+                    char *fingerprint_tmp = ui_alloc_temp(MAX_TOKEN_FINGERPRINT_STRING_LENGTH);
                     if (fingerprint_tmp == NULL) {
                         return SWO_INSUFFICIENT_MEMORY;
                     }
@@ -410,14 +410,14 @@ static int ui_materialize_strings(void) {
                         token->assetName,
                         token->assetNameLen,
                         fingerprint_tmp,
-                        MAX_TOKEN_FINGERPRINT_STRING_SIZE);
+                        MAX_TOKEN_FINGERPRINT_STRING_LENGTH);
                     LEDGER_ASSERT(fingerprint_len > 0, "Fingerprint derivation failed");
                     status = ui_add_pair_or_fail("Mint fingerprint", fingerprint_tmp);
                     if (status != SWO_SUCCESS) {
                         return status;
                     }
 
-                    char *amount_tmp = ui_alloc_temp(MAX_MINT_AMOUNT_STRING_SIZE);
+                    char *amount_tmp = ui_alloc_temp(MAX_MINT_AMOUNT_STRING_LENGTH);
                     if (amount_tmp == NULL) {
                         return SWO_INSUFFICIENT_MEMORY;
                     }
@@ -426,7 +426,7 @@ static int ui_materialize_strings(void) {
                                                                            token->assetNameLen,
                                                                            token->amount,
                                                                            amount_tmp,
-                                                                           MAX_MINT_AMOUNT_STRING_SIZE);
+                                                                           MAX_MINT_AMOUNT_STRING_LENGTH);
                     ASSERT(mint_amount_formatted);
                     status = ui_add_pair_or_fail("Mint amount", amount_tmp);
                     if (status != SWO_SUCCESS) {
@@ -469,12 +469,12 @@ static int ui_materialize_strings(void) {
         G_context.tx_info.raw_tx_len = 0;
     }
 
-    char *hash_tmp = ui_alloc_temp(MAX_TX_HASH_DISPLAY_SIZE);
+    char *hash_tmp = ui_alloc_temp(MAX_TX_HASH_DISPLAY_LENGTH);
     if (hash_tmp == NULL) {
         return SWO_INSUFFICIENT_MEMORY;
     }
     int hex_status = bytes_to_lowercase_hex(hash_tmp,
-                                            MAX_TX_HASH_DISPLAY_SIZE,
+                                            MAX_TX_HASH_DISPLAY_LENGTH,
                                             G_context.tx_info.tx_hash,
                                             sizeof(G_context.tx_info.tx_hash));
     LEDGER_ASSERT(hex_status == 0, "Tx hash hex formatting failed");

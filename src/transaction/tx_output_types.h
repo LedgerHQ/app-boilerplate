@@ -10,17 +10,17 @@
 
 #define MAX_ASSET_GROUPS_PER_OUTPUT 10
 #define MAX_TOKENS_PER_ASSET_GROUP 20
-#define MAX_DATUM_INLINE_SIZE 256
-#define MAX_REF_SCRIPT_SIZE 512
+#define MAX_DATUM_INLINE_LENGTH 256
+#define MAX_REF_SCRIPT_LENGTH 512
 #define ASSET_NAME_HASH_SIZE 32
 #define ASSET_NAME_DISPLAY_SIZE 32
 
 typedef struct {
-    uint8_t policyId[MINTING_POLICY_ID_SIZE];
+    uint8_t policyId[MINTING_POLICY_ID_LENGTH];
 } token_group_t;
 
 typedef struct {
-    uint8_t assetNameBytes[ASSET_NAME_SIZE_MAX];
+    uint8_t assetNameBytes[MAX_ASSET_NAME_LENGTH];
     size_t assetNameSize;
     uint64_t amount;
 } output_token_amount_t;
@@ -44,7 +44,7 @@ typedef struct {
     tx_output_destination_type_t type;
     union {
         struct {
-            uint8_t buffer[MAX_ADDRESS_SIZE];
+            uint8_t buffer[MAX_ADDRESS_LENGTH];
             size_t size;
         } address;
         addressParams_t params;
@@ -70,7 +70,7 @@ typedef struct {
 } output_token_t;
 
 typedef struct {
-    uint8_t policyId[MINTING_POLICY_ID_SIZE];
+    uint8_t policyId[MINTING_POLICY_ID_LENGTH];
     uint16_t numTokens;
     output_token_t* tokens;
 } asset_group_t;

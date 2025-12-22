@@ -162,7 +162,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
         if (output_item->output_data.destination.type == DESTINATION_THIRD_PARTY) {
             txHashBuilder_addOutput_topLevelData(&txHashBuilder, &output_desc);
         } else {
-            uint8_t *address_bytes = (uint8_t *) app_mem_alloc(MAX_ADDRESS_SIZE);
+            uint8_t *address_bytes = (uint8_t *) app_mem_alloc(MAX_ADDRESS_LENGTH);
             if (address_bytes == NULL) {
                 return send_error_and_reset(SWO_TX_PARSING_FAIL);
             }
@@ -170,10 +170,10 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             size_t address_size = deriveAddress(
                 &output_item->output_data.destination.params,
                 address_bytes,
-                MAX_ADDRESS_SIZE
+                MAX_ADDRESS_LENGTH
             );
 
-            if (address_size == 0 || address_size > MAX_ADDRESS_SIZE) {
+            if (address_size == 0 || address_size > MAX_ADDRESS_LENGTH) {
                 app_mem_free(address_bytes);
                 return send_error_and_reset(SWO_TX_PARSING_FAIL);
             }
@@ -189,7 +189,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             asset_group_t *group = &output_item->output_data.assetGroups[ag];
             txHashBuilder_addOutput_tokenGroup(&txHashBuilder,
                                                group->policyId,
-                                               MINTING_POLICY_ID_SIZE,
+                                               MINTING_POLICY_ID_LENGTH,
                                                group->numTokens);
 
             for (uint16_t tk = 0; tk < group->numTokens; tk++) {
@@ -243,7 +243,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                     break;
             }
 
-            uint8_t reward_address[REWARD_ACCOUNT_SIZE];
+            uint8_t reward_address[REWARD_ACCOUNT_LENGTH];
             size_t reward_addr_len = 0;
 
             switch (withdrawal_item->withdrawal_data.stakeCredential.type) {
@@ -279,7 +279,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                     return send_error_and_reset(SWO_TX_PARSING_FAIL);
             }
 
-            if (reward_addr_len == 0 || reward_addr_len != REWARD_ACCOUNT_SIZE) {
+            if (reward_addr_len != REWARD_ACCOUNT_LENGTH) {
                 return send_error_and_reset(SWO_TX_PARSING_FAIL);
             }
 
@@ -309,7 +309,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
 
             txHashBuilder_addMint_tokenGroup(&txHashBuilder,
                                              mint_item->asset_group.policyId,
-                                             MINTING_POLICY_ID_SIZE,
+                                             MINTING_POLICY_ID_LENGTH,
                                              mint_item->asset_group.numTokens);
 
             for (uint16_t tk = 0; tk < mint_item->asset_group.numTokens; tk++) {

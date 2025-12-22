@@ -75,7 +75,7 @@ static void test_tx_hash_builder_full(void** state) {
     txHashBuilder_addOutput_topLevelData(&builder, &output);
 
     static const char* policyIdHex = "0A0B0C0D0E0F101112131415161718191A1B1C1D1E1F2021222324";
-    uint8_t policyId[MINTING_POLICY_ID_SIZE] = {0};
+    uint8_t policyId[MINTING_POLICY_ID_LENGTH] = {0};
     decode_hex_buffer(policyIdHex, policyId, SIZEOF(policyId));
     txHashBuilder_addOutput_tokenGroup(&builder, policyId, SIZEOF(policyId), 1);
 
@@ -103,7 +103,7 @@ static void test_tx_hash_builder_full(void** state) {
     txHashBuilder_addCertificate_stakeDelegation(&builder, &stakeCredential, poolKeyHash, SIZEOF(poolKeyHash));
 
     txHashBuilder_enterWithdrawals(&builder);
-    uint8_t rewardAddress[REWARD_ACCOUNT_SIZE] = {0};
+    uint8_t rewardAddress[REWARD_ACCOUNT_LENGTH] = {0};
     static const char* rewardAddrHex = "E1A1A2A3A4A5A6A7A8A9AAABACADAEB0B1B2B3B4B5B6B7B8B9";
     decode_hex_buffer(rewardAddrHex, rewardAddress, SIZEOF(rewardAddress));
     txHashBuilder_addWithdrawal(&builder, rewardAddress, SIZEOF(rewardAddress), 500000ULL);

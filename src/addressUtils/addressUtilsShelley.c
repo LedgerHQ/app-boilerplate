@@ -357,7 +357,7 @@ size_t constructRewardAddressFromKeyPath(const bip44_path_t* path,
                                          uint8_t networkId,
                                          uint8_t* outBuffer,
                                          size_t outSize) {
-    ASSERT(outSize == REWARD_ACCOUNT_SIZE);
+    ASSERT(outSize == REWARD_ACCOUNT_LENGTH);
     ASSERT(bip44_isOrdinaryStakingKeyPath(path));
 
     addressParams_t addressParamsStub;
@@ -388,7 +388,7 @@ size_t constructRewardAddressFromHash(uint8_t networkId,
         ASSERT(buffer_write_bytes(&out, hashBuffer, hashSize));
     }
 
-    const int ADDRESS_LENGTH = REWARD_ACCOUNT_SIZE;
+    const int ADDRESS_LENGTH = REWARD_ACCOUNT_LENGTH;
     ASSERT(buffer_written_size(&out) == ADDRESS_LENGTH);
 
     return buffer_written_size(&out);
@@ -754,16 +754,16 @@ void rewardAccountToBuffer(const reward_account_t* rewardAccount,
                            uint8_t* rewardAccountBuffer) {
     switch (rewardAccount->keyReferenceType) {
         case KEY_REFERENCE_HASH: {
-            STATIC_ASSERT(SIZEOF(rewardAccount->hashBuffer) == REWARD_ACCOUNT_SIZE,
+            STATIC_ASSERT(SIZEOF(rewardAccount->hashBuffer) == REWARD_ACCOUNT_LENGTH,
                           "wrong reward account hash buffer size");
-            memmove(rewardAccountBuffer, rewardAccount->hashBuffer, REWARD_ACCOUNT_SIZE);
+            memmove(rewardAccountBuffer, rewardAccount->hashBuffer, REWARD_ACCOUNT_LENGTH);
             break;
         }
         case KEY_REFERENCE_PATH: {
             constructRewardAddressFromKeyPath(&rewardAccount->path,
                                               networkId,
                                               rewardAccountBuffer,
-                                              REWARD_ACCOUNT_SIZE);
+                                              REWARD_ACCOUNT_LENGTH);
             break;
         }
         default:

@@ -132,7 +132,7 @@ static void _getRewardAccountWithDescriptionScreen(char* line,
 
         {
             bool rewardFormatted = format_address_human_readable(rewardAccountBuffer,
-                                                                 REWARD_ACCOUNT_SIZE,
+                                                                 REWARD_ACCOUNT_LENGTH,
                                                                  line + descLen,
                                                                  lineSize - descLen);
             ASSERT(rewardFormatted);
@@ -155,7 +155,7 @@ void ui_getRewardAccountScreen(char* firstLine,
 
     ASSERT(isValidNetworkId(networkId));
 
-    uint8_t rewardAccountBuffer[REWARD_ACCOUNT_SIZE] = {0};
+    uint8_t rewardAccountBuffer[REWARD_ACCOUNT_LENGTH] = {0};
     explicit_bzero(firstLine, firstLineSize);
 
     switch (rewardAccount->keyReferenceType) {
@@ -179,11 +179,11 @@ void ui_getRewardAccountScreen(char* firstLine,
         case KEY_REFERENCE_HASH: {
             snprintf(firstLine, firstLineSize, "Reward account");
 
-            STATIC_ASSERT(SIZEOF(rewardAccountBuffer) == REWARD_ACCOUNT_SIZE,
+            STATIC_ASSERT(SIZEOF(rewardAccountBuffer) == REWARD_ACCOUNT_LENGTH,
                           "wrong reward account buffer size");
-            STATIC_ASSERT(SIZEOF(rewardAccount->hashBuffer) == REWARD_ACCOUNT_SIZE,
+            STATIC_ASSERT(SIZEOF(rewardAccount->hashBuffer) == REWARD_ACCOUNT_LENGTH,
                           "wrong reward account hash buffer size");
-            memmove(rewardAccountBuffer, rewardAccount->hashBuffer, REWARD_ACCOUNT_SIZE);
+            memmove(rewardAccountBuffer, rewardAccount->hashBuffer, REWARD_ACCOUNT_LENGTH);
             break;
         }
 
@@ -331,7 +331,7 @@ void ui_getAssetFingerprintScreen(char* line,
                                   const token_group_t* tokenGroup,
                                   const uint8_t* assetNameBytes,
                                   size_t assetNameSize) {
-    ASSERT(assetNameSize <= ASSET_NAME_SIZE_MAX);
+    ASSERT(assetNameSize <= MAX_ASSET_NAME_LENGTH);
 
     explicit_bzero(line, lineSize);
 
@@ -386,7 +386,7 @@ void ui_getPoolOwnerScreen(char* firstLine,
         ASSERT(ownerIndex < POOL_MAX_OWNERS);
     }
     {
-        uint8_t rewardAddress[REWARD_ACCOUNT_SIZE] = {0};
+        uint8_t rewardAddress[REWARD_ACCOUNT_LENGTH] = {0};
 
         switch (owner->keyReferenceType) {
             case KEY_REFERENCE_PATH: {

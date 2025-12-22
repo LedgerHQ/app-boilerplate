@@ -134,26 +134,26 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
     ASSERT(strlen(kesKeyStr) + 1 < BECH32_STRING_SIZE_MAX);
 
     // Allocate and fill KES period
-    kesPeriodStr = (char *) ui_mem_alloc(MAX_UINT64_STRING_SIZE);
+    kesPeriodStr = (char *) ui_mem_alloc(MAX_UINT64_STRING_LENGTH);
     if (kesPeriodStr == NULL) {
         TRACE("Failed to allocate kesPeriodStr");
         opcert_buffer_cleanup();
         return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
-    if (!format_u64(kesPeriodStr, MAX_UINT64_STRING_SIZE, opcert->kesPeriod)) {
+    if (!format_u64(kesPeriodStr, MAX_UINT64_STRING_LENGTH, opcert->kesPeriod)) {
         TRACE("Failed to format KES period");
         opcert_buffer_cleanup();
         return send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
     }
 
     // Allocate and fill issue counter
-    issueCounterStr = (char *) ui_mem_alloc(MAX_UINT64_STRING_SIZE);
+    issueCounterStr = (char *) ui_mem_alloc(MAX_UINT64_STRING_LENGTH);
     if (issueCounterStr == NULL) {
         TRACE("Failed to allocate issueCounterStr");
         opcert_buffer_cleanup();
         return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
-    if (!format_u64(issueCounterStr, MAX_UINT64_STRING_SIZE, opcert->issueCounter)) {
+    if (!format_u64(issueCounterStr, MAX_UINT64_STRING_LENGTH, opcert->issueCounter)) {
         TRACE("Failed to format issue counter");
         opcert_buffer_cleanup();
         return send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);

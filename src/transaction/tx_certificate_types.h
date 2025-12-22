@@ -33,12 +33,12 @@ typedef enum {
 
 typedef struct {
     bool isNull;
-    uint8_t ip[IPV4_SIZE];
+    uint8_t ip[IPV4_LENGTH];
 } ipv4_t;
 
 typedef struct {
     bool isNull;
-    uint8_t ip[IPV6_SIZE];
+    uint8_t ip[IPV6_LENGTH];
 } ipv6_t;
 
 typedef struct {
@@ -52,7 +52,7 @@ typedef struct {
     ipv4_t ipv4;
     ipv6_t ipv6;
     size_t dnsNameSize;
-    uint8_t dnsName[DNS_NAME_SIZE_MAX];
+    uint8_t dnsName[MAX_DNS_NAME_LENGTH];
 } pool_relay_t;
 
 typedef struct {

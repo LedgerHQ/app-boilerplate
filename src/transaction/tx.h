@@ -14,7 +14,7 @@
 // Mint token limits
 #define MAX_MINT_ASSET_GROUPS 100
 #define MAX_TOKENS_PER_MINT_GROUP 100
-#define MAX_MINT_ASSET_NAME_LEN 32
+#define MAX_MINT_ASSET_NAME_LENGTH 32
 
 typedef struct {
     uint8_t txHashBuffer[TX_HASH_LENGTH];
@@ -22,13 +22,13 @@ typedef struct {
 } tx_input_t;
 
 typedef struct {
-    uint8_t assetName[MAX_MINT_ASSET_NAME_LEN];
+    uint8_t assetName[MAX_MINT_ASSET_NAME_LENGTH];
     uint8_t assetNameLen;
     int64_t amount;
 } mint_token_t;
 
 typedef struct {
-    uint8_t policyId[MINTING_POLICY_ID_SIZE];
+    uint8_t policyId[MINTING_POLICY_ID_LENGTH];
     uint16_t numTokens;
     mint_token_t* tokens;
 } mint_asset_group_t;
@@ -58,7 +58,7 @@ typedef struct {
 typedef struct {
     ext_credential_t stakeCredential;
     uint64_t amount;
-    uint8_t previousRewardAccount[REWARD_ACCOUNT_SIZE];
+    uint8_t previousRewardAccount[REWARD_ACCOUNT_LENGTH];
 } withdrawal_data_t;
 
 typedef enum {

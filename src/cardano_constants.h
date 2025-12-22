@@ -27,13 +27,13 @@
 /**
  * Native token policy constants.
  */
-#define MINTING_POLICY_ID_SIZE 28
-#define ASSET_NAME_SIZE_MAX    32
+#define MINTING_POLICY_ID_LENGTH 28
+#define MAX_ASSET_NAME_LENGTH    32
 
 /**
  * Reward account serialization.
  */
-#define REWARD_ACCOUNT_SIZE (1 + ADDRESS_KEY_HASH_LENGTH)
+#define REWARD_ACCOUNT_LENGTH (1 + ADDRESS_KEY_HASH_LENGTH)
 
 /**
  * Network IDs and protocol magics.
@@ -53,13 +53,13 @@
  */
 #define ANCHOR_URL_LENGTH_MAX       128
 #define POOL_METADATA_URL_LENGTH_MAX 128
-#define DNS_NAME_SIZE_MAX           128
+#define MAX_DNS_NAME_LENGTH         128
 
 /**
- * IP address storage sizes.
+ * IP address storage lengths.
  */
-#define IPV4_SIZE 4
-#define IPV6_SIZE 16
+#define IPV4_LENGTH 4
+#define IPV6_LENGTH 16
 
 /**
  * Maximum allowed pool margin denominator.
@@ -69,4 +69,4 @@
 /**
  * Native script depth limit.
  */
-#define MAX_SCRIPT_DEPTH 11
+#define SCRIPT_DEPTH_MAX 11

@@ -157,9 +157,9 @@ def _check_result(testCase: SignMsgTestCase, buffer: bytes) -> None:
 
     ED25519_SIGNATURE_LENGTH = 64
     PUBLIC_KEY_LENGTH = 32
-    MAX_ADDRESS_SIZE = 128
+    MAX_ADDRESS_LENGTH = 128
     # Check the response length
-    assert len(buffer) <= ED25519_SIGNATURE_LENGTH + PUBLIC_KEY_LENGTH + 4 + MAX_ADDRESS_SIZE
+    assert len(buffer) <= ED25519_SIGNATURE_LENGTH + PUBLIC_KEY_LENGTH + 4 + MAX_ADDRESS_LENGTH
     # Get the signature
     buffer, signature = pop_sized_buf_from_buffer(buffer, ED25519_SIGNATURE_LENGTH)
     # Get the public key

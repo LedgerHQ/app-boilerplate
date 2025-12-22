@@ -174,12 +174,12 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
             if (!buffer_read_u16(buf, &addr_size, BE)) {
                 return OUTPUTS_PARSING_ERROR;
             }
-            if (addr_size == 0 || addr_size > MAX_ADDRESS_SIZE) {
+            if (addr_size == 0 || addr_size > MAX_ADDRESS_LENGTH) {
                 return OUTPUT_ADDRESS_SIZE_ERROR;
             }
             item->output_data.destination.address.size = addr_size;
 
-            STATIC_ASSERT(SIZEOF(item->output_data.destination.address.buffer) == MAX_ADDRESS_SIZE,
+            STATIC_ASSERT(SIZEOF(item->output_data.destination.address.buffer) == MAX_ADDRESS_LENGTH,
                           "destination address buffer size mismatch");
             if (!buffer_read_bytes(buf, item->output_data.destination.address.buffer, addr_size)) {
                 return OUTPUTS_PARSING_ERROR;
@@ -310,9 +310,9 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
 
             for (uint16_t ag = 0; ag < item->output_data.numAssetGroups; ag++) {
                 asset_group_t *group = &item->output_data.assetGroups[ag];
-                STATIC_ASSERT(SIZEOF(group->policyId) == MINTING_POLICY_ID_SIZE,
+                STATIC_ASSERT(SIZEOF(group->policyId) == MINTING_POLICY_ID_LENGTH,
                               "asset group policy size mismatch");
-                if (!buffer_read_bytes(buf, group->policyId, MINTING_POLICY_ID_SIZE)) {
+                if (!buffer_read_bytes(buf, group->policyId, MINTING_POLICY_ID_LENGTH)) {
                     return OUTPUTS_PARSING_ERROR;
                 }
                 TRACE("Deserialize: Asset group %u: policy ID read", ag);
@@ -395,7 +395,7 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                 if (!buffer_read_u16(buf, &datum_size, BE)) {
                     return OUTPUTS_PARSING_ERROR;
                 }
-                if (datum_size > MAX_DATUM_INLINE_SIZE) {
+                if (datum_size > MAX_DATUM_INLINE_LENGTH) {
                     return OUTPUTS_PARSING_ERROR;
                 }
                 item->output_data.datum.inline_data.size = datum_size;
@@ -429,7 +429,7 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
             if (!buffer_read_u16(buf, &script_size, BE)) {
                 return OUTPUTS_PARSING_ERROR;
             }
-            if (script_size > MAX_REF_SCRIPT_SIZE) {
+            if (script_size > MAX_REF_SCRIPT_LENGTH) {
                 return OUTPUTS_PARSING_ERROR;
             }
             item->output_data.refScript.size = script_size;
@@ -464,9 +464,9 @@ static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
             return OUTPUTS_PARSING_ERROR;
         }
 
-        STATIC_ASSERT(SIZEOF(item->asset_group.policyId) == MINTING_POLICY_ID_SIZE,
+        STATIC_ASSERT(SIZEOF(item->asset_group.policyId) == MINTING_POLICY_ID_LENGTH,
                       "mint asset group policy size mismatch");
-        if (!buffer_read_bytes(buf, item->asset_group.policyId, MINTING_POLICY_ID_SIZE)) {
+        if (!buffer_read_bytes(buf, item->asset_group.policyId, MINTING_POLICY_ID_LENGTH)) {
             return OUTPUTS_PARSING_ERROR;
         }
         TRACE("Deserialize: Mint asset group %u: policy ID read", ag);
@@ -489,12 +489,12 @@ static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
             if (!buffer_read_u8(buf, &token->assetNameLen)) {
                 return OUTPUTS_PARSING_ERROR;
             }
-            if (token->assetNameLen > MAX_MINT_ASSET_NAME_LEN) {
+            if (token->assetNameLen > MAX_MINT_ASSET_NAME_LENGTH) {
                 return OUTPUTS_PARSING_ERROR;
             }
 
             if (token->assetNameLen > 0) {
-                STATIC_ASSERT(SIZEOF(token->assetName) == MAX_MINT_ASSET_NAME_LEN,
+                STATIC_ASSERT(SIZEOF(token->assetName) == MAX_MINT_ASSET_NAME_LENGTH,
                               "mint token asset buffer size mismatch");
                 if (!buffer_read_bytes(buf, token->assetName, token->assetNameLen)) {
                     return OUTPUTS_PARSING_ERROR;
@@ -580,7 +580,7 @@ static parser_status_e parse_tx_withdrawals(buffer_t *buf, transaction_t *tx) {
                 return WITHDRAWALS_PARSING_ERROR;
         }
 
-        explicit_bzero(item->withdrawal_data.previousRewardAccount, REWARD_ACCOUNT_SIZE);
+        explicit_bzero(item->withdrawal_data.previousRewardAccount, REWARD_ACCOUNT_LENGTH);
         item->node.next = NULL;
         flist_push_back(&tx->withdrawals, (s_flist_node *) item);
     }

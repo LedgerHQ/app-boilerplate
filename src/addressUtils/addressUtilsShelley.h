@@ -13,7 +13,7 @@ typedef struct {
     key_reference_type_t keyReferenceType;
     union {
         bip44_path_t path;
-        uint8_t hashBuffer[REWARD_ACCOUNT_SIZE];
+        uint8_t hashBuffer[REWARD_ACCOUNT_LENGTH];
     };
 } reward_account_t;
 
@@ -41,9 +41,9 @@ typedef enum {
     REWARD_SCRIPT = 0xF,                      // 0b1111
 } address_type_t;
 
-#define MAX_ADDRESS_SIZE              128
-#define MAX_HUMAN_ADDRESS_SIZE        150
-#define MAX_HUMAN_REWARD_ACCOUNT_SIZE 65
+#define MAX_ADDRESS_LENGTH              128
+#define MAX_HUMAN_ADDRESS_LENGTH        150
+#define MAX_HUMAN_REWARD_ACCOUNT_LENGTH 65
 
 uint8_t getAddressHeader(const uint8_t* addressBuffer, size_t addressSize);
 
@@ -137,7 +137,7 @@ payment_choice_t determinePaymentChoice(address_type_t addressType);
  *
  * @param rewardAccount The reward account structure containing either a key path or hash
  * @param networkId The network ID to use for the reward account
- * @param rewardAccountBuffer Output buffer to store the serialized reward account (REWARD_ACCOUNT_SIZE bytes)
+ * @param rewardAccountBuffer Output buffer to store the serialized reward account (REWARD_ACCOUNT_LENGTH bytes)
  */
 void rewardAccountToBuffer(const reward_account_t* rewardAccount,
                            uint8_t networkId,

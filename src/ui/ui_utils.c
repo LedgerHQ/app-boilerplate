@@ -18,7 +18,7 @@ static uint16_t g_next_pair_index = 0;
  * Allocation tracker for UI buffers to prevent memory leaks
  * Tracks all dynamically allocated buffers for centralized cleanup
  */
-#define MAX_UI_ALLOCATIONS 400
+#define MAX_UI_ALLOCATIONS 250
 
 typedef struct {
     void *ptrs[MAX_UI_ALLOCATIONS];  /// Array of allocated pointers
