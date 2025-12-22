@@ -94,67 +94,67 @@ static int ui_materialize_strings(void) {
                 break;
             case POLICY_SHOW: {
                 char *output_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH);
-            if (output_num_tmp == NULL) {
-                return SWO_INSUFFICIENT_MEMORY;
-            }
-            snprintf(output_num_tmp, MAX_UINT64_STRING_LENGTH, "#%d", output_num);
-            status = ui_add_pair_or_fail("Output", output_num_tmp);
-            if (status != SWO_SUCCESS) {
-                return status;
-            }
+                if (output_num_tmp == NULL) {
+                    return SWO_INSUFFICIENT_MEMORY;
+                }
+                snprintf(output_num_tmp, MAX_UINT64_STRING_LENGTH, "#%d", output_num);
+                status = ui_add_pair_or_fail("Output", output_num_tmp);
+                if (status != SWO_SUCCESS) {
+                    return status;
+                }
 
-            char *address_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
-            if (address_tmp == NULL) {
-                return SWO_INSUFFICIENT_MEMORY;
-            }
+                char *address_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
+                if (address_tmp == NULL) {
+                    return SWO_INSUFFICIENT_MEMORY;
+                }
 
-            bool address_formatted = false;
-            if (output_item->output_data.destination.type == DESTINATION_THIRD_PARTY) {
-                address_formatted = format_address_human_readable(
-                    output_item->output_data.destination.address.buffer,
-                    output_item->output_data.destination.address.size,
-                    address_tmp,
-                    MAX_HUMAN_ADDRESS_LENGTH
-                );
-            } else {
-                uint8_t address_bytes[MAX_ADDRESS_LENGTH];
-                size_t derived_len = deriveAddress(
-                    &output_item->output_data.destination.params,
-                    address_bytes,
-                    sizeof(address_bytes)
-                );
-                if (derived_len > 0) {
+                bool address_formatted = false;
+                if (output_item->output_data.destination.type == DESTINATION_THIRD_PARTY) {
                     address_formatted = format_address_human_readable(
-                        address_bytes,
-                        derived_len,
+                        output_item->output_data.destination.address.buffer,
+                        output_item->output_data.destination.address.size,
                         address_tmp,
                         MAX_HUMAN_ADDRESS_LENGTH
                     );
+                } else {
+                    uint8_t address_bytes[MAX_ADDRESS_LENGTH];
+                    size_t derived_len = deriveAddress(
+                        &output_item->output_data.destination.params,
+                        address_bytes,
+                        sizeof(address_bytes)
+                    );
+                    if (derived_len > 0) {
+                        address_formatted = format_address_human_readable(
+                            address_bytes,
+                            derived_len,
+                            address_tmp,
+                            MAX_HUMAN_ADDRESS_LENGTH
+                        );
+                    }
                 }
-            }
 
-            LEDGER_ASSERT(address_formatted, "Address formatting failed");
-            size_t address_len = strlen(address_tmp);
-            LEDGER_ASSERT(address_len > 0, "Address length zero");
-            LEDGER_ASSERT(address_len + 1 < MAX_HUMAN_ADDRESS_LENGTH, "Address truncated");
+                LEDGER_ASSERT(address_formatted, "Address formatting failed");
+                size_t address_len = strlen(address_tmp);
+                LEDGER_ASSERT(address_len > 0, "Address length zero");
+                LEDGER_ASSERT(address_len + 1 < MAX_HUMAN_ADDRESS_LENGTH, "Address truncated");
 
-            status = ui_add_pair_or_fail("Address", address_tmp);
-            if (status != SWO_SUCCESS) {
-                return status;
-            }
+                status = ui_add_pair_or_fail("Address", address_tmp);
+                if (status != SWO_SUCCESS) {
+                    return status;
+                }
 
-            char *amount_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH);
-            if (amount_tmp == NULL) {
-                return SWO_INSUFFICIENT_MEMORY;
-            }
-            bool amount_formatted = str_formatAdaAmount(output_item->output_data.adaAmount,
-                                                        amount_tmp,
-                                                        MAX_ADA_AMOUNT_STRING_LENGTH);
-            ASSERT(amount_formatted);
-            status = ui_add_pair_or_fail("Amount", amount_tmp);
-            if (status != SWO_SUCCESS) {
-                return status;
-            }
+                char *amount_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH);
+                if (amount_tmp == NULL) {
+                    return SWO_INSUFFICIENT_MEMORY;
+                }
+                bool amount_formatted = str_formatAdaAmount(output_item->output_data.adaAmount,
+                                                            amount_tmp,
+                                                            MAX_ADA_AMOUNT_STRING_LENGTH);
+                ASSERT(amount_formatted);
+                status = ui_add_pair_or_fail("Amount", amount_tmp);
+                if (status != SWO_SUCCESS) {
+                    return status;
+                }
 
                 output_num++;
             }
