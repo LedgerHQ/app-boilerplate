@@ -52,15 +52,15 @@ size_t deriveAssetFingerprintBech32(const uint8_t* policyId,
                                 fingerprintBuffer,
                                 SIZEOF(fingerprintBuffer));
 
-    size_t len = bech32_encode("asset",
-                               fingerprintBuffer,
-                               SIZEOF(fingerprintBuffer),
-                               fingerprint,
-                               fingerprintMaxSize);
-    ASSERT(len == strlen(fingerprint));
-    ASSERT(len + 1 < fingerprintMaxSize);
+    bool success = format_bech32("asset",
+                                 fingerprintBuffer,
+                                 SIZEOF(fingerprintBuffer),
+                                 fingerprint,
+                                 fingerprintMaxSize);
+    ASSERT(success);
+    ASSERT(strlen(fingerprint) + 1 < fingerprintMaxSize);
 
-    return len;
+    return strlen(fingerprint);
 }
 
 typedef struct {

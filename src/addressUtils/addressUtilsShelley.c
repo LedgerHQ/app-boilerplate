@@ -445,8 +445,7 @@ bool format_blockchain_pointer(blockchainPointer_t blockchainPointer, char* out,
              blockchainPointer.blockIndex,
              blockchainPointer.txIndex,
              blockchainPointer.certificateIndex);
-    const size_t len = strlen(out);
-    ASSERT(len + 1 < outSize);
+    ASSERT(strlen(out) + 1 < outSize);
     return true;
 }
 
@@ -480,18 +479,18 @@ bool format_address_human_readable(const uint8_t* address,
         case REWARD_SCRIPT:
             {
                 const char* hrp = (networkId == TESTNET_NETWORK_ID) ? "stake_test" : "stake";
-                size_t len = bech32_encode(hrp, address, addressSize, out, outSize);
-                ASSERT(len == strlen(out));
-                ASSERT(len + 1 < outSize);
+                bool encoded = format_bech32(hrp, address, addressSize, out, outSize);
+                ASSERT(encoded);
+                ASSERT(strlen(out) + 1 < outSize);
                 return true;
             }
 
         default:  // all other shelley addresses
             {
                 const char* hrp = (networkId == TESTNET_NETWORK_ID) ? "addr_test" : "addr";
-                size_t len = bech32_encode(hrp, address, addressSize, out, outSize);
-                ASSERT(len == strlen(out));
-                ASSERT(len + 1 < outSize);
+                bool encoded = format_bech32(hrp, address, addressSize, out, outSize);
+                ASSERT(encoded);
+                ASSERT(strlen(out) + 1 < outSize);
                 return true;
             }
     }

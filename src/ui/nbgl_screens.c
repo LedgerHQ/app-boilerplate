@@ -223,13 +223,13 @@ void ui_getPaymentInfoScreen(char* line1,
         case PAYMENT_SCRIPT_HASH: {
             snprintf(line1, line1Size, "Payment script hash");
             {
-                const size_t len = bech32_encode("script",
-                                                 addressParams->paymentScriptHash,
-                                                 SIZEOF(addressParams->paymentScriptHash),
-                                                 line2,
-                                                 line2Size);
-                ASSERT(len > 0);
-                ASSERT(len + 1 < line2Size);
+                bool encoded = format_bech32("script",
+                                             addressParams->paymentScriptHash,
+                                             SIZEOF(addressParams->paymentScriptHash),
+                                             line2,
+                                             line2Size);
+                ASSERT(encoded);
+                ASSERT(strlen(line2) + 1 < line2Size);
             }
             return;
         }
@@ -284,13 +284,13 @@ void ui_getStakingInfoScreen(char* line1,
         case STAKING_KEY_HASH: {
             strncpy(line1, STAKING_HEADING_KEY_HASH, line1Size);
             {
-                const size_t len = bech32_encode("stake_vkh",  // shared keys never go into address directly
-                                                 addressParams->stakingKeyHash,
-                                                 SIZEOF(addressParams->stakingKeyHash),
-                                                 line2,
-                                                 line2Size);
-                ASSERT(len > 0);
-                ASSERT(len + 1 < line2Size);
+                bool encoded = format_bech32("stake_vkh",  // shared keys never go into address directly
+                                             addressParams->stakingKeyHash,
+                                             SIZEOF(addressParams->stakingKeyHash),
+                                             line2,
+                                             line2Size);
+                ASSERT(encoded);
+                ASSERT(strlen(line2) + 1 < line2Size);
             }
             break;
         }
@@ -298,13 +298,13 @@ void ui_getStakingInfoScreen(char* line1,
         case STAKING_SCRIPT_HASH: {
             strncpy(line1, STAKING_HEADING_SCRIPT_HASH, line1Size);
             {
-                const size_t len = bech32_encode("script",
-                                                 addressParams->stakingScriptHash,
-                                                 SIZEOF(addressParams->stakingScriptHash),
-                                                 line2,
-                                                 line2Size);
-                ASSERT(len > 0);
-                ASSERT(len + 1 < line2Size);
+                bool encoded = format_bech32("script",
+                                             addressParams->stakingScriptHash,
+                                             SIZEOF(addressParams->stakingScriptHash),
+                                             line2,
+                                             line2Size);
+                ASSERT(encoded);
+                ASSERT(strlen(line2) + 1 < line2Size);
             }
             break;
         }

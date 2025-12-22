@@ -96,11 +96,11 @@ void bech32_encode_5bit(const char* hrp,
 // WARNING: increasing this would take more stack space, see data5bit definition below
 #define MAX_BYTES 65
 
-size_t bech32_encode(const char* hrp,
-                     const uint8_t* bytes,
-                     size_t bytesSize,
-                     char* output,
-                     size_t maxOutputSize) {
+bool format_bech32(const char* hrp,
+                   const uint8_t* bytes,
+                   size_t bytesSize,
+                   char* output,
+                   size_t maxOutputSize) {
     ASSERT(bytesSize <= MAX_BYTES);
     ASSERT(strlen(hrp) >= 1);  // not allowed for bech32
 
@@ -141,5 +141,5 @@ size_t bech32_encode(const char* hrp,
     bech32_encode_5bit(hrp, data5bit, data5bitLength, output, maxOutputSize);
     ASSERT(strlen(output) == supposedOutputLength);
 
-    return supposedOutputLength;
+    return true;
 }

@@ -18,7 +18,9 @@ static void test_bech32_empty_prefix(void **state) {
     uint8_t inputBuffer[1] = {0};
     char outputStr[300] = {0};
 
-    size_t outputLen = bech32_encode(hrp, inputBuffer, 0, outputStr, sizeof(outputStr));
+    bool formatted = format_bech32(hrp, inputBuffer, 0, outputStr, sizeof(outputStr));
+    assert_true(formatted);
+    size_t outputLen = strlen(outputStr);
     assert_int_equal(outputLen, strlen("a12uel5l"));
     assert_string_equal(outputStr, "a12uel5l");
 }
@@ -31,7 +33,9 @@ static void test_bech32_long_prefix(void **state) {
     uint8_t inputBuffer[1] = {0};
     char outputStr[300] = {0};
 
-    size_t outputLen = bech32_encode(hrp, inputBuffer, 0, outputStr, sizeof(outputStr));
+    bool formatted = format_bech32(hrp, inputBuffer, 0, outputStr, sizeof(outputStr));
+    assert_true(formatted);
+    size_t outputLen = strlen(outputStr);
     const char* expected = "an83characterlonghumanreadablepartthatcontainsthenumber1andtheexcludedcharactersbio1tt5tgs";
     assert_int_equal(outputLen, strlen(expected));
     assert_string_equal(outputStr, expected);
@@ -48,7 +52,9 @@ static void test_bech32_with_data(void **state) {
     assert_true(success);
 
     char outputStr[300] = {0};
-    size_t outputLen = bech32_encode("abcdef", inputBuffer, inputSize, outputStr, sizeof(outputStr));
+    bool formatted = format_bech32("abcdef", inputBuffer, inputSize, outputStr, sizeof(outputStr));
+    assert_true(formatted);
+    size_t outputLen = strlen(outputStr);
 
     const char* expected = "abcdef1qpzry9x8gf2tvdw0s3jn54khce6mua7lmqqqxw";
     assert_int_equal(outputLen, strlen(expected));
@@ -67,7 +73,9 @@ static void test_bech32_all_zeros(void **state) {
     assert_true(success);
 
     char outputStr[300] = {0};
-    size_t outputLen = bech32_encode("1", inputBuffer, inputSize, outputStr, sizeof(outputStr));
+    bool formatted = format_bech32("1", inputBuffer, inputSize, outputStr, sizeof(outputStr));
+    assert_true(formatted);
+    size_t outputLen = strlen(outputStr);
 
     const char* expected = "11qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqc8247"
                           "j";
@@ -86,7 +94,9 @@ static void test_bech32_split_example(void **state) {
     assert_true(success);
 
     char outputStr[300] = {0};
-    size_t outputLen = bech32_encode("split", inputBuffer, inputSize, outputStr, sizeof(outputStr));
+    bool formatted = format_bech32("split", inputBuffer, inputSize, outputStr, sizeof(outputStr));
+    assert_true(formatted);
+    size_t outputLen = strlen(outputStr);
 
     const char* expected = "split1checkupstagehandshakeupstreamerranterredcaperred2y9e3w";
     assert_int_equal(outputLen, strlen(expected));
@@ -105,7 +115,9 @@ static void test_bech32_cardano_address(void **state) {
     assert_true(success);
 
     char outputStr[300] = {0};
-    size_t outputLen = bech32_encode("addr", inputBuffer, inputSize, outputStr, sizeof(outputStr));
+    bool formatted = format_bech32("addr", inputBuffer, inputSize, outputStr, sizeof(outputStr));
+    assert_true(formatted);
+    size_t outputLen = strlen(outputStr);
 
     const char* expected = "addr1qz2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3jcu5d8ps7zex2k2xt3uqxgjqnnj83ws8lhrn6"
                           "48jjxtwqcyl47r";
