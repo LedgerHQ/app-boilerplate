@@ -62,7 +62,7 @@ set(CARDANO_SOURCE
     ${CARDANO_PATH}/src/ui/nbgl_display_transaction.c
     ${CARDANO_PATH}/src/ui/nbgl_display_witness.c
     ${CARDANO_PATH}/src/ui/nbgl_screens.c
-    ${CARDANO_PATH}/src/ui/tx_review_prepare.c
+    ${CARDANO_PATH}/src/ui/tx_ui_materialize.c
     ${CARDANO_PATH}/src/ui/ui_utils.c
     ${CARDANO_PATH}/src/utils/buffer_utils.c
     ${CARDANO_PATH}/src/utils/cardano_os_utils.c

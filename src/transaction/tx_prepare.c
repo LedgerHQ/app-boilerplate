@@ -50,6 +50,32 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
         }
     }
 
+    if (G_context.tx_info.transaction.num_mint_asset_groups > 0) {
+        security_policy_t mint_policy =
+            policyForSignTxMintInit(G_context.tx_info.transaction.txSigningMode);
+        switch (mint_policy) {
+            case POLICY_DENY:
+                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            case POLICY_SHOW: {
+                // summary entry
+                plan->pair_count++;
+                // each minted token contributes fingerprint + amount
+                s_flist_node* mint_node = G_context.tx_info.transaction.mint_asset_groups;
+                while (mint_node != NULL) {
+                    mint_asset_group_list_item_t* mint_item =
+                        (mint_asset_group_list_item_t*) mint_node;
+                    if (mint_item->asset_group.tokens != NULL) {
+                        plan->pair_count += (uint16_t)(2 * mint_item->asset_group.numTokens);
+                    }
+                    mint_node = mint_node->next;
+                }
+                break;
+            }
+            case POLICY_HIDE:
+                break;
+        }
+    }
+
     tx_hash_builder_t txHashBuilder;
     explicit_bzero(&txHashBuilder, sizeof(txHashBuilder));
 

@@ -6,14 +6,12 @@
 
 #include "addressUtils/addressUtilsShelley.h"
 #include "addressUtils/bip44.h"
+#include "auxDataHashBuilder/auxDataHashBuilder.h"
+#include "messageSigning/cip8_types.h"
 #include "securityPolicyType.h"
+#include "transaction/tx_aux_data_types.h"
 #include "transaction/tx_hash_builder.h"
 #include "transaction/tx.h"
-/*
-#include "signTxPoolRegistration.h"
-#include "signTxAuxData.h"
-#include "signTx.h"
-*/
 
 #include "securityWarnings.h"
 
@@ -34,9 +32,9 @@ security_policy_t policyForGetExtendedPublicKey(const bip44_path_t* path, warnin
 security_policy_t policyForShowDeriveAddress(const addressParams_t* addressParams);
 security_policy_t policyForReturnDeriveAddress(const addressParams_t* addressParams);
 
- security_policy_t policyForSignTxFee(sign_tx_signingmode_t txSigningMode,
-                                       uint64_t fee,
-                                       warning_bits_t* warnings);
+security_policy_t policyForSignTxFee(sign_tx_signingmode_t txSigningMode,
+                                     uint64_t fee,
+                                     warning_bits_t* warnings);
 
 bool isNetworkUsual(uint32_t networkId, uint32_t protocolMagic);
 bool isTxNetworkIdVerifiable(bool includeNetworkId,
@@ -109,9 +107,6 @@ security_policy_t policyForSignTxCollateralOutputConfirm(security_policy_t outpu
                                                          uint64_t numAssetGroups);
 
 security_policy_t policyForSignTxTtl(uint32_t ttl);
-
-/*
-
 security_policy_t policyForSignTxCertificate(sign_tx_signingmode_t txSigningMode,
                                              const certificate_type_t certificateType);
 security_policy_t policyForSignTxCertificateStaking(sign_tx_signingmode_t txSigningMode,
@@ -151,19 +146,12 @@ security_policy_t policyForSignTxStakePoolRegistrationNoMetadata();
 security_policy_t policyForSignTxStakePoolRegistrationConfirm(uint32_t numOwners,
                                                               uint32_t numRelays);
 
-*/
-
 security_policy_t policyForSignTxWithdrawal(sign_tx_signingmode_t txSigningMode,
                                             const ext_credential_t* stakeCredential,
                                             warning_bits_t* warnings);
-
-/*
 security_policy_t policyForSignTxAuxData(aux_data_type_t auxDataType);
-*/
 
 security_policy_t policyForSignTxValidityIntervalStart();
-
-/*
 security_policy_t policyForSignTxMintInit(const sign_tx_signingmode_t txSigningMode);
 security_policy_t policyForSignTxMintConfirm(security_policy_t outputPolicy);
 
@@ -173,17 +161,13 @@ security_policy_t policyForSignTxCollateralInput(const sign_tx_signingmode_t txS
                                                  bool isTotalCollateralIncluded);
 
 security_policy_t policyForSignTxRequiredSigner(const sign_tx_signingmode_t txSigningMode,
-                                                sign_tx_required_signer_t* requiredSigner);
-*/
+                                                required_signer_t* requiredSigner);
 
 security_policy_t policyForSignTxWitness(sign_tx_signingmode_t txSigningMode,
                                          const bip44_path_t* witnessPath,
                                          bool mintPresent,
                                          const bip44_path_t* poolOwnerPath,
                                          warning_bits_t* warnings);
-
-/*
-
 security_policy_t policyForSignTxTotalCollateral();
 
 security_policy_t policyForSignTxReferenceInput(const sign_tx_signingmode_t txSigningMode);
@@ -197,12 +181,8 @@ security_policy_t policyForSignTxDonation(sign_tx_signingmode_t txSigningMode, u
 
 security_policy_t policyForSignTxConfirm();
 
-*/
-
 security_policy_t policyForSignOpCert(const bip44_path_t* poolColdKeyPathSpec,
                                       warning_bits_t* warnings);
-
-/*
 
 security_policy_t policyForCVoteRegistrationVoteKey();
 security_policy_t policyForCVoteRegistrationVoteKeyPath(bip44_path_t* path,
@@ -222,5 +202,3 @@ security_policy_t policyForSignCVoteWitness(bip44_path_t* path);
 security_policy_t policyForSignMsg(const bip44_path_t* witnessPath,
                                    cip8_address_field_type_t addressFieldType,
                                    const addressParams_t* addressParams);
-
-*/

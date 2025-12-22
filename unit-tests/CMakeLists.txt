@@ -116,8 +116,9 @@ add_executable(test_tx_prepare
     ../src/keyDerivation/keyDerivation.c
     ../src/memory/mem.c
     ../src/memory/mem_utils.c
+    ../src/app_tokens/app_tokens.c
     ../src/ui/ui_utils.c
-    ../src/ui/tx_review_prepare.c
+    ../src/ui/tx_ui_materialize.c
     ../src/utils/cardano_os_utils.c
     mock_sources/mem_alloc_stub.c
     mock_sources/glyphs_mock.c
@@ -139,7 +140,8 @@ add_executable(test_sign_tx_handler
     ../src/addressUtils/addressUtilsByron.c
     ../src/transaction/tx_hash_builder.c
     ../src/transaction/tx_prepare.c
-    ../src/ui/tx_review_prepare.c
+    ../src/app_tokens/app_tokens.c
+    ../src/ui/tx_ui_materialize.c
     ../src/ui/ui_utils.c
     ../src/utils/cardano_os_utils.c
     ../src/memory/mem_utils.c
@@ -346,7 +348,7 @@ add_executable(test_sign_tx_rejects
     ../src/addressUtils/addressUtilsByron.c
     ../src/transaction/tx_hash_builder.c
     ../src/transaction/tx_prepare.c
-    ../src/ui/tx_review_prepare.c
+    ../src/ui/tx_ui_materialize.c
     ../src/ui/ui_utils.c
     ../src/utils/cardano_os_utils.c
     ../src/memory/mem_utils.c

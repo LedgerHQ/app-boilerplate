@@ -22,6 +22,7 @@
 #include "ui/ui_utils.h"
 #include "io.h"
 #include "utils/cardano_os_utils.h"
+#include "app_tokens/app_tokens.h"
 
 static nbgl_warning_t *g_warning = NULL;
 
@@ -85,7 +86,7 @@ static int ui_materialize_strings(void) {
                 tx->protocolMagic,
                 &G_context.tx_info.warning_bits);
 
-        LEDGER_ASSERT(policy != POLICY_DENY, "Output policy changed between parse and UI");
+        LEDGER_ASSERT(policy != POLICY_DENY, "Output denied during UI");
 
         switch (policy) {
             case POLICY_DENY:
@@ -192,7 +193,7 @@ static int ui_materialize_strings(void) {
 
     if (tx->includeTtl) {
         security_policy_t ttl_policy = policyForSignTxTtl(tx->ttl);
-        LEDGER_ASSERT(ttl_policy != POLICY_DENY, "TTL policy changed between parse and UI");
+        LEDGER_ASSERT(ttl_policy != POLICY_DENY, "TTL denied during UI");
         switch (ttl_policy) {
             case POLICY_DENY:
                 // Already asserted above, this case should never be reached
@@ -216,7 +217,7 @@ static int ui_materialize_strings(void) {
 
     if (tx->includeValidityIntervalStart) {
         security_policy_t validity_interval_start_policy = policyForSignTxValidityIntervalStart();
-        LEDGER_ASSERT(validity_interval_start_policy != POLICY_DENY, "Validity interval start policy changed between parse and UI");
+        LEDGER_ASSERT(validity_interval_start_policy != POLICY_DENY, "Validity interval start denied during UI");
         switch (validity_interval_start_policy) {
             case POLICY_DENY:
                 // Already asserted above, this case should never be reached
@@ -250,7 +251,7 @@ static int ui_materialize_strings(void) {
             &withdrawal_item->withdrawal_data.stakeCredential,
             &G_context.tx_info.warning_bits
         );
-        LEDGER_ASSERT(policy != POLICY_DENY, "Withdrawal policy changed between parse and UI");
+        LEDGER_ASSERT(policy != POLICY_DENY, "Withdrawal denied during UI");
 
         switch (policy) {
             case POLICY_DENY:
@@ -351,6 +352,85 @@ static int ui_materialize_strings(void) {
         withdrawal_node = next;
     }
     tx->withdrawals = NULL;
+
+    if (tx->num_mint_asset_groups > 0) {
+        security_policy_t mint_policy = policyForSignTxMintInit(tx->txSigningMode);
+        LEDGER_ASSERT(mint_policy != POLICY_DENY, "Mint denied during UI");
+        if (mint_policy == POLICY_SHOW) {
+            char *summary_tmp = ui_alloc_temp(MAX_MINT_SUMMARY_STRING_SIZE);
+            if (summary_tmp == NULL) {
+                return SWO_INSUFFICIENT_MEMORY;
+            }
+            snprintf(summary_tmp,
+                     MAX_MINT_SUMMARY_STRING_SIZE,
+                     "%u asset group%s",
+                     tx->num_mint_asset_groups,
+                     (tx->num_mint_asset_groups == 1) ? "" : "s");
+            status = ui_add_pair_or_fail("Mint", summary_tmp);
+            if (status != SWO_SUCCESS) {
+                return status;
+            }
+
+            token_group_t tokenGroup;
+            s_flist_node *mint_node = tx->mint_asset_groups;
+            while (mint_node != NULL) {
+                mint_asset_group_list_item_t *item =
+                    (mint_asset_group_list_item_t *) mint_node;
+                memcpy(tokenGroup.policyId,
+                       item->asset_group.policyId,
+                       sizeof(tokenGroup.policyId));
+
+                if (item->asset_group.tokens == NULL) {
+                    mint_node = mint_node->next;
+                    continue;
+                }
+
+                for (uint16_t tk = 0; tk < item->asset_group.numTokens; tk++) {
+                    mint_token_t *token = &item->asset_group.tokens[tk];
+
+                    char *fingerprint_tmp = ui_alloc_temp(MAX_TOKEN_FINGERPRINT_STRING_SIZE);
+                    if (fingerprint_tmp == NULL) {
+                        return SWO_INSUFFICIENT_MEMORY;
+                    }
+                    size_t fingerprint_len = deriveAssetFingerprintBech32(
+                        tokenGroup.policyId,
+                        sizeof(tokenGroup.policyId),
+                        token->assetName,
+                        token->assetNameLen,
+                        fingerprint_tmp,
+                        MAX_TOKEN_FINGERPRINT_STRING_SIZE);
+                    if (fingerprint_len == 0) {
+                        return SWO_DISPLAY_ADDRESS_FAIL;
+                    }
+                    status = ui_add_pair_or_fail("Mint fingerprint", fingerprint_tmp);
+                    if (status != SWO_SUCCESS) {
+                        return status;
+                    }
+
+                    char *amount_tmp = ui_alloc_temp(MAX_MINT_AMOUNT_STRING_SIZE);
+                    if (amount_tmp == NULL) {
+                        return SWO_INSUFFICIENT_MEMORY;
+                    }
+                    str_formatTokenAmountMint(&tokenGroup,
+                                              token->assetName,
+                                              token->assetNameLen,
+                                              token->amount,
+                                              amount_tmp,
+                                              MAX_MINT_AMOUNT_STRING_SIZE);
+                    status = ui_add_pair_or_fail("Mint amount", amount_tmp);
+                    if (status != SWO_SUCCESS) {
+                        return status;
+                    }
+                }
+
+                mint_node = mint_node->next;
+            }
+        }
+
+        security_policy_t mint_confirm_policy =
+            policyForSignTxMintConfirm(mint_policy);
+        LEDGER_ASSERT(mint_confirm_policy != POLICY_DENY, "Mint confirm denied during UI");
+    }
 
     s_flist_node *input_node = tx->inputs;
     while (input_node != NULL) {

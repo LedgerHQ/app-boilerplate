@@ -873,9 +873,6 @@ security_policy_t policyForSignTxTtl(uint32_t ttl MARK_UNUSED) {
     SHOW_IF(is_expert_mode());
     HIDE();
 }
-
-/*
-
 // a generic policy for all certificates
 // does not evaluate aspects of specific certificates
 security_policy_t policyForSignTxCertificate(sign_tx_signingmode_t txSigningMode,
@@ -885,7 +882,7 @@ security_policy_t policyForSignTxCertificate(sign_tx_signingmode_t txSigningMode
         case SIGN_TX_SIGNINGMODE_ORDINARY_TX:
             // pool registration is allowed only in POOL_REGISTRATION signing modes
             DENY_IF(certificateType == CERTIFICATE_STAKE_POOL_REGISTRATION);
-            ALLOW();
+            HIDE();
             break;
 
         case SIGN_TX_SIGNINGMODE_MULTISIG_TX:
@@ -893,14 +890,14 @@ security_policy_t policyForSignTxCertificate(sign_tx_signingmode_t txSigningMode
             DENY_IF(certificateType == CERTIFICATE_STAKE_POOL_REGISTRATION);
             // pool retirement is impossible with multisig keys
             DENY_IF(certificateType == CERTIFICATE_STAKE_POOL_RETIREMENT);
-            ALLOW();
+            HIDE();
             break;
 
         case SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR:
         case SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER:
             // only pool registration is allowed
             DENY_UNLESS(certificateType == CERTIFICATE_STAKE_POOL_REGISTRATION);
-            ALLOW();
+            HIDE();
             break;
 
         default:
@@ -1276,8 +1273,6 @@ security_policy_t policyForSignTxStakePoolRegistrationConfirm(uint32_t numOwners
     HIDE();
 }
 
-*/
-
 // For each withdrawal
 security_policy_t policyForSignTxWithdrawal(sign_tx_signingmode_t txSigningMode,
                                             const ext_credential_t* stakeCredential,
@@ -1595,15 +1590,12 @@ security_policy_t policyForSignTxWitness(sign_tx_signingmode_t txSigningMode,
 
     DENY();  // should not be reached
 }
-
-/*
-
 // For transaction auxiliary data
 security_policy_t policyForSignTxAuxData(aux_data_type_t auxDataType) {
     switch (auxDataType) {
         case AUX_DATA_TYPE_ARBITRARY_HASH:
             SHOW_IF(is_expert_mode());
-            ALLOW();
+            HIDE();
 
         case AUX_DATA_TYPE_CVOTE_REGISTRATION:
             // this is the policy for the initial prompt
@@ -1619,16 +1611,11 @@ security_policy_t policyForSignTxAuxData(aux_data_type_t auxDataType) {
     DENY();  // should not be reached
 }
 
-*/
-
 // For transaction validity interval start
 security_policy_t policyForSignTxValidityIntervalStart() {
     SHOW_IF(is_expert_mode());
     HIDE();
 }
-
-/*
-
 // For transaction mint field
 security_policy_t policyForSignTxMintInit(const sign_tx_signingmode_t txSigningMode) {
     switch (txSigningMode) {
@@ -1699,7 +1686,7 @@ security_policy_t policyForSignTxCollateralInput(const sign_tx_signingmode_t txS
             // (if tokens are present, they go to collateral output, and collateral ADA is
             // shown explicitly, so we don't need to see individual collateral inputs)
             SHOW_IF(!isTotalCollateralPresent && is_expert_mode());
-            ALLOW();
+            HIDE();
             break;
 
         case SIGN_TX_SIGNINGMODE_ORDINARY_TX:
@@ -1756,7 +1743,7 @@ static bool is_required_signer_allowed(bip44_path_t* path) {
 }
 
 security_policy_t policyForSignTxRequiredSigner(const sign_tx_signingmode_t txSigningMode,
-                                                sign_tx_required_signer_t* requiredSigner) {
+                                                required_signer_t* requiredSigner) {
     DENY_UNLESS(required_signers_allowed(txSigningMode));
 
     switch (requiredSigner->type) {
@@ -1963,14 +1950,12 @@ security_policy_t policyForCVoteRegistrationNonce() {
 security_policy_t policyForCVoteRegistrationVotingPurpose() {
     // since it will only be used for Catalyst, we don't show this value to non-experts
     SHOW_IF(is_expert_mode());
-    ALLOW();
+    HIDE();
 }
 
 security_policy_t policyForCVoteRegistrationConfirm() {
     SHOW();
 }
-
-*/
 
 security_policy_t policyForSignOpCert(const bip44_path_t* poolColdKeyPath,
                                      warning_bits_t* warnings) {
@@ -2067,9 +2052,6 @@ size_t warning_bits_to_definitions(warning_bits_t warnings,
     }
     return count;
 }
-
-/*
-
 security_policy_t policyForSignCVoteInit() {
     SHOW();
 }
@@ -2130,5 +2112,3 @@ security_policy_t policyForSignMsg(const bip44_path_t* witnessPath,
 
     SHOW();
 }
-
-*/

@@ -61,6 +61,19 @@ typedef struct {
     uint8_t previousRewardAccount[REWARD_ACCOUNT_SIZE];
 } withdrawal_data_t;
 
+typedef enum {
+    REQUIRED_SIGNER_WITH_PATH = 0,
+    REQUIRED_SIGNER_WITH_HASH = 1,
+} required_signer_type_t;
+
+typedef struct {
+    required_signer_type_t type;
+    union {
+        bip44_path_t keyPath;
+        uint8_t keyHash[ADDRESS_KEY_HASH_LENGTH];
+    };
+} required_signer_t;
+
 typedef struct {
     s_flist_node node;
     withdrawal_data_t withdrawal_data;

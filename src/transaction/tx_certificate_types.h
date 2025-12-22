@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #include "cardano_constants.h"
-
+#include "addressUtils/addressUtilsShelley.h"
 
 // Certificate body types (matches CDDL)
 typedef enum {
@@ -55,6 +55,28 @@ typedef struct {
     uint8_t dnsName[DNS_NAME_SIZE_MAX];
 } pool_relay_t;
 
+typedef struct {
+    key_reference_type_t keyReferenceType;
+    union {
+        bip44_path_t path;
+        uint8_t hash[POOL_KEY_HASH_LENGTH];
+    };
+} pool_id_t;
+
+typedef struct {
+    key_reference_type_t keyReferenceType;
+    union {
+        bip44_path_t path;
+        uint8_t keyHash[ADDRESS_KEY_HASH_LENGTH];
+    };
+} pool_owner_t;
+
+typedef struct {
+    uint8_t url[POOL_METADATA_URL_LENGTH_MAX];
+    size_t urlSize;
+    uint8_t hash[POOL_METADATA_HASH_LENGTH];
+} pool_metadata_t;
+
 // Anchor structures for committee/DRep certificates
 typedef struct {
     bool isIncluded;
@@ -85,6 +107,26 @@ typedef struct {
         uint8_t scriptHash[SCRIPT_HASH_LENGTH];
     };
 } voter_t;
+
+typedef enum {
+    EXT_VOTER_COMMITTEE_HOT_KEY_HASH = 0,
+    EXT_VOTER_COMMITTEE_HOT_KEY_PATH = 0 + 100,
+    EXT_VOTER_COMMITTEE_HOT_SCRIPT_HASH = 1,
+    EXT_VOTER_DREP_KEY_HASH = 2,
+    EXT_VOTER_DREP_KEY_PATH = 2 + 100,
+    EXT_VOTER_DREP_SCRIPT_HASH = 3,
+    EXT_VOTER_STAKE_POOL_KEY_HASH = 4,
+    EXT_VOTER_STAKE_POOL_KEY_PATH = 4 + 100,
+} ext_voter_type_t;
+
+typedef struct {
+    ext_voter_type_t type;
+    union {
+        bip44_path_t keyPath;
+        uint8_t keyHash[ADDRESS_KEY_HASH_LENGTH];
+        uint8_t scriptHash[SCRIPT_HASH_LENGTH];
+    };
+} ext_voter_t;
 
 typedef enum {
     VOTE_NO = 0,
