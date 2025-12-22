@@ -24,21 +24,6 @@ __noinline_due_to_stack__ static void _ui_getAccountWithDescriptionScreen(
     }
 }
 
-void ui_getPublicKeyType(char* line, const size_t lineSize, const bip44_path_t* path) {
-    switch (bip44_classifyPath(path)) {
-        case PATH_POOL_COLD_KEY: {
-            strncpy(line, "Export\nCold public key", lineSize);
-            return;
-        }
-
-        case PATH_ORDINARY_ACCOUNT:
-        // Fallthrough
-        default:
-            strncpy(line, "Export\nPublic key", lineSize);
-            return;
-    }
-}
-
 // the given path typically corresponds to an account
 // if it contains anything more, we display just the whole path
 void ui_getPublicKeyPathScreen(char* line1,

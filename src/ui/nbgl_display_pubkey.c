@@ -80,9 +80,6 @@ int ui_display_pubkey(security_policy_t securityPolicy, warning_bits_t warnings)
     bip44_printToStr(&pk->path, pubkeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1);
     ASSERT(strlen(pubkeyPathStr) + 1 < BIP44_PATH_STRING_SIZE_MAX + 1);
 
-    // set warning if needed
-    bool isUnusual = warning_bits_has(warnings, WARNING_BIT_UNUSUAL_KEY_DERIVATION_PATH);
-
     switch (securityPolicy) {
         case POLICY_SHOW:
             pk->silentExport = false;
@@ -100,30 +97,31 @@ int ui_display_pubkey(security_policy_t securityPolicy, warning_bits_t warnings)
             ui_cleanup_tracked_allocations();
             return 0;
     }
-    TRACE("isUnusual: %d", isUnusual);
 
-    if (isUnusual) {
-        // a mild warning about unusual path
-        // no immediate threat, just to be aware that the client (SW wallet)
-        // behaves in an unusual way
-        nbgl_useCaseChoice(
-                            &WARNING_ICON,
-                            "Export UNUSUAL public key",
-                            pubkeyPathStr,
-                            "Export",
-                            "Reject",
-                            pubkey_review_choice
-        );
-    } else {
-        nbgl_useCaseChoice(
-                            &ICON_APP_CARDANO,
-                            "Export public key",
-                            pubkeyPathStr,
-                            "Export",
-                            "Reject",
-                            pubkey_review_choice
-        );
-    }
+    bool isColdKey = (bip44_classifyPath(&pk->path) == PATH_POOL_COLD_KEY);
+    const char* keyTypeLabel = isColdKey ? "Cold public key" : "Public key";
+
+    // Prepare icon and title based on whether path is unusual
+    bool isUnusual = warning_bits_has(warnings, WARNING_BIT_UNUSUAL_KEY_DERIVATION_PATH);
+    const nbgl_icon_details_t* icon = isUnusual ? &WARNING_ICON : &ICON_APP_CARDANO;
+    const char* exportPrefix = isUnusual ? "Export UNUSUAL" : "Export";
+
+    char title[64] = {0};
+    explicit_bzero(title, sizeof(title));
+    snprintf(title, sizeof(title), "%s %s", exportPrefix, keyTypeLabel);
+
+    ASSERT(strlen(title) > 0);
+    ASSERT(strlen(title) + 1 < SIZEOF(title));
+    ASSERT(icon != NULL);
+
+    nbgl_useCaseChoice(
+                        icon,
+                        title,
+                        pubkeyPathStr,
+                        "Export",
+                        "Reject",
+                        pubkey_review_choice
+    );
 
     return 0;
 }
