@@ -361,8 +361,8 @@ bool bip44_isCVoteKeyPath(const bip44_path_t* pathSpec) {
 #undef CHECK
 }
 
-// returns the length of the resulting string
-size_t bip44_printToStr(const bip44_path_t* pathSpec, char* out, size_t outSize) {
+// returns success/failure (length must be obtained via strlen)
+bool format_bip44_path(const bip44_path_t* pathSpec, char* out, size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
 
     explicit_bzero(out, outSize);
@@ -407,8 +407,11 @@ size_t bip44_printToStr(const bip44_path_t* pathSpec, char* out, size_t outSize)
 #undef WRITE
     ASSERT(ptr >= out);
     ASSERT(ptr + 1 < end);
+    const size_t resultLen = (size_t)(ptr - out);
+    ASSERT(resultLen + 1 < outSize);
+    ASSERT(strlen(out) == resultLen);
 
-    return ptr - out;
+    return true;
 }
 
 static bip44_path_type_t bip44_classifyOrdinaryWalletPath(const bip44_path_t* pathSpec) {
@@ -627,7 +630,8 @@ bool bip44_pathsEqual(const bip44_path_t* lhs, const bip44_path_t* rhs) {
 #ifdef DEVEL
 void bip44_PRINTF(const bip44_path_t* pathSpec) {
     char tmp[BIP44_PATH_STRING_SIZE_MAX + 1] = {0};
-    bip44_printToStr(pathSpec, tmp, SIZEOF(tmp));
+    bool success = format_bip44_path(pathSpec, tmp, SIZEOF(tmp));
+    ASSERT(success);
     TRACE("%s", tmp);
 }
 #endif  // DEVEL

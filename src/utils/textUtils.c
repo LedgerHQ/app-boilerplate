@@ -21,7 +21,7 @@ uint64_t abs_int64(int64_t number) {
     return (uint64_t)(number < 0 ? -number : number);
 }
 
-size_t str_formatDecimalAmount(uint64_t amount, size_t places, char* out, size_t outSize) {
+bool str_formatDecimalAmount(uint64_t amount, size_t places, char* out, size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
     ASSERT(places <= UINT8_MAX);
 
@@ -68,17 +68,19 @@ size_t str_formatDecimalAmount(uint64_t amount, size_t places, char* out, size_t
     // make sure all the information is displayed to the user
     ASSERT(strlen(out) == rawSize);
 
-    return rawSize;
+    return true;
 }
 
-size_t str_formatAdaAmount(uint64_t amount, char* out, size_t outSize) {
+bool str_formatAdaAmount(uint64_t amount, char* out, size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
 
     explicit_bzero(out, outSize);
 
     // TODO: Consider using format_fpu64 directly instead of str_formatDecimalAmount
     // for consistency with other formatting code
-    size_t rawSize = str_formatDecimalAmount(amount, 6, out, outSize);
+    bool formatted = str_formatDecimalAmount(amount, 6, out, outSize);
+    ASSERT(formatted);
+    const size_t rawSize = strlen(out);
 
     const char* suffix = " ADA";
     const size_t suffixLength = strlen(suffix);
@@ -89,7 +91,7 @@ size_t str_formatAdaAmount(uint64_t amount, char* out, size_t outSize) {
     snprintf(out + rawSize, outSize - rawSize, "%s", suffix);
     ASSERT(strlen(out) == rawSize + suffixLength);
 
-    return rawSize + suffixLength;
+    return true;
 }
 
 
@@ -103,7 +105,8 @@ void str_traceAdaAmount(const char* prefix, uint64_t amount) {
     snprintf(adaAmountStr, SIZEOF(adaAmountStr), "%s", prefix);
     ASSERT(strlen(adaAmountStr) == prefixLen);
 
-    str_formatAdaAmount(amount, adaAmountStr + prefixLen, SIZEOF(adaAmountStr) - prefixLen);
+    bool formatted = str_formatAdaAmount(amount, adaAmountStr + prefixLen, SIZEOF(adaAmountStr) - prefixLen);
+    ASSERT(formatted);
     TRACE("%s", adaAmountStr);
 }
 
@@ -131,7 +134,7 @@ static struct {
     uint64_t slotsInEpoch;
 } EPOCH_SLOTS_CONFIG[] = {{4492800, 208, 432000}, {0, 0, 21600}};
 
-size_t str_formatValidityBoundaryMainnet(uint64_t slotNumber, char* out, size_t outSize) {
+bool str_formatValidityBoundaryMainnet(uint64_t slotNumber, char* out, size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
 
     explicit_bzero(out, outSize);
@@ -166,14 +169,14 @@ size_t str_formatValidityBoundaryMainnet(uint64_t slotNumber, char* out, size_t 
     // make sure we did not truncate
     ASSERT(len + 1 < outSize);
 
-    return strlen(out);
+    return true;
 }
 
-size_t str_formatValidityBoundary(uint64_t slotNumber,
-                                  uint8_t networkId,
-                                  uint32_t protocolMagic,
-                                  char* out,
-                                  size_t outSize) {
+bool str_formatValidityBoundary(uint64_t slotNumber,
+                                uint8_t networkId,
+                                uint32_t protocolMagic,
+                                char* out,
+                                size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
 
     explicit_bzero(out, outSize);
@@ -190,7 +193,7 @@ size_t str_formatValidityBoundary(uint64_t slotNumber,
         ASSERT(success);
         size_t len = strlen(out);
         ASSERT(len + 1 < outSize);
-        return len;
+        return true;
     }
 }
 
@@ -244,7 +247,7 @@ bool str_isUnambiguousAscii(const uint8_t* buffer, size_t bufferSize) {
     return true;
 }
 
-size_t str_formatIpv4(const ipv4_t* ipv4, char* out, size_t outSize) {
+bool str_formatIpv4(const ipv4_t* ipv4, char* out, size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
     ASSERT(out != NULL);
     ASSERT(ipv4 != NULL);
@@ -260,10 +263,10 @@ size_t str_formatIpv4(const ipv4_t* ipv4, char* out, size_t outSize) {
     // make sure all the information is displayed to the user
     ASSERT(strlen(out) + 1 < outSize);
 
-    return strlen(out);
+    return true;
 }
 
-size_t str_formatIpv6(const ipv6_t* ipv6, char* out, size_t outSize) {
+bool str_formatIpv6(const ipv6_t* ipv6, char* out, size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
     ASSERT(out != NULL);
     ASSERT(ipv6 != NULL);
@@ -279,10 +282,10 @@ size_t str_formatIpv6(const ipv6_t* ipv6, char* out, size_t outSize) {
     // make sure all the information is displayed to the user
     ASSERT(strlen(out) + 1 < outSize);
 
-    return strlen(out);
+    return true;
 }
 
-size_t str_formatIpPort(const ipport_t* port, char* out, size_t outSize) {
+bool str_formatIpPort(const ipport_t* port, char* out, size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
     ASSERT(out != NULL);
     ASSERT(port != NULL);
@@ -300,5 +303,5 @@ size_t str_formatIpPort(const ipport_t* port, char* out, size_t outSize) {
     // make sure all the information is displayed to the user
     ASSERT(strlen(out) + 1 < outSize);
 
-    return strlen(out);
+    return true;
 }

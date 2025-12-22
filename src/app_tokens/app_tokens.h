@@ -10,16 +10,16 @@ __noinline_due_to_stack__ size_t deriveAssetFingerprintBech32(const uint8_t* pol
                                                               char* fingerprint,
                                                               size_t fingerprintMaxSize);
 
-__noinline_due_to_stack__ size_t str_formatTokenAmountOutput(const token_group_t* tokenGroup,
-                                                             const uint8_t* assetNameBytes,
-                                                             size_t assetNameSize,
-                                                             uint64_t amount,
-                                                             char* out,
-                                                             size_t outSize);
-
-__noinline_due_to_stack__ size_t str_formatTokenAmountMint(const token_group_t* tokenGroup,
+__noinline_due_to_stack__ bool str_formatTokenAmountOutput(const token_group_t* tokenGroup,
                                                            const uint8_t* assetNameBytes,
                                                            size_t assetNameSize,
-                                                           int64_t amount,
+                                                           uint64_t amount,
                                                            char* out,
                                                            size_t outSize);
+
+__noinline_due_to_stack__ bool str_formatTokenAmountMint(const token_group_t* tokenGroup,
+                                                         const uint8_t* assetNameBytes,
+                                                         size_t assetNameSize,
+                                                         int64_t amount,
+                                                         char* out,
+                                                         size_t outSize);

@@ -93,7 +93,7 @@ bool bip44_isPoolColdKeyPath(const bip44_path_t* pathSpec);
 
 bool bip44_isCVoteKeyPath(const bip44_path_t* pathSpec);
 
-size_t bip44_printToStr(const bip44_path_t*, char* out, size_t outSize);
+bool format_bip44_path(const bip44_path_t*, char* out, size_t outSize);
 
 typedef enum {
     // hd wallet account

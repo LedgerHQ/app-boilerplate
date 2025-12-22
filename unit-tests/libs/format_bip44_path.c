@@ -1,4 +1,4 @@
-// Minimal bip44_printToStr implementation extracted for testing
+// Minimal format_bip44_path implementation extracted for testing
 // This is a standalone version to avoid complex crypto dependencies
 
 #include <stdio.h>
@@ -11,9 +11,9 @@
 
 #define HARDENED_BIP32 0x80000000
 
-// Copy of bip44_printToStr from ../src/addressUtils/bip44.c
+// Copy of format_bip44_path from ../src/addressUtils/bip44.c
 // Extracted here to avoid including hash.h and crypto dependencies
-size_t bip44_printToStr(const bip44_path_t* pathSpec, char* out, size_t outSize) {
+bool format_bip44_path(const bip44_path_t* pathSpec, char* out, size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
     // we need space for the terminating \0
     // and one more byte to check whether
@@ -45,9 +45,9 @@ size_t bip44_printToStr(const bip44_path_t* pathSpec, char* out, size_t outSize)
     }
 
     size_t result = ptr - out;
-    ASSERT(result < outSize);
+    ASSERT(result + 1 < outSize);
     ASSERT(out[result] == '\0');
-    return result;
+    return true;
 
 #undef WRITE
 }

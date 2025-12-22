@@ -40,8 +40,9 @@ static void test_bip44_simple_paths(void **state) {
         pathSpec_init(&pathSpec, testVectors[i].path, testVectors[i].path_len);
 
         char result[256] = {0};
-        size_t resultLen = bip44_printToStr(&pathSpec, result, sizeof(result));
-
+        bool success = format_bip44_path(&pathSpec, result, sizeof(result));
+        assert_true(success);
+        size_t resultLen = strlen(result);
         // Result length should be expected string length (without null terminator)
         assert_int_equal(resultLen, strlen(testVectors[i].expected));
         // String content should match
@@ -71,8 +72,9 @@ static void test_bip44_hardened_paths(void **state) {
         pathSpec_init(&pathSpec, testVectors[i].path, testVectors[i].path_len);
 
         char result[256] = {0};
-        size_t resultLen = bip44_printToStr(&pathSpec, result, sizeof(result));
-
+        bool success = format_bip44_path(&pathSpec, result, sizeof(result));
+        assert_true(success);
+        size_t resultLen = strlen(result);
         assert_int_equal(resultLen, strlen(testVectors[i].expected));
         assert_string_equal(result, testVectors[i].expected);
     }
@@ -86,7 +88,9 @@ static void test_bip44_root_path(void **state) {
     pathSpec.length = 0;
 
     char result[256] = {0};
-    size_t resultLen = bip44_printToStr(&pathSpec, result, sizeof(result));
+    bool success = format_bip44_path(&pathSpec, result, sizeof(result));
+    assert_true(success);
+    size_t resultLen = strlen(result);
 
     // Root path should be just "m"
     assert_int_equal(resultLen, 1);
@@ -126,8 +130,9 @@ static void test_bip44_cardano_paths(void **state) {
         pathSpec_init(&pathSpec, testVectors[i].path, testVectors[i].path_len);
 
         char result[256] = {0};
-        size_t resultLen = bip44_printToStr(&pathSpec, result, sizeof(result));
-
+        bool success = format_bip44_path(&pathSpec, result, sizeof(result));
+        assert_true(success);
+        size_t resultLen = strlen(result);
         assert_int_equal(resultLen, strlen(testVectors[i].expected));
         assert_string_equal(result, testVectors[i].expected);
     }
@@ -146,13 +151,17 @@ static void test_bip44_buffer_size(void **state) {
     // Test with proper minimum buffer size (BIP44_PATH_STRING_SIZE_MAX + 1)
     // The function requires at least this much space
     const char* expected = "m/44'/1815'/0'/0/0";
-    size_t resultLen = bip44_printToStr(&pathSpec, result, 256);
+    bool success = format_bip44_path(&pathSpec, result, 256);
+    assert_true(success);
+    size_t resultLen = strlen(result);
     assert_int_equal(resultLen, strlen(expected));
     assert_string_equal(result, expected);
 
     // Test with larger buffer
     memset(result, 0, sizeof(result));
-    resultLen = bip44_printToStr(&pathSpec, result, sizeof(result));
+    success = format_bip44_path(&pathSpec, result, sizeof(result));
+    assert_true(success);
+    resultLen = strlen(result);
     assert_int_equal(resultLen, strlen(expected));
     assert_string_equal(result, expected);
 }
@@ -167,8 +176,9 @@ static void test_bip44_max_depth_paths(void **state) {
     pathSpec_init(&pathSpec, maxDepthPath, 5);
 
     char result[256] = {0};
-    size_t resultLen = bip44_printToStr(&pathSpec, result, sizeof(result));
-
+    bool success = format_bip44_path(&pathSpec, result, sizeof(result));
+    assert_true(success);
+    size_t resultLen = strlen(result);
     assert_int_equal(resultLen, strlen("m/44'/1815'/0'/0/0"));
     assert_string_equal(result, "m/44'/1815'/0'/0/0");
 }

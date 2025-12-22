@@ -77,7 +77,8 @@ static void test_format_token_amount_output(void **state) {
     memcpy(group1.policyId, policyId1, sizeof(policyId1));
 
     char output1[60] = {0};
-    str_formatTokenAmountOutput(&group1, assetName1, sizeof(assetName1), 234, output1, sizeof(output1));
+    bool success = str_formatTokenAmountOutput(&group1, assetName1, sizeof(assetName1), 234, output1, sizeof(output1));
+    assert_true(success);
     assert_string_equal(output1, "0.00000234 REVU");
 
     // Test case 2: Unknown token (no decimal places)
@@ -92,7 +93,8 @@ static void test_format_token_amount_output(void **state) {
     memcpy(group2.policyId, policyId2, sizeof(policyId2));
 
     char output2[60] = {0};
-    str_formatTokenAmountOutput(&group2, assetName1, sizeof(assetName1), 2345, output2, sizeof(output2));
+    success = str_formatTokenAmountOutput(&group2, assetName1, sizeof(assetName1), 2345, output2, sizeof(output2));
+    assert_true(success);
     assert_string_equal(output2, "2,345 (unknown decimals)");
 }
 
@@ -114,12 +116,14 @@ static void test_format_token_amount_mint(void **state) {
 
     // Test negative amount (burning)
     char mint1[60] = {0};
-    str_formatTokenAmountMint(&group1, assetName1, sizeof(assetName1), -234, mint1, sizeof(mint1));
+    success = str_formatTokenAmountMint(&group1, assetName1, sizeof(assetName1), -234, mint1, sizeof(mint1));
+    assert_true(success);
     assert_string_equal(mint1, "-0.00000234 REVU");
 
     // Test positive amount (minting)
     char mint2[60] = {0};
-    str_formatTokenAmountMint(&group1, assetName1, sizeof(assetName1), 234, mint2, sizeof(mint2));
+    success = str_formatTokenAmountMint(&group1, assetName1, sizeof(assetName1), 234, mint2, sizeof(mint2));
+    assert_true(success);
     assert_string_equal(mint2, " 0.00000234 REVU");
 
     // Test case 2: Unknown token
@@ -134,7 +138,8 @@ static void test_format_token_amount_mint(void **state) {
     memcpy(group2.policyId, policyId2, sizeof(policyId2));
 
     char mint3[60] = {0};
-    str_formatTokenAmountMint(&group2, assetName1, sizeof(assetName1), 2345, mint3, sizeof(mint3));
+    success = str_formatTokenAmountMint(&group2, assetName1, sizeof(assetName1), 2345, mint3, sizeof(mint3));
+    assert_true(success);
     assert_string_equal(mint3, " 2,345 (unknown decimals)");
 }
 

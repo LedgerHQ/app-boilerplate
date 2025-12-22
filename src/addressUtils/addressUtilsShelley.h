@@ -122,9 +122,9 @@ __noinline_due_to_stack__ size_t constructRewardAddressFromHash(uint8_t networkI
                                                                 uint8_t* outBuffer,
                                                                 size_t outSize);
 
-void printBlockchainPointerToStr(blockchainPointer_t blockchainPointer, char* out, size_t outSize);
+bool format_blockchain_pointer(blockchainPointer_t blockchainPointer, char* out, size_t outSize);
 
-size_t humanReadableAddress(const uint8_t* address, size_t addressSize, char* out, size_t outSize);
+bool format_address_human_readable(const uint8_t* address, size_t addressSize, char* out, size_t outSize);
 
 bool buffer_parseAddressParams(buffer_t* buffer, addressParams_t* params);
 

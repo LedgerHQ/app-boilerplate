@@ -15,13 +15,12 @@ __noinline_due_to_stack__ static void _ui_getAccountWithDescriptionScreen(
 
     ASSERT(bip44_hasOrdinaryWalletKeyPrefix(path));
     ASSERT(bip44_containsAccount(path));
-    { bip44_printToStr(path, accountDescription, accountDescriptionSize); }
+    bool success = format_bip44_path(path, accountDescription, accountDescriptionSize);
+    ASSERT(success);
 
-    {
-        size_t len = strlen(accountDescription);
-        ASSERT(len > 0);
-        ASSERT(len + 1 < accountDescriptionSize);
-    }
+    size_t len = strlen(accountDescription);
+    ASSERT(len > 0);
+    ASSERT(len + 1 < accountDescriptionSize);
 }
 
 // the given path typically corresponds to an account
@@ -36,7 +35,8 @@ void ui_getPublicKeyPathScreen(char* line1,
             strncpy(line1, "Cold public key", line1Size);
 
             explicit_bzero(line2, line2Size);
-            bip44_printToStr(path, line2, line2Size);
+            bool success = format_bip44_path(path, line2, line2Size);
+            ASSERT(success);
             ASSERT(strlen(line2) + 1 < line2Size);
             return;
         }
@@ -50,7 +50,8 @@ void ui_getPublicKeyPathScreen(char* line1,
         default:
             strncpy(line1, "Public key", line1Size);
             explicit_bzero(line2, line2Size);
-            bip44_printToStr(path, line2, line2Size);
+            bool success = format_bip44_path(path, line2, line2Size);
+            ASSERT(success);
             ASSERT(strlen(line2) + 1 < line2Size);
             return;
     }
@@ -96,9 +97,11 @@ void ui_getAddressScreen(char* line,
 
     explicit_bzero(line, lineSize);
 
-    size_t length = humanReadableAddress(addressBuffer, addressSize, line, lineSize);
+    bool success = format_address_human_readable(addressBuffer, addressSize, line, lineSize);
+    ASSERT(success);
+    size_t length = strlen(line);
     ASSERT(length > 0);
-    ASSERT(strlen(line) == length);
+    ASSERT(length + 1 < lineSize);
 }
 
 // display bech32-encoded reward account preceded by stake key derivation path (if given)
@@ -111,7 +114,9 @@ static void _getRewardAccountWithDescriptionScreen(char* line,
     size_t descLen = 0;  // line length
 
     if (keyReferenceType == KEY_REFERENCE_PATH) {
-        descLen += bip44_printToStr(path, line, lineSize);
+        bool pathFormatted = format_bip44_path(path, line, lineSize);
+        ASSERT(pathFormatted);
+        descLen += strlen(line);
     }
     {
         // add bech32-encoded reward account
@@ -126,10 +131,12 @@ static void _getRewardAccountWithDescriptionScreen(char* line,
         }
 
         {
-            descLen += humanReadableAddress(rewardAccountBuffer,
-                                            REWARD_ACCOUNT_SIZE,
-                                            line + descLen,
-                                            lineSize - descLen);
+            bool rewardFormatted = format_address_human_readable(rewardAccountBuffer,
+                                                                 REWARD_ACCOUNT_SIZE,
+                                                                 line + descLen,
+                                                                 lineSize - descLen);
+            ASSERT(rewardFormatted);
+            descLen += strlen(line + descLen);
         }
         ASSERT(descLen == strlen(line));
         ASSERT(descLen + 1 < lineSize);
@@ -207,7 +214,8 @@ void ui_getPaymentInfoScreen(char* line1,
         case PAYMENT_PATH: {
             snprintf(line1, line1Size, "Payment key path");
             explicit_bzero(line2, line2Size);
-            bip44_printToStr(&addressParams->paymentKeyPath, line2, line2Size);
+            bool success = format_bip44_path(&addressParams->paymentKeyPath, line2, line2Size);
+            ASSERT(success);
             ASSERT(strlen(line2) + 1 < line2Size);
             return;
         }
@@ -268,7 +276,8 @@ void ui_getStakingInfoScreen(char* line1,
 
         case STAKING_KEY_PATH: {
             strncpy(line1, STAKING_HEADING_PATH, line1Size);
-            bip44_printToStr(&addressParams->stakingKeyPath, line2, line2Size);
+            bool success = format_bip44_path(&addressParams->stakingKeyPath, line2, line2Size);
+            ASSERT(success);
             break;
         }
 
@@ -302,9 +311,10 @@ void ui_getStakingInfoScreen(char* line1,
 
         case BLOCKCHAIN_POINTER:
             strncpy(line1, STAKING_HEADING_POINTER, line1Size);
-            printBlockchainPointerToStr(addressParams->stakingKeyBlockchainPointer,
-                                        line2,
-                                        line2Size);
+            bool success = format_blockchain_pointer(addressParams->stakingKeyBlockchainPointer,
+                                                     line2,
+                                                     line2Size);
+            ASSERT(success);
             break;
 
         default:

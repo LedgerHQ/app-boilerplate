@@ -336,7 +336,10 @@ static void test_format_blockchain_pointer(void **state) {
 
     for (size_t i = 0; i < sizeof(testVectors) / sizeof(testVectors[0]); i++) {
         char tmp[100] = {0};
-        printBlockchainPointerToStr(testVectors[i].pointer, tmp, sizeof(tmp));
+        bool success = format_blockchain_pointer(testVectors[i].pointer, tmp, sizeof(tmp));
+        assert_true(success);
+        size_t len = strlen(tmp);
+        assert_int_equal(len, strlen(testVectors[i].expected));
         assert_string_equal(tmp, testVectors[i].expected);
     }
 }

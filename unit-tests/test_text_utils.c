@@ -32,12 +32,14 @@ static void test_format_decimal_basic(void **state) {
 
     for (size_t i = 0; i < sizeof(testVectors) / sizeof(testVectors[0]); i++) {
         char tmp[100] = {0};
-        size_t len = str_formatDecimalAmount(
+        bool success = str_formatDecimalAmount(
             testVectors[i].amount,
             testVectors[i].places,
             tmp,
             sizeof(tmp)
         );
+        assert_true(success);
+        size_t len = strlen(tmp);
         assert_int_equal(len, strlen(testVectors[i].expected));
         assert_string_equal(tmp, testVectors[i].expected);
     }
@@ -61,7 +63,9 @@ static void test_format_ada_basic(void **state) {
 
     for (size_t i = 0; i < sizeof(testVectors) / sizeof(testVectors[0]); i++) {
         char tmp[100] = {0};
-        size_t len = str_formatAdaAmount(testVectors[i].amount, tmp, sizeof(tmp));
+        bool success = str_formatAdaAmount(testVectors[i].amount, tmp, sizeof(tmp));
+        assert_true(success);
+        size_t len = strlen(tmp);
         assert_int_equal(len, strlen(testVectors[i].expected));
         assert_string_equal(tmp, testVectors[i].expected);
     }
@@ -88,7 +92,10 @@ static void test_format_validity_boundary_mainnet(void **state) {
 
     for (size_t i = 0; i < sizeof(testVectors) / sizeof(testVectors[0]); i++) {
         char tmp[100] = {0};
-        size_t len = str_formatValidityBoundaryMainnet(testVectors[i].slotNumber, tmp, sizeof(tmp));
+        bool success =
+            str_formatValidityBoundaryMainnet(testVectors[i].slotNumber, tmp, sizeof(tmp));
+        assert_true(success);
+        size_t len = strlen(tmp);
         assert_int_equal(len, strlen(testVectors[i].expected));
         assert_string_equal(tmp, testVectors[i].expected);
     }
@@ -101,7 +108,15 @@ static void test_format_validity_boundary(void **state) {
     // Test mainnet (should use pretty formatting)
     {
         char tmp[100] = {0};
-        size_t len = str_formatValidityBoundary(4492800, MAINNET_NETWORK_ID, MAINNET_PROTOCOL_MAGIC, tmp, sizeof(tmp));
+        bool success = str_formatValidityBoundary(
+            4492800,
+            MAINNET_NETWORK_ID,
+            MAINNET_PROTOCOL_MAGIC,
+            tmp,
+            sizeof(tmp)
+        );
+        assert_true(success);
+        size_t len = strlen(tmp);
         assert_string_equal(tmp, "epoch 208 / slot 0");
         assert_int_equal(len, strlen("epoch 208 / slot 0"));
     }
@@ -109,7 +124,15 @@ static void test_format_validity_boundary(void **state) {
     // Test testnet (should use simple uint64 formatting)
     {
         char tmp[100] = {0};
-        size_t len = str_formatValidityBoundary(12345, TESTNET_NETWORK_ID, TESTNET_PROTOCOL_MAGIC_LEGACY, tmp, sizeof(tmp));
+        bool success = str_formatValidityBoundary(
+            12345,
+            TESTNET_NETWORK_ID,
+            TESTNET_PROTOCOL_MAGIC_LEGACY,
+            tmp,
+            sizeof(tmp)
+        );
+        assert_true(success);
+        size_t len = strlen(tmp);
         assert_string_equal(tmp, "12345");
         assert_int_equal(len, strlen("12345"));
     }
@@ -117,7 +140,15 @@ static void test_format_validity_boundary(void **state) {
     // Test mainnet with wrong protocol magic (should use simple formatting)
     {
         char tmp[100] = {0};
-        size_t len = str_formatValidityBoundary(12345, MAINNET_NETWORK_ID, TESTNET_PROTOCOL_MAGIC_LEGACY, tmp, sizeof(tmp));
+        bool success = str_formatValidityBoundary(
+            12345,
+            MAINNET_NETWORK_ID,
+            TESTNET_PROTOCOL_MAGIC_LEGACY,
+            tmp,
+            sizeof(tmp)
+        );
+        assert_true(success);
+        size_t len = strlen(tmp);
         assert_string_equal(tmp, "12345");
         assert_int_equal(len, strlen("12345"));
     }
@@ -259,28 +290,36 @@ static void test_format_ipv4(void **state) {
 
     // IPv4 null case
     ipv4_t ipv4_null = {.isNull = true, .ip = {0, 0, 0, 0}};
-    size_t len = str_formatIpv4(&ipv4_null, tmp, sizeof(tmp));
+    bool success = str_formatIpv4(&ipv4_null, tmp, sizeof(tmp));
+    assert_true(success);
+    size_t len = strlen(tmp);
     assert_int_equal(len, strlen("(none)"));
     assert_string_equal(tmp, "(none)");
 
     // IPv4 typical case
     ipv4_t ipv4_valid = {.isNull = false, .ip = {192, 168, 1, 1}};
     memset(tmp, 0, sizeof(tmp));
-    len = str_formatIpv4(&ipv4_valid, tmp, sizeof(tmp));
+    success = str_formatIpv4(&ipv4_valid, tmp, sizeof(tmp));
+    assert_true(success);
+    len = strlen(tmp);
     assert_int_equal(len, strlen("192.168.1.1"));
     assert_string_equal(tmp, "192.168.1.1");
 
     // IPv4 all zeros
     ipv4_t ipv4_zeros = {.isNull = false, .ip = {0, 0, 0, 0}};
     memset(tmp, 0, sizeof(tmp));
-    len = str_formatIpv4(&ipv4_zeros, tmp, sizeof(tmp));
+    success = str_formatIpv4(&ipv4_zeros, tmp, sizeof(tmp));
+    assert_true(success);
+    len = strlen(tmp);
     assert_int_equal(len, strlen("0.0.0.0"));
     assert_string_equal(tmp, "0.0.0.0");
 
     // IPv4 max values
     ipv4_t ipv4_max = {.isNull = false, .ip = {255, 255, 255, 255}};
     memset(tmp, 0, sizeof(tmp));
-    len = str_formatIpv4(&ipv4_max, tmp, sizeof(tmp));
+    success = str_formatIpv4(&ipv4_max, tmp, sizeof(tmp));
+    assert_true(success);
+    len = strlen(tmp);
     assert_int_equal(len, strlen("255.255.255.255"));
     assert_string_equal(tmp, "255.255.255.255");
 }
@@ -293,29 +332,37 @@ static void test_format_ipv6(void **state) {
 
     // IPv6 null case
     ipv6_t ipv6_null = {.isNull = true, .ip = {0}};
-    size_t len = str_formatIpv6(&ipv6_null, tmp, sizeof(tmp));
-    assert_int_equal(len, strlen("(none)"));
+    bool success6 = str_formatIpv6(&ipv6_null, tmp, sizeof(tmp));
+    assert_true(success6);
+    size_t len6 = strlen(tmp);
+    assert_int_equal(len6, strlen("(none)"));
     assert_string_equal(tmp, "(none)");
 
     // IPv6 all zeros
     ipv6_t ipv6_zeros = {.isNull = false, .ip = {0}};
     memset(tmp, 0, sizeof(tmp));
-    len = str_formatIpv6(&ipv6_zeros, tmp, sizeof(tmp));
-    assert_int_equal(len, strlen("::"));
+    success6 = str_formatIpv6(&ipv6_zeros, tmp, sizeof(tmp));
+    assert_true(success6);
+    len6 = strlen(tmp);
+    assert_int_equal(len6, strlen("::"));
     assert_string_equal(tmp, "::");
 
     // IPv6 loopback
     ipv6_t ipv6_loopback = {.isNull = false, .ip = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}};
     memset(tmp, 0, sizeof(tmp));
-    len = str_formatIpv6(&ipv6_loopback, tmp, sizeof(tmp));
-    assert_int_equal(len, strlen("::1"));
+    success6 = str_formatIpv6(&ipv6_loopback, tmp, sizeof(tmp));
+    assert_true(success6);
+    len6 = strlen(tmp);
+    assert_int_equal(len6, strlen("::1"));
     assert_string_equal(tmp, "::1");
 
     // IPv6 typical case
     ipv6_t ipv6_valid = {.isNull = false, .ip = {0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}};
     memset(tmp, 0, sizeof(tmp));
-    len = str_formatIpv6(&ipv6_valid, tmp, sizeof(tmp));
-    assert_int_equal(len, strlen("2001:db8::1"));
+    success6 = str_formatIpv6(&ipv6_valid, tmp, sizeof(tmp));
+    assert_true(success6);
+    len6 = strlen(tmp);
+    assert_int_equal(len6, strlen("2001:db8::1"));
     assert_string_equal(tmp, "2001:db8::1");
 }
 
@@ -327,35 +374,45 @@ static void test_format_ip_port(void **state) {
 
     // Port null case
     ipport_t port_null = {.isNull = true, .number = 0};
-    size_t len = str_formatIpPort(&port_null, tmp, sizeof(tmp));
+    bool success = str_formatIpPort(&port_null, tmp, sizeof(tmp));
+    assert_true(success);
+    size_t len = strlen(tmp);
     assert_int_equal(len, strlen("(none)"));
     assert_string_equal(tmp, "(none)");
 
     // Port 0
     ipport_t port_zero = {.isNull = false, .number = 0};
     memset(tmp, 0, sizeof(tmp));
-    len = str_formatIpPort(&port_zero, tmp, sizeof(tmp));
+    success = str_formatIpPort(&port_zero, tmp, sizeof(tmp));
+    assert_true(success);
+    len = strlen(tmp);
     assert_int_equal(len, strlen("0"));
     assert_string_equal(tmp, "0");
 
     // Port typical case
     ipport_t port_http = {.isNull = false, .number = 80};
     memset(tmp, 0, sizeof(tmp));
-    len = str_formatIpPort(&port_http, tmp, sizeof(tmp));
+    success = str_formatIpPort(&port_http, tmp, sizeof(tmp));
+    assert_true(success);
+    len = strlen(tmp);
     assert_int_equal(len, strlen("80"));
     assert_string_equal(tmp, "80");
 
     // Port HTTPS
     ipport_t port_https = {.isNull = false, .number = 443};
     memset(tmp, 0, sizeof(tmp));
-    len = str_formatIpPort(&port_https, tmp, sizeof(tmp));
+    success = str_formatIpPort(&port_https, tmp, sizeof(tmp));
+    assert_true(success);
+    len = strlen(tmp);
     assert_int_equal(len, strlen("443"));
     assert_string_equal(tmp, "443");
 
     // Port max value
     ipport_t port_max = {.isNull = false, .number = 65535};
     memset(tmp, 0, sizeof(tmp));
-    len = str_formatIpPort(&port_max, tmp, sizeof(tmp));
+    success = str_formatIpPort(&port_max, tmp, sizeof(tmp));
+    assert_true(success);
+    len = strlen(tmp);
     assert_int_equal(len, strlen("65535"));
     assert_string_equal(tmp, "65535");
 }

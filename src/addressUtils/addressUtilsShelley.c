@@ -428,7 +428,7 @@ size_t deriveAddress(const addressParams_t* addressParams, uint8_t* outBuffer, s
     return BUFFER_SIZE_PARANOIA + 1;
 }
 
-void printBlockchainPointerToStr(blockchainPointer_t blockchainPointer, char* out, size_t outSize) {
+bool format_blockchain_pointer(blockchainPointer_t blockchainPointer, char* out, size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
 
     explicit_bzero(out, outSize);
@@ -445,12 +445,15 @@ void printBlockchainPointerToStr(blockchainPointer_t blockchainPointer, char* ou
              blockchainPointer.blockIndex,
              blockchainPointer.txIndex,
              blockchainPointer.certificateIndex);
-    // make sure all the information is displayed to the user
-    ASSERT(strlen(out) + 1 < outSize);
+    const size_t len = strlen(out);
+    ASSERT(len + 1 < outSize);
+    return true;
 }
 
-// bech32 for Shelley, base58 for Byron
-size_t humanReadableAddress(const uint8_t* address, size_t addressSize, char* out, size_t outSize) {
+bool format_address_human_readable(const uint8_t* address,
+                                   size_t addressSize,
+                                   char* out,
+                                   size_t outSize) {
     ASSERT(addressSize > 0);
     ASSERT(addressSize < BUFFER_SIZE_PARANOIA);
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
@@ -459,7 +462,11 @@ size_t humanReadableAddress(const uint8_t* address, size_t addressSize, char* ou
     const uint8_t networkId = getNetworkId(address[0]);
 
     if (addressType == BYRON) {
-        return base58_encode(address, addressSize, out, outSize);
+        size_t len = base58_encode(address, addressSize, out, outSize);
+        ASSERT(len > 0);
+        ASSERT(len == strlen(out));
+        ASSERT(len + 1 < outSize);
+        return true;
     }
 
     ASSERT(isValidNetworkId(networkId));
@@ -471,16 +478,22 @@ size_t humanReadableAddress(const uint8_t* address, size_t addressSize, char* ou
             __attribute__((fallthrough));
         case REWARD_KEY:
         case REWARD_SCRIPT:
-            if (networkId == TESTNET_NETWORK_ID)
-                return bech32_encode("stake_test", address, addressSize, out, outSize);
-            else
-                return bech32_encode("stake", address, addressSize, out, outSize);
+            {
+                const char* hrp = (networkId == TESTNET_NETWORK_ID) ? "stake_test" : "stake";
+                size_t len = bech32_encode(hrp, address, addressSize, out, outSize);
+                ASSERT(len == strlen(out));
+                ASSERT(len + 1 < outSize);
+                return true;
+            }
 
         default:  // all other shelley addresses
-            if (networkId == TESTNET_NETWORK_ID)
-                return bech32_encode("addr_test", address, addressSize, out, outSize);
-            else
-                return bech32_encode("addr", address, addressSize, out, outSize);
+            {
+                const char* hrp = (networkId == TESTNET_NETWORK_ID) ? "addr_test" : "addr";
+                size_t len = bech32_encode(hrp, address, addressSize, out, outSize);
+                ASSERT(len == strlen(out));
+                ASSERT(len + 1 < outSize);
+                return true;
+            }
     }
 }
 

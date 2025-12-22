@@ -87,15 +87,19 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
     const parsed_opcert_t* opcert = &G_context.opcert_info.opcert;
 
     // Allocate and fill pool cold key path
-    poolColdKeyPathStr = (char *) ui_mem_alloc(BIP44_PATH_STRING_SIZE_MAX + 1);
+    const size_t poolColdKeyPathStrSize = BIP44_PATH_STRING_SIZE_MAX + 1;
+    poolColdKeyPathStr = (char *) ui_mem_alloc(poolColdKeyPathStrSize);
     if (poolColdKeyPathStr == NULL) {
         TRACE("Failed to allocate poolColdKeyPathStr");
         opcert_buffer_cleanup();
         return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
-    explicit_bzero(poolColdKeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1);
-    bip44_printToStr(&opcert->poolColdKeyPath, poolColdKeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1);
-    ASSERT(strlen(poolColdKeyPathStr) + 1 < BIP44_PATH_STRING_SIZE_MAX + 1);
+    explicit_bzero(poolColdKeyPathStr, poolColdKeyPathStrSize);
+    bool poolPathFormatted = format_bip44_path(&opcert->poolColdKeyPath,
+                                               poolColdKeyPathStr,
+                                               poolColdKeyPathStrSize);
+    ASSERT(poolPathFormatted);
+    ASSERT(strlen(poolColdKeyPathStr) + 1 < poolColdKeyPathStrSize);
 
     // Allocate and fill pool ID (key hash)
     poolKeyHashStr = (char *) ui_mem_alloc(BECH32_STRING_SIZE_MAX);

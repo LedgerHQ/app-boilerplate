@@ -108,9 +108,9 @@ static int ui_materialize_strings(void) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
 
-            size_t address_len = 0;
+            bool address_formatted = false;
             if (output_item->output_data.destination.type == DESTINATION_THIRD_PARTY) {
-                address_len = humanReadableAddress(
+                address_formatted = format_address_human_readable(
                     output_item->output_data.destination.address.buffer,
                     output_item->output_data.destination.address.size,
                     address_tmp,
@@ -124,7 +124,7 @@ static int ui_materialize_strings(void) {
                     sizeof(address_bytes)
                 );
                 if (derived_len > 0) {
-                    address_len = humanReadableAddress(
+                    address_formatted = format_address_human_readable(
                         address_bytes,
                         derived_len,
                         address_tmp,
@@ -133,7 +133,11 @@ static int ui_materialize_strings(void) {
                 }
             }
 
-            if (address_len == 0) {
+            if (!address_formatted) {
+                return SWO_DISPLAY_ADDRESS_FAIL;
+            }
+            size_t address_len = strlen(address_tmp);
+            if (address_len == 0 || address_len + 1 >= MAX_HUMAN_ADDRESS_SIZE) {
                 return SWO_DISPLAY_ADDRESS_FAIL;
             }
 
@@ -146,9 +150,10 @@ static int ui_materialize_strings(void) {
             if (amount_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
-            str_formatAdaAmount(output_item->output_data.adaAmount,
-                                amount_tmp,
-                                MAX_ADA_AMOUNT_STRING_SIZE);
+            bool amount_formatted = str_formatAdaAmount(output_item->output_data.adaAmount,
+                                                        amount_tmp,
+                                                        MAX_ADA_AMOUNT_STRING_SIZE);
+            ASSERT(amount_formatted);
             status = ui_add_pair_or_fail("Amount", amount_tmp);
             if (status != SWO_SUCCESS) {
                 return status;
@@ -185,7 +190,8 @@ static int ui_materialize_strings(void) {
     if (fee_tmp == NULL) {
         return SWO_INSUFFICIENT_MEMORY;
     }
-    str_formatAdaAmount(tx->fee, fee_tmp, MAX_ADA_AMOUNT_STRING_SIZE);
+    bool fee_formatted = str_formatAdaAmount(tx->fee, fee_tmp, MAX_ADA_AMOUNT_STRING_SIZE);
+    ASSERT(fee_formatted);
     status = ui_add_pair_or_fail("Fee", fee_tmp);
     if (status != SWO_SUCCESS) {
         return status;
@@ -203,7 +209,12 @@ static int ui_materialize_strings(void) {
                 if (ttl_tmp == NULL) {
                     return SWO_INSUFFICIENT_MEMORY;
                 }
-                str_formatValidityBoundary(tx->ttl, tx->networkId, tx->protocolMagic, ttl_tmp, MAX_VALIDITY_BOUNDARY_STRING_SIZE);
+                bool ttl_formatted = str_formatValidityBoundary(tx->ttl,
+                                                                tx->networkId,
+                                                                tx->protocolMagic,
+                                                                ttl_tmp,
+                                                                MAX_VALIDITY_BOUNDARY_STRING_SIZE);
+                ASSERT(ttl_formatted);
                 status = ui_add_pair_or_fail("TTL", ttl_tmp);
                 if (status != SWO_SUCCESS) {
                     return status;
@@ -227,7 +238,12 @@ static int ui_materialize_strings(void) {
                 if (validity_interval_start_tmp == NULL) {
                     return SWO_INSUFFICIENT_MEMORY;
                 }
-                str_formatValidityBoundary(tx->validityIntervalStart, tx->networkId, tx->protocolMagic, validity_interval_start_tmp, MAX_VALIDITY_BOUNDARY_STRING_SIZE);
+                bool vis_formatted = str_formatValidityBoundary(tx->validityIntervalStart,
+                                                                tx->networkId,
+                                                                tx->protocolMagic,
+                                                                validity_interval_start_tmp,
+                                                                MAX_VALIDITY_BOUNDARY_STRING_SIZE);
+                ASSERT(vis_formatted);
                 status = ui_add_pair_or_fail("Validity interval start", validity_interval_start_tmp);
                 if (status != SWO_SUCCESS) {
                     return status;
@@ -272,9 +288,11 @@ static int ui_materialize_strings(void) {
             if (withdrawal_amount_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
-            str_formatAdaAmount(withdrawal_item->withdrawal_data.amount,
-                                withdrawal_amount_tmp,
-                                MAX_ADA_AMOUNT_STRING_SIZE);
+            bool withdrawal_amount_formatted =
+                str_formatAdaAmount(withdrawal_item->withdrawal_data.amount,
+                                    withdrawal_amount_tmp,
+                                    MAX_ADA_AMOUNT_STRING_SIZE);
+            ASSERT(withdrawal_amount_formatted);
             status = ui_add_pair_or_fail("Amount", withdrawal_amount_tmp);
             if (status != SWO_SUCCESS) {
                 return status;
@@ -325,14 +343,14 @@ static int ui_materialize_strings(void) {
                 return SWO_DISPLAY_ADDRESS_FAIL;
             }
 
-            reward_addr_len = humanReadableAddress(
-                reward_addr_bytes,
-                reward_addr_len,
-                reward_account_tmp,
-                MAX_HUMAN_ADDRESS_SIZE
-            );
-
-            if (reward_addr_len == 0) {
+            bool reward_formatted =
+                format_address_human_readable(reward_addr_bytes,
+                                              reward_addr_len,
+                                              reward_account_tmp,
+                                              MAX_HUMAN_ADDRESS_SIZE);
+            ASSERT(reward_formatted);
+            size_t reward_display_len = strlen(reward_account_tmp);
+            if (reward_display_len == 0 || reward_display_len + 1 >= MAX_HUMAN_ADDRESS_SIZE) {
                 return SWO_DISPLAY_ADDRESS_FAIL;
             }
 
@@ -411,12 +429,13 @@ static int ui_materialize_strings(void) {
                     if (amount_tmp == NULL) {
                         return SWO_INSUFFICIENT_MEMORY;
                     }
-                    str_formatTokenAmountMint(&tokenGroup,
-                                              token->assetName,
-                                              token->assetNameLen,
-                                              token->amount,
-                                              amount_tmp,
-                                              MAX_MINT_AMOUNT_STRING_SIZE);
+                    bool mint_amount_formatted = str_formatTokenAmountMint(&tokenGroup,
+                                                                           token->assetName,
+                                                                           token->assetNameLen,
+                                                                           token->amount,
+                                                                           amount_tmp,
+                                                                           MAX_MINT_AMOUNT_STRING_SIZE);
+                    ASSERT(mint_amount_formatted);
                     status = ui_add_pair_or_fail("Mint amount", amount_tmp);
                     if (status != SWO_SUCCESS) {
                         return status;

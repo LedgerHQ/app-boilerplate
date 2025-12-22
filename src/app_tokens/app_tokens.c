@@ -96,12 +96,12 @@ static const token_info_t* _getTokenInfo(const token_group_t* tokenGroup,
     return NULL;
 }
 
-size_t str_formatTokenAmountOutput(const token_group_t* tokenGroup,
-                                   const uint8_t* assetNameBytes,
-                                   size_t assetNameSize,
-                                   uint64_t amount,
-                                   char* out,
-                                   size_t outSize) {
+bool str_formatTokenAmountOutput(const token_group_t* tokenGroup,
+                                 const uint8_t* assetNameBytes,
+                                 size_t assetNameSize,
+                                 uint64_t amount,
+                                 char* out,
+                                 size_t outSize) {
     ASSERT(assetNameSize <= ASSET_NAME_SIZE_MAX);
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
 
@@ -110,25 +110,27 @@ size_t str_formatTokenAmountOutput(const token_group_t* tokenGroup,
     const token_info_t* tokenInfo = _getTokenInfo(tokenGroup, assetNameBytes, assetNameSize);
     int decimals = (tokenInfo != NULL) ? tokenInfo->decimals : 0;
     TRACE("token decimal places = %u", decimals);
-    size_t length = str_formatDecimalAmount(amount, decimals, out, outSize);
+    bool formatted = str_formatDecimalAmount(amount, decimals, out, outSize);
+    ASSERT(formatted);
+    size_t length = strlen(out);
 
     const char* ticker = (tokenInfo != NULL) ? (const char*) PIC(tokenInfo->ticker) : "(unknown decimals)";
     TRACE("token ticker = %s", ticker);
     snprintf(out + length, outSize - length, " %s", ticker);
     length += 1 + strlen(ticker);
 
-    ASSERT(length < outSize);
+    ASSERT(length + 1 < outSize);
     ASSERT(length == strlen(out));
 
-    return length;
+    return true;
 }
 
-size_t str_formatTokenAmountMint(const token_group_t* tokenGroup,
-                                 const uint8_t* assetNameBytes,
-                                 size_t assetNameSize,
-                                 int64_t amount,
-                                 char* out,
-                                 size_t outSize) {
+bool str_formatTokenAmountMint(const token_group_t* tokenGroup,
+                               const uint8_t* assetNameBytes,
+                               size_t assetNameSize,
+                               int64_t amount,
+                               char* out,
+                               size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
     ASSERT(outSize >= 2);
 
@@ -139,14 +141,16 @@ size_t str_formatTokenAmountMint(const token_group_t* tokenGroup,
                  : '-';  // + sign instead of the space would be nice, but is unreadable on Nano S
     out[1] = '\0';
 
-    size_t length = 1 + str_formatTokenAmountOutput(tokenGroup,
-                                                    assetNameBytes,
-                                                    assetNameSize,
-                                                    abs_int64(amount),
-                                                    out + 1,
-                                                    outSize - 1);
-    ASSERT(length < outSize);
-    ASSERT(length == strlen(out));
+    bool formatted = str_formatTokenAmountOutput(tokenGroup,
+                                                 assetNameBytes,
+                                                 assetNameSize,
+                                                 abs_int64(amount),
+                                                 out + 1,
+                                                 outSize - 1);
+    ASSERT(formatted);
 
-    return length;
+    size_t length = strlen(out);
+    ASSERT(length + 1 < outSize);
+
+    return true;
 }

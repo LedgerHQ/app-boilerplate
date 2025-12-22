@@ -71,14 +71,16 @@ int ui_display_pubkey(security_policy_t securityPolicy, warning_bits_t warnings)
     pubkey_ctx_t* pk = &G_context.pk_info;
 
     // Allocate display buffers
-    pubkeyPathStr = (char *) ui_mem_alloc(BIP44_PATH_STRING_SIZE_MAX + 1);
+    const size_t pubkeyPathStrSize = BIP44_PATH_STRING_SIZE_MAX + 1;
+    pubkeyPathStr = (char *) ui_mem_alloc(pubkeyPathStrSize);
     if (pubkeyPathStr == NULL) {
         ui_cleanup_tracked_allocations();
         return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
-    explicit_bzero(pubkeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1);
-    bip44_printToStr(&pk->path, pubkeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1);
-    ASSERT(strlen(pubkeyPathStr) + 1 < BIP44_PATH_STRING_SIZE_MAX + 1);
+    explicit_bzero(pubkeyPathStr, pubkeyPathStrSize);
+    bool pathFormatted = format_bip44_path(&pk->path, pubkeyPathStr, pubkeyPathStrSize);
+    ASSERT(pathFormatted);
+    ASSERT(strlen(pubkeyPathStr) + 1 < pubkeyPathStrSize);
 
     switch (securityPolicy) {
         case POLICY_SHOW:

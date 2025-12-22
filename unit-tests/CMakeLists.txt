@@ -188,7 +188,7 @@ add_library(bech32_lib SHARED ../src/addressUtils/bech32.c)
 target_link_libraries(bech32_lib PUBLIC c)
 add_library(text_utils SHARED ../src/utils/textUtils.c ../src/utils/ipUtils.c)
 target_link_libraries(text_utils PUBLIC c format)
-add_library(bip44_lib SHARED libs/bip44_printToStr.c)  # Standalone version without crypto dependencies
+add_library(bip44_lib SHARED libs/format_bip44_path.c)  # Standalone version without crypto dependencies
 target_link_libraries(bip44_lib PUBLIC c)
 add_library(bip44_real SHARED ../src/addressUtils/bip44.c)
 target_link_libraries(bip44_real PUBLIC c read write buffer varint bip32 hash_mocks_lib)
