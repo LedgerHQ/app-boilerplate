@@ -73,6 +73,17 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
+    // Validate network ID immediately - return specific error code
+    if (!isValidNetworkId(G_context.tx_info.transaction.networkId)) {
+        return send_error_and_reset(SWO_INVALID_NETWORK_ID);
+    }
+
+    // Validate mainnet protocol magic - return specific error code
+    if (G_context.tx_info.transaction.networkId == MAINNET_NETWORK_ID &&
+        G_context.tx_info.transaction.protocolMagic != MAINNET_PROTOCOL_MAGIC) {
+        return send_error_and_reset(SWO_INVALID_PROTOCOL_MAGIC);
+    }
+
     uint8_t txSigningMode;
     if (!buffer_read_u8(cdata, &txSigningMode)) {
         return send_error_and_reset(SWO_WRONG_DATA_LENGTH);

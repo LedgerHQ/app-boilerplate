@@ -533,10 +533,8 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = NULL,
         .chunk_count = 0,
-        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
+        .expected_sw = SWO_INVALID_PROTOCOL_MAGIC,
         .expect_init_failure = true,
-        // TODO: enforce protocol magic validation in handler
-        .skip_reason = "Protocol magic validation not enforced",
     },
     {
         .name = "[REJECT_INIT] Invalid_network_id",
@@ -547,8 +545,6 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .chunk_count = 0,
         .expected_sw = SWO_INVALID_NETWORK_ID,
         .expect_init_failure = true,
-        // TODO: enforce network ID validation in handler
-        .skip_reason = "Network ID validation not enforced",
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(operator)_-_too_few_certificates",

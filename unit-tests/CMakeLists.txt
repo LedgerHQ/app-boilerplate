@@ -59,6 +59,11 @@ include_directories($ENV{BOLOS_SDK}/lib_cxng/include)
 include_directories($ENV{BOLOS_SDK}/lib_nbgl/include)
 
 add_compile_definitions(HAVE_CRC)
+add_compile_definitions(APPNAME=\"Cardano\")
+add_compile_definitions(APPVERSION=\"8.0.0\")
+add_compile_definitions(MAJOR_VERSION=8)
+add_compile_definitions(MINOR_VERSION=0)
+add_compile_definitions(PATCH_VERSION=0)
 
 # Test executables
 add_executable(test_hex_utils test_hex_utils.c)
@@ -70,6 +75,13 @@ add_executable(test_cbor test_cbor.c)
 add_executable(test_buffer_utils test_buffer_utils.c)
 add_executable(test_ip_utils test_ip_utils.c ../src/utils/ipUtils.c)
 add_executable(test_hash test_hash.c)
+add_executable(test_apdu_info
+    test_apdu_info.c
+    ../src/handler/get_version.c
+    ../src/handler/get_app_name.c
+    ../src/handler/get_serial.c
+    mock_sources/io_stub.c
+)
 add_executable(test_address_utils_byron
     test_address_utils_byron.c
     ../src/addressUtils/addressUtilsByron.c
@@ -124,6 +136,7 @@ add_executable(test_tx_prepare
     mock_sources/glyphs_mock.c
     mock_sources/display_stub.c
     mock_sources/hex_stub.c
+    mock_sources/io_stub.c
 )
 add_executable(test_sign_tx_handler
     test_sign_tx_handler.c
@@ -136,6 +149,7 @@ add_executable(test_sign_tx_handler
     ../src/securityPolicy/securityPolicy_privkey.c
     ../src/messageSigning/messageSigning.c
     ../src/keyDerivation/keyDerivation.c
+    ../src/app_tokens/app_tokens.c
     ../src/addressUtils/addressUtilsShelley.c
     ../src/addressUtils/addressUtilsByron.c
     ../src/transaction/tx_hash_builder.c
@@ -148,6 +162,7 @@ add_executable(test_sign_tx_handler
     mock_sources/glyphs_mock.c
     mock_sources/display_stub.c
     mock_sources/hex_stub.c
+    mock_sources/io_stub.c
 )
 # add_executable(test_tokens test_tokens.c)  # TODO: needs crypto mocks (keyDerivation.h, etc.)
 # add_executable(test_tx_parser test_tx_parser.c)  # TODO: create this file
@@ -214,6 +229,7 @@ target_link_libraries(test_cbor PUBLIC cmocka gcov cbor_lib hex_utils read write
 target_link_libraries(test_buffer_utils PUBLIC cmocka gcov buffer_utils_lib buffer write varint bip32)
 target_link_libraries(test_ip_utils PUBLIC cmocka gcov)
 target_link_libraries(test_hash PUBLIC cmocka gcov hex_utils blake2b_lib sha3_lib hash_mocks_lib)
+target_link_libraries(test_apdu_info PUBLIC cmocka gcov)
 target_link_libraries(test_address_utils_byron
     PUBLIC
         cmocka
@@ -344,6 +360,7 @@ add_executable(test_sign_tx_rejects
     ../src/securityPolicy/securityPolicy_privkey.c
     ../src/messageSigning/messageSigning.c
     ../src/keyDerivation/keyDerivation.c
+    ../src/app_tokens/app_tokens.c
     ../src/addressUtils/addressUtilsShelley.c
     ../src/addressUtils/addressUtilsByron.c
     ../src/transaction/tx_hash_builder.c
@@ -403,6 +420,7 @@ add_test(test_sign_tx_rejects test_sign_tx_rejects)
 
 # Register tests with CTest
 add_test(test_hex_utils test_hex_utils)
+add_test(test_apdu_info test_apdu_info)
 add_test(test_base58 test_base58)
 add_test(test_bech32 test_bech32)
 add_test(test_text_utils test_text_utils)
