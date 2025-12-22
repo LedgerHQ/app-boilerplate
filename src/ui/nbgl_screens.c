@@ -7,12 +7,6 @@
 // #include "signTxPoolRegistration.h"
 #include "app_tokens/app_tokens.h"
 
-void ui_getPathScreen(char* line, const size_t lineSize, const bip44_path_t* path) {
-    explicit_bzero(line, lineSize);
-    bip44_printToStr(path, line, lineSize);
-    ASSERT(strlen(line) + 1 < lineSize);
-}
-
 __noinline_due_to_stack__ static void _ui_getAccountWithDescriptionScreen(
     char* accountDescription,
     const size_t accountDescriptionSize,
@@ -56,7 +50,9 @@ void ui_getPublicKeyPathScreen(char* line1,
         case PATH_POOL_COLD_KEY: {
             strncpy(line1, "Cold public key", line1Size);
 
-            ui_getPathScreen(line2, line2Size, path);
+            explicit_bzero(line2, line2Size);
+            bip44_printToStr(path, line2, line2Size);
+            ASSERT(strlen(line2) + 1 < line2Size);
             return;
         }
 
@@ -68,7 +64,9 @@ void ui_getPublicKeyPathScreen(char* line1,
 
         default:
             strncpy(line1, "Public key", line1Size);
-            ui_getPathScreen(line2, line2Size, path);
+            explicit_bzero(line2, line2Size);
+            bip44_printToStr(path, line2, line2Size);
+            ASSERT(strlen(line2) + 1 < line2Size);
             return;
     }
 }
@@ -223,7 +221,9 @@ void ui_getPaymentInfoScreen(char* line1,
     switch (determinePaymentChoice(addressParams->type)) {
         case PAYMENT_PATH: {
             snprintf(line1, line1Size, "Payment key path");
-            ui_getPathScreen(line2, line2Size, &addressParams->paymentKeyPath);
+            explicit_bzero(line2, line2Size);
+            bip44_printToStr(&addressParams->paymentKeyPath, line2, line2Size);
+            ASSERT(strlen(line2) + 1 < line2Size);
             return;
         }
 
@@ -349,84 +349,23 @@ void ui_getAssetFingerprintScreen(char* line,
     ASSERT(strlen(line) + 1 < lineSize);
 }
 
-void ui_getAdaAmountScreen(char* line, const size_t lineSize, uint64_t amount) {
-    explicit_bzero(line, lineSize);
-    str_formatAdaAmount(amount, line, lineSize);
-}
-
-void ui_getTokenAmountOutputScreen(char* line,
-                                   const size_t lineSize,
-                                   const token_group_t* tokenGroup,
-                                   const uint8_t* assetNameBytes,
-                                   size_t assetNameSize,
-                                   uint64_t tokenAmount) {
-    explicit_bzero(line, lineSize);
-    str_formatTokenAmountOutput(tokenGroup,
-                                assetNameBytes,
-                                assetNameSize,
-                                tokenAmount,
-                                line,
-                                lineSize);
-}
-
-void ui_getTokenAmountMintScreen(char* line,
-                                 const size_t lineSize,
-                                 const token_group_t* tokenGroup,
-                                 const uint8_t* assetNameBytes,
-                                 size_t assetNameSize,
-                                 int64_t tokenAmount) {
-    explicit_bzero(line, lineSize);
-    str_formatTokenAmountMint(tokenGroup,
-                              assetNameBytes,
-                              assetNameSize,
-                              tokenAmount,
-                              line,
-                              lineSize);
-}
-
-void ui_getUint64Screen(char* line, const size_t lineSize, uint64_t value) {
-    explicit_bzero(line, lineSize);
-    str_formatUint64(value, line, lineSize);
-}
-
-void ui_getInt64Screen(char* line, const size_t lineSize, uint64_t value) {
-    explicit_bzero(line, lineSize);
-    str_formatInt64(value, line, lineSize);
-}
 
 void ui_getValidityBoundaryScreen(char* line,
                                   const size_t lineSize,
                                   uint64_t boundary,
                                   uint8_t networkId,
                                   uint32_t protocolMagic) {
+    explicit_bzero(line, lineSize);
     if ((networkId == MAINNET_NETWORK_ID) && (protocolMagic == MAINNET_PROTOCOL_MAGIC)) {
         // nicer formatting could only be used for mainnet
         // since it depends on network params that could differ for testnets
         str_formatValidityBoundary(boundary, line, lineSize);
     } else {
-        ui_getUint64Screen(line, lineSize, boundary);
+        bool success = format_u64(line, lineSize, boundary);
+        ASSERT(success);
     }
 }
 
-void ui_getNetworkParamsScreen_1(char* line, const size_t lineSize, uint8_t networkId) {
-    ASSERT(isValidNetworkId(networkId));
-
-    explicit_bzero(line, lineSize);
-
-    STATIC_ASSERT(sizeof(networkId) <= sizeof(unsigned), "oversized type for %u");
-    STATIC_ASSERT(!IS_SIGNED(networkId), "signed type for %u");
-    snprintf(line, lineSize, "%u", networkId);
-    ASSERT(strlen(line) + 1 < lineSize);
-}
-
-void ui_getNetworkParamsScreen_2(char* line, const size_t lineSize, uint32_t protocolMagic) {
-    explicit_bzero(line, lineSize);
-
-    STATIC_ASSERT(sizeof(protocolMagic) <= sizeof(unsigned), "oversized type for %u");
-    STATIC_ASSERT(!IS_SIGNED(protocolMagic), "signed type for %u");
-    snprintf(line, lineSize, "%u", protocolMagic);
-    ASSERT(strlen(line) + 1 < lineSize);
-}
 
 void ui_getPoolMarginScreen(char* line1,
                             size_t lineSize,
@@ -530,46 +469,6 @@ void ui_getPoolRelayScreen(char* line, const size_t lineSize, size_t relayIndex)
     }
 }
 
-void ui_getIpv4Screen(char* ipStr, const size_t ipStrSize, const ipv4_t* ipv4) {
-    explicit_bzero(ipStr, ipStrSize);
-
-    if (ipv4->isNull) {
-        snprintf(ipStr, ipStrSize, "(none)");
-    } else {
-        inet_ntop4(ipv4->ip, ipStr, ipStrSize);
-    }
-
-    // make sure all the information is displayed to the user
-    ASSERT(strlen(ipStr) + 1 < ipStrSize);
-}
-
-void ui_getIpv6Screen(char* ipStr, const size_t ipStrSize, const ipv6_t* ipv6) {
-    explicit_bzero(ipStr, ipStrSize);
-
-    if (ipv6->isNull) {
-        snprintf(ipStr, ipStrSize, "(none)");
-    } else {
-        inet_ntop6(ipv6->ip, ipStr, ipStrSize);
-    }
-
-    // make sure all the information is displayed to the user
-    ASSERT(strlen(ipStr) + 1 < ipStrSize);
-}
-
-void ui_getIpPortScreen(char* portStr, const size_t portStrSize, const ipport_t* port) {
-    explicit_bzero(portStr, portStrSize);
-
-    if (port->isNull) {
-        snprintf(portStr, portStrSize, "(none)");
-    } else {
-        STATIC_ASSERT(sizeof(port->number) <= sizeof(unsigned), "oversized variable for %u");
-        STATIC_ASSERT(!IS_SIGNED(port->number), "signed type for %u");
-        snprintf(portStr, portStrSize, "%u", port->number);
-    }
-
-    // make sure all the information is displayed to the user
-    ASSERT(strlen(portStr) + 1 < portStrSize);
-}
 
 /*
 TODO

@@ -364,6 +364,9 @@ bool bip44_isCVoteKeyPath(const bip44_path_t* pathSpec) {
 // returns the length of the resulting string
 size_t bip44_printToStr(const bip44_path_t* pathSpec, char* out, size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
+
+    explicit_bzero(out, outSize);
+
     // we need space for the terminating \0
     // and one more byte to check whether
     // everything was printed

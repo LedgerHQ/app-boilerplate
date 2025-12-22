@@ -187,7 +187,9 @@ static int ui_materialize_strings(void) {
         if (ttl_tmp == NULL) {
             return SWO_INSUFFICIENT_MEMORY;
         }
-        str_formatUint64(tx->ttl, ttl_tmp, MAX_ADA_AMOUNT_STRING_SIZE);
+        explicit_bzero(ttl_tmp, MAX_ADA_AMOUNT_STRING_SIZE);
+        bool success = format_u64(ttl_tmp, MAX_ADA_AMOUNT_STRING_SIZE, tx->ttl);
+        ASSERT(success);
         status = ui_add_pair_or_fail("TTL", ttl_tmp);
         if (status != SWO_SUCCESS) {
             return status;

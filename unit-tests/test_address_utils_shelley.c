@@ -320,12 +320,34 @@ static void test_buffer_parse_address_params_payment_script_hash_with_stake_path
     }
 }
 
+// Test blockchain pointer formatting
+static void test_format_blockchain_pointer(void **state) {
+    (void) state;
+
+    struct {
+        blockchainPointer_t pointer;
+        const char* expected;
+    } testVectors[] = {
+        {{0, 0, 0}, "(0, 0, 0)"},
+        {{1, 2, 3}, "(1, 2, 3)"},
+        {{12345, 67890, 11111}, "(12345, 67890, 11111)"},
+        {{UINT32_MAX, UINT32_MAX, UINT32_MAX}, "(4294967295, 4294967295, 4294967295)"},
+    };
+
+    for (size_t i = 0; i < sizeof(testVectors) / sizeof(testVectors[0]); i++) {
+        char tmp[100] = {0};
+        printBlockchainPointerToStr(testVectors[i].pointer, tmp, sizeof(tmp));
+        assert_string_equal(tmp, testVectors[i].expected);
+    }
+}
+
 int main(void) {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_address_derivation),
         cmocka_unit_test(test_buffer_parse_address_params_payment_script_hash),
         cmocka_unit_test(test_buffer_parse_address_params_payment_script_hash_with_pointer),
         cmocka_unit_test(test_buffer_parse_address_params_payment_script_hash_with_stake_path),
+        cmocka_unit_test(test_format_blockchain_pointer),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

@@ -1,7 +1,9 @@
 #include "utils/assert.h"
 #include "utils/utils.h"
 #include "textUtils.h"
+#include "utils/ipUtils.h"
 #include <string.h>
+#include <stdint.h>
 
 #define WRITE_CHAR(ptr, end, c) \
     {                           \
@@ -10,9 +12,19 @@
         ptr++;                  \
     }
 
+uint64_t abs_int64(int64_t number) {
+    // INT64_MIN cannot be negated safely, so handle it specially
+    if (number == INT64_MIN) {
+        return (uint64_t)INT64_MAX + 1;
+    }
+    return (uint64_t)(number < 0 ? -number : number);
+}
+
 size_t str_formatDecimalAmount(uint64_t amount, size_t places, char* out, size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
     ASSERT(places <= UINT8_MAX);
+
+    explicit_bzero(out, outSize);
 
     char scratchBuffer[40] = {0};
     explicit_bzero(scratchBuffer, SIZEOF(scratchBuffer));
@@ -61,6 +73,8 @@ size_t str_formatDecimalAmount(uint64_t amount, size_t places, char* out, size_t
 size_t str_formatAdaAmount(uint64_t amount, char* out, size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
 
+    explicit_bzero(out, outSize);
+
     // TODO: Consider using format_fpu64 directly instead of str_formatDecimalAmount
     // for consistency with other formatting code
     size_t rawSize = str_formatDecimalAmount(amount, 6, out, outSize);
@@ -77,80 +91,6 @@ size_t str_formatAdaAmount(uint64_t amount, char* out, size_t outSize) {
     return rawSize + suffixLength;
 }
 
-static size_t stringifyUint64ToBufferReverse(uint64_t number, char* buffer, size_t bufferSize) {
-    char* currChar = buffer;
-    char* const end = buffer + bufferSize;
-
-    // We print in reverse
-    // We want at least one iteration
-    size_t printedChars = 0;
-    do {
-        WRITE_CHAR(currChar, end, '0' + (number % 10));
-        number /= 10;
-        ++printedChars;
-    } while (number > 0);
-    WRITE_CHAR(currChar, end, '\0');
-    return printedChars;
-}
-
-static void printReversedStringToBuffer(const char* reversed, char* out, size_t outSize) {
-    const size_t reversedSize = strlen(reversed);
-    ASSERT(outSize >= reversedSize + 1);
-
-    for (size_t i = 0; i < reversedSize; i++) {
-        out[i] = reversed[reversedSize - 1 - i];
-    }
-    out[reversedSize] = 0;
-
-    ASSERT(strlen(out) == reversedSize);
-}
-
-size_t str_formatUint64(uint64_t number, char* out, size_t outSize) {
-    ASSERT(outSize < BUFFER_SIZE_PARANOIA);
-
-    {
-        char tmpReversed[30] = {0};
-        explicit_bzero(tmpReversed, SIZEOF(tmpReversed));
-
-        stringifyUint64ToBufferReverse(number, tmpReversed, SIZEOF(tmpReversed));
-        const size_t reversedSize = strlen(tmpReversed);
-        printReversedStringToBuffer(tmpReversed, out, outSize);
-        ASSERT(strlen(out) == reversedSize);
-    }
-    return strlen(out);
-}
-
-uint64_t abs_int64(int64_t number) {
-    if (number < 0) {
-        if (number == INT64_MIN) {
-            return ((uint64_t) INT64_MAX) + 1;
-        } else {
-            return (uint64_t)(-number);
-        }
-    } else {
-        return (uint64_t) number;
-    }
-}
-
-size_t str_formatInt64(int64_t number, char* out, size_t outSize) {
-    ASSERT(outSize < BUFFER_SIZE_PARANOIA);
-
-    const uint64_t signlessNumber = abs_int64(number);
-    {
-        char tmpReversed[30] = {0};
-        explicit_bzero(tmpReversed, SIZEOF(tmpReversed));
-        // size without the potential '-' sign
-        stringifyUint64ToBufferReverse(signlessNumber, tmpReversed, SIZEOF(tmpReversed) - 1);
-        size_t reversedLength = strlen(tmpReversed);
-        if (number < 0) {
-            snprintf(tmpReversed + reversedLength, SIZEOF(tmpReversed) - reversedLength, "%c", '-');
-            ++reversedLength;
-        }
-        printReversedStringToBuffer(tmpReversed, out, outSize);
-        ASSERT(strlen(out) == reversedLength);
-    }
-    return strlen(out);
-}
 
 #ifdef DEVEL
 void str_traceAdaAmount(const char* prefix, uint64_t amount) {
@@ -170,7 +110,7 @@ void str_traceUint64(uint64_t number) {
     char numberStr[30] = {0};
     explicit_bzero(numberStr, SIZEOF(numberStr));
 
-    str_formatUint64(number, numberStr, SIZEOF(numberStr));
+    format_u64(numberStr, SIZEOF(numberStr), number);
     TRACE("%s", numberStr);
 }
 
@@ -178,7 +118,7 @@ void str_traceInt64(int64_t number) {
     char numberStr[30] = {0};
     explicit_bzero(numberStr, SIZEOF(numberStr));
 
-    str_formatInt64(number, numberStr, SIZEOF(numberStr));
+    format_i64(numberStr, SIZEOF(numberStr), number);
     TRACE("%s", numberStr);
 }
 #endif  // DEVEL
@@ -192,6 +132,8 @@ static struct {
 
 size_t str_formatValidityBoundary(uint64_t slotNumber, char* out, size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
+
+    explicit_bzero(out, outSize);
 
     unsigned i = 0;
     while (slotNumber < EPOCH_SLOTS_CONFIG[i].startSlotNumber) {
@@ -276,23 +218,61 @@ bool str_isUnambiguousAscii(const uint8_t* buffer, size_t bufferSize) {
     return true;
 }
 
-#ifdef DEVEL
+size_t str_formatIpv4(const ipv4_t* ipv4, char* out, size_t outSize) {
+    ASSERT(outSize < BUFFER_SIZE_PARANOIA);
+    ASSERT(out != NULL);
+    ASSERT(ipv4 != NULL);
 
-/* cspell:disable-next-line */
-// converts a text to bytes (suitable for CBORization) and validates if chars are allowed
-size_t str_textToBuffer(const char* text, uint8_t* buffer, size_t bufferSize) {
-    size_t textLength = strlen(text);
-    ASSERT(textLength < BUFFER_SIZE_PARANOIA);
-    ASSERT(bufferSize < BUFFER_SIZE_PARANOIA);
-    ASSERT(bufferSize >= textLength);
+    explicit_bzero(out, outSize);
 
-    for (size_t i = 0; i < textLength; i++) {
-        buffer[i] = text[i];
+    if (ipv4->isNull) {
+        snprintf(out, outSize, "(none)");
+    } else {
+        inet_ntop4(ipv4->ip, out, outSize);
     }
 
-    ASSERT(str_isPrintableAsciiWithSpaces(buffer, textLength));
+    // make sure all the information is displayed to the user
+    ASSERT(strlen(out) + 1 < outSize);
 
-    return textLength;
+    return strlen(out);
 }
 
-#endif  // DEVEL
+size_t str_formatIpv6(const ipv6_t* ipv6, char* out, size_t outSize) {
+    ASSERT(outSize < BUFFER_SIZE_PARANOIA);
+    ASSERT(out != NULL);
+    ASSERT(ipv6 != NULL);
+
+    explicit_bzero(out, outSize);
+
+    if (ipv6->isNull) {
+        snprintf(out, outSize, "(none)");
+    } else {
+        inet_ntop6(ipv6->ip, out, outSize);
+    }
+
+    // make sure all the information is displayed to the user
+    ASSERT(strlen(out) + 1 < outSize);
+
+    return strlen(out);
+}
+
+size_t str_formatIpPort(const ipport_t* port, char* out, size_t outSize) {
+    ASSERT(outSize < BUFFER_SIZE_PARANOIA);
+    ASSERT(out != NULL);
+    ASSERT(port != NULL);
+
+    explicit_bzero(out, outSize);
+
+    if (port->isNull) {
+        snprintf(out, outSize, "(none)");
+    } else {
+        STATIC_ASSERT(sizeof(port->number) <= sizeof(unsigned), "oversized variable for %u");
+        STATIC_ASSERT(!IS_SIGNED(port->number), "signed type for %u");
+        snprintf(out, outSize, "%u", port->number);
+    }
+
+    // make sure all the information is displayed to the user
+    ASSERT(strlen(out) + 1 < outSize);
+
+    return strlen(out);
+}

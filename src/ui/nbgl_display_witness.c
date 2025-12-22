@@ -90,7 +90,9 @@ int ui_display_witness(const bip44_path_t* witnessPath,
     TRACE("isUnusual: %d", isUnusual);
 
     // Format the witness path as a string
-    ui_getPathScreen(witnessPathStr, BIP44_PATH_STRING_SIZE_MAX + 1, witnessPath);
+    explicit_bzero(witnessPathStr, BIP44_PATH_STRING_SIZE_MAX + 1);
+    bip44_printToStr(witnessPath, witnessPathStr, BIP44_PATH_STRING_SIZE_MAX + 1);
+    ASSERT(strlen(witnessPathStr) + 1 < BIP44_PATH_STRING_SIZE_MAX + 1);
 
     if (isUnusual) {
         // A mild warning about unusual path

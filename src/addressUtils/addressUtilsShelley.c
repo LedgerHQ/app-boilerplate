@@ -431,6 +431,8 @@ size_t deriveAddress(const addressParams_t* addressParams, uint8_t* outBuffer, s
 void printBlockchainPointerToStr(blockchainPointer_t blockchainPointer, char* out, size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
 
+    explicit_bzero(out, outSize);
+
     STATIC_ASSERT(sizeof(blockchainIndex_t) <= sizeof(unsigned), "oversized type for %u");
     STATIC_ASSERT(!IS_SIGNED(blockchainPointer.blockIndex), "signed type for %u");
     STATIC_ASSERT(!IS_SIGNED(blockchainPointer.txIndex), "signed type for %u");

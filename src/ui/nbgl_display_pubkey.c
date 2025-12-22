@@ -76,7 +76,9 @@ int ui_display_pubkey(security_policy_t securityPolicy, warning_bits_t warnings)
         ui_cleanup_tracked_allocations();
         return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
-    ui_getPathScreen(pubkeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1, &pk->path);
+    explicit_bzero(pubkeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1);
+    bip44_printToStr(&pk->path, pubkeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1);
+    ASSERT(strlen(pubkeyPathStr) + 1 < BIP44_PATH_STRING_SIZE_MAX + 1);
 
     // set warning if needed
     bool isUnusual = warning_bits_has(warnings, WARNING_BIT_UNUSUAL_KEY_DERIVATION_PATH);

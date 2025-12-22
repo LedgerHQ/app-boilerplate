@@ -9,6 +9,7 @@
 #include <cmocka.h>
 
 #include "utils/textUtils.h"
+#include "utils/ipUtils.h"
 
 // Test str_formatDecimalAmount
 static void test_format_decimal_basic(void **state) {
@@ -92,7 +93,30 @@ static void test_format_validity_boundary(void **state) {
     }
 }
 
-// Test str_formatUint64
+// Test abs_int64
+static void test_abs_int64(void **state) {
+    (void) state;
+
+    struct {
+        int64_t input;
+        uint64_t expected;
+    } testVectors[] = {
+        {0, 0},
+        {1, 1},
+        {-1, 1},
+        {123456, 123456},
+        {-123456, 123456},
+        {INT64_MAX, (uint64_t)INT64_MAX},
+        {INT64_MIN, (uint64_t)INT64_MAX + 1},  // Special case: INT64_MIN
+    };
+
+    for (size_t i = 0; i < sizeof(testVectors) / sizeof(testVectors[0]); i++) {
+        uint64_t result = abs_int64(testVectors[i].input);
+        assert_int_equal(result, testVectors[i].expected);
+    }
+}
+
+// Test format_u64
 static void test_format_uint64(void **state) {
     (void) state;
 
@@ -109,13 +133,13 @@ static void test_format_uint64(void **state) {
 
     for (size_t i = 0; i < sizeof(testVectors) / sizeof(testVectors[0]); i++) {
         char tmp[100] = {0};
-        size_t len = str_formatUint64(testVectors[i].number, tmp, sizeof(tmp));
-        assert_int_equal(len, strlen(testVectors[i].expected));
+        explicit_bzero(tmp, sizeof(tmp));
+        format_u64(tmp, sizeof(tmp), testVectors[i].number);
         assert_string_equal(tmp, testVectors[i].expected);
     }
 }
 
-// Test str_formatInt64
+// Test format_i64
 static void test_format_int64(void **state) {
     (void) state;
 
@@ -134,8 +158,8 @@ static void test_format_int64(void **state) {
 
     for (size_t i = 0; i < sizeof(testVectors) / sizeof(testVectors[0]); i++) {
         char tmp[100] = {0};
-        size_t len = str_formatInt64(testVectors[i].number, tmp, sizeof(tmp));
-        assert_int_equal(len, strlen(testVectors[i].expected));
+        explicit_bzero(tmp, sizeof(tmp));
+        format_i64(tmp, sizeof(tmp), testVectors[i].number);
         assert_string_equal(tmp, testVectors[i].expected);
     }
 }
@@ -197,30 +221,118 @@ static void test_is_unambiguous_ascii(void **state) {
     assert_false(str_isUnambiguousAscii((const uint8_t*)"", 0));
 }
 
-// Test text to buffer conversion
-static void test_text_to_buffer(void **state) {
+// Test IPv4 address formatting
+static void test_format_ipv4(void **state) {
     (void) state;
 
-    // Simple ASCII text conversion
-    uint8_t buffer[100] = {0};
-    size_t len = str_textToBuffer("Hello", buffer, sizeof(buffer));
-    assert_int_equal(len, 5);
-    assert_memory_equal(buffer, (const uint8_t*)"Hello", 5);
+    char tmp[IPV4_STR_SIZE_MAX + 1] = {0};
 
-    // Text with spaces
-    memset(buffer, 0, sizeof(buffer));
-    len = str_textToBuffer("Hello World", buffer, sizeof(buffer));
-    assert_int_equal(len, 11);
-    assert_memory_equal(buffer, (const uint8_t*)"Hello World", 11);
+    // IPv4 null case
+    ipv4_t ipv4_null = {.isNull = true, .ip = {0, 0, 0, 0}};
+    size_t len = str_formatIpv4(&ipv4_null, tmp, sizeof(tmp));
+    assert_int_equal(len, strlen("(none)"));
+    assert_string_equal(tmp, "(none)");
 
-    // Empty string
-    memset(buffer, 0, sizeof(buffer));
-    len = str_textToBuffer("", buffer, sizeof(buffer));
-    assert_int_equal(len, 0);
+    // IPv4 typical case
+    ipv4_t ipv4_valid = {.isNull = false, .ip = {192, 168, 1, 1}};
+    memset(tmp, 0, sizeof(tmp));
+    len = str_formatIpv4(&ipv4_valid, tmp, sizeof(tmp));
+    assert_int_equal(len, strlen("192.168.1.1"));
+    assert_string_equal(tmp, "192.168.1.1");
+
+    // IPv4 all zeros
+    ipv4_t ipv4_zeros = {.isNull = false, .ip = {0, 0, 0, 0}};
+    memset(tmp, 0, sizeof(tmp));
+    len = str_formatIpv4(&ipv4_zeros, tmp, sizeof(tmp));
+    assert_int_equal(len, strlen("0.0.0.0"));
+    assert_string_equal(tmp, "0.0.0.0");
+
+    // IPv4 max values
+    ipv4_t ipv4_max = {.isNull = false, .ip = {255, 255, 255, 255}};
+    memset(tmp, 0, sizeof(tmp));
+    len = str_formatIpv4(&ipv4_max, tmp, sizeof(tmp));
+    assert_int_equal(len, strlen("255.255.255.255"));
+    assert_string_equal(tmp, "255.255.255.255");
+}
+
+// Test IPv6 address formatting
+static void test_format_ipv6(void **state) {
+    (void) state;
+
+    char tmp[IPV6_STR_SIZE_MAX + 1] = {0};
+
+    // IPv6 null case
+    ipv6_t ipv6_null = {.isNull = true, .ip = {0}};
+    size_t len = str_formatIpv6(&ipv6_null, tmp, sizeof(tmp));
+    assert_int_equal(len, strlen("(none)"));
+    assert_string_equal(tmp, "(none)");
+
+    // IPv6 all zeros
+    ipv6_t ipv6_zeros = {.isNull = false, .ip = {0}};
+    memset(tmp, 0, sizeof(tmp));
+    len = str_formatIpv6(&ipv6_zeros, tmp, sizeof(tmp));
+    assert_int_equal(len, strlen("::"));
+    assert_string_equal(tmp, "::");
+
+    // IPv6 loopback
+    ipv6_t ipv6_loopback = {.isNull = false, .ip = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}};
+    memset(tmp, 0, sizeof(tmp));
+    len = str_formatIpv6(&ipv6_loopback, tmp, sizeof(tmp));
+    assert_int_equal(len, strlen("::1"));
+    assert_string_equal(tmp, "::1");
+
+    // IPv6 typical case
+    ipv6_t ipv6_valid = {.isNull = false, .ip = {0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}};
+    memset(tmp, 0, sizeof(tmp));
+    len = str_formatIpv6(&ipv6_valid, tmp, sizeof(tmp));
+    assert_int_equal(len, strlen("2001:db8::1"));
+    assert_string_equal(tmp, "2001:db8::1");
+}
+
+// Test IP port formatting
+static void test_format_ip_port(void **state) {
+    (void) state;
+
+    char tmp[20] = {0};
+
+    // Port null case
+    ipport_t port_null = {.isNull = true, .number = 0};
+    size_t len = str_formatIpPort(&port_null, tmp, sizeof(tmp));
+    assert_int_equal(len, strlen("(none)"));
+    assert_string_equal(tmp, "(none)");
+
+    // Port 0
+    ipport_t port_zero = {.isNull = false, .number = 0};
+    memset(tmp, 0, sizeof(tmp));
+    len = str_formatIpPort(&port_zero, tmp, sizeof(tmp));
+    assert_int_equal(len, strlen("0"));
+    assert_string_equal(tmp, "0");
+
+    // Port typical case
+    ipport_t port_http = {.isNull = false, .number = 80};
+    memset(tmp, 0, sizeof(tmp));
+    len = str_formatIpPort(&port_http, tmp, sizeof(tmp));
+    assert_int_equal(len, strlen("80"));
+    assert_string_equal(tmp, "80");
+
+    // Port HTTPS
+    ipport_t port_https = {.isNull = false, .number = 443};
+    memset(tmp, 0, sizeof(tmp));
+    len = str_formatIpPort(&port_https, tmp, sizeof(tmp));
+    assert_int_equal(len, strlen("443"));
+    assert_string_equal(tmp, "443");
+
+    // Port max value
+    ipport_t port_max = {.isNull = false, .number = 65535};
+    memset(tmp, 0, sizeof(tmp));
+    len = str_formatIpPort(&port_max, tmp, sizeof(tmp));
+    assert_int_equal(len, strlen("65535"));
+    assert_string_equal(tmp, "65535");
 }
 
 int main(void) {
     const struct CMUnitTest tests[] = {
+        cmocka_unit_test(test_abs_int64),
         cmocka_unit_test(test_format_decimal_basic),
         cmocka_unit_test(test_format_ada_basic),
         cmocka_unit_test(test_format_validity_boundary),
@@ -228,7 +340,9 @@ int main(void) {
         cmocka_unit_test(test_format_int64),
         cmocka_unit_test(test_is_printable_ascii),
         cmocka_unit_test(test_is_unambiguous_ascii),
-        cmocka_unit_test(test_text_to_buffer),
+        cmocka_unit_test(test_format_ipv4),
+        cmocka_unit_test(test_format_ipv6),
+        cmocka_unit_test(test_format_ip_port),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

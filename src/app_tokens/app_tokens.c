@@ -105,6 +105,8 @@ size_t str_formatTokenAmountOutput(const token_group_t* tokenGroup,
     ASSERT(assetNameSize <= ASSET_NAME_SIZE_MAX);
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
 
+    explicit_bzero(out, outSize);
+
     const token_info_t* tokenInfo = _getTokenInfo(tokenGroup, assetNameBytes, assetNameSize);
     int decimals = (tokenInfo != NULL) ? tokenInfo->decimals : 0;
     TRACE("token decimal places = %u", decimals);
@@ -129,6 +131,8 @@ size_t str_formatTokenAmountMint(const token_group_t* tokenGroup,
                                  size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
     ASSERT(outSize >= 2);
+
+    explicit_bzero(out, outSize);
 
     out[0] = (amount >= 0)
                  ? ' '

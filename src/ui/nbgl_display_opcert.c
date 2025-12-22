@@ -93,7 +93,9 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
         opcert_buffer_cleanup();
         return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
-    ui_getPathScreen(poolColdKeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1, &opcert->poolColdKeyPath);
+    explicit_bzero(poolColdKeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1);
+    bip44_printToStr(&opcert->poolColdKeyPath, poolColdKeyPathStr, BIP44_PATH_STRING_SIZE_MAX + 1);
+    ASSERT(strlen(poolColdKeyPathStr) + 1 < BIP44_PATH_STRING_SIZE_MAX + 1);
 
     // Allocate and fill pool ID (key hash)
     poolKeyHashStr = (char *) ui_mem_alloc(BECH32_STRING_SIZE_MAX);
