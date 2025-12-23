@@ -786,8 +786,6 @@ static const sign_tx_fixture_t SIGN_TX_FIXTURES[] = {
         "243BD81478E68B9DB53A8528FD4FB1078D58D54A7F11241D227AEFA4B7731491"
         "70885AADBA30AAB3127CC611DDBC4999DEF61C1A006CA79302182A030A0807",
         .expected_num_witnesses = 1,
-        // TODO: finish multiasset serialization support
-        .skip_reason = "Multiasset serialization incomplete",
     },
     {
         // Source: tests/standalone/input_files/signTx.py (testsMary[1])
@@ -811,8 +809,6 @@ static const sign_tx_fixture_t SIGN_TX_FIXTURES[] = {
         "58D54A7F11241D227AEFA4B773149170885AADBA30AAB3127CC611DDBC4999DE"
         "F61C1A006CA79302182A030A0807",
         .expected_num_witnesses = 1,
-        // TODO: finish multiasset serialization support
-        .skip_reason = "Multiasset serialization incomplete",
     },
     {
         // Source: tests/standalone/input_files/signTx.py (testsMary[2])

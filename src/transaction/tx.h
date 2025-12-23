@@ -12,23 +12,24 @@
 #include "transaction/tx_output_types.h"
 
 // Mint token limits
-#define MAX_MINT_ASSET_GROUPS 100
-#define MAX_TOKENS_PER_MINT_GROUP 100
+// Note: No artificial limits on asset groups or tokens per mint.
+// The wire format uses uint16_t for counts, so the natural limit is UINT16_MAX.
+// Memory allocation is dynamic, so we can handle any count up to that limit.
 #define MAX_MINT_ASSET_NAME_LENGTH 32
 
 typedef struct {
-    uint8_t txHashBuffer[TX_HASH_LENGTH];
+    const uint8_t* txHash;
     uint32_t index;
 } tx_input_t;
 
 typedef struct {
-    uint8_t assetName[MAX_MINT_ASSET_NAME_LENGTH];
+    const uint8_t* assetName;
     uint8_t assetNameLen;
     int64_t amount;
 } mint_token_t;
 
 typedef struct {
-    uint8_t policyId[MINTING_POLICY_ID_LENGTH];
+    const uint8_t* policyId;
     uint16_t numTokens;
     mint_token_t* tokens;
 } mint_asset_group_t;
@@ -58,7 +59,6 @@ typedef struct {
 typedef struct {
     ext_credential_t stakeCredential;
     uint64_t amount;
-    uint8_t previousRewardAccount[REWARD_ACCOUNT_LENGTH];
 } withdrawal_data_t;
 
 typedef enum {
@@ -100,7 +100,7 @@ typedef struct {
     };
     union {
         ext_credential_t hotCredential;
-        uint8_t poolKeyHash[POOL_KEY_HASH_LENGTH];
+        const uint8_t* poolKeyHash;
         uint64_t deposit;
         uint64_t retirementEpoch;
         ext_drep_t drep;

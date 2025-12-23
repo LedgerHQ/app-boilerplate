@@ -454,11 +454,10 @@ void ui_getInputScreen(char* line,
                        const size_t lineSize,
                        const sign_tx_transaction_input_t* input) {
     const tx_input_t* inputData = &input->input_data;
-    ASSERT(SIZEOF(inputData->txHashBuffer) == TX_HASH_LENGTH);
     char txHex[2 * TX_HASH_LENGTH + 1] = {0};
     explicit_bzero(txHex, SIZEOF(txHex));
 
-    int result = bytes_to_lowercase_hex(txHex, SIZEOF(txHex), inputData->txHashBuffer, TX_HASH_LENGTH);
+    int result = bytes_to_lowercase_hex(txHex, SIZEOF(txHex), inputData->txHash, TX_HASH_LENGTH);
     ASSERT(result == 0);  // SDK returns 0 on success, -1 if output buffer too small
     ASSERT(strlen(txHex) == 2 * TX_HASH_LENGTH);
 

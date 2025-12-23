@@ -52,7 +52,7 @@ typedef struct {
     ipv4_t ipv4;
     ipv6_t ipv6;
     size_t dnsNameSize;
-    uint8_t dnsName[MAX_DNS_NAME_LENGTH];
+    const uint8_t* dnsName;
 } pool_relay_t;
 
 typedef struct {
@@ -72,22 +72,20 @@ typedef struct {
 } pool_owner_t;
 
 typedef struct {
-    uint8_t url[POOL_METADATA_URL_LENGTH_MAX];
+    const uint8_t* url;
     size_t urlSize;
-    uint8_t hash[POOL_METADATA_HASH_LENGTH];
+    const uint8_t* hash;
 } pool_metadata_t;
 
-// Anchor structures for committee/DRep certificates
 typedef struct {
     bool isIncluded;
-    uint8_t url[ANCHOR_URL_LENGTH_MAX];
+    const uint8_t* url;
     size_t urlLength;
-    uint8_t hash[ANCHOR_HASH_LENGTH];
+    const uint8_t* hash;
 } anchor_t;
 
-// Governing action identifiers
 typedef struct {
-    uint8_t txHashBuffer[TX_HASH_LENGTH];
+    const uint8_t* txHash;
     uint32_t govActionIndex;
 } gov_action_id_t;
 

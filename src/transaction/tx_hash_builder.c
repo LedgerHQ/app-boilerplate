@@ -354,9 +354,7 @@ void txHashBuilder_addInput(tx_hash_builder_t* builder, const tx_input_t* input)
     ASSERT(builder->remainingInputs > 0);
     builder->remainingInputs--;
 
-    const size_t utxoHashSize = SIZEOF(input->txHashBuffer);
-    ASSERT(utxoHashSize < BUFFER_SIZE_PARANOIA);
-    cbor_append_txInput(builder, input->txHashBuffer, utxoHashSize, input->index);
+    cbor_append_txInput(builder, input->txHash, TX_HASH_LENGTH, input->index);
 }
 
 static void txHashBuilder_assertCanLeaveInputs(tx_hash_builder_t* builder) {
@@ -921,8 +919,8 @@ static void _appendAnchor(tx_hash_builder_t* builder, const anchor_t* anchor) {
             BUILDER_APPEND_DATA(anchor->url, anchor->urlLength);
         }
         {
-            BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, SIZEOF(anchor->hash));
-            BUILDER_APPEND_DATA(anchor->hash, SIZEOF(anchor->hash));
+            BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, ANCHOR_HASH_LENGTH);
+            BUILDER_APPEND_DATA(anchor->hash, ANCHOR_HASH_LENGTH);
         }
     } else {
         // Null
@@ -1688,9 +1686,7 @@ void txHashBuilder_addCollateralInput(tx_hash_builder_t* builder, const tx_input
     ASSERT(builder->remainingCollateralInputs > 0);
     builder->remainingCollateralInputs--;
 
-    const size_t utxoHashSize = SIZEOF(collInput->txHashBuffer);
-    ASSERT(utxoHashSize < BUFFER_SIZE_PARANOIA);
-    cbor_append_txInput(builder, collInput->txHashBuffer, utxoHashSize, collInput->index);
+    cbor_append_txInput(builder, collInput->txHash, TX_HASH_LENGTH, collInput->index);
 }
 
 static void txHashBuilder_assertCanLeaveCollateralInputs(tx_hash_builder_t* builder) {
@@ -1917,9 +1913,7 @@ void txHashBuilder_addReferenceInput(tx_hash_builder_t* builder, const tx_input_
     ASSERT(builder->remainingReferenceInputs > 0);
     builder->remainingReferenceInputs--;
 
-    const size_t utxoHashSize = SIZEOF(refInput->txHashBuffer);
-    ASSERT(utxoHashSize < BUFFER_SIZE_PARANOIA);
-    cbor_append_txInput(builder, refInput->txHashBuffer, utxoHashSize, refInput->index);
+    cbor_append_txInput(builder, refInput->txHash, TX_HASH_LENGTH, refInput->index);
 }
 
 static void txHashBuilder_assertCanLeaveReferenceInputs(tx_hash_builder_t* builder) {
@@ -2008,10 +2002,9 @@ void txHashBuilder_addVotingProcedure(tx_hash_builder_t* builder,
             // ]
             BUILDER_APPEND_CBOR(CBOR_TYPE_ARRAY, 2);
             {
-                size_t size = SIZEOF(govActionId->txHashBuffer);
-                ASSERT(size == TX_HASH_LENGTH);
+                size_t size = TX_HASH_LENGTH;
                 BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, size);
-                BUILDER_APPEND_DATA(govActionId->txHashBuffer, size);
+                BUILDER_APPEND_DATA(govActionId->txHash, size);
             }
             { BUILDER_APPEND_CBOR(CBOR_TYPE_UNSIGNED, govActionId->govActionIndex); }
         }

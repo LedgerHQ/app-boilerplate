@@ -1824,17 +1824,18 @@ class CommandBuilder:
                 output_data.extend(addr_bytes)
             elif tx_output.destination.type == TxOutputDestinationType.DEVICE_OWNED:
                 # Serialize device-owned destination in the format expected by handler:
-                # [address_type][protocol_magic (Byron only)][payment_info][staking_choice][staking_info]
-                # Note: For Shelley addresses, networkId comes from the tx init, not from output data
+                # [address_type][protocol_magic/network_id][payment_info][staking_choice][staking_info]
                 addr_params = tx_output.destination.params
 
                 # Address type (1B)
                 output_data.append(addr_params.addrType)
 
-                # Protocol Magic only for Byron addresses (4B)
-                # For Shelley addresses, network ID is taken from tx init, not serialized here
+                # Protocol Magic for Byron addresses (4B) or Network ID for Shelley (1B)
                 if addr_params.addrType == AddressType.BYRON:
                     output_data.extend(addr_params.netDesc.protocol.to_bytes(4, 'big'))
+                else:
+                    # Shelley addresses: serialize network ID from tx init
+                    output_data.append(tx.network.networkId)
 
                 # Payment credential (path or script hash)
                 if addr_params.spendingValue.startswith("m/"):

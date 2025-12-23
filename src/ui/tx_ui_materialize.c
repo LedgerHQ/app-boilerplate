@@ -59,7 +59,7 @@ static int ui_materialize_strings(void) {
             .format = output_item->output_data.format,
             .amount = output_item->output_data.adaAmount,
             .numAssetGroups = output_item->output_data.numAssetGroups,
-            .includeDatum = (output_item->output_data.datum.type != 0xFF),
+            .includeDatum = output_item->output_data.datum.hasDatum,
             .includeRefScript = output_item->output_data.hasRefScript,
         };
 
@@ -156,6 +156,58 @@ static int ui_materialize_strings(void) {
                     return status;
                 }
 
+                // Display tokens if output is shown
+                if (output_item->output_data.assetGroups != NULL) {
+                    for (uint16_t ag = 0; ag < output_item->output_data.numAssetGroups; ag++) {
+                        asset_group_t *group = &output_item->output_data.assetGroups[ag];
+                        if (group->tokens == NULL) {
+                            continue;
+                        }
+
+                        for (uint16_t tk = 0; tk < group->numTokens; tk++) {
+                            output_token_t *token = &group->tokens[tk];
+
+                            // Display token fingerprint
+                            char *fingerprint_tmp = ui_alloc_temp(MAX_TOKEN_FINGERPRINT_STRING_LENGTH);
+                            if (fingerprint_tmp == NULL) {
+                                return SWO_INSUFFICIENT_MEMORY;
+                            }
+                            size_t fingerprint_len = deriveAssetFingerprintBech32(
+                                group->policyId,
+                                MINTING_POLICY_ID_LENGTH,
+                                token->assetName,
+                                token->assetNameLen,
+                                fingerprint_tmp,
+                                MAX_TOKEN_FINGERPRINT_STRING_LENGTH);
+                            LEDGER_ASSERT(fingerprint_len > 0, "Fingerprint derivation failed");
+                            status = ui_add_pair_or_fail("Asset fingerprint", fingerprint_tmp);
+                            if (status != SWO_SUCCESS) {
+                                return status;
+                            }
+
+                            // Display token amount
+                            char *token_amount_tmp = ui_alloc_temp(MAX_TOKEN_AMOUNT_OUTPUT_STRING_LENGTH);
+                            if (token_amount_tmp == NULL) {
+                                return SWO_INSUFFICIENT_MEMORY;
+                            }
+                            token_group_t tokenGroup;
+                            memcpy(tokenGroup.policyId, group->policyId, MINTING_POLICY_ID_LENGTH);
+                            bool token_amount_formatted = str_formatTokenAmountOutput(
+                                &tokenGroup,
+                                token->assetName,
+                                token->assetNameLen,
+                                token->amount,
+                                token_amount_tmp,
+                                MAX_TOKEN_AMOUNT_OUTPUT_STRING_LENGTH);
+                            ASSERT(token_amount_formatted);
+                            status = ui_add_pair_or_fail("Token amount", token_amount_tmp);
+                            if (status != SWO_SUCCESS) {
+                                return status;
+                            }
+                        }
+                    }
+                }
+
                 output_num++;
             }
             break;
@@ -171,13 +223,8 @@ static int ui_materialize_strings(void) {
             }
             app_mem_free(output_item->output_data.assetGroups);
         }
-        if (output_item->output_data.datum.type == DATUM_INLINE &&
-            output_item->output_data.datum.inline_data.data != NULL) {
-            app_mem_free(output_item->output_data.datum.inline_data.data);
-        }
-        if (output_item->output_data.hasRefScript && output_item->output_data.refScript.data != NULL) {
-            app_mem_free(output_item->output_data.refScript.data);
-        }
+        // Note: inline datum and reference script data are pointers into the raw_tx buffer,
+        // not separately allocated, so they do not need to be freed
         app_mem_free(output_item);
         output_node = next;
     }
@@ -260,11 +307,66 @@ static int ui_materialize_strings(void) {
             (tx_certificate_list_item_t *) certificate_node;
         s_flist_node *next = certificate_node->next;
 
-        security_policy_t policy = policyForSignTxCertificateStaking(
-            tx->txSigningMode,
-            certificate_item->certificate_data.type,
-            &certificate_item->certificate_data.stakeCredential
-        );
+        // Determine security policy based on certificate type
+        security_policy_t policy;
+        switch (certificate_item->certificate_data.type) {
+            case CERTIFICATE_STAKE_REGISTRATION:
+            case CERTIFICATE_STAKE_DEREGISTRATION:
+            case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
+            case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY:
+            case CERTIFICATE_STAKE_DELEGATION:
+                policy = policyForSignTxCertificateStaking(
+                    tx->txSigningMode,
+                    certificate_item->certificate_data.type,
+                    &certificate_item->certificate_data.stakeCredential
+                );
+                break;
+
+            case CERTIFICATE_VOTE_DELEGATION:
+                policy = policyForSignTxCertificateVoteDelegation(
+                    tx->txSigningMode,
+                    &certificate_item->certificate_data.stakeCredential,
+                    &certificate_item->certificate_data.drep
+                );
+                break;
+
+            case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT:
+                policy = policyForSignTxCertificateCommitteeAuth(
+                    tx->txSigningMode,
+                    &certificate_item->certificate_data.coldCredential,
+                    &certificate_item->certificate_data.hotCredential
+                );
+                break;
+
+            case CERTIFICATE_RESIGN_COMMITTEE_COLD:
+                policy = policyForSignTxCertificateCommitteeResign(
+                    tx->txSigningMode,
+                    &certificate_item->certificate_data.coldCredential
+                );
+                break;
+
+            case CERTIFICATE_DREP_REGISTRATION:
+            case CERTIFICATE_DREP_DEREGISTRATION:
+            case CERTIFICATE_DREP_UPDATE:
+                policy = policyForSignTxCertificateDRep(
+                    tx->txSigningMode,
+                    &certificate_item->certificate_data.dRepCredential
+                );
+                break;
+
+            case CERTIFICATE_STAKE_POOL_RETIREMENT:
+                policy = policyForSignTxCertificateStakePoolRetirement(
+                    tx->txSigningMode,
+                    &certificate_item->certificate_data.poolCredential,
+                    certificate_item->certificate_data.retirementEpoch
+                );
+                break;
+
+            default:
+                LEDGER_ASSERT(false, "Unknown certificate type");
+                policy = POLICY_DENY;
+                break;
+        }
 
         switch (policy) {
             case POLICY_DENY:
@@ -531,6 +633,41 @@ static int ui_materialize_strings(void) {
                     }
 
                     case CERTIFICATE_STAKE_POOL_RETIREMENT: {
+                        // Display pool credential
+                        const ext_credential_t* poolCred = &certificate_item->certificate_data.poolCredential;
+                        uint8_t poolKeyHash[POOL_KEY_HASH_LENGTH];
+
+                        switch (poolCred->type) {
+                            case EXT_CREDENTIAL_KEY_PATH:
+                                bip44_pathToKeyHash(&poolCred->keyPath, poolKeyHash, sizeof(poolKeyHash));
+                                break;
+                            case EXT_CREDENTIAL_KEY_HASH: {
+                                STATIC_ASSERT(ADDRESS_KEY_HASH_LENGTH == POOL_KEY_HASH_LENGTH,
+                                              "pool credential hash size mismatch");
+                                memcpy(poolKeyHash, poolCred->keyHash, POOL_KEY_HASH_LENGTH);
+                                break;
+                            }
+                            default:
+                                LEDGER_ASSERT(false, "Unsupported pool credential type for retirement");
+                                return SWO_TX_PARSING_FAIL;
+                        }
+
+                        char *pool_hash_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
+                        if (pool_hash_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
+                        bool pool_formatted = format_address_human_readable(
+                            poolKeyHash,
+                            POOL_KEY_HASH_LENGTH,
+                            pool_hash_tmp,
+                            MAX_HUMAN_ADDRESS_LENGTH
+                        );
+                        ASSERT(pool_formatted);
+                        status = ui_add_pair_or_fail("Pool ID", pool_hash_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+
                         // Display retirement epoch
                         char *epoch_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH);
                         if (epoch_tmp == NULL) {
@@ -595,17 +732,494 @@ static int ui_materialize_strings(void) {
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
-                        // DRep display not implemented for simplicity
+
+                        // Display DRep
+                        const ext_drep_t* drep = &certificate_item->certificate_data.drep;
+                        char *drep_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
+                        if (drep_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
+
+                        switch (drep->type) {
+                            case EXT_DREP_KEY_PATH: {
+                                uint8_t drepKeyHash[ADDRESS_KEY_HASH_LENGTH];
+                                bip44_pathToKeyHash(&drep->keyPath, drepKeyHash, sizeof(drepKeyHash));
+                                bool drep_formatted = format_address_human_readable(
+                                    drepKeyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    drep_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(drep_formatted);
+                                break;
+                            }
+                            case EXT_DREP_KEY_HASH: {
+                                bool drep_formatted = format_address_human_readable(
+                                    drep->keyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    drep_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(drep_formatted);
+                                break;
+                            }
+                            case EXT_DREP_SCRIPT_HASH: {
+                                bool drep_formatted = format_address_human_readable(
+                                    drep->scriptHash,
+                                    SCRIPT_HASH_LENGTH,
+                                    drep_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(drep_formatted);
+                                break;
+                            }
+                            case EXT_DREP_ABSTAIN:
+                                snprintf(drep_tmp, MAX_HUMAN_ADDRESS_LENGTH, "Abstain");
+                                break;
+                            case EXT_DREP_NO_CONFIDENCE:
+                                snprintf(drep_tmp, MAX_HUMAN_ADDRESS_LENGTH, "No Confidence");
+                                break;
+                            default:
+                                LEDGER_ASSERT(false, "Unknown DRep type");
+                                return SWO_TX_PARSING_FAIL;
+                        }
+                        status = ui_add_pair_or_fail("DRep", drep_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
                         break;
                     }
 
-                    case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT:
-                    case CERTIFICATE_RESIGN_COMMITTEE_COLD:
-                    case CERTIFICATE_DREP_REGISTRATION:
-                    case CERTIFICATE_DREP_DEREGISTRATION:
-                    case CERTIFICATE_DREP_UPDATE:
-                        // These certificate types not fully displayed in basic view
+                    case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT: {
+                        // Display cold credential
+                        const ext_credential_t* coldCred = &certificate_item->certificate_data.coldCredential;
+                        char *cold_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
+                        if (cold_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
+
+                        switch (coldCred->type) {
+                            case EXT_CREDENTIAL_KEY_PATH: {
+                                uint8_t coldKeyHash[ADDRESS_KEY_HASH_LENGTH];
+                                bip44_pathToKeyHash(&coldCred->keyPath, coldKeyHash, sizeof(coldKeyHash));
+                                bool cold_formatted = format_address_human_readable(
+                                    coldKeyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    cold_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(cold_formatted);
+                                break;
+                            }
+                            case EXT_CREDENTIAL_KEY_HASH: {
+                                bool cold_formatted = format_address_human_readable(
+                                    coldCred->keyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    cold_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(cold_formatted);
+                                break;
+                            }
+                            case EXT_CREDENTIAL_SCRIPT_HASH: {
+                                bool cold_formatted = format_address_human_readable(
+                                    coldCred->scriptHash,
+                                    SCRIPT_HASH_LENGTH,
+                                    cold_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(cold_formatted);
+                                break;
+                            }
+                            default:
+                                return SWO_TX_PARSING_FAIL;
+                        }
+                        status = ui_add_pair_or_fail("Cold credential", cold_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+
+                        // Display hot credential
+                        const ext_credential_t* hotCred = &certificate_item->certificate_data.hotCredential;
+                        char *hot_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
+                        if (hot_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
+
+                        switch (hotCred->type) {
+                            case EXT_CREDENTIAL_KEY_PATH: {
+                                uint8_t hotKeyHash[ADDRESS_KEY_HASH_LENGTH];
+                                bip44_pathToKeyHash(&hotCred->keyPath, hotKeyHash, sizeof(hotKeyHash));
+                                bool hot_formatted = format_address_human_readable(
+                                    hotKeyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    hot_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(hot_formatted);
+                                break;
+                            }
+                            case EXT_CREDENTIAL_KEY_HASH: {
+                                bool hot_formatted = format_address_human_readable(
+                                    hotCred->keyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    hot_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(hot_formatted);
+                                break;
+                            }
+                            case EXT_CREDENTIAL_SCRIPT_HASH: {
+                                bool hot_formatted = format_address_human_readable(
+                                    hotCred->scriptHash,
+                                    SCRIPT_HASH_LENGTH,
+                                    hot_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(hot_formatted);
+                                break;
+                            }
+                            default:
+                                return SWO_TX_PARSING_FAIL;
+                        }
+                        status = ui_add_pair_or_fail("Hot credential", hot_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
                         break;
+                    }
+
+                    case CERTIFICATE_RESIGN_COMMITTEE_COLD: {
+                        // Display cold credential
+                        const ext_credential_t* coldCred = &certificate_item->certificate_data.coldCredential;
+                        char *cold_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
+                        if (cold_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
+
+                        switch (coldCred->type) {
+                            case EXT_CREDENTIAL_KEY_PATH: {
+                                uint8_t coldKeyHash[ADDRESS_KEY_HASH_LENGTH];
+                                bip44_pathToKeyHash(&coldCred->keyPath, coldKeyHash, sizeof(coldKeyHash));
+                                bool cold_formatted = format_address_human_readable(
+                                    coldKeyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    cold_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(cold_formatted);
+                                break;
+                            }
+                            case EXT_CREDENTIAL_KEY_HASH: {
+                                bool cold_formatted = format_address_human_readable(
+                                    coldCred->keyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    cold_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(cold_formatted);
+                                break;
+                            }
+                            case EXT_CREDENTIAL_SCRIPT_HASH: {
+                                bool cold_formatted = format_address_human_readable(
+                                    coldCred->scriptHash,
+                                    SCRIPT_HASH_LENGTH,
+                                    cold_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(cold_formatted);
+                                break;
+                            }
+                            default:
+                                return SWO_TX_PARSING_FAIL;
+                        }
+                        status = ui_add_pair_or_fail("Cold credential", cold_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+
+                        // Display anchor if present
+                        if (certificate_item->certificate_data.anchor.isIncluded) {
+                            char *anchor_url_tmp = ui_alloc_temp(ANCHOR_URL_LENGTH_MAX + 1);
+                            if (anchor_url_tmp == NULL) {
+                                return SWO_INSUFFICIENT_MEMORY;
+                            }
+                            memcpy(anchor_url_tmp,
+                                   certificate_item->certificate_data.anchor.url,
+                                   certificate_item->certificate_data.anchor.urlLength);
+                            anchor_url_tmp[certificate_item->certificate_data.anchor.urlLength] = '\0';
+                            status = ui_add_pair_or_fail("Anchor URL", anchor_url_tmp);
+                            if (status != SWO_SUCCESS) {
+                                return status;
+                            }
+
+                            char *anchor_hash_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
+                            if (anchor_hash_tmp == NULL) {
+                                return SWO_INSUFFICIENT_MEMORY;
+                            }
+                            bool anchor_formatted = format_address_human_readable(
+                                certificate_item->certificate_data.anchor.hash,
+                                ANCHOR_HASH_LENGTH,
+                                anchor_hash_tmp,
+                                MAX_HUMAN_ADDRESS_LENGTH
+                            );
+                            ASSERT(anchor_formatted);
+                            status = ui_add_pair_or_fail("Anchor hash", anchor_hash_tmp);
+                            if (status != SWO_SUCCESS) {
+                                return status;
+                            }
+                        }
+                        break;
+                    }
+
+                    case CERTIFICATE_DREP_REGISTRATION: {
+                        // Display DRep credential
+                        const ext_credential_t* drepCred = &certificate_item->certificate_data.dRepCredential;
+                        char *drep_cred_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
+                        if (drep_cred_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
+
+                        switch (drepCred->type) {
+                            case EXT_CREDENTIAL_KEY_PATH: {
+                                uint8_t drepKeyHash[ADDRESS_KEY_HASH_LENGTH];
+                                bip44_pathToKeyHash(&drepCred->keyPath, drepKeyHash, sizeof(drepKeyHash));
+                                bool drep_formatted = format_address_human_readable(
+                                    drepKeyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    drep_cred_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(drep_formatted);
+                                break;
+                            }
+                            case EXT_CREDENTIAL_KEY_HASH: {
+                                bool drep_formatted = format_address_human_readable(
+                                    drepCred->keyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    drep_cred_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(drep_formatted);
+                                break;
+                            }
+                            case EXT_CREDENTIAL_SCRIPT_HASH: {
+                                bool drep_formatted = format_address_human_readable(
+                                    drepCred->scriptHash,
+                                    SCRIPT_HASH_LENGTH,
+                                    drep_cred_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(drep_formatted);
+                                break;
+                            }
+                            default:
+                                return SWO_TX_PARSING_FAIL;
+                        }
+                        status = ui_add_pair_or_fail("DRep credential", drep_cred_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+
+                        // Display deposit
+                        char *deposit_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH);
+                        if (deposit_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
+                        bool deposit_formatted = str_formatAdaAmount(
+                            certificate_item->certificate_data.deposit,
+                            deposit_tmp,
+                            MAX_ADA_AMOUNT_STRING_LENGTH
+                        );
+                        ASSERT(deposit_formatted);
+                        status = ui_add_pair_or_fail("Deposit", deposit_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+
+                        // Display anchor if present
+                        if (certificate_item->certificate_data.anchor.isIncluded) {
+                            char *anchor_url_tmp = ui_alloc_temp(ANCHOR_URL_LENGTH_MAX + 1);
+                            if (anchor_url_tmp == NULL) {
+                                return SWO_INSUFFICIENT_MEMORY;
+                            }
+                            memcpy(anchor_url_tmp,
+                                   certificate_item->certificate_data.anchor.url,
+                                   certificate_item->certificate_data.anchor.urlLength);
+                            anchor_url_tmp[certificate_item->certificate_data.anchor.urlLength] = '\0';
+                            status = ui_add_pair_or_fail("Anchor URL", anchor_url_tmp);
+                            if (status != SWO_SUCCESS) {
+                                return status;
+                            }
+
+                            char *anchor_hash_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
+                            if (anchor_hash_tmp == NULL) {
+                                return SWO_INSUFFICIENT_MEMORY;
+                            }
+                            bool anchor_formatted = format_address_human_readable(
+                                certificate_item->certificate_data.anchor.hash,
+                                ANCHOR_HASH_LENGTH,
+                                anchor_hash_tmp,
+                                MAX_HUMAN_ADDRESS_LENGTH
+                            );
+                            ASSERT(anchor_formatted);
+                            status = ui_add_pair_or_fail("Anchor hash", anchor_hash_tmp);
+                            if (status != SWO_SUCCESS) {
+                                return status;
+                            }
+                        }
+                        break;
+                    }
+
+                    case CERTIFICATE_DREP_DEREGISTRATION: {
+                        // Display DRep credential
+                        const ext_credential_t* drepCred = &certificate_item->certificate_data.dRepCredential;
+                        char *drep_cred_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
+                        if (drep_cred_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
+
+                        switch (drepCred->type) {
+                            case EXT_CREDENTIAL_KEY_PATH: {
+                                uint8_t drepKeyHash[ADDRESS_KEY_HASH_LENGTH];
+                                bip44_pathToKeyHash(&drepCred->keyPath, drepKeyHash, sizeof(drepKeyHash));
+                                bool drep_formatted = format_address_human_readable(
+                                    drepKeyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    drep_cred_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(drep_formatted);
+                                break;
+                            }
+                            case EXT_CREDENTIAL_KEY_HASH: {
+                                bool drep_formatted = format_address_human_readable(
+                                    drepCred->keyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    drep_cred_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(drep_formatted);
+                                break;
+                            }
+                            case EXT_CREDENTIAL_SCRIPT_HASH: {
+                                bool drep_formatted = format_address_human_readable(
+                                    drepCred->scriptHash,
+                                    SCRIPT_HASH_LENGTH,
+                                    drep_cred_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(drep_formatted);
+                                break;
+                            }
+                            default:
+                                return SWO_TX_PARSING_FAIL;
+                        }
+                        status = ui_add_pair_or_fail("DRep credential", drep_cred_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+
+                        // Display deposit
+                        char *deposit_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH);
+                        if (deposit_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
+                        bool deposit_formatted = str_formatAdaAmount(
+                            certificate_item->certificate_data.deposit,
+                            deposit_tmp,
+                            MAX_ADA_AMOUNT_STRING_LENGTH
+                        );
+                        ASSERT(deposit_formatted);
+                        status = ui_add_pair_or_fail("Deposit", deposit_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+                        break;
+                    }
+
+                    case CERTIFICATE_DREP_UPDATE: {
+                        // Display DRep credential
+                        const ext_credential_t* drepCred = &certificate_item->certificate_data.dRepCredential;
+                        char *drep_cred_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
+                        if (drep_cred_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
+
+                        switch (drepCred->type) {
+                            case EXT_CREDENTIAL_KEY_PATH: {
+                                uint8_t drepKeyHash[ADDRESS_KEY_HASH_LENGTH];
+                                bip44_pathToKeyHash(&drepCred->keyPath, drepKeyHash, sizeof(drepKeyHash));
+                                bool drep_formatted = format_address_human_readable(
+                                    drepKeyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    drep_cred_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(drep_formatted);
+                                break;
+                            }
+                            case EXT_CREDENTIAL_KEY_HASH: {
+                                bool drep_formatted = format_address_human_readable(
+                                    drepCred->keyHash,
+                                    ADDRESS_KEY_HASH_LENGTH,
+                                    drep_cred_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(drep_formatted);
+                                break;
+                            }
+                            case EXT_CREDENTIAL_SCRIPT_HASH: {
+                                bool drep_formatted = format_address_human_readable(
+                                    drepCred->scriptHash,
+                                    SCRIPT_HASH_LENGTH,
+                                    drep_cred_tmp,
+                                    MAX_HUMAN_ADDRESS_LENGTH
+                                );
+                                ASSERT(drep_formatted);
+                                break;
+                            }
+                            default:
+                                return SWO_TX_PARSING_FAIL;
+                        }
+                        status = ui_add_pair_or_fail("DRep credential", drep_cred_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+
+                        // Display anchor if present
+                        if (certificate_item->certificate_data.anchor.isIncluded) {
+                            char *anchor_url_tmp = ui_alloc_temp(ANCHOR_URL_LENGTH_MAX + 1);
+                            if (anchor_url_tmp == NULL) {
+                                return SWO_INSUFFICIENT_MEMORY;
+                            }
+                            memcpy(anchor_url_tmp,
+                                   certificate_item->certificate_data.anchor.url,
+                                   certificate_item->certificate_data.anchor.urlLength);
+                            anchor_url_tmp[certificate_item->certificate_data.anchor.urlLength] = '\0';
+                            status = ui_add_pair_or_fail("Anchor URL", anchor_url_tmp);
+                            if (status != SWO_SUCCESS) {
+                                return status;
+                            }
+
+                            char *anchor_hash_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
+                            if (anchor_hash_tmp == NULL) {
+                                return SWO_INSUFFICIENT_MEMORY;
+                            }
+                            bool anchor_formatted = format_address_human_readable(
+                                certificate_item->certificate_data.anchor.hash,
+                                ANCHOR_HASH_LENGTH,
+                                anchor_hash_tmp,
+                                MAX_HUMAN_ADDRESS_LENGTH
+                            );
+                            ASSERT(anchor_formatted);
+                            status = ui_add_pair_or_fail("Anchor hash", anchor_hash_tmp);
+                            if (status != SWO_SUCCESS) {
+                                return status;
+                            }
+                        }
+                        break;
+                    }
 
                     default:
                         return SWO_TX_PARSING_FAIL;

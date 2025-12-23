@@ -66,6 +66,8 @@ Bitcoin btc app (modern code you will be ask to consult occasionally to copy or 
 ../../ledger/app-bitcoin-new
 Ledgerjs, typescript API to be used with companion apps:
 ../ledgerjs-cardano-shelley
+hw interop lib:
+../cardano-hw-interop-lib
 
 You can read git commits or changes from the last commit, but do not do any git operations/modifications/writes.
 

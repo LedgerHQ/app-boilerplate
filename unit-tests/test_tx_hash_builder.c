@@ -45,7 +45,9 @@ static void test_tx_hash_builder_full(void** state) {
     tx_input_t input = {0};
     input.index = 0;
     static const char* inputHashHex = "34BBDF0A10E7290AD22E3EE791B6B3C35C206AB8B51BB749A2B06489CEEBF5F4";
-    decode_hex_buffer(inputHashHex, input.txHashBuffer, SIZEOF(input.txHashBuffer));
+    uint8_t inputHashBuffer[TX_HASH_LENGTH] = {0};
+    decode_hex_buffer(inputHashHex, inputHashBuffer, TX_HASH_LENGTH);
+    input.txHash = inputHashBuffer;
 
     txHashBuilder_enterInputs(&builder);
     txHashBuilder_addInput(&builder, &input);
@@ -127,9 +129,11 @@ static void test_tx_hash_builder_full(void** state) {
 
     tx_input_t collateralInput = {0};
     collateralInput.index = 1;
+    uint8_t collateralHashBuffer[TX_HASH_LENGTH] = {0};
     decode_hex_buffer("34BBDF0A10E7290AD22E3EE791B6B3C35C206AB8B51BB749A2B06489CEEBF5F4",
-                      collateralInput.txHashBuffer,
-                      SIZEOF(collateralInput.txHashBuffer));
+                      collateralHashBuffer,
+                      TX_HASH_LENGTH);
+    collateralInput.txHash = collateralHashBuffer;
     txHashBuilder_enterCollateralInputs(&builder);
     txHashBuilder_addCollateralInput(&builder, &collateralInput);
 
@@ -167,9 +171,11 @@ static void test_tx_hash_builder_full(void** state) {
 
     tx_input_t referenceInput = {0};
     referenceInput.index = 2;
+    uint8_t referenceHashBuffer[TX_HASH_LENGTH] = {0};
     decode_hex_buffer("EA34DF0A10E7290AD22E3EE791B6B3C35C206AB8B51BB749A2B06489CEEBF5F5",
-                      referenceInput.txHashBuffer,
-                      SIZEOF(referenceInput.txHashBuffer));
+                      referenceHashBuffer,
+                      TX_HASH_LENGTH);
+    referenceInput.txHash = referenceHashBuffer;
     txHashBuilder_enterReferenceInputs(&builder);
     txHashBuilder_addReferenceInput(&builder, &referenceInput);
 
@@ -181,9 +187,11 @@ static void test_tx_hash_builder_full(void** state) {
 
     gov_action_id_t govAction = {0};
     govAction.govActionIndex = 7;
+    uint8_t govActionHashBuffer[TX_HASH_LENGTH] = {0};
     decode_hex_buffer("45BBDF0A10E7290AD22E3EE791B6B3C35C206AB8B51BB749A2B06489CEEBF5F1",
-                      govAction.txHashBuffer,
-                      SIZEOF(govAction.txHashBuffer));
+                      govActionHashBuffer,
+                      TX_HASH_LENGTH);
+    govAction.txHash = govActionHashBuffer;
 
     voting_procedure_t votingProcedure = {0};
     votingProcedure.vote = VOTE_YES;
@@ -233,7 +241,9 @@ static void test_tx_hash_builder_minimal(void** state) {
     tx_input_t input = {0};
     input.index = 0;
     static const char* inputHashHex = "34BBDF0A10E7290AD22E3EE791B6B3C35C206AB8B51BB749A2B06489CEEBF5F4";
-    decode_hex_buffer(inputHashHex, input.txHashBuffer, SIZEOF(input.txHashBuffer));
+    uint8_t inputHashBuffer2[TX_HASH_LENGTH] = {0};
+    decode_hex_buffer(inputHashHex, inputHashBuffer2, TX_HASH_LENGTH);
+    input.txHash = inputHashBuffer2;
 
     txHashBuilder_enterInputs(&builder);
     txHashBuilder_addInput(&builder, &input);

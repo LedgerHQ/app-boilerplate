@@ -8,8 +8,9 @@
 #include "memory/flist.h"
 #include "addressUtils/addressUtilsShelley.h"
 
-#define MAX_ASSET_GROUPS_PER_OUTPUT 10
-#define MAX_TOKENS_PER_ASSET_GROUP 20
+// Note: No artificial limits on asset groups or tokens per output.
+// The wire format uses uint16_t for counts, so the natural limit is UINT16_MAX.
+// Memory allocation is dynamic, so we can handle any count up to that limit.
 #define MAX_DATUM_INLINE_LENGTH 256
 #define MAX_REF_SCRIPT_LENGTH 512
 #define ASSET_NAME_HASH_SIZE 32
@@ -44,7 +45,7 @@ typedef struct {
     tx_output_destination_type_t type;
     union {
         struct {
-            uint8_t buffer[MAX_ADDRESS_LENGTH];
+            const uint8_t* buffer;
             size_t size;
         } address;
         addressParams_t params;
@@ -55,7 +56,7 @@ typedef struct {
     tx_output_destination_type_t type;
     union {
         struct {
-            uint8_t* buffer;
+            const uint8_t* buffer;
             size_t size;
         } address;
         addressParams_t* params;
@@ -63,32 +64,32 @@ typedef struct {
 } tx_output_destination_t;
 
 typedef struct {
-    uint8_t assetNameHash[ASSET_NAME_HASH_SIZE];
+    const uint8_t* assetName;
     uint8_t assetNameLen;
-    uint8_t assetName[ASSET_NAME_DISPLAY_SIZE];
     int64_t amount;
 } output_token_t;
 
 typedef struct {
-    uint8_t policyId[MINTING_POLICY_ID_LENGTH];
+    const uint8_t* policyId;
     uint16_t numTokens;
     output_token_t* tokens;
 } asset_group_t;
 
 typedef struct {
+    bool hasDatum;
     datum_type_t type;
     union {
-        uint8_t hash[OUTPUT_DATUM_HASH_LENGTH];
+        const uint8_t* hash;  // Points to 32-byte hash in raw_tx buffer
         struct {
             uint16_t size;
-            uint8_t* data;
+            const uint8_t* data;  // Points to data in raw_tx buffer
         } inline_data;
     };
 } output_datum_t;
 
 typedef struct {
     uint16_t size;
-    uint8_t* data;
+    const uint8_t* data;  // Points to data in raw_tx buffer
 } ref_script_t;
 
 typedef struct {

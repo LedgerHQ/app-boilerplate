@@ -122,11 +122,13 @@ parser_status_e parse_certificate_stake_delegation(buffer_t *buf,
         return status;
     }
 
-    STATIC_ASSERT(SIZEOF(cert_data->poolKeyHash) == POOL_KEY_HASH_LENGTH,
-                  "pool key hash size mismatch");
-    if (!buffer_read_bytes(buf, cert_data->poolKeyHash, POOL_KEY_HASH_LENGTH)) {
+    // Store pointer to pool key hash in raw buffer instead of copying
+    uint8_t *hash_ptr = NULL;
+    if (!buffer_read_bytes_ptr(buf, &hash_ptr, POOL_KEY_HASH_LENGTH)) {
         return CERTIFICATES_PARSING_ERROR;
     }
+    ASSERT(hash_ptr != NULL);
+    cert_data->poolKeyHash = hash_ptr;
     return PARSING_OK;
 }
 
@@ -251,7 +253,7 @@ static parser_status_e _parse_anchor(buffer_t *buf, anchor_t *anchor) {
 
     anchor->isIncluded = true;
 
-    // Read URL
+    // Read URL length
     uint8_t url_len_byte;
     if (!buffer_read_u8(buf, &url_len_byte)) {
         return CERTIFICATES_PARSING_ERROR;
@@ -262,16 +264,22 @@ static parser_status_e _parse_anchor(buffer_t *buf, anchor_t *anchor) {
         return CERTIFICATES_PARSING_ERROR;
     }
 
-    if (!buffer_read_bytes(buf, anchor->url, anchor->urlLength)) {
+    // Store pointer to URL in raw buffer instead of copying
+    // Note: urlLength can be 0 for empty URLs, which is valid
+    uint8_t *url_ptr = NULL;
+    if (!buffer_read_bytes_ptr(buf, &url_ptr, anchor->urlLength)) {
         return CERTIFICATES_PARSING_ERROR;
     }
+    ASSERT(url_ptr != NULL);
+    anchor->url = url_ptr;
 
-    // Read hash (32 bytes)
-    STATIC_ASSERT(SIZEOF(anchor->hash) == ANCHOR_HASH_LENGTH,
-                  "anchor hash size mismatch");
-    if (!buffer_read_bytes(buf, anchor->hash, ANCHOR_HASH_LENGTH)) {
+    // Store pointer to hash in raw buffer instead of copying
+    uint8_t *hash_ptr = NULL;
+    if (!buffer_read_bytes_ptr(buf, &hash_ptr, ANCHOR_HASH_LENGTH)) {
         return CERTIFICATES_PARSING_ERROR;
     }
+    ASSERT(hash_ptr != NULL);
+    anchor->hash = hash_ptr;
 
     return PARSING_OK;
 }

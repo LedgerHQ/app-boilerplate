@@ -20,6 +20,7 @@
 #include "utils/assert.h"
 #include "io.h"
 #include "utils/cardano_os_utils.h"
+#include "utils/cbor.h"
 
 #define UI_PAIR_LIMIT 250
 
@@ -155,7 +156,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
         output_desc.format = output_item->output_data.format;
         output_desc.amount = output_item->output_data.adaAmount;
         output_desc.numAssetGroups = output_item->output_data.numAssetGroups;
-        output_desc.includeDatum = (output_item->output_data.datum.type != 0xFF);
+        output_desc.includeDatum = output_item->output_data.datum.hasDatum;
         output_desc.includeRefScript = output_item->output_data.hasRefScript;
 
         if (output_item->output_data.destination.type == DESTINATION_THIRD_PARTY) {
@@ -190,9 +191,21 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             case POLICY_DENY:
                 TRACE("Output security policy denied");
                 return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
-            case POLICY_SHOW:
+            case POLICY_SHOW: {
+                // Count pairs for output: output number, address, amount
                 plan->pair_count += 3;
+
+                // Count pairs for tokens (2 pairs per token: fingerprint + amount)
+                if (output_item->output_data.assetGroups != NULL) {
+                    for (uint16_t ag = 0; ag < output_item->output_data.numAssetGroups; ag++) {
+                        asset_group_t *group = &output_item->output_data.assetGroups[ag];
+                        if (group->tokens != NULL) {
+                            plan->pair_count += 2 * group->numTokens;
+                        }
+                    }
+                }
                 break;
+            }
             case POLICY_HIDE:
                 break;
         }
@@ -335,7 +348,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                         case POLICY_DENY:
                             return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
-                            plan->pair_count += 3;  // cert# + type + stake credential (DRep not shown)
+                            plan->pair_count += 4;  // cert# + type + stake credential + DRep
                             break;
                         case POLICY_HIDE:
                             break;
@@ -352,7 +365,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                         case POLICY_DENY:
                             return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
-                            plan->pair_count += 2;  // cert# + type only
+                            plan->pair_count += 4;  // cert# + type + cold credential + hot credential
                             break;
                         case POLICY_HIDE:
                             break;
@@ -368,7 +381,11 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                         case POLICY_DENY:
                             return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
-                            plan->pair_count += 2;  // cert# + type only
+                            // cert# + type + cold credential + anchor (URL + hash if present)
+                            plan->pair_count += 3;
+                            if (certificate_item->certificate_data.anchor.isIncluded) {
+                                plan->pair_count += 2;  // anchor URL + anchor hash
+                            }
                             break;
                         case POLICY_HIDE:
                             break;
@@ -386,7 +403,22 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                         case POLICY_DENY:
                             return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
-                            plan->pair_count += 2;  // cert# + type only
+                            if (certificate_item->certificate_data.type == CERTIFICATE_DREP_REGISTRATION) {
+                                // cert# + type + DRep credential + deposit + anchor (URL + hash if present)
+                                plan->pair_count += 4;
+                                if (certificate_item->certificate_data.anchor.isIncluded) {
+                                    plan->pair_count += 2;  // anchor URL + anchor hash
+                                }
+                            } else if (certificate_item->certificate_data.type == CERTIFICATE_DREP_DEREGISTRATION) {
+                                // cert# + type + DRep credential + deposit
+                                plan->pair_count += 4;
+                            } else {  // CERTIFICATE_DREP_UPDATE
+                                // cert# + type + DRep credential + anchor (URL + hash if present)
+                                plan->pair_count += 3;
+                                if (certificate_item->certificate_data.anchor.isIncluded) {
+                                    plan->pair_count += 2;  // anchor URL + anchor hash
+                                }
+                            }
                             break;
                         case POLICY_HIDE:
                             break;
@@ -403,7 +435,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                         case POLICY_DENY:
                             return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
-                            plan->pair_count += 3;  // cert# + type + retirement epoch
+                            plan->pair_count += 4;  // cert# + type + pool ID + retirement epoch
                             break;
                         case POLICY_HIDE:
                             break;
@@ -542,6 +574,12 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
 
     if (G_context.tx_info.transaction.num_withdrawals > 0) {
         txHashBuilder_enterWithdrawals(&txHashBuilder);
+
+        // Track previous reward account for CBOR canonical ordering validation
+        uint8_t previousRewardAccount[REWARD_ACCOUNT_LENGTH];
+        explicit_bzero(previousRewardAccount, REWARD_ACCOUNT_LENGTH);
+        bool isFirstWithdrawal = true;
+
         s_flist_node *withdrawal_node = G_context.tx_info.transaction.withdrawals;
         while (withdrawal_node != NULL) {
             tx_withdrawal_list_item_t *withdrawal_item =
@@ -603,6 +641,22 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             if (reward_addr_len != REWARD_ACCOUNT_LENGTH) {
                 return send_error_and_reset(SWO_TX_PARSING_FAIL);
             }
+
+            // Validate CBOR canonical ordering of withdrawal map keys
+            if (!isFirstWithdrawal) {
+                if (!cbor_mapKeyFulfillsCanonicalOrdering(
+                        previousRewardAccount,
+                        REWARD_ACCOUNT_LENGTH,
+                        reward_address,
+                        reward_addr_len)) {
+                    TRACE("Withdrawals not in canonical order");
+                    return send_error_and_reset(SWO_TX_PARSING_FAIL_WITHDRAWALS);
+                }
+            }
+
+            // Update for next iteration
+            memmove(previousRewardAccount, reward_address, reward_addr_len);
+            isFirstWithdrawal = false;
 
             txHashBuilder_addWithdrawal(&txHashBuilder,
                                        reward_address,

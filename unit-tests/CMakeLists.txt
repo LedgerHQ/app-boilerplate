@@ -146,6 +146,7 @@ add_executable(test_sign_tx_handler
     ../src/handler/sign_tx.c
     ../src/transaction/tx_parse.c
     ../src/transaction/tx_parse_certificates.c
+    ../src/transaction/tx_parse_outputs.c
     ../src/transaction/tx_utils.c
     ../src/securityPolicy/securityPolicy.c
     ../src/securityPolicy/securityPolicy_privkey.c
@@ -385,6 +386,7 @@ add_executable(test_sign_tx_rejects
     ../src/handler/sign_tx.c
     ../src/transaction/tx_parse.c
     ../src/transaction/tx_parse_certificates.c
+    ../src/transaction/tx_parse_outputs.c
     ../src/transaction/tx_utils.c
     ../src/securityPolicy/securityPolicy.c
     ../src/securityPolicy/securityPolicy_privkey.c
