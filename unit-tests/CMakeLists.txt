@@ -539,6 +539,47 @@ target_link_libraries(test_ui_utils PUBLIC cmocka gcov)
 add_test(test_sign_tx_rejects test_sign_tx_rejects)
 # target_link_libraries(test_tokens PUBLIC cmocka gcov tokens_lib bech32_lib hex_utils)  # TODO: when tokens_lib is ready
 
+add_executable(test_opcert 
+    test_opcert.c
+    mock_globals.c
+    ../src/memory/flist.c
+    ../src/handler/sign_opcert.c
+    ../src/opcert/opcert_parse.c
+    ../src/securityPolicy/securityPolicy.c
+    ../src/securityPolicy/securityPolicy_privkey.c
+    ../src/messageSigning/messageSigning.c
+    ../src/addressUtils/addressUtilsShelley.c
+    ../src/addressUtils/addressUtilsByron.c
+    ../src/transaction/tx_parse.c
+    ../src/transaction/tx_utils.c
+    ../src/keyDerivation/keyDerivation.c
+    ../src/utils/cardano_os_utils.c
+)
+
+target_link_libraries(test_opcert 
+    PUBLIC
+        cmocka
+        gcov
+        text_utils
+        hex_utils
+        base58
+        bech32_lib
+        bip44_real
+        buffer_utils_lib
+        cbor_lib
+        blake2b_lib
+        sha3_lib
+        hash_mocks_lib
+        crypto_mocks_lib
+        buffer
+        write
+        read
+        varint
+        bip32
+        cx_crc_support
+)
+add_test(test_opcert test_opcert)
+
 # TODO: uncomment when test files are created
 # target_link_libraries(test_tx_parser PUBLIC
 #                       transaction_deserialize

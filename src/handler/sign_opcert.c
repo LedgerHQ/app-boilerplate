@@ -41,6 +41,7 @@
 #include "write.h"
 #include "sign_opcert.h"
 #include "menu.h"
+#include "ui/menu.h"
 
 #define OP_CERT_BODY_LENGTH (KES_PUBLIC_KEY_LENGTH + 8 + 8)
 
