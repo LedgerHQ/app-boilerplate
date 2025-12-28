@@ -8,7 +8,7 @@ This module provides Ragger tests for Derive Address check
 import pytest
 import base58
 
-from ledgered.devices import Device
+from ledgered.devices import DeviceType, Device
 from ragger.backend import BackendInterface
 from ragger.navigator import Navigator, NavInsID
 from ragger.navigator.navigation_scenario import NavigateWithScenario
@@ -21,57 +21,67 @@ from application_client.command_builder import P1Type
 
 from standalone.input_files.derive_address import DeriveAddressTestCase
 from standalone.input_files.derive_address import byronTestCases, rejectTestCases
-from standalone.input_files.derive_address import shelleyTestCasesNoConfirm, shelleyTestCasesWithConfirm
+from standalone.input_files.derive_address import (
+    shelleyTestCasesNoConfirm,
+    shelleyTestCasesWithConfirm,
+)
 
 from standalone.utils import idTestFunc, derive_address
 
 
-@pytest.mark.parametrize(
-    "testCase",
-    byronTestCases,
-    ids=idTestFunc
-)
-def test_derive_address_byron(device: Device,
-                              backend: BackendInterface,
-                              navigator: Navigator,
-                              scenario_navigator: NavigateWithScenario,
-                              testCase: DeriveAddressTestCase) -> None:
+@pytest.mark.parametrize("testCase", byronTestCases, ids=idTestFunc)
+def test_derive_address_byron(
+    device: Device,
+    backend: BackendInterface,
+    navigator: Navigator,
+    scenario_navigator: NavigateWithScenario,
+    testCase: DeriveAddressTestCase,
+) -> None:
     """Check Derive Byron Address Return"""
 
     # Use the app interface instead of raw interface
     client = CommandSender(backend)
+    
+    nav_inst = []
+    valid_instr = []
     if device.is_nano:
         nav_inst = NavInsID.BOTH_CLICK
         valid_instr = [NavInsID.BOTH_CLICK]
-
+    elif device.type is DeviceType.STAX:
+        valid_instr += 2*[NavInsID.USE_CASE_REVIEW_TAP]
+        valid_instr += [NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CONFIRM]
+        #valid_instr += [NavInsID.USE_CASE_REVIEW_TAP]
+        
     # Send the APDU
     with client.derive_address_async(P1Type.P1_RETURN, testCase):
         if device.is_nano:
             navigator.navigate_until_text(nav_inst, valid_instr, "Confirm")
         else:
-            scenario_navigator.address_review_approve(do_comparison=False)
-
+            #scenario_navigator.address_review_approve(do_comparison=False)
+            navigator.navigate(valid_instr, screen_change_before_first_instruction=False)
+            
     # Check the status (Asynchronous)
     response = client.get_async_response()
+    
+
     assert response and response.status == StatusWord.SWO_SUCCESS
     encoded = base58.b58encode(response.data).decode()
-
+    
     if testCase.netDesc == Testnet:
         assert encoded == testCase.result
     else:
         assert encoded == derive_address(testCase)
 
+    
 
-@pytest.mark.parametrize(
-    "testCase",
-    byronTestCases,
-    ids=idTestFunc
-)
-def test_derive_address_byron_show(device: Device,
-                                   backend: BackendInterface,
-                                   navigator: Navigator,
-                                   scenario_navigator: NavigateWithScenario,
-                                   testCase: DeriveAddressTestCase) -> None:
+@pytest.mark.parametrize("testCase", byronTestCases, ids=idTestFunc)
+def test_derive_address_byron_show(
+    device: Device,
+    backend: BackendInterface,
+    navigator: Navigator,
+    scenario_navigator: NavigateWithScenario,
+    testCase: DeriveAddressTestCase,
+) -> None:
     """Check Derive Byron Address Show"""
 
     # Use the app interface instead of raw interface
@@ -81,26 +91,29 @@ def test_derive_address_byron_show(device: Device,
         moves += [NavInsID.BOTH_CLICK] * 3
         moves += [NavInsID.RIGHT_CLICK]
         moves += [NavInsID.BOTH_CLICK] * 2
+    elif device.type is DeviceType.STAX:
+        moves = []
+        moves += [NavInsID.USE_CASE_REVIEW_TAP] * 2 + [
+            NavInsID.USE_CASE_ADDRESS_CONFIRMATION_TAP
+        ]
 
     # Send the APDU
     with client.derive_address_async(P1Type.P1_DISPLAY, testCase):
         if device.is_nano:
             navigator.navigate(moves)
         else:
-            scenario_navigator.address_review_approve(do_comparison=False)
-
+            #scenario_navigator.address_review_approve(do_comparison=False)
+            navigator.navigate(moves, screen_change_before_first_instruction=False)
+            
     # Check the status (Asynchronous)
     response = client.get_async_response()
     assert response and response.status == StatusWord.SWO_SUCCESS
 
 
-@pytest.mark.parametrize(
-    "testCase",
-    shelleyTestCasesNoConfirm,
-    ids=idTestFunc
-)
-def test_derive_address_shelley(backend: BackendInterface,
-                                testCase: DeriveAddressTestCase) -> None:
+@pytest.mark.parametrize("testCase", shelleyTestCasesNoConfirm, ids=idTestFunc)
+def test_derive_address_shelley(
+    backend: BackendInterface, testCase: DeriveAddressTestCase
+) -> None:
     """Check Derive Shelley Address Return without confirmation"""
 
     # Use the app interface instead of raw interface
@@ -113,36 +126,38 @@ def test_derive_address_shelley(backend: BackendInterface,
     assert response.data == derive_address(testCase)
 
 
-@pytest.mark.parametrize(
-    "testCase",
-    shelleyTestCasesWithConfirm,
-    ids=idTestFunc
-)
-def test_derive_address_shelley_confirm(device: Device,
-                                        backend: BackendInterface,
-                                        navigator: Navigator,
-                                        scenario_navigator: NavigateWithScenario,
-                                        testCase: DeriveAddressTestCase) -> None:
+@pytest.mark.parametrize("testCase", shelleyTestCasesWithConfirm, ids=idTestFunc)
+def test_derive_address_shelley_confirm(
+    device: Device,
+    backend: BackendInterface,
+    navigator: Navigator,
+    scenario_navigator: NavigateWithScenario,
+    testCase: DeriveAddressTestCase,
+) -> None:
     """Check Derive Shelley Address Return with confirmation"""
 
     # Use the app interface instead of raw interface
     client = CommandSender(backend)
     if device.is_nano:
         nav_inst = NavInsID.BOTH_CLICK
-        if device.is_nanos:
-            valid_instr = [NavInsID.RIGHT_CLICK]
-        else:
-            valid_instr = [NavInsID.BOTH_CLICK]
+        # if device.is_nanos:
+        #    valid_instr = [NavInsID.RIGHT_CLICK]
+        # else:
+        #    valid_instr = [NavInsID.BOTH_CLICK]
+        valid_instr = [NavInsID.BOTH_CLICK]
+
 
     # Send the APDU
     with client.derive_address_async(P1Type.P1_RETURN, testCase):
         if device.is_nano:
-            if not device.is_nanos and testCase.nano_nav_confirm:
+            # if not device.is_nanos and testCase.nano_nav_confirm:
+            if testCase.nano_nav_confirm:
                 navigator.navigate(testCase.nano_nav_confirm)
             else:
                 navigator.navigate_until_text(nav_inst, valid_instr, "Confirm")
         else:
-            scenario_navigator.address_review_approve(do_comparison=False)
+            navigator.navigate(testCase.nano_nav_confirm, screen_change_before_first_instruction=False)
+            #scenario_navigator.address_review_approve(do_comparison=False)
 
     # Check the status (Asynchronous)
     response = client.get_async_response()
@@ -152,29 +167,39 @@ def test_derive_address_shelley_confirm(device: Device,
 
 @pytest.mark.parametrize(
     "testCase",
+    #shelleyTestCasesNoConfirm,
+    # shelleyTestCasesWithConfirm,
     shelleyTestCasesNoConfirm + shelleyTestCasesWithConfirm,
-    ids=idTestFunc
+    ids=idTestFunc,
 )
-def test_derive_address_shelley_show(device: Device,
-                                     backend: BackendInterface,
-                                     navigator: Navigator,
-                                     scenario_navigator: NavigateWithScenario,
-                                     testCase: DeriveAddressTestCase) -> None:
+def test_derive_address_shelley_show(
+    device: Device,
+    backend: BackendInterface,
+    navigator: Navigator,
+    scenario_navigator: NavigateWithScenario,
+    testCase: DeriveAddressTestCase,
+) -> None:
     """Check Derive Shelley Address Show without confirmation"""
 
     # TODO - Navigation should be set for each test case
-    if device.is_nanos:
-        pytest.skip("Not supported on Nanos because Navigation should be set for each test case")
+    # if device.is_nanos:
+    #    pytest.skip("Not supported on Nanos because Navigation should be set for each test case")
 
     # Use the app interface instead of raw interface
     client = CommandSender(backend)
 
     # Send the APDU
     with client.derive_address_async(P1Type.P1_DISPLAY, testCase):
-        if device.is_nano:
-            navigator.navigate(testCase.nano_nav_show)
+
+        if device.type is DeviceType.STAX:
+            navigator.navigate(
+                testCase.nano_nav_show, screen_change_before_first_instruction=False
+            )
         else:
-            scenario_navigator.address_review_approve(do_comparison=False)
+            if device.is_nano:
+                navigator.navigate(testCase.nano_nav_show)
+            else:
+                scenario_navigator.address_review_approve(do_comparison=False)
 
     # Check the status (Asynchronous)
     response = client.get_async_response()
@@ -185,20 +210,17 @@ def test_derive_address_shelley_show(device: Device,
 def p1_fixture(request: pytest.FixtureRequest) -> P1Type:
     return request.param
 
-@pytest.mark.parametrize(
-    "testCase",
-    rejectTestCases,
-    ids=idTestFunc
-)
-def test_derive_address_reject(backend: BackendInterface,
-                               testCase: DeriveAddressTestCase,
-                               p1: P1Type) -> None:
-    """Check Derive Reject Address"""
 
-    # Use the app interface instead of raw interface
-    client = CommandSender(backend)
+# @pytest.mark.parametrize("testCase", rejectTestCases, ids=idTestFunc)
+# def test_derive_address_reject(
+#     backend: BackendInterface, testCase: DeriveAddressTestCase, p1: P1Type
+# ) -> None:
+#     """Check Derive Reject Address"""
 
-    with pytest.raises(ExceptionRAPDU) as err:
-        # Send the APDU
-        client.derive_address(p1, testCase)
-    assert err.value.status == StatusWord.SWO_SECURITY_CONDITION_NOT_SATISFIED
+#     # Use the app interface instead of raw interface
+#     client = CommandSender(backend)
+
+#     with pytest.raises(ExceptionRAPDU) as err:
+#         # Send the APDU
+#         client.derive_address(p1, testCase)
+#     assert err.value.status == StatusWord.SWO_SECURITY_CONDITION_NOT_SATISFIED

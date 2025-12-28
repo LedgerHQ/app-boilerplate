@@ -14,6 +14,11 @@ from bip_utils.bip.bip32.bip32_path import Bip32Path, Bip32PathParser
 from ragger.bip import calculate_public_key_and_chaincode, CurveChoice
 from ragger.conftest.configuration import OPTIONAL
 
+from ragger.navigator import NavInsID, NavIns, Navigator
+from ragger.bip.seed import SPECULOS_MNEMONIC
+
+from ledgered.devices import DeviceType, Device
+
 from application_client.app_def import AddressType
 
 from standalone.input_files.derive_address import DeriveAddressTestCase
@@ -140,9 +145,9 @@ def derive_address(testCase: DeriveAddressTestCase) -> Union[bytes, str]:
 
 def _deriveAddressByron(testCase: DeriveAddressTestCase) -> str:
     """Derive the Byron address from the path"""
-
    # Generate seed from mnemonic
-    seed_bytes = Bip39SeedGenerator(OPTIONAL.CUSTOM_SEED).Generate()
+   # seed_bytes = Bip39SeedGenerator(OPTIONAL.CUSTOM_SEED).Generate()
+    seed_bytes = Bip39SeedGenerator(SPECULOS_MNEMONIC).Generate()
 
     # Construct from seed
     bip44_mst_ctx = Bip44.FromSeed(seed_bytes, Bip44Coins.CARDANO_BYRON_LEDGER)

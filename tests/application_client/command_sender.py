@@ -3,10 +3,13 @@ from contextlib import contextmanager
 
 from ragger.backend.interface import BackendInterface, RAPDU
 
+
 from standalone.input_files.signOpCert import OpCertTestCase
-from application_client.command_builder import CommandBuilder, gather_witness_paths
+from application_client.command_builder import CommandBuilder, gather_witness_paths, P1Type
+from standalone.input_files.derive_address import DeriveAddressTestCase
 from application_client.status_words import StatusWord
 from standalone.input_files.signTx import Transaction, TxAuxiliaryDataCIP36, TxAuxiliaryDataType
+
 
 
 class CommandSender:
@@ -187,6 +190,7 @@ class CommandSender:
         """
         return self._exchange(self._cmd_builder.sign_tx_witness(path))
 
+<<<<<<< HEAD
     def set_debug_settings(self, expert_mode: bool, silent_export: bool) -> RAPDU:
         """Set app settings via debug APDU (only works with DEBUG builds).
 
@@ -226,3 +230,32 @@ class CommandSender:
             )
 
         return response
+=======
+    @contextmanager
+    def derive_address_async(self, p1: P1Type, testCase: DeriveAddressTestCase) -> Generator[None, None, None]:
+        """APDU Derive Address
+
+        Args:
+            p1 (P1Type): APDU Parameter 1
+            testCase (DeriveAddressTestCase): Test parameters
+
+        Returns:
+            Generator
+        """
+
+        with self._exchange_async(self._cmd_builder.derive_address(p1, testCase)):
+            yield
+
+    def derive_address(self, p1: P1Type, testCase: DeriveAddressTestCase) -> RAPDU:
+        """APDU Derive Address
+
+        Args:
+            p1 (P1Type): APDU Parameter 1
+            testCase (DeriveAddressTestCase): Test parameters
+
+        Returns:
+            Response APDU
+        """
+
+        return self._exchange(self._cmd_builder.derive_address(p1, testCase))
+>>>>>>> 1f05ffa (derive address tests)
