@@ -1897,8 +1897,8 @@ class CommandBuilder:
                         output_data.append(len(asset_name_bytes))
                         # Asset name
                         output_data.extend(asset_name_bytes)
-                        # Token amount (int64, BE, signed)
-                        output_data.extend(token.amount.to_bytes(8, 'big', signed=True))
+                        # Token amount (uint64, BE)
+                        output_data.extend(token.amount.to_bytes(8, 'big'))
 
             # Datum (if any)
             # Wire format: 0=NONE, 1=HASH (32 bytes, no length), 2=INLINE (u16 length + data)
@@ -1950,13 +1950,13 @@ class CommandBuilder:
                 # Credential type and data
                 cred = certificate.params.stakeCredential
                 if cred.type == CredentialParamsType.KEY_PATH:
-                    data.append(0x22)  # STAKING_KEY_PATH
+                    data.append(0x02)  # STAKING_KEY_PATH (wire 0x02)
                     data.extend(pack_derivation_path(cred.keyValue))
                 elif cred.type == CredentialParamsType.KEY_HASH:
-                    data.append(0x33)  # STAKING_KEY_HASH
+                    data.append(0x00)  # STAKING_KEY_HASH (wire 0x00)
                     data.extend(bytes.fromhex(cred.keyValue))
                 elif cred.type == CredentialParamsType.SCRIPT_HASH:
-                    data.append(0x55)  # STAKING_SCRIPT_HASH
+                    data.append(0x01)  # STAKING_SCRIPT_HASH (wire 0x01)
                     data.extend(bytes.fromhex(cred.keyValue))
 
             elif certificate.type in (CertificateType.STAKE_REGISTRATION_CONWAY, CertificateType.STAKE_DEREGISTRATION_CONWAY):
@@ -1965,13 +1965,13 @@ class CommandBuilder:
                 # Credential type and data
                 cred = certificate.params.stakeCredential
                 if cred.type == CredentialParamsType.KEY_PATH:
-                    data.append(0x22)  # STAKING_KEY_PATH
+                    data.append(0x02)  # STAKING_KEY_PATH (wire 0x02)
                     data.extend(pack_derivation_path(cred.keyValue))
                 elif cred.type == CredentialParamsType.KEY_HASH:
-                    data.append(0x33)  # STAKING_KEY_HASH
+                    data.append(0x00)  # STAKING_KEY_HASH (wire 0x00)
                     data.extend(bytes.fromhex(cred.keyValue))
                 elif cred.type == CredentialParamsType.SCRIPT_HASH:
-                    data.append(0x55)  # STAKING_SCRIPT_HASH
+                    data.append(0x01)  # STAKING_SCRIPT_HASH (wire 0x01)
                     data.extend(bytes.fromhex(cred.keyValue))
                 # Deposit (uint64, BE)
                 assert certificate.params.deposit is not None
@@ -1983,13 +1983,13 @@ class CommandBuilder:
                 # Credential type and data
                 cred = certificate.params.stakeCredential
                 if cred.type == CredentialParamsType.KEY_PATH:
-                    data.append(0x22)  # STAKING_KEY_PATH
+                    data.append(0x02)  # STAKING_KEY_PATH (wire 0x02)
                     data.extend(pack_derivation_path(cred.keyValue))
                 elif cred.type == CredentialParamsType.KEY_HASH:
-                    data.append(0x33)  # STAKING_KEY_HASH
+                    data.append(0x00)  # STAKING_KEY_HASH (wire 0x00)
                     data.extend(bytes.fromhex(cred.keyValue))
                 elif cred.type == CredentialParamsType.SCRIPT_HASH:
-                    data.append(0x55)  # STAKING_SCRIPT_HASH
+                    data.append(0x01)  # STAKING_SCRIPT_HASH (wire 0x01)
                     data.extend(bytes.fromhex(cred.keyValue))
                 # Pool key hash (28 bytes)
                 assert certificate.params.poolKeyHash is not None
@@ -2009,13 +2009,13 @@ class CommandBuilder:
                 # Stake credential type and data
                 cred = certificate.params.stakeCredential
                 if cred.type == CredentialParamsType.KEY_PATH:
-                    data.append(0x22)  # STAKING_KEY_PATH
+                    data.append(0x02)  # STAKING_KEY_PATH (wire 0x02)
                     data.extend(pack_derivation_path(cred.keyValue))
                 elif cred.type == CredentialParamsType.KEY_HASH:
-                    data.append(0x33)  # STAKING_KEY_HASH
+                    data.append(0x00)  # STAKING_KEY_HASH (wire 0x00)
                     data.extend(bytes.fromhex(cred.keyValue))
                 elif cred.type == CredentialParamsType.SCRIPT_HASH:
-                    data.append(0x55)  # STAKING_SCRIPT_HASH
+                    data.append(0x01)  # STAKING_SCRIPT_HASH (wire 0x01)
                     data.extend(bytes.fromhex(cred.keyValue))
                 # DRep (handled by _serializeDRep logic)
                 assert certificate.params.dRep is not None
@@ -2055,13 +2055,13 @@ class CommandBuilder:
             data.extend(withdrawal.amount.to_bytes(8, 'big'))
 
             # Credential type (uint8) - convert to staking_data_source_t values
-            # Python CredentialParamsType: KEY_PATH=0x00, SCRIPT_HASH=0x01, KEY_HASH=0x02
+            # Python CredentialParamsType: KEY_HASH=0x00, SCRIPT_HASH=0x01, KEY_PATH=0x02
             # C staking_data_source_t: STAKING_KEY_PATH=0x22, STAKING_KEY_HASH=0x33, STAKING_SCRIPT_HASH=0x55
-            if withdrawal.stakeCredential.type == 0x00:  # KEY_PATH
+            if withdrawal.stakeCredential.type == CredentialParamsType.KEY_PATH:
                 credential_type_wire = 0x22  # STAKING_KEY_PATH
-            elif withdrawal.stakeCredential.type == 0x01:  # SCRIPT_HASH
+            elif withdrawal.stakeCredential.type == CredentialParamsType.SCRIPT_HASH:
                 credential_type_wire = 0x55  # STAKING_SCRIPT_HASH
-            elif withdrawal.stakeCredential.type == 0x02:  # KEY_HASH
+            elif withdrawal.stakeCredential.type == CredentialParamsType.KEY_HASH:
                 credential_type_wire = 0x33  # STAKING_KEY_HASH
             else:
                 raise ValueError(f"Unknown credential type: {withdrawal.stakeCredential.type}")

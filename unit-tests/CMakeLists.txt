@@ -60,6 +60,8 @@ include_directories($ENV{BOLOS_SDK}/lib_nbgl/include)
 
 add_compile_definitions(HAVE_CRC)
 add_compile_definitions(HAVE_PRINTF)
+# Prevent os.h from defining PRINTF as empty macro
+add_compile_definitions(PRINTF=PRINTF)
 add_compile_definitions(APPNAME=\"Cardano\")
 add_compile_definitions(APPVERSION=\"8.0.0\")
 add_compile_definitions(MAJOR_VERSION=8)
@@ -132,6 +134,7 @@ add_executable(test_tx_prepare
     ../src/app_tokens/app_tokens.c
     ../src/ui/ui_utils.c
     ../src/ui/tx_ui_materialize.c
+    ../src/ui/tx_ui_helpers.c
     ../src/utils/cardano_os_utils.c
     mock_sources/mem_alloc_stub.c
     mock_sources/glyphs_mock.c
@@ -343,6 +346,7 @@ add_executable(test_sign_tx_mary
     ../src/transaction/tx_hash_builder.c
     ../src/transaction/tx_prepare.c
     ../src/ui/tx_ui_materialize.c
+    ../src/ui/tx_ui_helpers.c
     ../src/ui/ui_utils.c
     ../src/utils/cardano_os_utils.c
     ../src/memory/mem_utils.c
@@ -395,6 +399,7 @@ add_executable(test_sign_tx_shelley
     ../src/transaction/tx_hash_builder.c
     ../src/transaction/tx_prepare.c
     ../src/ui/tx_ui_materialize.c
+    ../src/ui/tx_ui_helpers.c
     ../src/ui/ui_utils.c
     ../src/utils/cardano_os_utils.c
     ../src/memory/mem_utils.c
@@ -448,6 +453,7 @@ add_executable(test_sign_tx_byron
     ../src/transaction/tx_hash_builder.c
     ../src/transaction/tx_prepare.c
     ../src/ui/tx_ui_materialize.c
+    ../src/ui/tx_ui_helpers.c
     ../src/ui/ui_utils.c
     ../src/utils/cardano_os_utils.c
     ../src/memory/mem_utils.c
@@ -501,6 +507,7 @@ add_executable(test_sign_tx_shelley_certificates
     ../src/transaction/tx_hash_builder.c
     ../src/transaction/tx_prepare.c
     ../src/ui/tx_ui_materialize.c
+    ../src/ui/tx_ui_helpers.c
     ../src/ui/ui_utils.c
     ../src/utils/cardano_os_utils.c
     ../src/memory/mem_utils.c
@@ -554,6 +561,7 @@ add_executable(test_sign_tx_allegra
     ../src/transaction/tx_hash_builder.c
     ../src/transaction/tx_prepare.c
     ../src/ui/tx_ui_materialize.c
+    ../src/ui/tx_ui_helpers.c
     ../src/ui/ui_utils.c
     ../src/utils/cardano_os_utils.c
     ../src/memory/mem_utils.c
@@ -607,6 +615,7 @@ add_executable(test_sign_tx_alonzo
     ../src/transaction/tx_hash_builder.c
     ../src/transaction/tx_prepare.c
     ../src/ui/tx_ui_materialize.c
+    ../src/ui/tx_ui_helpers.c
     ../src/ui/ui_utils.c
     ../src/utils/cardano_os_utils.c
     ../src/memory/mem_utils.c
@@ -660,6 +669,7 @@ add_executable(test_sign_tx_babbage
     ../src/transaction/tx_hash_builder.c
     ../src/transaction/tx_prepare.c
     ../src/ui/tx_ui_materialize.c
+    ../src/ui/tx_ui_helpers.c
     ../src/ui/ui_utils.c
     ../src/utils/cardano_os_utils.c
     ../src/memory/mem_utils.c
@@ -713,6 +723,7 @@ add_executable(test_sign_tx_conway
     ../src/transaction/tx_hash_builder.c
     ../src/transaction/tx_prepare.c
     ../src/ui/tx_ui_materialize.c
+    ../src/ui/tx_ui_helpers.c
     ../src/ui/ui_utils.c
     ../src/utils/cardano_os_utils.c
     ../src/memory/mem_utils.c
@@ -766,6 +777,7 @@ add_executable(test_sign_tx_conway_without_certificates
     ../src/transaction/tx_hash_builder.c
     ../src/transaction/tx_prepare.c
     ../src/ui/tx_ui_materialize.c
+    ../src/ui/tx_ui_helpers.c
     ../src/ui/ui_utils.c
     ../src/utils/cardano_os_utils.c
     ../src/memory/mem_utils.c
@@ -819,6 +831,7 @@ add_executable(test_sign_tx_conway_voting
     ../src/transaction/tx_hash_builder.c
     ../src/transaction/tx_prepare.c
     ../src/ui/tx_ui_materialize.c
+    ../src/ui/tx_ui_helpers.c
     ../src/ui/ui_utils.c
     ../src/utils/cardano_os_utils.c
     ../src/memory/mem_utils.c
@@ -872,6 +885,7 @@ add_executable(test_sign_tx_multisig
     ../src/transaction/tx_hash_builder.c
     ../src/transaction/tx_prepare.c
     ../src/ui/tx_ui_materialize.c
+    ../src/ui/tx_ui_helpers.c
     ../src/ui/ui_utils.c
     ../src/utils/cardano_os_utils.c
     ../src/memory/mem_utils.c
@@ -928,6 +942,7 @@ add_executable(test_sign_tx_rejects
     ../src/transaction/tx_hash_builder.c
     ../src/transaction/tx_prepare.c
     ../src/ui/tx_ui_materialize.c
+    ../src/ui/tx_ui_helpers.c
     ../src/ui/ui_utils.c
     ../src/utils/cardano_os_utils.c
     ../src/memory/mem_utils.c

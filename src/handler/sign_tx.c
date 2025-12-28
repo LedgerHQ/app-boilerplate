@@ -111,6 +111,7 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
     if (!buffer_read_u16(cdata, &G_context.tx_info.transaction.num_certificates, BE)) {
         return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
+    TRACE(">>>INIT: num_certificates=%u", G_context.tx_info.transaction.num_certificates);
 
     // Field 5 (withdrawals) - optional
     if (!buffer_read_u16(cdata, &G_context.tx_info.transaction.num_withdrawals, BE)) {

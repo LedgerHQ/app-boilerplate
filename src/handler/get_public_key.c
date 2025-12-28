@@ -49,6 +49,9 @@ int handler_get_public_key(buffer_t *cdata) {
         return send_error_and_reset(SWO_BIP44_PATH_PARSING_FAIL);
     }
 
+    // Log the requested path for easier debugging.
+    BIP44_PRINTF(&G_context.pk_info.path);
+
     // Check security policy
     warning_bits_t warnings;
     warning_bits_init(&warnings);

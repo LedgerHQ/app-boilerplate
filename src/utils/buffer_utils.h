@@ -141,3 +141,15 @@ bool buffer_write_cbor_token(write_buffer_t *buffer, uint8_t type, uint64_t valu
  */
 bool buffer_read_bytes(buffer_t *buffer, uint8_t *destBuffer, size_t n);
 bool buffer_read_bytes_ptr(buffer_t *buffer, uint8_t **destBuffer, size_t n);
+
+/**
+ * Read 8 bytes from buffer as signed int64 with specified endianness.
+ * Reads 8 bytes as unsigned, then reinterprets as signed int64_t.
+ * This allows reading values that can be negative (e.g., for mint amounts).
+ *
+ * @param[in,out] buffer Pointer to read buffer struct
+ * @param[out] value Pointer to store the int64 value
+ * @param[in] endianness BE or LE
+ * @return true if success, false if not enough data
+ */
+bool buffer_read_int64(buffer_t *buffer, int64_t *value, endianness_t endianness);

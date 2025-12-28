@@ -4,9 +4,9 @@
 #include "addressUtils/bip44.h"
 
 typedef enum {
-    EXT_CREDENTIAL_KEY_HASH = 0,
-    EXT_CREDENTIAL_SCRIPT_HASH = 1,
-    EXT_CREDENTIAL_KEY_PATH = 2,  // not serialized directly; host sends 0x22 which parser maps here
+    EXT_CREDENTIAL_KEY_HASH = 0,      // Wire: 0x02, CBOR: 0
+    EXT_CREDENTIAL_SCRIPT_HASH = 1,   // Wire: 0x01, CBOR: 1
+    EXT_CREDENTIAL_KEY_PATH = 2,      // Wire: 0x00, not in CBOR (converted to KEY_HASH via bip44_pathToKeyHash)
 } ext_credential_type_t;
 
 // Extended credential structure

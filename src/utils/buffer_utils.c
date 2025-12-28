@@ -108,3 +108,17 @@ bool buffer_read_bytes_ptr(buffer_t *buffer, uint8_t **destBuffer, size_t n) {
     }
     return true;
 }
+
+bool buffer_read_int64(buffer_t *buffer, int64_t *value, endianness_t endianness) {
+    LEDGER_ASSERT(buffer != NULL, "NULL buffer");
+    LEDGER_ASSERT(value != NULL, "NULL value pointer");
+
+    uint64_t unsigned_value;
+    if (!buffer_read_u64(buffer, &unsigned_value, endianness)) {
+        return false;
+    }
+
+    // Reinterpret the bit pattern as signed int64_t
+    *value = (int64_t) unsigned_value;
+    return true;
+}

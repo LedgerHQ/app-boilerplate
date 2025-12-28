@@ -20,6 +20,7 @@
 #include "utils/textUtils.h"
 #include "ui/display.h"
 #include "ui/ui_utils.h"
+#include "ui/tx_ui_helpers.h"
 #include "io.h"
 #include "utils/cardano_os_utils.h"
 #include "app_tokens/app_tokens.h"
@@ -49,8 +50,11 @@ static int ui_materialize_strings(void) {
     transaction_t *tx = &G_context.tx_info.transaction;
     int status;
 
+    TRACE("UI materialization starting");
+
     uint16_t output_num = 1;
     s_flist_node *output_node = tx->outputs;
+    TRACE("Materializing %u outputs", tx->num_outputs);
     while (output_node != NULL) {
         tx_output_list_item_t *output_item = (tx_output_list_item_t *) output_node;
         s_flist_node *next = output_node->next;
@@ -93,6 +97,7 @@ static int ui_materialize_strings(void) {
                 // Already asserted above, this case should never be reached
                 break;
             case POLICY_SHOW: {
+                TRACE("Materializing output #%u", output_num);
                 char *output_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH);
                 if (output_num_tmp == NULL) {
                     return SWO_INSUFFICIENT_MEMORY;
@@ -302,6 +307,7 @@ static int ui_materialize_strings(void) {
     // Display certificates
     uint16_t certificate_num = 1;
     s_flist_node *certificate_node = tx->certificates;
+    TRACE("Materializing %u certificates", tx->num_certificates);
     while (certificate_node != NULL) {
         tx_certificate_list_item_t *certificate_item =
             (tx_certificate_list_item_t *) certificate_node;
@@ -373,6 +379,7 @@ static int ui_materialize_strings(void) {
                 LEDGER_ASSERT(false, "Certificate denied during UI");
                 break;
             case POLICY_SHOW: {
+                TRACE("Materializing certificate #%u type=%u", certificate_num, certificate_item->certificate_data.type);
                 char *cert_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH);
                 if (cert_num_tmp == NULL) {
                     return SWO_INSUFFICIENT_MEMORY;
@@ -384,108 +391,31 @@ static int ui_materialize_strings(void) {
                 }
 
                 // Certificate type
-                const char *cert_type_name = NULL;
-                switch (certificate_item->certificate_data.type) {
-                    case CERTIFICATE_STAKE_REGISTRATION:
-                        cert_type_name = "Stake Registration";
-                        break;
-                    case CERTIFICATE_STAKE_DEREGISTRATION:
-                        cert_type_name = "Stake Deregistration";
-                        break;
-                    case CERTIFICATE_STAKE_DELEGATION:
-                        cert_type_name = "Stake Delegation";
-                        break;
-                    case CERTIFICATE_STAKE_POOL_RETIREMENT:
-                        cert_type_name = "Pool Retirement";
-                        break;
-                    case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
-                        cert_type_name = "Stake Registration (Conway)";
-                        break;
-                    case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY:
-                        cert_type_name = "Stake Deregistration (Conway)";
-                        break;
-                    case CERTIFICATE_VOTE_DELEGATION:
-                        cert_type_name = "Vote Delegation";
-                        break;
-                    case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT:
-                        cert_type_name = "Committee Authorization";
-                        break;
-                    case CERTIFICATE_RESIGN_COMMITTEE_COLD:
-                        cert_type_name = "Committee Resignation";
-                        break;
-                    case CERTIFICATE_DREP_REGISTRATION:
-                        cert_type_name = "DRep Registration";
-                        break;
-                    case CERTIFICATE_DREP_DEREGISTRATION:
-                        cert_type_name = "DRep Deregistration";
-                        break;
-                    case CERTIFICATE_DREP_UPDATE:
-                        cert_type_name = "DRep Update";
-                        break;
-                    default:
-                        cert_type_name = "Unknown";
-                        break;
+                const char *cert_type_name = getCertificateTypeName(certificate_item->certificate_data.type);
+                size_t cert_type_len = strlen(cert_type_name);
+                char *cert_type_tmp = ui_alloc_temp(cert_type_len + 1);
+                if (cert_type_tmp == NULL) {
+                    return SWO_INSUFFICIENT_MEMORY;
                 }
-                status = ui_add_pair_or_fail("Type", (char *) cert_type_name);
+                memcpy(cert_type_tmp, cert_type_name, cert_type_len + 1);
+                status = ui_add_pair_or_fail("Type", cert_type_tmp);
                 if (status != SWO_SUCCESS) {
                     return status;
                 }
 
                 // Certificate-specific fields
-                char *addr_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
-                if (addr_tmp == NULL) {
-                    return SWO_INSUFFICIENT_MEMORY;
-                }
-
                 switch (certificate_item->certificate_data.type) {
                     case CERTIFICATE_STAKE_REGISTRATION:
                     case CERTIFICATE_STAKE_DEREGISTRATION: {
                         // Display stake credential
-                        uint8_t reward_addr_bytes[REWARD_ACCOUNT_LENGTH];
-                        size_t reward_addr_len = 0;
-
-                        switch (certificate_item->certificate_data.stakeCredential.type) {
-                            case EXT_CREDENTIAL_KEY_PATH:
-                                reward_addr_len = constructRewardAddressFromKeyPath(
-                                    &certificate_item->certificate_data.stakeCredential.keyPath,
-                                    tx->networkId,
-                                    reward_addr_bytes,
-                                    sizeof(reward_addr_bytes)
-                                );
-                                break;
-                            case EXT_CREDENTIAL_KEY_HASH:
-                                reward_addr_len = constructRewardAddressFromHash(
-                                    tx->networkId,
-                                    REWARD_HASH_SOURCE_KEY,
-                                    certificate_item->certificate_data.stakeCredential.keyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    reward_addr_bytes,
-                                    sizeof(reward_addr_bytes)
-                                );
-                                break;
-                            case EXT_CREDENTIAL_SCRIPT_HASH:
-                                reward_addr_len = constructRewardAddressFromHash(
-                                    tx->networkId,
-                                    REWARD_HASH_SOURCE_SCRIPT,
-                                    certificate_item->certificate_data.stakeCredential.scriptHash,
-                                    SCRIPT_HASH_LENGTH,
-                                    reward_addr_bytes,
-                                    sizeof(reward_addr_bytes)
-                                );
-                                break;
-                            default:
-                                return SWO_TX_PARSING_FAIL;
-                        }
-
-                        LEDGER_ASSERT(reward_addr_len > 0, "Reward addr derivation failed");
-                        bool reward_formatted = format_address_human_readable(
-                            reward_addr_bytes,
-                            reward_addr_len,
-                            addr_tmp,
-                            MAX_HUMAN_ADDRESS_LENGTH
+                        status = displayCredential(
+                            &certificate_item->certificate_data.stakeCredential,
+                            "Stake key",           // KEY_PATH label
+                            "Stake key hash",      // KEY_HASH label
+                            "stake_vkh",           // KEY_HASH bech32 prefix
+                            "Stake script hash",   // SCRIPT_HASH label
+                            "script"               // SCRIPT_HASH bech32 prefix
                         );
-                        ASSERT(reward_formatted);
-                        status = ui_add_pair_or_fail("Stake credential", addr_tmp);
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -494,68 +424,23 @@ static int ui_materialize_strings(void) {
 
                     case CERTIFICATE_STAKE_DELEGATION: {
                         // Display stake credential
-                        uint8_t reward_addr_bytes[REWARD_ACCOUNT_LENGTH];
-                        size_t reward_addr_len = 0;
-
-                        switch (certificate_item->certificate_data.stakeCredential.type) {
-                            case EXT_CREDENTIAL_KEY_PATH:
-                                reward_addr_len = constructRewardAddressFromKeyPath(
-                                    &certificate_item->certificate_data.stakeCredential.keyPath,
-                                    tx->networkId,
-                                    reward_addr_bytes,
-                                    sizeof(reward_addr_bytes)
-                                );
-                                break;
-                            case EXT_CREDENTIAL_KEY_HASH:
-                                reward_addr_len = constructRewardAddressFromHash(
-                                    tx->networkId,
-                                    REWARD_HASH_SOURCE_KEY,
-                                    certificate_item->certificate_data.stakeCredential.keyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    reward_addr_bytes,
-                                    sizeof(reward_addr_bytes)
-                                );
-                                break;
-                            case EXT_CREDENTIAL_SCRIPT_HASH:
-                                reward_addr_len = constructRewardAddressFromHash(
-                                    tx->networkId,
-                                    REWARD_HASH_SOURCE_SCRIPT,
-                                    certificate_item->certificate_data.stakeCredential.scriptHash,
-                                    SCRIPT_HASH_LENGTH,
-                                    reward_addr_bytes,
-                                    sizeof(reward_addr_bytes)
-                                );
-                                break;
-                            default:
-                                return SWO_TX_PARSING_FAIL;
-                        }
-
-                        LEDGER_ASSERT(reward_addr_len > 0, "Reward addr derivation failed");
-                        bool reward_formatted = format_address_human_readable(
-                            reward_addr_bytes,
-                            reward_addr_len,
-                            addr_tmp,
-                            MAX_HUMAN_ADDRESS_LENGTH
+                        status = displayCredential(
+                            &certificate_item->certificate_data.stakeCredential,
+                            "Stake key",           // KEY_PATH label
+                            "Stake key hash",      // KEY_HASH label
+                            "stake_vkh",           // KEY_HASH bech32 prefix
+                            "Stake script hash",   // SCRIPT_HASH label
+                            "script"               // SCRIPT_HASH bech32 prefix
                         );
-                        ASSERT(reward_formatted);
-                        status = ui_add_pair_or_fail("Stake credential", addr_tmp);
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
 
                         // Display pool key hash
-                        char *pool_hash_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
-                        if (pool_hash_tmp == NULL) {
-                            return SWO_INSUFFICIENT_MEMORY;
-                        }
-                        bool pool_formatted = format_address_human_readable(
+                        status = displayPoolKeyHash(
                             certificate_item->certificate_data.poolKeyHash,
-                            POOL_KEY_HASH_LENGTH,
-                            pool_hash_tmp,
-                            MAX_HUMAN_ADDRESS_LENGTH
+                            "Pool"
                         );
-                        ASSERT(pool_formatted);
-                        status = ui_add_pair_or_fail("Pool keyhash", pool_hash_tmp);
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -565,67 +450,20 @@ static int ui_materialize_strings(void) {
                     case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
                     case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY: {
                         // Display stake credential
-                        uint8_t reward_addr_bytes[REWARD_ACCOUNT_LENGTH];
-                        size_t reward_addr_len = 0;
-
-                        switch (certificate_item->certificate_data.stakeCredential.type) {
-                            case EXT_CREDENTIAL_KEY_PATH:
-                                reward_addr_len = constructRewardAddressFromKeyPath(
-                                    &certificate_item->certificate_data.stakeCredential.keyPath,
-                                    tx->networkId,
-                                    reward_addr_bytes,
-                                    sizeof(reward_addr_bytes)
-                                );
-                                break;
-                            case EXT_CREDENTIAL_KEY_HASH:
-                                reward_addr_len = constructRewardAddressFromHash(
-                                    tx->networkId,
-                                    REWARD_HASH_SOURCE_KEY,
-                                    certificate_item->certificate_data.stakeCredential.keyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    reward_addr_bytes,
-                                    sizeof(reward_addr_bytes)
-                                );
-                                break;
-                            case EXT_CREDENTIAL_SCRIPT_HASH:
-                                reward_addr_len = constructRewardAddressFromHash(
-                                    tx->networkId,
-                                    REWARD_HASH_SOURCE_SCRIPT,
-                                    certificate_item->certificate_data.stakeCredential.scriptHash,
-                                    SCRIPT_HASH_LENGTH,
-                                    reward_addr_bytes,
-                                    sizeof(reward_addr_bytes)
-                                );
-                                break;
-                            default:
-                                return SWO_TX_PARSING_FAIL;
-                        }
-
-                        LEDGER_ASSERT(reward_addr_len > 0, "Reward addr derivation failed");
-                        bool reward_formatted = format_address_human_readable(
-                            reward_addr_bytes,
-                            reward_addr_len,
-                            addr_tmp,
-                            MAX_HUMAN_ADDRESS_LENGTH
+                        status = displayCredential(
+                            &certificate_item->certificate_data.stakeCredential,
+                            "Stake key",           // KEY_PATH label
+                            "Stake key hash",      // KEY_HASH label
+                            "stake_vkh",           // KEY_HASH bech32 prefix
+                            "Stake script hash",   // SCRIPT_HASH label
+                            "script"               // SCRIPT_HASH bech32 prefix
                         );
-                        ASSERT(reward_formatted);
-                        status = ui_add_pair_or_fail("Stake credential", addr_tmp);
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
 
                         // Display deposit
-                        char *deposit_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH);
-                        if (deposit_tmp == NULL) {
-                            return SWO_INSUFFICIENT_MEMORY;
-                        }
-                        bool deposit_formatted = str_formatAdaAmount(
-                            certificate_item->certificate_data.deposit,
-                            deposit_tmp,
-                            MAX_ADA_AMOUNT_STRING_LENGTH
-                        );
-                        ASSERT(deposit_formatted);
-                        status = ui_add_pair_or_fail("Deposit", deposit_tmp);
+                        status = displayDeposit(certificate_item->certificate_data.deposit, "Deposit");
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -652,18 +490,8 @@ static int ui_materialize_strings(void) {
                                 return SWO_TX_PARSING_FAIL;
                         }
 
-                        char *pool_hash_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
-                        if (pool_hash_tmp == NULL) {
-                            return SWO_INSUFFICIENT_MEMORY;
-                        }
-                        bool pool_formatted = format_address_human_readable(
-                            poolKeyHash,
-                            POOL_KEY_HASH_LENGTH,
-                            pool_hash_tmp,
-                            MAX_HUMAN_ADDRESS_LENGTH
-                        );
-                        ASSERT(pool_formatted);
-                        status = ui_add_pair_or_fail("Pool ID", pool_hash_tmp);
+                        // Display pool key hash with "pool" prefix
+                        status = displayPoolKeyHash(poolKeyHash, "Pool ID");
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -684,106 +512,21 @@ static int ui_materialize_strings(void) {
 
                     case CERTIFICATE_VOTE_DELEGATION: {
                         // Display stake credential
-                        uint8_t reward_addr_bytes[REWARD_ACCOUNT_LENGTH];
-                        size_t reward_addr_len = 0;
-
-                        switch (certificate_item->certificate_data.stakeCredential.type) {
-                            case EXT_CREDENTIAL_KEY_PATH:
-                                reward_addr_len = constructRewardAddressFromKeyPath(
-                                    &certificate_item->certificate_data.stakeCredential.keyPath,
-                                    tx->networkId,
-                                    reward_addr_bytes,
-                                    sizeof(reward_addr_bytes)
-                                );
-                                break;
-                            case EXT_CREDENTIAL_KEY_HASH:
-                                reward_addr_len = constructRewardAddressFromHash(
-                                    tx->networkId,
-                                    REWARD_HASH_SOURCE_KEY,
-                                    certificate_item->certificate_data.stakeCredential.keyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    reward_addr_bytes,
-                                    sizeof(reward_addr_bytes)
-                                );
-                                break;
-                            case EXT_CREDENTIAL_SCRIPT_HASH:
-                                reward_addr_len = constructRewardAddressFromHash(
-                                    tx->networkId,
-                                    REWARD_HASH_SOURCE_SCRIPT,
-                                    certificate_item->certificate_data.stakeCredential.scriptHash,
-                                    SCRIPT_HASH_LENGTH,
-                                    reward_addr_bytes,
-                                    sizeof(reward_addr_bytes)
-                                );
-                                break;
-                            default:
-                                return SWO_TX_PARSING_FAIL;
-                        }
-
-                        LEDGER_ASSERT(reward_addr_len > 0, "Reward addr derivation failed");
-                        bool reward_formatted = format_address_human_readable(
-                            reward_addr_bytes,
-                            reward_addr_len,
-                            addr_tmp,
-                            MAX_HUMAN_ADDRESS_LENGTH
+                        status = displayCredential(
+                            &certificate_item->certificate_data.stakeCredential,
+                            "Stake key",           // KEY_PATH label
+                            "Stake key hash",      // KEY_HASH label
+                            "stake_vkh",           // KEY_HASH bech32 prefix
+                            "Stake script hash",   // SCRIPT_HASH label
+                            "script"               // SCRIPT_HASH bech32 prefix
                         );
-                        ASSERT(reward_formatted);
-                        status = ui_add_pair_or_fail("Stake credential", addr_tmp);
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
 
                         // Display DRep
                         const ext_drep_t* drep = &certificate_item->certificate_data.drep;
-                        char *drep_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
-                        if (drep_tmp == NULL) {
-                            return SWO_INSUFFICIENT_MEMORY;
-                        }
-
-                        switch (drep->type) {
-                            case EXT_DREP_KEY_PATH: {
-                                uint8_t drepKeyHash[ADDRESS_KEY_HASH_LENGTH];
-                                bip44_pathToKeyHash(&drep->keyPath, drepKeyHash, sizeof(drepKeyHash));
-                                bool drep_formatted = format_address_human_readable(
-                                    drepKeyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    drep_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(drep_formatted);
-                                break;
-                            }
-                            case EXT_DREP_KEY_HASH: {
-                                bool drep_formatted = format_address_human_readable(
-                                    drep->keyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    drep_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(drep_formatted);
-                                break;
-                            }
-                            case EXT_DREP_SCRIPT_HASH: {
-                                bool drep_formatted = format_address_human_readable(
-                                    drep->scriptHash,
-                                    SCRIPT_HASH_LENGTH,
-                                    drep_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(drep_formatted);
-                                break;
-                            }
-                            case EXT_DREP_ABSTAIN:
-                                snprintf(drep_tmp, MAX_HUMAN_ADDRESS_LENGTH, "Abstain");
-                                break;
-                            case EXT_DREP_NO_CONFIDENCE:
-                                snprintf(drep_tmp, MAX_HUMAN_ADDRESS_LENGTH, "No Confidence");
-                                break;
-                            default:
-                                LEDGER_ASSERT(false, "Unknown DRep type");
-                                return SWO_TX_PARSING_FAIL;
-                        }
-                        status = ui_add_pair_or_fail("DRep", drep_tmp);
+                        status = displayDRep(drep, "DRep");
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -793,96 +536,24 @@ static int ui_materialize_strings(void) {
                     case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT: {
                         // Display cold credential
                         const ext_credential_t* coldCred = &certificate_item->certificate_data.coldCredential;
-                        char *cold_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
-                        if (cold_tmp == NULL) {
-                            return SWO_INSUFFICIENT_MEMORY;
-                        }
-
-                        switch (coldCred->type) {
-                            case EXT_CREDENTIAL_KEY_PATH: {
-                                uint8_t coldKeyHash[ADDRESS_KEY_HASH_LENGTH];
-                                bip44_pathToKeyHash(&coldCred->keyPath, coldKeyHash, sizeof(coldKeyHash));
-                                bool cold_formatted = format_address_human_readable(
-                                    coldKeyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    cold_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(cold_formatted);
-                                break;
-                            }
-                            case EXT_CREDENTIAL_KEY_HASH: {
-                                bool cold_formatted = format_address_human_readable(
-                                    coldCred->keyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    cold_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(cold_formatted);
-                                break;
-                            }
-                            case EXT_CREDENTIAL_SCRIPT_HASH: {
-                                bool cold_formatted = format_address_human_readable(
-                                    coldCred->scriptHash,
-                                    SCRIPT_HASH_LENGTH,
-                                    cold_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(cold_formatted);
-                                break;
-                            }
-                            default:
-                                return SWO_TX_PARSING_FAIL;
-                        }
-                        status = ui_add_pair_or_fail("Cold credential", cold_tmp);
+                        status = displayCredential(coldCred,
+                                                  "Committee cold key",
+                                                  "Committee cold key hash",
+                                                  "cc_cold",
+                                                  "Committee cold script hash",
+                                                  "cc_cold_script");
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
 
                         // Display hot credential
                         const ext_credential_t* hotCred = &certificate_item->certificate_data.hotCredential;
-                        char *hot_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
-                        if (hot_tmp == NULL) {
-                            return SWO_INSUFFICIENT_MEMORY;
-                        }
-
-                        switch (hotCred->type) {
-                            case EXT_CREDENTIAL_KEY_PATH: {
-                                uint8_t hotKeyHash[ADDRESS_KEY_HASH_LENGTH];
-                                bip44_pathToKeyHash(&hotCred->keyPath, hotKeyHash, sizeof(hotKeyHash));
-                                bool hot_formatted = format_address_human_readable(
-                                    hotKeyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    hot_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(hot_formatted);
-                                break;
-                            }
-                            case EXT_CREDENTIAL_KEY_HASH: {
-                                bool hot_formatted = format_address_human_readable(
-                                    hotCred->keyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    hot_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(hot_formatted);
-                                break;
-                            }
-                            case EXT_CREDENTIAL_SCRIPT_HASH: {
-                                bool hot_formatted = format_address_human_readable(
-                                    hotCred->scriptHash,
-                                    SCRIPT_HASH_LENGTH,
-                                    hot_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(hot_formatted);
-                                break;
-                            }
-                            default:
-                                return SWO_TX_PARSING_FAIL;
-                        }
-                        status = ui_add_pair_or_fail("Hot credential", hot_tmp);
+                        status = displayCredential(hotCred,
+                                                  "Committee hot key",
+                                                  "Committee hot key hash",
+                                                  "cc_hot",
+                                                  "Committee hot script hash",
+                                                  "cc_hot_script");
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -892,82 +563,20 @@ static int ui_materialize_strings(void) {
                     case CERTIFICATE_RESIGN_COMMITTEE_COLD: {
                         // Display cold credential
                         const ext_credential_t* coldCred = &certificate_item->certificate_data.coldCredential;
-                        char *cold_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
-                        if (cold_tmp == NULL) {
-                            return SWO_INSUFFICIENT_MEMORY;
-                        }
-
-                        switch (coldCred->type) {
-                            case EXT_CREDENTIAL_KEY_PATH: {
-                                uint8_t coldKeyHash[ADDRESS_KEY_HASH_LENGTH];
-                                bip44_pathToKeyHash(&coldCred->keyPath, coldKeyHash, sizeof(coldKeyHash));
-                                bool cold_formatted = format_address_human_readable(
-                                    coldKeyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    cold_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(cold_formatted);
-                                break;
-                            }
-                            case EXT_CREDENTIAL_KEY_HASH: {
-                                bool cold_formatted = format_address_human_readable(
-                                    coldCred->keyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    cold_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(cold_formatted);
-                                break;
-                            }
-                            case EXT_CREDENTIAL_SCRIPT_HASH: {
-                                bool cold_formatted = format_address_human_readable(
-                                    coldCred->scriptHash,
-                                    SCRIPT_HASH_LENGTH,
-                                    cold_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(cold_formatted);
-                                break;
-                            }
-                            default:
-                                return SWO_TX_PARSING_FAIL;
-                        }
-                        status = ui_add_pair_or_fail("Cold credential", cold_tmp);
+                        status = displayCredential(coldCred,
+                                                  "Committee cold key",
+                                                  "Committee cold key hash",
+                                                  "cc_cold",
+                                                  "Committee cold script hash",
+                                                  "cc_cold");
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
 
                         // Display anchor if present
-                        if (certificate_item->certificate_data.anchor.isIncluded) {
-                            char *anchor_url_tmp = ui_alloc_temp(ANCHOR_URL_LENGTH_MAX + 1);
-                            if (anchor_url_tmp == NULL) {
-                                return SWO_INSUFFICIENT_MEMORY;
-                            }
-                            memcpy(anchor_url_tmp,
-                                   certificate_item->certificate_data.anchor.url,
-                                   certificate_item->certificate_data.anchor.urlLength);
-                            anchor_url_tmp[certificate_item->certificate_data.anchor.urlLength] = '\0';
-                            status = ui_add_pair_or_fail("Anchor URL", anchor_url_tmp);
-                            if (status != SWO_SUCCESS) {
-                                return status;
-                            }
-
-                            char *anchor_hash_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
-                            if (anchor_hash_tmp == NULL) {
-                                return SWO_INSUFFICIENT_MEMORY;
-                            }
-                            bool anchor_formatted = format_address_human_readable(
-                                certificate_item->certificate_data.anchor.hash,
-                                ANCHOR_HASH_LENGTH,
-                                anchor_hash_tmp,
-                                MAX_HUMAN_ADDRESS_LENGTH
-                            );
-                            ASSERT(anchor_formatted);
-                            status = ui_add_pair_or_fail("Anchor hash", anchor_hash_tmp);
-                            if (status != SWO_SUCCESS) {
-                                return status;
-                            }
+                        status = displayAnchorIfPresent(&certificate_item->certificate_data.anchor);
+                        if (status != SWO_SUCCESS) {
+                            return status;
                         }
                         break;
                     }
@@ -975,98 +584,26 @@ static int ui_materialize_strings(void) {
                     case CERTIFICATE_DREP_REGISTRATION: {
                         // Display DRep credential
                         const ext_credential_t* drepCred = &certificate_item->certificate_data.dRepCredential;
-                        char *drep_cred_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
-                        if (drep_cred_tmp == NULL) {
-                            return SWO_INSUFFICIENT_MEMORY;
-                        }
-
-                        switch (drepCred->type) {
-                            case EXT_CREDENTIAL_KEY_PATH: {
-                                uint8_t drepKeyHash[ADDRESS_KEY_HASH_LENGTH];
-                                bip44_pathToKeyHash(&drepCred->keyPath, drepKeyHash, sizeof(drepKeyHash));
-                                bool drep_formatted = format_address_human_readable(
-                                    drepKeyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    drep_cred_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(drep_formatted);
-                                break;
-                            }
-                            case EXT_CREDENTIAL_KEY_HASH: {
-                                bool drep_formatted = format_address_human_readable(
-                                    drepCred->keyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    drep_cred_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(drep_formatted);
-                                break;
-                            }
-                            case EXT_CREDENTIAL_SCRIPT_HASH: {
-                                bool drep_formatted = format_address_human_readable(
-                                    drepCred->scriptHash,
-                                    SCRIPT_HASH_LENGTH,
-                                    drep_cred_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(drep_formatted);
-                                break;
-                            }
-                            default:
-                                return SWO_TX_PARSING_FAIL;
-                        }
-                        status = ui_add_pair_or_fail("DRep credential", drep_cred_tmp);
+                        status = displayCredential(drepCred,
+                                                  "DRep key",
+                                                  "DRep key hash",
+                                                  "drep",
+                                                  "DRep script hash",
+                                                  "drep");
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
 
                         // Display deposit
-                        char *deposit_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH);
-                        if (deposit_tmp == NULL) {
-                            return SWO_INSUFFICIENT_MEMORY;
-                        }
-                        bool deposit_formatted = str_formatAdaAmount(
-                            certificate_item->certificate_data.deposit,
-                            deposit_tmp,
-                            MAX_ADA_AMOUNT_STRING_LENGTH
-                        );
-                        ASSERT(deposit_formatted);
-                        status = ui_add_pair_or_fail("Deposit", deposit_tmp);
+                        status = displayDeposit(certificate_item->certificate_data.deposit, "Deposit");
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
 
                         // Display anchor if present
-                        if (certificate_item->certificate_data.anchor.isIncluded) {
-                            char *anchor_url_tmp = ui_alloc_temp(ANCHOR_URL_LENGTH_MAX + 1);
-                            if (anchor_url_tmp == NULL) {
-                                return SWO_INSUFFICIENT_MEMORY;
-                            }
-                            memcpy(anchor_url_tmp,
-                                   certificate_item->certificate_data.anchor.url,
-                                   certificate_item->certificate_data.anchor.urlLength);
-                            anchor_url_tmp[certificate_item->certificate_data.anchor.urlLength] = '\0';
-                            status = ui_add_pair_or_fail("Anchor URL", anchor_url_tmp);
-                            if (status != SWO_SUCCESS) {
-                                return status;
-                            }
-
-                            char *anchor_hash_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
-                            if (anchor_hash_tmp == NULL) {
-                                return SWO_INSUFFICIENT_MEMORY;
-                            }
-                            bool anchor_formatted = format_address_human_readable(
-                                certificate_item->certificate_data.anchor.hash,
-                                ANCHOR_HASH_LENGTH,
-                                anchor_hash_tmp,
-                                MAX_HUMAN_ADDRESS_LENGTH
-                            );
-                            ASSERT(anchor_formatted);
-                            status = ui_add_pair_or_fail("Anchor hash", anchor_hash_tmp);
-                            if (status != SWO_SUCCESS) {
-                                return status;
-                            }
+                        status = displayAnchorIfPresent(&certificate_item->certificate_data.anchor);
+                        if (status != SWO_SUCCESS) {
+                            return status;
                         }
                         break;
                     }
@@ -1074,64 +611,18 @@ static int ui_materialize_strings(void) {
                     case CERTIFICATE_DREP_DEREGISTRATION: {
                         // Display DRep credential
                         const ext_credential_t* drepCred = &certificate_item->certificate_data.dRepCredential;
-                        char *drep_cred_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
-                        if (drep_cred_tmp == NULL) {
-                            return SWO_INSUFFICIENT_MEMORY;
-                        }
-
-                        switch (drepCred->type) {
-                            case EXT_CREDENTIAL_KEY_PATH: {
-                                uint8_t drepKeyHash[ADDRESS_KEY_HASH_LENGTH];
-                                bip44_pathToKeyHash(&drepCred->keyPath, drepKeyHash, sizeof(drepKeyHash));
-                                bool drep_formatted = format_address_human_readable(
-                                    drepKeyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    drep_cred_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(drep_formatted);
-                                break;
-                            }
-                            case EXT_CREDENTIAL_KEY_HASH: {
-                                bool drep_formatted = format_address_human_readable(
-                                    drepCred->keyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    drep_cred_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(drep_formatted);
-                                break;
-                            }
-                            case EXT_CREDENTIAL_SCRIPT_HASH: {
-                                bool drep_formatted = format_address_human_readable(
-                                    drepCred->scriptHash,
-                                    SCRIPT_HASH_LENGTH,
-                                    drep_cred_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(drep_formatted);
-                                break;
-                            }
-                            default:
-                                return SWO_TX_PARSING_FAIL;
-                        }
-                        status = ui_add_pair_or_fail("DRep credential", drep_cred_tmp);
+                        status = displayCredential(drepCred,
+                                                  "DRep key",
+                                                  "DRep key hash",
+                                                  "drep",
+                                                  "DRep script hash",
+                                                  "drep");
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
 
                         // Display deposit
-                        char *deposit_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH);
-                        if (deposit_tmp == NULL) {
-                            return SWO_INSUFFICIENT_MEMORY;
-                        }
-                        bool deposit_formatted = str_formatAdaAmount(
-                            certificate_item->certificate_data.deposit,
-                            deposit_tmp,
-                            MAX_ADA_AMOUNT_STRING_LENGTH
-                        );
-                        ASSERT(deposit_formatted);
-                        status = ui_add_pair_or_fail("Deposit", deposit_tmp);
+                        status = displayDeposit(certificate_item->certificate_data.deposit, "Deposit");
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -1141,82 +632,20 @@ static int ui_materialize_strings(void) {
                     case CERTIFICATE_DREP_UPDATE: {
                         // Display DRep credential
                         const ext_credential_t* drepCred = &certificate_item->certificate_data.dRepCredential;
-                        char *drep_cred_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
-                        if (drep_cred_tmp == NULL) {
-                            return SWO_INSUFFICIENT_MEMORY;
-                        }
-
-                        switch (drepCred->type) {
-                            case EXT_CREDENTIAL_KEY_PATH: {
-                                uint8_t drepKeyHash[ADDRESS_KEY_HASH_LENGTH];
-                                bip44_pathToKeyHash(&drepCred->keyPath, drepKeyHash, sizeof(drepKeyHash));
-                                bool drep_formatted = format_address_human_readable(
-                                    drepKeyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    drep_cred_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(drep_formatted);
-                                break;
-                            }
-                            case EXT_CREDENTIAL_KEY_HASH: {
-                                bool drep_formatted = format_address_human_readable(
-                                    drepCred->keyHash,
-                                    ADDRESS_KEY_HASH_LENGTH,
-                                    drep_cred_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(drep_formatted);
-                                break;
-                            }
-                            case EXT_CREDENTIAL_SCRIPT_HASH: {
-                                bool drep_formatted = format_address_human_readable(
-                                    drepCred->scriptHash,
-                                    SCRIPT_HASH_LENGTH,
-                                    drep_cred_tmp,
-                                    MAX_HUMAN_ADDRESS_LENGTH
-                                );
-                                ASSERT(drep_formatted);
-                                break;
-                            }
-                            default:
-                                return SWO_TX_PARSING_FAIL;
-                        }
-                        status = ui_add_pair_or_fail("DRep credential", drep_cred_tmp);
+                        status = displayCredential(drepCred,
+                                                  "DRep key",
+                                                  "DRep key hash",
+                                                  "drep",
+                                                  "DRep script hash",
+                                                  "drep");
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
 
                         // Display anchor if present
-                        if (certificate_item->certificate_data.anchor.isIncluded) {
-                            char *anchor_url_tmp = ui_alloc_temp(ANCHOR_URL_LENGTH_MAX + 1);
-                            if (anchor_url_tmp == NULL) {
-                                return SWO_INSUFFICIENT_MEMORY;
-                            }
-                            memcpy(anchor_url_tmp,
-                                   certificate_item->certificate_data.anchor.url,
-                                   certificate_item->certificate_data.anchor.urlLength);
-                            anchor_url_tmp[certificate_item->certificate_data.anchor.urlLength] = '\0';
-                            status = ui_add_pair_or_fail("Anchor URL", anchor_url_tmp);
-                            if (status != SWO_SUCCESS) {
-                                return status;
-                            }
-
-                            char *anchor_hash_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
-                            if (anchor_hash_tmp == NULL) {
-                                return SWO_INSUFFICIENT_MEMORY;
-                            }
-                            bool anchor_formatted = format_address_human_readable(
-                                certificate_item->certificate_data.anchor.hash,
-                                ANCHOR_HASH_LENGTH,
-                                anchor_hash_tmp,
-                                MAX_HUMAN_ADDRESS_LENGTH
-                            );
-                            ASSERT(anchor_formatted);
-                            status = ui_add_pair_or_fail("Anchor hash", anchor_hash_tmp);
-                            if (status != SWO_SUCCESS) {
-                                return status;
-                            }
+                        status = displayAnchorIfPresent(&certificate_item->certificate_data.anchor);
+                        if (status != SWO_SUCCESS) {
+                            return status;
                         }
                         break;
                     }
@@ -1239,6 +668,7 @@ static int ui_materialize_strings(void) {
 
     uint16_t withdrawal_num = 1;
     s_flist_node *withdrawal_node = tx->withdrawals;
+    TRACE("Materializing %u withdrawals", tx->num_withdrawals);
     while (withdrawal_node != NULL) {
         tx_withdrawal_list_item_t *withdrawal_item =
             (tx_withdrawal_list_item_t *) withdrawal_node;
@@ -1256,6 +686,7 @@ static int ui_materialize_strings(void) {
                 // Already asserted above, this case should never be reached
                 break;
             case POLICY_SHOW: {
+                TRACE("Materializing withdrawal #%u", withdrawal_num);
                 char *withdrawal_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH);
             if (withdrawal_num_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
@@ -1280,60 +711,13 @@ static int ui_materialize_strings(void) {
                 return status;
             }
 
-            char *reward_account_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
-            if (reward_account_tmp == NULL) {
-                return SWO_INSUFFICIENT_MEMORY;
-            }
-
-            uint8_t reward_addr_bytes[REWARD_ACCOUNT_LENGTH];
-            size_t reward_addr_len = 0;
-
-            switch (withdrawal_item->withdrawal_data.stakeCredential.type) {
-                case EXT_CREDENTIAL_KEY_PATH:
-                    reward_addr_len = constructRewardAddressFromKeyPath(
-                        &withdrawal_item->withdrawal_data.stakeCredential.keyPath,
-                        G_context.tx_info.transaction.networkId,
-                        reward_addr_bytes,
-                        sizeof(reward_addr_bytes)
-                    );
-                    break;
-                case EXT_CREDENTIAL_KEY_HASH:
-                    reward_addr_len = constructRewardAddressFromHash(
-                        G_context.tx_info.transaction.networkId,
-                        REWARD_HASH_SOURCE_KEY,
-                        withdrawal_item->withdrawal_data.stakeCredential.keyHash,
-                        ADDRESS_KEY_HASH_LENGTH,
-                        reward_addr_bytes,
-                        sizeof(reward_addr_bytes)
-                    );
-                    break;
-                case EXT_CREDENTIAL_SCRIPT_HASH:
-                    reward_addr_len = constructRewardAddressFromHash(
-                        G_context.tx_info.transaction.networkId,
-                        REWARD_HASH_SOURCE_SCRIPT,
-                        withdrawal_item->withdrawal_data.stakeCredential.scriptHash,
-                        SCRIPT_HASH_LENGTH,
-                        reward_addr_bytes,
-                        sizeof(reward_addr_bytes)
-                    );
-                    break;
-                default:
-                    return SWO_TX_PARSING_FAIL;
-            }
-
-            LEDGER_ASSERT(reward_addr_len > 0, "Reward addr derivation failed");
-
-            bool reward_formatted =
-                format_address_human_readable(reward_addr_bytes,
-                                              reward_addr_len,
-                                              reward_account_tmp,
-                                              MAX_HUMAN_ADDRESS_LENGTH);
-            ASSERT(reward_formatted);
-            size_t reward_display_len = strlen(reward_account_tmp);
-            LEDGER_ASSERT(reward_display_len > 0, "Reward addr length zero");
-            LEDGER_ASSERT(reward_display_len + 1 < MAX_HUMAN_ADDRESS_LENGTH, "Reward addr truncated");
-
-            status = ui_add_pair_or_fail("Reward account", reward_account_tmp);
+            // Display reward account with proper formatting
+            // For KEY_PATH: shows "Reward account #N" with "path address"
+            // For KEY_HASH/SCRIPT_HASH: shows "Reward account" with just address
+            status = displayRewardAccountFromCredential(
+                G_context.tx_info.transaction.networkId,
+                &withdrawal_item->withdrawal_data.stakeCredential
+            );
             if (status != SWO_SUCCESS) {
                 return status;
             }
@@ -1464,6 +848,7 @@ static int ui_materialize_strings(void) {
         return status;
     }
 
+    TRACE("UI materialization complete");
     return SWO_SUCCESS;
 }
 

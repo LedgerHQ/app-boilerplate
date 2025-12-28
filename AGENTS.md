@@ -23,12 +23,12 @@ Test fixtures:
 ../ledger-app-cardano/tests/standalone/input_files
 Tests are run by hand.
 
-Transaction body uses CBOR (via CDDL spec), do not modify code in txhashbuilder.c, it is trusted and correct, so is addressUtilsShelley.c and bip44.c.
+Transaction body uses CBOR (via CDDL spec in `conway.cddl`), do not modify code in txhashbuilder.c, it is trusted and correct, so is addressUtilsShelley.c and bip44.c.
 Do not add any CBOR serialization or address manipulation or bip44 path manipulations functions on your own (if it seems necessary, ask first).
 Order of items in transaction body (should be followed in general when organizing code and ordering UI display items):
 In raw_tx (or elsewhere), we do not serialize constants (e.g. if some item is always 28 bytes, both C and Python should have a named constant for that length and apply it, no need to serialize 28 as a prefix in any buffer).
 
-transaction_body = 
+transaction_body =
   {   0  : set<transaction_input>  // inputs
   ,   1  : [* transaction_output]  // outputs
   ,   2  : coin  // fee
@@ -41,7 +41,7 @@ transaction_body =
   , ? 11 : script_data_hash
   , ? 13 : nonempty_set<transaction_input>  // collateral inputs
   , ? 14 : required_signers
-  , ? 15 : network_id 
+  , ? 15 : network_id
   , ? 16 : transaction_output  // collateral output
   , ? 17 : coin  // total collateral
   , ? 18 : nonempty_set<transaction_input>  // reference inputs
@@ -68,7 +68,7 @@ Ledgerjs, typescript API to be used with companion apps:
 ../ledgerjs-cardano-shelley
 hw interop lib:
 ../cardano-hw-interop-lib
-documentation for unit tests:
+documentation for unit tests, including on how to derive keys from paths for mock:
 unit-tests/README.md
 
 You can read git commits or changes from the last commit, but do not do any git operations/modifications/writes.

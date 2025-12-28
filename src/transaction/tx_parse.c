@@ -124,10 +124,13 @@ parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
     }
 
     // key 4: certificates
+    TRACE("About to parse %u certificates", tx->num_certificates);
     status = parse_tx_certificates(buf, tx);
     if (status != PARSING_OK) {
+        TRACE("Certificate parsing failed with status=%d", status);
         return status;
     }
+    TRACE("Successfully parsed all certificates");
 
     // key 5: withdrawals
     status = parse_tx_withdrawals(buf, tx);
@@ -285,13 +288,13 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                     ASSERT(name_ptr != NULL);
                     token->assetName = name_ptr;
 
-                    if (!buffer_read_u64(&output_buf, (uint64_t*)&token->amount, BE)) {
+                    if (!buffer_read_u64(&output_buf, &token->amount, BE)) {
                         return OUTPUTS_PARSING_ERROR;
                     }
 
                     TRACE("Deserialize: Token %u: name_len=%u, amount=",
                           tk, token->assetNameLen);
-                    TRACE_INT64(token->amount);
+                    TRACE_UINT64(token->amount);
                 }
             }
         } else {
@@ -379,7 +382,7 @@ static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
             ASSERT(name_ptr != NULL);
             token->assetName = name_ptr;
 
-            if (!buffer_read_u64(buf, (uint64_t*)&token->amount, BE)) {
+            if (!buffer_read_int64(buf, &token->amount, BE)) {
                 return MINT_PARSING_ERROR;
             }
 
@@ -395,15 +398,21 @@ static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
 
 /// Parse certificate data structure supporting multiple certificate types
 static parser_status_e parse_tx_certificates(buffer_t *buf, transaction_t *tx) {
+    TRACE(">>>>> parse_tx_certificates: num_certificates=%u buf->offset=%u buf->size=%u",
+          tx->num_certificates, buf->offset, buf->size);
     for (uint16_t i = 0; i < tx->num_certificates; i++) {
+        TRACE(">>>>> Allocating memory for certificate %u", i);
         tx_certificate_list_item_t *item = (tx_certificate_list_item_t *) app_mem_alloc(sizeof(tx_certificate_list_item_t));
         if (item == NULL) {
+            TRACE(">>>>> OUT OF MEMORY");
             return OUT_OF_MEMORY_ERROR;
         }
 
         // Read certificate type
         uint8_t cert_type_wire;
+        TRACE(">>>>> About to read certificate type byte at offset %u", buf->offset);
         if (!buffer_read_u8(buf, &cert_type_wire)) {
+            TRACE(">>>>> FAILED TO READ CERTIFICATE TYPE BYTE");
             return CERTIFICATES_PARSING_ERROR;
         }
         certificate_type_t cert_type = (certificate_type_t) cert_type_wire;
@@ -482,59 +491,13 @@ static parser_status_e parse_tx_withdrawals(buffer_t *buf, transaction_t *tx) {
             return WITHDRAWALS_PARSING_ERROR;
         }
 
-        uint8_t cred_type_wire;
-        if (!buffer_read_u8(buf, &cred_type_wire)) {
-            return WITHDRAWALS_PARSING_ERROR;
+        parser_status_e status = parse_stake_credential(buf, &item->withdrawal_data.stakeCredential);
+        if (status != PARSING_OK) {
+            TRACE("Withdrawal %u credential parsing failed: status=%d", i, status);
+            return status;
         }
 
-        ext_credential_type_t cred_type;
-        switch (cred_type_wire) {
-            case 0x22:
-                cred_type = EXT_CREDENTIAL_KEY_PATH;
-                break;
-            case 0x33:
-                cred_type = EXT_CREDENTIAL_KEY_HASH;
-                break;
-            case 0x55:
-                cred_type = EXT_CREDENTIAL_SCRIPT_HASH;
-                break;
-            default:
-                return WITHDRAWALS_PARSING_ERROR;
-        }
-        item->withdrawal_data.stakeCredential.type = cred_type;
-
-        switch (cred_type) {
-            case EXT_CREDENTIAL_KEY_PATH:
-                if (!buffer_read_bip44_path(buf, &item->withdrawal_data.stakeCredential.keyPath)) {
-                    return WITHDRAWALS_PARSING_ERROR;
-                }
-                TRACE("Deserialize: Withdrawal %u key path, length=%u", i, item->withdrawal_data.stakeCredential.keyPath.length);
-                break;
-            case EXT_CREDENTIAL_KEY_HASH: {
-                STATIC_ASSERT(SIZEOF(item->withdrawal_data.stakeCredential.keyHash) == ADDRESS_KEY_HASH_LENGTH,
-                              "credential key hash size mismatch");
-                if (!buffer_read_bytes(buf,
-                                       item->withdrawal_data.stakeCredential.keyHash,
-                                       ADDRESS_KEY_HASH_LENGTH)) {
-                    return WITHDRAWALS_PARSING_ERROR;
-                }
-                TRACE("Deserialize: Withdrawal %u key hash", i);
-                break;
-            }
-            case EXT_CREDENTIAL_SCRIPT_HASH: {
-                STATIC_ASSERT(SIZEOF(item->withdrawal_data.stakeCredential.scriptHash) == SCRIPT_HASH_LENGTH,
-                              "credential script hash size mismatch");
-                if (!buffer_read_bytes(buf,
-                                       item->withdrawal_data.stakeCredential.scriptHash,
-                                       SCRIPT_HASH_LENGTH)) {
-                    return WITHDRAWALS_PARSING_ERROR;
-                }
-                TRACE("Deserialize: Withdrawal %u script hash", i);
-                break;
-            }
-            default:
-                return WITHDRAWALS_PARSING_ERROR;
-        }
+        TRACE("Deserialize: Withdrawal %u, type=%u", i, item->withdrawal_data.stakeCredential.type);
 
         item->node.next = NULL;
         flist_push_back(&tx->withdrawals, (s_flist_node *) item);

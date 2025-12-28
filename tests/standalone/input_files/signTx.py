@@ -29,9 +29,9 @@ class TxAuxiliaryDataType(IntEnum):
     CIP36_REGISTRATION = 0x01
 
 class CredentialParamsType(IntEnum):
-    KEY_PATH = 0x00
+    KEY_HASH = 0x00
     SCRIPT_HASH = 0x01
-    KEY_HASH = 0x02
+    KEY_PATH = 0x02
 
 class TxOutputFormat(IntEnum):
     ARRAY_LEGACY = 0x00

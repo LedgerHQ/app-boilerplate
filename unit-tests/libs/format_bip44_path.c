@@ -18,7 +18,7 @@ bool format_bip44_path(const bip44_path_t* pathSpec, char* out, size_t outSize) 
     // we need space for the terminating \0
     // and one more byte to check whether
     // everything was printed
-    ASSERT(outSize >= BIP44_PATH_STRING_SIZE_MAX + 1);
+    ASSERT(outSize >= MAX_BIP44_PATH_STRING_LENGTH + 1);
     char* ptr = out;
     char* end = (out + outSize);
 

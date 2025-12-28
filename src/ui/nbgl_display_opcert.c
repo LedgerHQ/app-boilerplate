@@ -87,7 +87,7 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
     const parsed_opcert_t* opcert = &G_context.opcert_info.opcert;
 
     // Allocate and fill pool cold key path
-    const size_t poolColdKeyPathStrSize = BIP44_PATH_STRING_SIZE_MAX + 1;
+    const size_t poolColdKeyPathStrSize = MAX_BIP44_PATH_STRING_LENGTH + 1;
     poolColdKeyPathStr = (char *) ui_mem_alloc(poolColdKeyPathStrSize);
     if (poolColdKeyPathStr == NULL) {
         TRACE("Failed to allocate poolColdKeyPathStr");
@@ -102,7 +102,7 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
     ASSERT(strlen(poolColdKeyPathStr) + 1 < poolColdKeyPathStrSize);
 
     // Allocate and fill pool ID (key hash)
-    poolKeyHashStr = (char *) ui_mem_alloc(BECH32_STRING_SIZE_MAX);
+    poolKeyHashStr = (char *) ui_mem_alloc(MAX_BECH32_STRING_LENGTH);
     if (poolKeyHashStr == NULL) {
         TRACE("Failed to allocate poolKeyHashStr");
         opcert_buffer_cleanup();
@@ -114,12 +114,12 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
                                             poolKeyHash,
                                             SIZEOF(poolKeyHash),
                                             poolKeyHashStr,
-                                            BECH32_STRING_SIZE_MAX);
+                                            MAX_BECH32_STRING_LENGTH);
     ASSERT(pool_key_formatted);
-    ASSERT(strlen(poolKeyHashStr) + 1 < BECH32_STRING_SIZE_MAX);
+    ASSERT(strlen(poolKeyHashStr) + 1 < MAX_BECH32_STRING_LENGTH);
 
     // Allocate and fill KES public key
-    kesKeyStr = (char *) ui_mem_alloc(BECH32_STRING_SIZE_MAX);
+    kesKeyStr = (char *) ui_mem_alloc(MAX_BECH32_STRING_LENGTH);
     if (kesKeyStr == NULL) {
         TRACE("Failed to allocate kesKeyStr");
         opcert_buffer_cleanup();
@@ -129,9 +129,9 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
                                            opcert->kesPublicKey,
                                            KES_PUBLIC_KEY_LENGTH,
                                            kesKeyStr,
-                                           BECH32_STRING_SIZE_MAX);
+                                           MAX_BECH32_STRING_LENGTH);
     ASSERT(kes_key_formatted);
-    ASSERT(strlen(kesKeyStr) + 1 < BECH32_STRING_SIZE_MAX);
+    ASSERT(strlen(kesKeyStr) + 1 < MAX_BECH32_STRING_LENGTH);
 
     // Allocate and fill KES period
     kesPeriodStr = (char *) ui_mem_alloc(MAX_UINT64_STRING_LENGTH);

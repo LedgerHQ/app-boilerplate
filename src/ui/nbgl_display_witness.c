@@ -71,7 +71,7 @@ int ui_display_witness(const bip44_path_t* witnessPath,
 
     // Allocate display buffer for witness path using UI tracking system
     // This ensures automatic cleanup when the user responds or on error
-    const size_t witnessPathStrSize = BIP44_PATH_STRING_SIZE_MAX + 1;
+    const size_t witnessPathStrSize = MAX_BIP44_PATH_STRING_LENGTH + 1;
     char *witnessPathStr = (char *) ui_mem_alloc(witnessPathStrSize);
     if (witnessPathStr == NULL) {
         TRACE("Failed to allocate witness path string");

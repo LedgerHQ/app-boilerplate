@@ -4,9 +4,9 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#define BECH32_BUFFER_SIZE_MAX   150
-#define BECH32_PREFIX_LENGTH_MAX 16
-#define BECH32_STRING_SIZE_MAX   (1 + 11 + BECH32_PREFIX_LENGTH_MAX + 2 * BECH32_BUFFER_SIZE_MAX)
+#define MAX_BECH32_BUFFER_LENGTH   150
+#define MAX_BECH32_PREFIX_LENGTH 16
+#define MAX_BECH32_STRING_LENGTH   (1 + 11 + MAX_BECH32_PREFIX_LENGTH + 2 * MAX_BECH32_BUFFER_LENGTH)
 
 /*
  * Encode bytes, using human-readable prefix given in hrp.

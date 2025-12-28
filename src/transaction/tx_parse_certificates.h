@@ -8,9 +8,13 @@
  * Parse a complete stake credential (type + data)
  *
  * Wire format for credential type (as sent by Python client):
- * - 0x22: KEY_PATH (device derivation path)
- * - 0x33: KEY_HASH (28-byte public key hash)
- * - 0x55: SCRIPT_HASH (28-byte script hash)
+ * - 0x00: KEY_HASH (28-byte public key hash)
+ * - 0x01: SCRIPT_HASH (28-byte script hash)
+ * - 0x02: KEY_PATH (device derivation path; converted to KEY_HASH before hashing)
+ *
+ * CBOR credential types (tx hash builder, per CDDL):
+ * - 0x00: KEY_HASH
+ * - 0x01: SCRIPT_HASH
  *
  * @param[in]  buf        Buffer with serialized credential
  * @param[out] credential Parsed credential structure

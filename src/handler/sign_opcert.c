@@ -35,6 +35,7 @@
 #include "securityPolicy.h"
 #include "messageSigning.h"
 #include "buffer_utils.h"
+#include "addressUtils/bip44.h"
 #include "write.h"
 #include "sign_opcert.h"
 #include "menu.h"
@@ -65,6 +66,12 @@ int handler_sign_opcert(buffer_t *cdata) {
     }
     G_context.state.opcert_state = OPCERT_STATE_PARSED;
     const parsed_opcert_t* opcert = &G_context.opcert_info.opcert;
+
+    // Log parsed opcert details (path, KES period, issue counter)
+    BIP44_PRINTF(&opcert->poolColdKeyPath);
+    TRACE("KES period = %llu, issue counter = %llu",
+          (unsigned long long) opcert->kesPeriod,
+          (unsigned long long) opcert->issueCounter);
 
     // Check security policy
     warning_bits_t warnings = 0;

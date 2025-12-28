@@ -66,7 +66,7 @@ typedef struct {
 typedef struct {
     const uint8_t* assetName;
     uint8_t assetNameLen;
-    int64_t amount;
+    uint64_t amount;
 } output_token_t;
 
 typedef struct {

@@ -22,6 +22,7 @@
 #include "io.h"
 #include "utils/cardano_os_utils.h"
 #include "utils/cbor.h"
+#include "ui/tx_ui_helpers.h"
 
 #define UI_PAIR_LIMIT 250
 
@@ -618,8 +619,22 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             }
 
             uint8_t reward_address[REWARD_ACCOUNT_LENGTH];
-            size_t reward_addr_len = 0;
+            char temp_buf[256];  // Temporary buffer for helper function
 
+            // Use helper to construct reward address
+            bool addr_constructed = formatRewardAddressFromCredential(
+                G_context.tx_info.transaction.networkId,
+                &withdrawal_item->withdrawal_data.stakeCredential,
+                temp_buf,
+                sizeof(temp_buf)
+            );
+            if (!addr_constructed) {
+                return send_error_and_reset(SWO_TX_PARSING_FAIL);
+            }
+
+            // For hash builder, we need the raw reward address bytes
+            // Re-construct using the direct functions (helper only gives formatted string)
+            size_t reward_addr_len = 0;
             switch (withdrawal_item->withdrawal_data.stakeCredential.type) {
                 case EXT_CREDENTIAL_KEY_PATH:
                     reward_addr_len = constructRewardAddressFromKeyPath(

@@ -120,7 +120,7 @@ static void _getRewardAccountWithDescriptionScreen(char* line,
     }
     {
         // add bech32-encoded reward account
-        ASSERT(descLen < BIP44_PATH_STRING_SIZE_MAX);
+        ASSERT(descLen < MAX_BIP44_PATH_STRING_LENGTH);
         ASSERT(descLen + 1 < lineSize);
 
         if (descLen > 0) {

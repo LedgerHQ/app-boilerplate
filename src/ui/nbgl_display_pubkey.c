@@ -71,7 +71,7 @@ int ui_display_pubkey(security_policy_t securityPolicy, warning_bits_t warnings)
     pubkey_ctx_t* pk = &G_context.pk_info;
 
     // Allocate display buffers
-    const size_t pubkeyPathStrSize = BIP44_PATH_STRING_SIZE_MAX + 1;
+    const size_t pubkeyPathStrSize = MAX_BIP44_PATH_STRING_LENGTH + 1;
     pubkeyPathStr = (char *) ui_mem_alloc(pubkeyPathStrSize);
     if (pubkeyPathStr == NULL) {
         ui_cleanup_tracked_allocations();
