@@ -13,6 +13,7 @@
 #include "transaction/tx.h"
 #include "transaction/tx_state.h"
 #include "opcert/opcert_types.h"
+#include "deriveAddress/deriveAddress_types.h"
 #include "apdu/apdu_constants.h"
 #include "keyDerivation.h"
 
@@ -87,6 +88,7 @@ typedef struct {
         pubkey_ctx_t pk_info;
         transaction_ctx_t tx_info;
         sign_opcert_ctx_t opcert_info;
+        ins_derive_address_ctx_t derive_address_info;
     };
 
     request_type_e req_type;

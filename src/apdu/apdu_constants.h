@@ -11,6 +11,7 @@ typedef enum {
     INS_GET_VERSION = 0x03,
     INS_GET_APP_NAME = 0x04,
     INS_GET_PUBLIC_KEY = 0x10,
+    INS_DERIVE_ADDRESS = 0x11,
     INS_SIGN_TX = 0x21,
     INS_SIGN_OPCERT = 0x22,
 #ifdef DEBUG

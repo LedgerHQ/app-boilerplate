@@ -36,6 +36,8 @@
 #include "get_public_key.h"
 #include "sign_tx.h"
 #include "sign_opcert.h"
+#include "derive_address.h"
+
 #ifdef DEBUG
 #include "debug_settings.h"
 #endif
@@ -142,6 +144,31 @@ void apdu_dispatcher(const command_t *cmd) {
             handler_get_public_key(&data_buffer);
             return;
         }
+
+        case INS_DERIVE_ADDRESS:
+            TRACE("cmd->p1 %d\n", cmd->p1);
+            // P2 must be unused for all transaction APDU types
+            if (cmd->p2 != P2_UNUSED) {
+                return io_send_sw(SWO_INCORRECT_P1_P2);
+            }
+            // TODO: Check
+            // Validate P1 value
+            if (cmd->p1 != P1_TX_INIT && cmd->p1 != P1_TX_DATA_CHUNK &&
+                cmd->p1 != P1_TX_CHUNK_LAST) {
+                return io_send_sw(SWO_INCORRECT_P1_P2);
+            }
+
+            if (!cmd->data) {
+                return io_send_sw(SWO_WRONG_DATA_LENGTH);
+            }
+            
+            buffer_t deriveaddress_buf = {0};
+            deriveaddress_buf.ptr = cmd->data;
+            deriveaddress_buf.size = cmd->lc;
+            deriveaddress_buf.offset = 0;
+            
+            handler_derive_address(&deriveaddress_buf, cmd->p1);
+            return ;
 
         case INS_SIGN_TX:
             // Check if this is a witness APDU
