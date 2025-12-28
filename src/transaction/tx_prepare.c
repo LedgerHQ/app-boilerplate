@@ -13,6 +13,7 @@
 #include "addressUtils/bip44.h"
 #include "addressUtils/addressUtilsShelley.h"
 #include "tx_output_types.h"
+#include "transaction/tx_aux_data_types.h"
 #include "transaction/tx_hash_builder.h"
 #include "memory/mem.h"
 #include "securityPolicy/securityPolicy.h"
@@ -89,6 +90,20 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
         }
     }
 
+    if (G_context.tx_info.transaction.includeAuxDataHash) {
+        security_policy_t aux_policy =
+            policyForSignTxAuxData(G_context.tx_info.transaction.auxDataType);
+        switch (aux_policy) {
+            case POLICY_DENY:
+                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            case POLICY_SHOW:
+                plan->pair_count++;
+                break;
+            case POLICY_HIDE:
+                break;
+        }
+    }
+
     if (G_context.tx_info.transaction.num_mint_asset_groups > 0) {
         security_policy_t mint_policy =
             policyForSignTxMintInit(G_context.tx_info.transaction.txSigningMode);
@@ -125,7 +140,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                       G_context.tx_info.transaction.includeTtl,
                       G_context.tx_info.transaction.num_certificates,
                       G_context.tx_info.transaction.num_withdrawals,
-                      false,
+                      G_context.tx_info.transaction.includeAuxDataHash,
                       G_context.tx_info.transaction.includeValidityIntervalStart,
                       G_context.tx_info.transaction.num_mint_asset_groups > 0,
                       false,
@@ -665,6 +680,12 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
 
             withdrawal_node = withdrawal_node->next;
         }
+    }
+
+    if (G_context.tx_info.transaction.includeAuxDataHash) {
+        txHashBuilder_addAuxData(&txHashBuilder,
+                                 G_context.tx_info.transaction.auxDataHash,
+                                 AUX_DATA_HASH_LENGTH);
     }
 
     if (G_context.tx_info.transaction.includeValidityIntervalStart) {

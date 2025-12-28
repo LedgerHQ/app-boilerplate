@@ -10,6 +10,7 @@
 #include "crypto.h"
 #include "keyDerivation/keyDerivation.h"
 #include "crypto_mock_data.h"
+#include "utils/assert.h"
 
 #define RAW_PUBKEY_SIZE 65
 
@@ -80,7 +81,7 @@ cx_err_t crypto_get_pubkey(const uint32_t* path,
             fprintf(stderr, "%s0x%08x", (i == 0 ? "" : ", "), path[i]);
         }
         fprintf(stderr, "]\n");
-        return CX_INTERNAL_ERROR;
+        LEDGER_ASSERT(false, "Missing mock public key path");
     }
     encode_raw_pubkey(entry->public_key, raw_pubkey);
     memcpy(chain_code, entry->chain_code, CHAIN_CODE_SIZE);
@@ -106,7 +107,7 @@ cx_err_t crypto_eddsa_sign(const uint32_t* path,
             fprintf(stderr, "%s0x%08x", (i == 0 ? "" : ", "), path[i]);
         }
         fprintf(stderr, "] message_len=%zu\n", hash_len);
-        return CX_INTERNAL_ERROR;
+        LEDGER_ASSERT(false, "Missing mock signature path");
     }
 
     memcpy(sig, entry->signature, ED25519_SIGNATURE_LENGTH);

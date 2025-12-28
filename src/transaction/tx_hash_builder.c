@@ -6,11 +6,24 @@
 // this tracing is rarely needed
 // so we want to keep it turned off to avoid polluting the trace log
 
-#define TRACE_TX_HASH_BUILDER
-
 #ifdef TRACE_TX_HASH_BUILDER
+/* keep a sizable buffer for test tracing but never enable in production */
+static uint8_t tx_body_trace_buffer[100 * 1024];
+static size_t tx_body_trace_size = 0;
+
+static void trace_record_bytes(const uint8_t* buffer, size_t size) {
+    if (tx_body_trace_size + size > sizeof(tx_body_trace_buffer)) {
+        return;
+    }
+    memcpy(tx_body_trace_buffer + tx_body_trace_size, buffer, size);
+    tx_body_trace_size += size;
+}
+#define TRACE_BODY(buffer, size) trace_record_bytes(buffer, size)
+
 #define _TRACE(...) TRACE(__VA_ARGS__)
 #else
+#define TRACE_BODY(buffer, size) (void)0
+
 #define _TRACE(...)
 #endif  // TRACE_TX_HASH_BUILDER
 
@@ -30,7 +43,7 @@ usbtool).
 static void blake2b_256_append_buffer_tx_body(blake2b_256_context_t* hashCtx,
                                               const uint8_t* buffer,
                                               size_t bufferSize) {
-    TRACE_BUFFER(buffer, bufferSize);
+    TRACE_BODY(buffer, bufferSize);
     blake2b_256_append(hashCtx, buffer, bufferSize);
 }
 
@@ -39,7 +52,7 @@ blake2b_256_append_cbor_tx_body(blake2b_256_context_t* hashCtx, uint8_t type, ui
     uint8_t buffer[10] = {0};
     size_t size = 0;
     cbor_writeToken(type, value, buffer, SIZEOF(buffer), &size);
-    TRACE_BUFFER(buffer, size);
+    TRACE_BODY(buffer, size);
     blake2b_256_append(hashCtx, buffer, size);
 }
 
@@ -2113,4 +2126,16 @@ void txHashBuilder_finalize(tx_hash_builder_t* builder, uint8_t* outBuffer, size
     { blake2b_256_finalize(&builder->txHash, outBuffer, outSize); }
 
     builder->state = TX_HASH_BUILDER_FINISHED;
+#ifdef TRACE_TX_HASH_BUILDER
+    TRACE("tx_body (%zu bytes)", tx_body_trace_size);
+    TRACE_BUFFER(tx_body_trace_buffer, tx_body_trace_size);
+#endif
 }
+
+#ifdef TRACE_TX_HASH_BUILDER
+size_t txHashBuilder_get_trace_body(uint8_t* outBuffer, size_t outMaxSize) {
+    size_t copy = (tx_body_trace_size < outMaxSize) ? tx_body_trace_size : outMaxSize;
+    memcpy(outBuffer, tx_body_trace_buffer, copy);
+    return copy;
+}
+#endif

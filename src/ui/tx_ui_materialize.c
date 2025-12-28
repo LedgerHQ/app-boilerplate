@@ -1422,10 +1422,6 @@ static int ui_materialize_strings(void) {
                 mint_node = mint_node->next;
             }
         }
-
-        security_policy_t mint_confirm_policy =
-            policyForSignTxMintConfirm(mint_policy);
-        LEDGER_ASSERT(mint_confirm_policy != POLICY_DENY, "Mint confirm denied during UI");
     }
 
     s_flist_node *input_node = tx->inputs;

@@ -68,6 +68,8 @@ Ledgerjs, typescript API to be used with companion apps:
 ../ledgerjs-cardano-shelley
 hw interop lib:
 ../cardano-hw-interop-lib
+documentation for unit tests:
+unit-tests/README.md
 
 You can read git commits or changes from the last commit, but do not do any git operations/modifications/writes.
 

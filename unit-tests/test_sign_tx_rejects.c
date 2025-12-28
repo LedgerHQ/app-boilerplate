@@ -13,6 +13,7 @@
 #include "buffer.h"
 #include "cardano_swo.h"
 #include "globals.h"
+#include "display.h"
 #include "securityPolicy/securityPolicy.h"
 #include "transaction/tx_utils.h"
 #include "transaction/tx_parse.h"
@@ -71,6 +72,7 @@ void ui_menu_main(void) {
 
 int ui_display_transaction(void) {
     // reject tests never reach UI confirmation
+    tx_review_cleanup();
     return 0;
 }
 

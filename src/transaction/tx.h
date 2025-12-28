@@ -7,6 +7,7 @@
 #include "cardano_constants.h"
 #include "memory/flist.h"
 #include "addressUtils/bip44.h"
+#include "transaction/tx_aux_data_types.h"
 #include "transaction/tx_credential_types.h"
 #include "transaction/tx_certificate_types.h"
 #include "transaction/tx_output_types.h"
@@ -143,4 +144,7 @@ typedef struct {
 
     uint16_t num_mint_asset_groups;     // key 9 (mint)
     s_flist_node* mint_asset_groups;
+    bool includeAuxDataHash;
+    aux_data_type_t auxDataType;
+    uint8_t auxDataHash[AUX_DATA_HASH_LENGTH];
 } transaction_t;

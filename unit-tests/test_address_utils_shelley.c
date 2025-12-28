@@ -6,6 +6,7 @@
 
 #include <cmocka.h>
 
+#include "cardano_constants.h"
 #include "addressUtils/addressUtilsShelley.h"
 #include "addressUtils/addressUtilsByron.h"
 #include "addressUtils/bip44.h"
@@ -68,6 +69,17 @@ static void testcase_derive_address_shelley(address_type_t type,
     uint8_t expected[MAX_ADDRESS_LENGTH] = {0};
     size_t expectedSize = 0;
     assert_true(decode_hex(expectedHex, expected, sizeof(expected), &expectedSize));
+
+    if (expectedHex != NULL &&
+        strcmp(expectedHex,
+               "01f90b0dfcace47bf03e88f7469a2f4fb3a7918461aa4765bfaf55f0dae260546c20562e598fb761f419dad27edcd49f4ee4f0540b8e40d4d5") == 0) {
+        char out_hex[MAX_ADDRESS_LENGTH * 2 + 1];
+        char exp_hex[MAX_ADDRESS_LENGTH * 2 + 1];
+        test_bytes_to_lowercase_hex(out_hex, sizeof(out_hex), out, outSize);
+        test_bytes_to_lowercase_hex(exp_hex, sizeof(exp_hex), expected, expectedSize);
+        PRINTF("derived address: %s", out_hex);
+        PRINTF("expected address: %s", exp_hex);
+    }
 
     assert_int_equal(outSize, expectedSize);
     assert_memory_equal(out, expected, expectedSize);
@@ -195,6 +207,18 @@ static void test_address_derivation(void **state) {
         NULL,
         &(blockchainPointer_t){.blockIndex = 0, .txIndex = 0, .certificateIndex = 0},
         "435a53103829a7382c2ab76111fb69f13e69d616824c62058e44f1a8b3000000");
+
+    testcase_derive_address_shelley(
+        BASE_PAYMENT_KEY_STAKE_KEY,
+        MAINNET_NETWORK_ID,
+        (uint32_t[]){HD + 1852, HD + 1815, HD + 456, 0, 5000000},
+        5,
+        STAKING_KEY_PATH,
+        (uint32_t[]){HD + 1852, HD + 1815, HD + 456, 2, 0},
+        5,
+        NULL,
+        NULL,
+        "01f90b0dfcace47bf03e88f7469a2f4fb3a7918461aa4765bfaf55f0dae260546c20562e598fb761f419dad27edcd49f4ee4f0540b8e40d4d5");
 }
 
 static void test_buffer_parse_address_params_payment_script_hash(void **state) {

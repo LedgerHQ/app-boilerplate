@@ -376,3 +376,7 @@ void txHashBuilder_addTreasury(tx_hash_builder_t* builder, uint64_t treasury);
 void txHashBuilder_addDonation(tx_hash_builder_t* builder, uint64_t donation);
 
 void txHashBuilder_finalize(tx_hash_builder_t* builder, uint8_t* outBuffer, size_t outSize);
+
+#ifdef TRACE_TX_HASH_BUILDER
+size_t txHashBuilder_get_trace_body(uint8_t* outBuffer, size_t outMaxSize);
+#endif

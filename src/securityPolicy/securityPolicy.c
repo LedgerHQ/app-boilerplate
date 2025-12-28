@@ -1634,21 +1634,6 @@ security_policy_t policyForSignTxMintInit(const sign_tx_signingmode_t txSigningM
     DENY();  // should not be reached
 }
 
-// For final mint confirmation
-security_policy_t policyForSignTxMintConfirm(security_policy_t mintInitPolicy) {
-    if (mintInitPolicy == POLICY_HIDE) {
-        HIDE();
-    }
-
-    if (mintInitPolicy == POLICY_SHOW) {
-        SHOW();
-        HIDE();
-    }
-
-    ASSERT(false);
-    DENY();
-}
-
 // For transaction script data hash
 security_policy_t policyForSignTxScriptDataHash(const sign_tx_signingmode_t txSigningMode) {
     switch (txSigningMode) {

@@ -23,12 +23,14 @@
 #include "os.h"
 #include "buffer.h"
 #include "nbgl_use_case.h"
+#include "utils/buffer_utils.h"
 
 #include "sign_tx.h"
 #include "cardano_swo.h"
 #include "globals.h"
 #include "display.h"
 #include "transaction/tx.h"
+#include "transaction/tx_aux_data_types.h"
 #include "tx_output_types.h"
 #include "tx_parse.h"
 #include "memory/mem.h"
@@ -115,7 +117,7 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
-    // Field 7 (auxiliary data hash) - optional, not implemented yet
+    // Field 7 (auxiliary data hash) - optional
     uint8_t includeAuxDataHashByte;
     bool includeAuxDataHash = false;
     if (!buffer_read_u8(cdata, &includeAuxDataHashByte)) {
@@ -124,7 +126,18 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
     if (!parseIncluded(includeAuxDataHashByte, &includeAuxDataHash)) {
         return send_error_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
-    // TODO: Store includeAuxDataHash when auxiliary data is implemented
+    G_context.tx_info.transaction.includeAuxDataHash = includeAuxDataHash;
+    G_context.tx_info.transaction.auxDataType = AUX_DATA_TYPE_ARBITRARY_HASH;
+    if (includeAuxDataHash) {
+        if (!buffer_read_bytes(cdata,
+                               G_context.tx_info.transaction.auxDataHash,
+                               AUX_DATA_HASH_LENGTH)) {
+            return send_error_and_reset(SWO_TX_PARSING_FAIL);
+        }
+    } else {
+        explicit_bzero(G_context.tx_info.transaction.auxDataHash,
+                       AUX_DATA_HASH_LENGTH);
+    }
 
     // Field 8 (validity interval start) - optional
     uint8_t includeValidityIntervalStartByte;

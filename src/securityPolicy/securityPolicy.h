@@ -153,7 +153,6 @@ security_policy_t policyForSignTxAuxData(aux_data_type_t auxDataType);
 
 security_policy_t policyForSignTxValidityIntervalStart();
 security_policy_t policyForSignTxMintInit(const sign_tx_signingmode_t txSigningMode);
-security_policy_t policyForSignTxMintConfirm(security_policy_t outputPolicy);
 
 security_policy_t policyForSignTxScriptDataHash(const sign_tx_signingmode_t txSigningMode);
 

@@ -139,34 +139,6 @@ add_executable(test_tx_prepare
     mock_sources/hex_stub.c
     mock_sources/io_stub.c
 )
-add_executable(test_sign_tx_handler
-    test_sign_tx_handler.c
-    mock_globals.c
-    ../src/memory/flist.c
-    ../src/handler/sign_tx.c
-    ../src/transaction/tx_parse.c
-    ../src/transaction/tx_parse_certificates.c
-    ../src/transaction/tx_parse_outputs.c
-    ../src/transaction/tx_utils.c
-    ../src/securityPolicy/securityPolicy.c
-    ../src/securityPolicy/securityPolicy_privkey.c
-    ../src/messageSigning/messageSigning.c
-    ../src/keyDerivation/keyDerivation.c
-    ../src/app_tokens/app_tokens.c
-    ../src/addressUtils/addressUtilsShelley.c
-    ../src/addressUtils/addressUtilsByron.c
-    ../src/transaction/tx_hash_builder.c
-    ../src/transaction/tx_prepare.c
-    ../src/app_tokens/app_tokens.c
-    ../src/ui/tx_ui_materialize.c
-    ../src/ui/ui_utils.c
-    ../src/utils/cardano_os_utils.c
-    ../src/memory/mem_utils.c
-    mock_sources/glyphs_mock.c
-    mock_sources/display_stub.c
-    mock_sources/hex_stub.c
-    mock_sources/io_stub.c
-)
 
 set(TEST_EXECUTABLES
     test_hex_utils
@@ -186,7 +158,6 @@ set(TEST_EXECUTABLES
     test_aux_data_hash_builder
     test_tx_hash_builder
     test_tx_prepare
-    test_sign_tx_handler
 )
 # add_executable(test_tokens test_tokens.c)  # TODO: needs crypto mocks (keyDerivation.h, etc.)
 # add_executable(test_tx_parser test_tx_parser.c)  # TODO: create this file
@@ -351,7 +322,36 @@ target_link_libraries(test_tx_prepare
         cx_crc_support
 )
 add_test(test_tx_hash_builder test_tx_hash_builder)
-target_link_libraries(test_sign_tx_handler
+
+# Mary era tests (multiasset/tokens)
+add_executable(test_sign_tx_mary
+    test_sign_tx_mary.c
+    mock_globals.c
+    ../src/memory/flist.c
+    ../src/handler/sign_tx.c
+    ../src/transaction/tx_parse.c
+    ../src/transaction/tx_parse_certificates.c
+    ../src/transaction/tx_parse_outputs.c
+    ../src/transaction/tx_utils.c
+    ../src/securityPolicy/securityPolicy.c
+    ../src/securityPolicy/securityPolicy_privkey.c
+    ../src/messageSigning/messageSigning.c
+    ../src/keyDerivation/keyDerivation.c
+    ../src/app_tokens/app_tokens.c
+    ../src/addressUtils/addressUtilsShelley.c
+    ../src/addressUtils/addressUtilsByron.c
+    ../src/transaction/tx_hash_builder.c
+    ../src/transaction/tx_prepare.c
+    ../src/ui/tx_ui_materialize.c
+    ../src/ui/ui_utils.c
+    ../src/utils/cardano_os_utils.c
+    ../src/memory/mem_utils.c
+    mock_sources/glyphs_mock.c
+    mock_sources/display_stub.c
+    mock_sources/hex_stub.c
+    mock_sources/io_stub.c
+)
+target_link_libraries(test_sign_tx_mary
     PUBLIC
         cmocka
         gcov
@@ -372,8 +372,538 @@ target_link_libraries(test_sign_tx_handler
         varint
         bip32
         cx_crc_support
+        mock_printf
 )
-add_test(test_sign_tx_handler test_sign_tx_handler)
+add_test(test_sign_tx_mary test_sign_tx_mary)
+
+add_executable(test_sign_tx_shelley
+    test_sign_tx_shelley.c
+    mock_globals.c
+    ../src/memory/flist.c
+    ../src/handler/sign_tx.c
+    ../src/transaction/tx_parse.c
+    ../src/transaction/tx_parse_certificates.c
+    ../src/transaction/tx_parse_outputs.c
+    ../src/transaction/tx_utils.c
+    ../src/securityPolicy/securityPolicy.c
+    ../src/securityPolicy/securityPolicy_privkey.c
+    ../src/messageSigning/messageSigning.c
+    ../src/keyDerivation/keyDerivation.c
+    ../src/app_tokens/app_tokens.c
+    ../src/addressUtils/addressUtilsShelley.c
+    ../src/addressUtils/addressUtilsByron.c
+    ../src/transaction/tx_hash_builder.c
+    ../src/transaction/tx_prepare.c
+    ../src/ui/tx_ui_materialize.c
+    ../src/ui/ui_utils.c
+    ../src/utils/cardano_os_utils.c
+    ../src/memory/mem_utils.c
+    mock_sources/glyphs_mock.c
+    mock_sources/display_stub.c
+    mock_sources/hex_stub.c
+    mock_sources/io_stub.c
+)
+target_link_libraries(test_sign_tx_shelley
+    PUBLIC
+        cmocka
+        gcov
+        text_utils
+        hex_utils
+        base58
+        bech32_lib
+        bip44_real
+        buffer_utils_lib
+        cbor_lib
+        blake2b_lib
+        sha3_lib
+        hash_mocks_lib
+        crypto_mocks_lib
+        buffer
+        write
+        read
+        varint
+        bip32
+        cx_crc_support
+        mock_printf
+)
+target_compile_definitions(test_sign_tx_shelley PRIVATE TRACE_TX_HASH_BUILDER)
+add_test(test_sign_tx_shelley test_sign_tx_shelley)
+
+add_executable(test_sign_tx_byron
+    test_sign_tx_byron.c
+    mock_globals.c
+    ../src/memory/flist.c
+    ../src/handler/sign_tx.c
+    ../src/transaction/tx_parse.c
+    ../src/transaction/tx_parse_certificates.c
+    ../src/transaction/tx_parse_outputs.c
+    ../src/transaction/tx_utils.c
+    ../src/securityPolicy/securityPolicy.c
+    ../src/securityPolicy/securityPolicy_privkey.c
+    ../src/messageSigning/messageSigning.c
+    ../src/keyDerivation/keyDerivation.c
+    ../src/app_tokens/app_tokens.c
+    ../src/addressUtils/addressUtilsShelley.c
+    ../src/addressUtils/addressUtilsByron.c
+    ../src/transaction/tx_hash_builder.c
+    ../src/transaction/tx_prepare.c
+    ../src/ui/tx_ui_materialize.c
+    ../src/ui/ui_utils.c
+    ../src/utils/cardano_os_utils.c
+    ../src/memory/mem_utils.c
+    mock_sources/glyphs_mock.c
+    mock_sources/display_stub.c
+    mock_sources/hex_stub.c
+    mock_sources/io_stub.c
+)
+target_link_libraries(test_sign_tx_byron
+    PUBLIC
+        cmocka
+        gcov
+        text_utils
+        hex_utils
+        base58
+        bech32_lib
+        bip44_real
+        buffer_utils_lib
+        cbor_lib
+        blake2b_lib
+        sha3_lib
+        hash_mocks_lib
+        crypto_mocks_lib
+        buffer
+        write
+        read
+        varint
+        bip32
+        cx_crc_support
+        mock_printf
+)
+add_test(test_sign_tx_byron test_sign_tx_byron)
+
+# Shelley era tests with certificates
+add_executable(test_sign_tx_shelley_certificates
+    test_sign_tx_shelley_certificates.c
+    mock_globals.c
+    ../src/memory/flist.c
+    ../src/handler/sign_tx.c
+    ../src/transaction/tx_parse.c
+    ../src/transaction/tx_parse_certificates.c
+    ../src/transaction/tx_parse_outputs.c
+    ../src/transaction/tx_utils.c
+    ../src/securityPolicy/securityPolicy.c
+    ../src/securityPolicy/securityPolicy_privkey.c
+    ../src/messageSigning/messageSigning.c
+    ../src/keyDerivation/keyDerivation.c
+    ../src/app_tokens/app_tokens.c
+    ../src/addressUtils/addressUtilsShelley.c
+    ../src/addressUtils/addressUtilsByron.c
+    ../src/transaction/tx_hash_builder.c
+    ../src/transaction/tx_prepare.c
+    ../src/ui/tx_ui_materialize.c
+    ../src/ui/ui_utils.c
+    ../src/utils/cardano_os_utils.c
+    ../src/memory/mem_utils.c
+    mock_sources/glyphs_mock.c
+    mock_sources/display_stub.c
+    mock_sources/hex_stub.c
+    mock_sources/io_stub.c
+)
+target_link_libraries(test_sign_tx_shelley_certificates
+    PUBLIC
+        cmocka
+        gcov
+        text_utils
+        hex_utils
+        base58
+        bech32_lib
+        bip44_real
+        buffer_utils_lib
+        cbor_lib
+        blake2b_lib
+        sha3_lib
+        hash_mocks_lib
+        crypto_mocks_lib
+        buffer
+        write
+        read
+        varint
+        bip32
+        cx_crc_support
+        mock_printf
+)
+add_test(test_sign_tx_shelley_certificates test_sign_tx_shelley_certificates)
+
+# Allegra era tests (validity intervals)
+add_executable(test_sign_tx_allegra
+    test_sign_tx_allegra.c
+    mock_globals.c
+    ../src/memory/flist.c
+    ../src/handler/sign_tx.c
+    ../src/transaction/tx_parse.c
+    ../src/transaction/tx_parse_certificates.c
+    ../src/transaction/tx_parse_outputs.c
+    ../src/transaction/tx_utils.c
+    ../src/securityPolicy/securityPolicy.c
+    ../src/securityPolicy/securityPolicy_privkey.c
+    ../src/messageSigning/messageSigning.c
+    ../src/keyDerivation/keyDerivation.c
+    ../src/app_tokens/app_tokens.c
+    ../src/addressUtils/addressUtilsShelley.c
+    ../src/addressUtils/addressUtilsByron.c
+    ../src/transaction/tx_hash_builder.c
+    ../src/transaction/tx_prepare.c
+    ../src/ui/tx_ui_materialize.c
+    ../src/ui/ui_utils.c
+    ../src/utils/cardano_os_utils.c
+    ../src/memory/mem_utils.c
+    mock_sources/glyphs_mock.c
+    mock_sources/display_stub.c
+    mock_sources/hex_stub.c
+    mock_sources/io_stub.c
+)
+target_link_libraries(test_sign_tx_allegra
+    PUBLIC
+        cmocka
+        gcov
+        text_utils
+        hex_utils
+        base58
+        bech32_lib
+        bip44_real
+        buffer_utils_lib
+        cbor_lib
+        blake2b_lib
+        sha3_lib
+        hash_mocks_lib
+        crypto_mocks_lib
+        buffer
+        write
+        read
+        varint
+        bip32
+        cx_crc_support
+        mock_printf
+)
+add_test(test_sign_tx_allegra test_sign_tx_allegra)
+
+# Alonzo era tests (Plutus scripts)
+add_executable(test_sign_tx_alonzo
+    test_sign_tx_alonzo.c
+    mock_globals.c
+    ../src/memory/flist.c
+    ../src/handler/sign_tx.c
+    ../src/transaction/tx_parse.c
+    ../src/transaction/tx_parse_certificates.c
+    ../src/transaction/tx_parse_outputs.c
+    ../src/transaction/tx_utils.c
+    ../src/securityPolicy/securityPolicy.c
+    ../src/securityPolicy/securityPolicy_privkey.c
+    ../src/messageSigning/messageSigning.c
+    ../src/keyDerivation/keyDerivation.c
+    ../src/app_tokens/app_tokens.c
+    ../src/addressUtils/addressUtilsShelley.c
+    ../src/addressUtils/addressUtilsByron.c
+    ../src/transaction/tx_hash_builder.c
+    ../src/transaction/tx_prepare.c
+    ../src/ui/tx_ui_materialize.c
+    ../src/ui/ui_utils.c
+    ../src/utils/cardano_os_utils.c
+    ../src/memory/mem_utils.c
+    mock_sources/glyphs_mock.c
+    mock_sources/display_stub.c
+    mock_sources/hex_stub.c
+    mock_sources/io_stub.c
+)
+target_link_libraries(test_sign_tx_alonzo
+    PUBLIC
+        cmocka
+        gcov
+        text_utils
+        hex_utils
+        base58
+        bech32_lib
+        bip44_real
+        buffer_utils_lib
+        cbor_lib
+        blake2b_lib
+        sha3_lib
+        hash_mocks_lib
+        crypto_mocks_lib
+        buffer
+        write
+        read
+        varint
+        bip32
+        cx_crc_support
+        mock_printf
+)
+add_test(test_sign_tx_alonzo test_sign_tx_alonzo)
+
+# Babbage era tests (reference inputs, inline datums)
+add_executable(test_sign_tx_babbage
+    test_sign_tx_babbage.c
+    mock_globals.c
+    ../src/memory/flist.c
+    ../src/handler/sign_tx.c
+    ../src/transaction/tx_parse.c
+    ../src/transaction/tx_parse_certificates.c
+    ../src/transaction/tx_parse_outputs.c
+    ../src/transaction/tx_utils.c
+    ../src/securityPolicy/securityPolicy.c
+    ../src/securityPolicy/securityPolicy_privkey.c
+    ../src/messageSigning/messageSigning.c
+    ../src/keyDerivation/keyDerivation.c
+    ../src/app_tokens/app_tokens.c
+    ../src/addressUtils/addressUtilsShelley.c
+    ../src/addressUtils/addressUtilsByron.c
+    ../src/transaction/tx_hash_builder.c
+    ../src/transaction/tx_prepare.c
+    ../src/ui/tx_ui_materialize.c
+    ../src/ui/ui_utils.c
+    ../src/utils/cardano_os_utils.c
+    ../src/memory/mem_utils.c
+    mock_sources/glyphs_mock.c
+    mock_sources/display_stub.c
+    mock_sources/hex_stub.c
+    mock_sources/io_stub.c
+)
+target_link_libraries(test_sign_tx_babbage
+    PUBLIC
+        cmocka
+        gcov
+        text_utils
+        hex_utils
+        base58
+        bech32_lib
+        bip44_real
+        buffer_utils_lib
+        cbor_lib
+        blake2b_lib
+        sha3_lib
+        hash_mocks_lib
+        crypto_mocks_lib
+        buffer
+        write
+        read
+        varint
+        bip32
+        cx_crc_support
+        mock_printf
+)
+add_test(test_sign_tx_babbage test_sign_tx_babbage)
+
+# Conway era tests with governance certificates
+add_executable(test_sign_tx_conway
+    test_sign_tx_conway.c
+    mock_globals.c
+    ../src/memory/flist.c
+    ../src/handler/sign_tx.c
+    ../src/transaction/tx_parse.c
+    ../src/transaction/tx_parse_certificates.c
+    ../src/transaction/tx_parse_outputs.c
+    ../src/transaction/tx_utils.c
+    ../src/securityPolicy/securityPolicy.c
+    ../src/securityPolicy/securityPolicy_privkey.c
+    ../src/messageSigning/messageSigning.c
+    ../src/keyDerivation/keyDerivation.c
+    ../src/app_tokens/app_tokens.c
+    ../src/addressUtils/addressUtilsShelley.c
+    ../src/addressUtils/addressUtilsByron.c
+    ../src/transaction/tx_hash_builder.c
+    ../src/transaction/tx_prepare.c
+    ../src/ui/tx_ui_materialize.c
+    ../src/ui/ui_utils.c
+    ../src/utils/cardano_os_utils.c
+    ../src/memory/mem_utils.c
+    mock_sources/glyphs_mock.c
+    mock_sources/display_stub.c
+    mock_sources/hex_stub.c
+    mock_sources/io_stub.c
+)
+target_link_libraries(test_sign_tx_conway
+    PUBLIC
+        cmocka
+        gcov
+        text_utils
+        hex_utils
+        base58
+        bech32_lib
+        bip44_real
+        buffer_utils_lib
+        cbor_lib
+        blake2b_lib
+        sha3_lib
+        hash_mocks_lib
+        crypto_mocks_lib
+        buffer
+        write
+        read
+        varint
+        bip32
+        cx_crc_support
+        mock_printf
+)
+add_test(test_sign_tx_conway test_sign_tx_conway)
+
+# Conway era tests without certificates (treasury/donation)
+add_executable(test_sign_tx_conway_without_certificates
+    test_sign_tx_conway_without_certificates.c
+    mock_globals.c
+    ../src/memory/flist.c
+    ../src/handler/sign_tx.c
+    ../src/transaction/tx_parse.c
+    ../src/transaction/tx_parse_certificates.c
+    ../src/transaction/tx_parse_outputs.c
+    ../src/transaction/tx_utils.c
+    ../src/securityPolicy/securityPolicy.c
+    ../src/securityPolicy/securityPolicy_privkey.c
+    ../src/messageSigning/messageSigning.c
+    ../src/keyDerivation/keyDerivation.c
+    ../src/app_tokens/app_tokens.c
+    ../src/addressUtils/addressUtilsShelley.c
+    ../src/addressUtils/addressUtilsByron.c
+    ../src/transaction/tx_hash_builder.c
+    ../src/transaction/tx_prepare.c
+    ../src/ui/tx_ui_materialize.c
+    ../src/ui/ui_utils.c
+    ../src/utils/cardano_os_utils.c
+    ../src/memory/mem_utils.c
+    mock_sources/glyphs_mock.c
+    mock_sources/display_stub.c
+    mock_sources/hex_stub.c
+    mock_sources/io_stub.c
+)
+target_link_libraries(test_sign_tx_conway_without_certificates
+    PUBLIC
+        cmocka
+        gcov
+        text_utils
+        hex_utils
+        base58
+        bech32_lib
+        bip44_real
+        buffer_utils_lib
+        cbor_lib
+        blake2b_lib
+        sha3_lib
+        hash_mocks_lib
+        crypto_mocks_lib
+        buffer
+        write
+        read
+        varint
+        bip32
+        cx_crc_support
+        mock_printf
+)
+add_test(test_sign_tx_conway_without_certificates test_sign_tx_conway_without_certificates)
+
+# Conway era voting procedures tests
+add_executable(test_sign_tx_conway_voting
+    test_sign_tx_conway_voting.c
+    mock_globals.c
+    ../src/memory/flist.c
+    ../src/handler/sign_tx.c
+    ../src/transaction/tx_parse.c
+    ../src/transaction/tx_parse_certificates.c
+    ../src/transaction/tx_parse_outputs.c
+    ../src/transaction/tx_utils.c
+    ../src/securityPolicy/securityPolicy.c
+    ../src/securityPolicy/securityPolicy_privkey.c
+    ../src/messageSigning/messageSigning.c
+    ../src/keyDerivation/keyDerivation.c
+    ../src/app_tokens/app_tokens.c
+    ../src/addressUtils/addressUtilsShelley.c
+    ../src/addressUtils/addressUtilsByron.c
+    ../src/transaction/tx_hash_builder.c
+    ../src/transaction/tx_prepare.c
+    ../src/ui/tx_ui_materialize.c
+    ../src/ui/ui_utils.c
+    ../src/utils/cardano_os_utils.c
+    ../src/memory/mem_utils.c
+    mock_sources/glyphs_mock.c
+    mock_sources/display_stub.c
+    mock_sources/hex_stub.c
+    mock_sources/io_stub.c
+)
+target_link_libraries(test_sign_tx_conway_voting
+    PUBLIC
+        cmocka
+        gcov
+        text_utils
+        hex_utils
+        base58
+        bech32_lib
+        bip44_real
+        buffer_utils_lib
+        cbor_lib
+        blake2b_lib
+        sha3_lib
+        hash_mocks_lib
+        crypto_mocks_lib
+        buffer
+        write
+        read
+        varint
+        bip32
+        cx_crc_support
+        mock_printf
+)
+add_test(test_sign_tx_conway_voting test_sign_tx_conway_voting)
+
+# Multisig tests
+add_executable(test_sign_tx_multisig
+    test_sign_tx_multisig.c
+    mock_globals.c
+    ../src/memory/flist.c
+    ../src/handler/sign_tx.c
+    ../src/transaction/tx_parse.c
+    ../src/transaction/tx_parse_certificates.c
+    ../src/transaction/tx_parse_outputs.c
+    ../src/transaction/tx_utils.c
+    ../src/securityPolicy/securityPolicy.c
+    ../src/securityPolicy/securityPolicy_privkey.c
+    ../src/messageSigning/messageSigning.c
+    ../src/keyDerivation/keyDerivation.c
+    ../src/app_tokens/app_tokens.c
+    ../src/addressUtils/addressUtilsShelley.c
+    ../src/addressUtils/addressUtilsByron.c
+    ../src/transaction/tx_hash_builder.c
+    ../src/transaction/tx_prepare.c
+    ../src/ui/tx_ui_materialize.c
+    ../src/ui/ui_utils.c
+    ../src/utils/cardano_os_utils.c
+    ../src/memory/mem_utils.c
+    mock_sources/glyphs_mock.c
+    mock_sources/display_stub.c
+    mock_sources/hex_stub.c
+    mock_sources/io_stub.c
+)
+target_link_libraries(test_sign_tx_multisig
+    PUBLIC
+        cmocka
+        gcov
+        text_utils
+        hex_utils
+        base58
+        bech32_lib
+        bip44_real
+        buffer_utils_lib
+        cbor_lib
+        blake2b_lib
+        sha3_lib
+        hash_mocks_lib
+        crypto_mocks_lib
+        buffer
+        write
+        read
+        varint
+        bip32
+        cx_crc_support
+        mock_printf
+)
+add_test(test_sign_tx_multisig test_sign_tx_multisig)
 
 foreach(target IN LISTS TEST_EXECUTABLES)
     target_link_libraries(${target} PUBLIC mock_printf)
