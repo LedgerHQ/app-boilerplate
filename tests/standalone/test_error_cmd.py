@@ -10,7 +10,7 @@ from application_client.status_words import StatusWord
 # Ensure the app returns an error when a bad CLA is used
 def test_bad_cla(backend: BackendInterface) -> None:
     with pytest.raises(ExceptionRAPDU) as e:
-        backend.exchange(cla=CLA + 1, ins=InsType.GET_VERSION)
+        backend.exchange(cla=CLA + 1, ins=InsType.INS_GET_VERSION)
     assert e.value.status == StatusWord.SWO_INVALID_CLA
 
 
@@ -24,16 +24,16 @@ def test_bad_ins(backend: BackendInterface) -> None:
 # Ensure the app returns an error when a bad P1 or P2 is used
 def test_wrong_p1p2(backend: BackendInterface) -> None:
     with pytest.raises(ExceptionRAPDU) as e:
-        backend.exchange(cla=CLA, ins=InsType.GET_VERSION, p1=P1Type.P1_START + 1, p2=P2Type.P2_LAST)
+        backend.exchange(cla=CLA, ins=InsType.INS_GET_VERSION, p1=P1Type.P1_UNUSED + 1, p2=P2Type.P2_LAST)
     assert e.value.status == StatusWord.SWO_INCORRECT_P1_P2
     with pytest.raises(ExceptionRAPDU) as e:
-        backend.exchange(cla=CLA, ins=InsType.GET_VERSION, p1=P1Type.P1_START, p2=P2Type.P2_MORE)
+        backend.exchange(cla=CLA, ins=InsType.INS_GET_VERSION, p1=P1Type.P1_UNUSED, p2=P2Type.P2_MORE)
     assert e.value.status == StatusWord.SWO_INCORRECT_P1_P2
     with pytest.raises(ExceptionRAPDU) as e:
-        backend.exchange(cla=CLA, ins=InsType.GET_APP_NAME, p1=P1Type.P1_START + 1, p2=P2Type.P2_LAST)
+        backend.exchange(cla=CLA, ins=InsType.INS_GET_APP_NAME, p1=P1Type.P1_UNUSED + 1, p2=P2Type.P2_LAST)
     assert e.value.status == StatusWord.SWO_INCORRECT_P1_P2
     with pytest.raises(ExceptionRAPDU) as e:
-        backend.exchange(cla=CLA, ins=InsType.GET_APP_NAME, p1=P1Type.P1_START, p2=P2Type.P2_MORE)
+        backend.exchange(cla=CLA, ins=InsType.INS_GET_APP_NAME, p1=P1Type.P1_UNUSED, p2=P2Type.P2_MORE)
     assert e.value.status == StatusWord.SWO_INCORRECT_P1_P2
 
 
@@ -53,8 +53,8 @@ def test_wrong_data_length(backend: BackendInterface) -> None:
 def test_invalid_state(backend: BackendInterface) -> None:
     with pytest.raises(ExceptionRAPDU) as e:
         backend.exchange(cla=CLA,
-                         ins=InsType.SIGN_TX,
-                         p1=P1Type.P1_START + 1,  # Try to continue a flow instead of start a new one
+                         ins=InsType.INS_SIGN_TX,
+                         p1=P1Type.P1_UNUSED + 1,  # Try to continue a flow instead of start a new one
                          p2=P2Type.P2_MORE,
                          data=b"abcde")  # data is not parsed in this case
     assert e.value.status == StatusWord.SWO_BAD_STATE

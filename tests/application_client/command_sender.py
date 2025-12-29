@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from ragger.backend.interface import BackendInterface, RAPDU
 
 from standalone.input_files.signOpCert import OpCertTestCase
-from application_client.command_builder import CommandBuilder, InsType
+from application_client.command_builder import CommandBuilder
 from application_client.status_words import StatusWord
 
 
@@ -165,9 +165,20 @@ class CommandSender:
         # Number of witness paths
         data.extend(num_witnesses.to_bytes(2, 'big'))
 
-        from application_client.command_builder import P1Type
-        # P1 = P1_TX_INIT for INIT APDU, P2 = P2_UNUSED
-        return self._exchange(self._cmd_builder._serialize(InsType.SIGN_TX, P1Type.P1_TX_INIT, P1Type.P2_UNUSED, bytes(data)))
+        return self._exchange(self._cmd_builder.sign_tx_init_simple(
+            options=options,
+            tx_signing_mode=tx_signing_mode,
+            network_id=network_id,
+            protocol_magic=protocol_magic,
+            num_inputs=num_inputs,
+            num_outputs=num_outputs,
+            include_ttl=include_ttl,
+            num_certificates=num_certificates,
+            num_withdrawals=num_withdrawals,
+            include_validity_interval_start=include_validity_interval_start,
+            num_mint_asset_groups=num_mint_asset_groups,
+            num_witnesses=num_witnesses,
+        ))
 
     @contextmanager
     def sign_tx_send_chunks(self, tx) -> Generator[None, None, None]:

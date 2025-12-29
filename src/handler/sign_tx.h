@@ -5,6 +5,12 @@
 
 #include "buffer.h"
 
+-/**
+ * Maximum chunk size accepted for transaction data (bytes).
+ * Should match the Python client chunk size constant.
+ */
+#define MAX_SIGN_TX_CHUNK_SIZE 240
+
 /**
  * Transaction buffer size for dynamic allocation (bytes).
  * Note: Must be less than SIZE_MEM_BUFFER in mem.c to account for:
