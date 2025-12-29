@@ -129,7 +129,7 @@ static int prepare_address_info_pairs(const ins_derive_address_ctx_t *ctx) {
     return 0;
 }
 
-static int displayExportAddress() {
+static int ui_displayExportAddress() {
 #define PAYMENT_INFO_SIZE MAX(BECH32_STRING_SIZE_MAX, BIP44_PATH_STRING_SIZE_MAX)
 
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
@@ -158,7 +158,7 @@ static int displayExportAddress() {
     return 0;
 }
 
-static int returnExportAddress() {
+static int ui_returnExportAddress() {
 #define PAYMENT_INFO_SIZE MAX(BECH32_STRING_SIZE_MAX, BIP44_PATH_STRING_SIZE_MAX)
 
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
@@ -197,7 +197,7 @@ int deriveAddress_return_ui_runStep(void) {
 
         case RETURN_UI_STEP_BEGIN:
             ctx->ui_step = RETURN_UI_STEP_RESPOND;
-            return returnExportAddress();
+            return ui_returnExportAddress();
             break;
 
         case RETURN_UI_STEP_RESPOND:
@@ -229,7 +229,7 @@ int deriveAddress_display_ui_runStep(void) {
 
         case DISPLAY_UI_STEP_PAYMENT_INFO:
             ctx->ui_step = DISPLAY_UI_STEP_RESPOND;
-            return displayExportAddress();
+            return ui_displayExportAddress();
             break;
 
         case DISPLAY_UI_STEP_RESPOND:
@@ -247,7 +247,7 @@ int deriveAddress_display_ui_runStep(void) {
     return 0;
 }
 
-int deriveAddress_handleReturn(security_policy_t policy) {
+int ui_deriveAddress_handleReturn(security_policy_t policy) {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
     switch (policy) {
         case POLICY_SHOW:
@@ -264,7 +264,7 @@ int deriveAddress_handleReturn(security_policy_t policy) {
     return deriveAddress_return_ui_runStep();
 }
 
-int deriveAddress_handleDisplay(security_policy_t policy) {
+int ui_deriveAddress_handleDisplay(security_policy_t policy) {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
     switch (policy) {
         case POLICY_SHOW:

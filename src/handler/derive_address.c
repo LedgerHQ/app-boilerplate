@@ -1,7 +1,7 @@
 #include "utils/utils.h"
 #include "buffer.h"
 #include "derive_address.h"
-#include "deriveAddress_types.h"
+#include "deriveAddress/deriveAddress_types.h"
 #include "globals.h"
 #include "addressUtils/addressUtilsShelley.h"
 #include "securityPolicy.h"
@@ -20,6 +20,12 @@ enum {
     P1_DISPLAY = 0x02,
 };
 
+enum {
+    RETURN_POLICY_DENY = -1,
+    RETURN_BAD_PARSE = -2,
+};
+
+
 static void prepareResponse() {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
     ctx->address.size =
@@ -33,7 +39,7 @@ int handler_derive_address(buffer_t *cdata, uint8_t chunk_type) {
     ctx->responseReadyMagic = 0;
     bool is_parsed = buffer_parseAddressParams(cdata, &ctx->addressParams);
     if (!is_parsed) {
-        return 0;
+        return RETURN_BAD_PARSE;
     }
 
     switch (chunk_type) {
@@ -41,19 +47,19 @@ int handler_derive_address(buffer_t *cdata, uint8_t chunk_type) {
             security_policy_t policy = policyForReturnDeriveAddress(&ctx->addressParams);
             TRACE("RETURN");
             TRACE("Policy: %d", (int) policy);
-            if (policy == POLICY_DENY) return -1;
+            if (policy == POLICY_DENY) return RETURN_POLICY_DENY;
             prepareResponse();
-            return deriveAddress_handleReturn(policy);
+            return ui_deriveAddress_handleReturn(policy);
         }
         case P1_DISPLAY: {
             security_policy_t policy = policyForShowDeriveAddress(&ctx->addressParams);
             TRACE("DISPLAY");
             TRACE("Policy: %d", (int) policy);
-            if (policy == POLICY_DENY) return -1;
+            if (policy == POLICY_DENY) return RETURN_POLICY_DENY;
             prepareResponse();
-            return deriveAddress_handleDisplay(policy);
+            return ui_deriveAddress_handleDisplay(policy);
         }    
         default:
-            return -1;
+            return RETURN_BAD_PARSE;
     }
 }
