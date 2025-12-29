@@ -11,6 +11,7 @@
 #include "transaction/tx_credential_types.h"
 #include "transaction/tx_certificate_types.h"
 #include "transaction/tx_output_types.h"
+#include "transaction/tx_voting_procedure_types.h"
 
 // Mint token limits
 // Note: No artificial limits on asset groups or tokens per mint.
@@ -193,6 +194,9 @@ typedef struct {
 
     uint16_t num_reference_inputs;      // key 18
     s_flist_node* reference_inputs;
+
+    uint16_t num_voters;                 // key 19
+    s_flist_node* voting_procedures;
 
     bool includeTreasury;                // key 21
     uint64_t treasury;

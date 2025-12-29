@@ -59,6 +59,38 @@ static ext_drep_t _drepForTxHash(const ext_drep_t* drep) {
     return result;
 }
 
+static ext_voter_t _voterForTxHash(const ext_voter_t* voter) {
+    ext_voter_t result = *voter;
+
+    // Convert KEY_PATH variants to KEY_HASH
+    switch (voter->type) {
+        case EXT_VOTER_COMMITTEE_HOT_KEY_PATH:
+            result.type = EXT_VOTER_COMMITTEE_HOT_KEY_HASH;
+            bip44_pathToKeyHash(&voter->keyPath, result.keyHash, sizeof(result.keyHash));
+            break;
+        case EXT_VOTER_DREP_KEY_PATH:
+            result.type = EXT_VOTER_DREP_KEY_HASH;
+            bip44_pathToKeyHash(&voter->keyPath, result.keyHash, sizeof(result.keyHash));
+            break;
+        case EXT_VOTER_STAKE_POOL_KEY_PATH:
+            result.type = EXT_VOTER_STAKE_POOL_KEY_HASH;
+            bip44_pathToKeyHash(&voter->keyPath, result.keyHash, sizeof(result.keyHash));
+            break;
+        // KEY_HASH and SCRIPT_HASH types: no conversion needed, just copy
+        case EXT_VOTER_COMMITTEE_HOT_KEY_HASH:
+        case EXT_VOTER_DREP_KEY_HASH:
+        case EXT_VOTER_STAKE_POOL_KEY_HASH:
+        case EXT_VOTER_COMMITTEE_HOT_SCRIPT_HASH:
+        case EXT_VOTER_DREP_SCRIPT_HASH:
+            // Already copied above
+            break;
+        default:
+            ASSERT(false);
+    }
+
+    return result;
+}
+
 int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
     LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_PARSED, "Hash planning invoked at wrong state");
     LEDGER_ASSERT(plan != NULL, "NULL plan");
@@ -151,7 +183,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                       G_context.tx_info.transaction.includeCollateralOutput,
                       G_context.tx_info.transaction.includeTotalCollateral,
                       G_context.tx_info.transaction.num_reference_inputs,
-                      0,  // numVotingProcedures - not implemented yet
+                      G_context.tx_info.transaction.num_voters,
                       G_context.tx_info.transaction.includeTreasury,
                       G_context.tx_info.transaction.includeDonation);
 
@@ -918,6 +950,68 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
 
             txHashBuilder_addReferenceInput(&txHashBuilder, &input_item->input_data);
             reference_input_node = reference_input_node->next;
+        }
+    }
+
+    // key 19: voting procedures
+    if (G_context.tx_info.transaction.num_voters > 0) {
+        txHashBuilder_enterVotingProcedures(&txHashBuilder);
+
+        s_flist_node *voter_node = G_context.tx_info.transaction.voting_procedures;
+        while (voter_node != NULL) {
+            voter_votes_list_item_t *voter_item = (voter_votes_list_item_t *) voter_node;
+
+            // Security policy check for this voter
+            security_policy_t voter_policy = policyForSignTxVotingProcedure(
+                G_context.tx_info.transaction.txSigningMode,
+                &voter_item->voter_votes_data.voter
+            );
+
+            switch (voter_policy) {
+                case POLICY_DENY:
+                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                case POLICY_SHOW:
+                    plan->pair_count++;  // Display voter once
+                    // Count UI pairs for all votes
+                    s_flist_node *vote_node = voter_item->voter_votes_data.votes;
+                    while (vote_node != NULL) {
+                        vote_list_item_t *vote_item = (vote_list_item_t *) vote_node;
+                        plan->pair_count += 3;  // gov action hash, gov action index, vote option
+                        if (vote_item->vote_data.anchor.isIncluded) {
+                            plan->pair_count += 2;  // anchor URL + anchor hash
+                        }
+                        vote_node = vote_node->next;
+                    }
+                    break;
+                case POLICY_HIDE:
+                    break;
+            }
+
+            // Convert voter for hash building (KEY_PATH -> KEY_HASH)
+            ext_voter_t voter_for_hash = _voterForTxHash(&voter_item->voter_votes_data.voter);
+
+            // Add voter with all their votes to the hash
+            txHashBuilder_addVoter(&txHashBuilder,
+                                   &voter_for_hash,
+                                   voter_item->voter_votes_data.numVotes);
+
+            s_flist_node *vote_node = voter_item->voter_votes_data.votes;
+            while (vote_node != NULL) {
+                vote_list_item_t *vote_item = (vote_list_item_t *) vote_node;
+
+                voting_procedure_t voting_procedure = {
+                    .vote = vote_item->vote_data.voteOption,
+                    .anchor = vote_item->vote_data.anchor
+                };
+
+                txHashBuilder_addVote(&txHashBuilder,
+                                     &vote_item->vote_data.govActionId,
+                                     &voting_procedure);
+
+                vote_node = vote_node->next;
+            }
+
+            voter_node = voter_node->next;
         }
     }
 

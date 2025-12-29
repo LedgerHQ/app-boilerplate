@@ -5,7 +5,7 @@
 
 #include "buffer.h"
 
--/**
+/**
  * Maximum chunk size accepted for transaction data (bytes).
  * Should match the Python client chunk size constant.
  */

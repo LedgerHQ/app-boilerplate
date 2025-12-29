@@ -366,10 +366,13 @@ void txHashBuilder_addReferenceInput(tx_hash_builder_t* builder, const tx_input_
 
 void txHashBuilder_enterVotingProcedures(tx_hash_builder_t* builder);
 
-void txHashBuilder_addVotingProcedure(tx_hash_builder_t* builder,
-                                      voter_t* voter,
-                                      gov_action_id_t* govActionId,
-                                      voting_procedure_t* votingProcedure);
+void txHashBuilder_addVoter(tx_hash_builder_t* builder,
+                            ext_voter_t* voter,
+                            uint16_t numVotes);
+
+void txHashBuilder_addVote(tx_hash_builder_t* builder,
+                           gov_action_id_t* govActionId,
+                           voting_procedure_t* votingProcedure);
 
 void txHashBuilder_addTreasury(tx_hash_builder_t* builder, uint64_t treasury);
 

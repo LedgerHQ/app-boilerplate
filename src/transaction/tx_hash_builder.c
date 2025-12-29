@@ -1964,77 +1964,71 @@ void txHashBuilder_enterVotingProcedures(tx_hash_builder_t* builder) {
     builder->state = TX_HASH_BUILDER_IN_VOTING_PROCEDURES;
 }
 
-// assumes a single voting procedure for the voter
-void txHashBuilder_addVotingProcedure(tx_hash_builder_t* builder,
-                                      voter_t* voter,
-                                      gov_action_id_t* govActionId,
-                                      voting_procedure_t* votingProcedure) {
-    _TRACE("state = %d, remainingVotingProcedures = %u",
+void txHashBuilder_addVoter(tx_hash_builder_t* builder,
+                            ext_voter_t* voter,
+                            uint16_t numVotes) {
+    _TRACE("state = %d, remainingVotingProcedures = %u, numVotes = %u",
            builder->state,
-           builder->remainingVotingProcedures);
+           builder->remainingVotingProcedures,
+           numVotes);
 
     ASSERT(builder->state == TX_HASH_BUILDER_IN_VOTING_PROCEDURES);
     ASSERT(builder->remainingVotingProcedures > 0);
+    ASSERT(numVotes > 0);
+
+    // Assert no KEY_PATH variants (must be converted before calling)
+    ASSERT(voter->type != EXT_VOTER_COMMITTEE_HOT_KEY_PATH);
+    ASSERT(voter->type != EXT_VOTER_DREP_KEY_PATH);
+    ASSERT(voter->type != EXT_VOTER_STAKE_POOL_KEY_PATH);
+
     builder->remainingVotingProcedures--;
 
-    {
-        // voter
-        // Array(2)[
-        //    Unsigned[voter type]
-        //    Bytes[key or script hash],
-        // ]
-        BUILDER_APPEND_CBOR(CBOR_TYPE_ARRAY, 2);
-        BUILDER_APPEND_CBOR(CBOR_TYPE_UNSIGNED, voter->type);
+    // voter - Array(2)[Unsigned[voter type], Bytes[key or script hash]]
+    BUILDER_APPEND_CBOR(CBOR_TYPE_ARRAY, 2);
+    BUILDER_APPEND_CBOR(CBOR_TYPE_UNSIGNED, voter->type);
 
-        switch (voter->type) {
-            case VOTER_COMMITTEE_HOT_KEY_HASH:
-            case VOTER_DREP_KEY_HASH:
-            case VOTER_STAKE_POOL_KEY_HASH: {
-                BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, SIZEOF(voter->keyHash));
-                BUILDER_APPEND_DATA(voter->keyHash, SIZEOF(voter->keyHash));
-                break;
-            }
-            case VOTER_COMMITTEE_HOT_SCRIPT_HASH:
-            case VOTER_DREP_SCRIPT_HASH: {
-                BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, SIZEOF(voter->scriptHash));
-                BUILDER_APPEND_DATA(voter->scriptHash, SIZEOF(voter->scriptHash));
-                break;
-            }
-            default:
-                ASSERT(false);
+    switch (voter->type) {
+        case EXT_VOTER_COMMITTEE_HOT_KEY_HASH:
+        case EXT_VOTER_DREP_KEY_HASH:
+        case EXT_VOTER_STAKE_POOL_KEY_HASH: {
+            BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, SIZEOF(voter->keyHash));
+            BUILDER_APPEND_DATA(voter->keyHash, SIZEOF(voter->keyHash));
+            break;
         }
+        case EXT_VOTER_COMMITTEE_HOT_SCRIPT_HASH:
+        case EXT_VOTER_DREP_SCRIPT_HASH: {
+            BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, SIZEOF(voter->scriptHash));
+            BUILDER_APPEND_DATA(voter->scriptHash, SIZEOF(voter->scriptHash));
+            break;
+        }
+        default:
+            ASSERT(false);
     }
+
+    // Start the map of gov_action_id => voting_procedure
+    BUILDER_APPEND_CBOR(CBOR_TYPE_MAP, numVotes);
+}
+
+void txHashBuilder_addVote(tx_hash_builder_t* builder,
+                           gov_action_id_t* govActionId,
+                           voting_procedure_t* votingProcedure) {
+    _TRACE("state = %d", builder->state);
+
+    ASSERT(builder->state == TX_HASH_BUILDER_IN_VOTING_PROCEDURES);
+
+    // governance action id - Array(2)[Bytes[hash], Unsigned[index]]
+    BUILDER_APPEND_CBOR(CBOR_TYPE_ARRAY, 2);
     {
-        // only 1 vote for the voter is supported
-        BUILDER_APPEND_CBOR(CBOR_TYPE_MAP, 1);
-        {
-            // governance action id
-            // Array(2)[
-            //    Bytes[hash],
-            //    Unsigned[index]
-            // ]
-            BUILDER_APPEND_CBOR(CBOR_TYPE_ARRAY, 2);
-            {
-                size_t size = TX_HASH_LENGTH;
-                BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, size);
-                BUILDER_APPEND_DATA(govActionId->txHash, size);
-            }
-            { BUILDER_APPEND_CBOR(CBOR_TYPE_UNSIGNED, govActionId->govActionIndex); }
-        }
-        {
-            // voting procedure
-            // Array(2)[
-            //   Unsigned[vote]
-            //   Null / ...anchor
-            // ]
-            BUILDER_APPEND_CBOR(CBOR_TYPE_ARRAY, 2);
-            {
-                // vote
-                BUILDER_APPEND_CBOR(CBOR_TYPE_UNSIGNED, votingProcedure->vote);
-            }
-            { _appendAnchor(builder, &votingProcedure->anchor); }
-        }
+        size_t size = TX_HASH_LENGTH;
+        BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, size);
+        BUILDER_APPEND_DATA(govActionId->txHash, size);
     }
+    BUILDER_APPEND_CBOR(CBOR_TYPE_UNSIGNED, govActionId->govActionIndex);
+
+    // voting procedure - Array(2)[Unsigned[vote], Null / anchor]
+    BUILDER_APPEND_CBOR(CBOR_TYPE_ARRAY, 2);
+    BUILDER_APPEND_CBOR(CBOR_TYPE_UNSIGNED, votingProcedure->vote);
+    _appendAnchor(builder, &votingProcedure->anchor);
 }
 
 static void txHashBuilder_assertCanLeaveVotingProcedures(tx_hash_builder_t* builder) {

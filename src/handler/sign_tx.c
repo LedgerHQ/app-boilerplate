@@ -207,9 +207,8 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
-    // Field 19 (voting procedures) - optional, not implemented yet
-    uint16_t num_voting_procedures_dummy;
-    if (!buffer_read_u16(cdata, &num_voting_procedures_dummy, BE)) {
+    // Field 19 (voting procedures)
+    if (!buffer_read_u16(cdata, &G_context.tx_info.transaction.num_voters, BE)) {
         return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 

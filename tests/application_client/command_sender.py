@@ -94,7 +94,7 @@ class CommandSender:
     def sign_tx_init_simple(self, options: int, tx_signing_mode: int, network_id: int,
                            protocol_magic: int, num_inputs: int, num_outputs: int, include_ttl: bool,
                            num_certificates: int = 0, num_withdrawals: int = 0, include_validity_interval_start: bool = False,
-                           num_mint_asset_groups: int = 0, num_witnesses: int = 0) -> RAPDU:
+                           num_mint_asset_groups: int = 0, num_witnesses: int = 0, num_voters: int = 0) -> RAPDU:
         """APDU Sign TX Init (simple chunked mode)
 
         Args:
@@ -110,6 +110,7 @@ class CommandSender:
             include_validity_interval_start (bool): Whether validity interval start is included (default False)
             num_mint_asset_groups (int): Number of mint asset groups (default 0)
             num_witnesses (int): Number of witnesses (default 0)
+            num_voters (int): Number of voters in voting procedures (default 0)
 
         Returns:
             Response APDU
@@ -155,8 +156,8 @@ class CommandSender:
         data.append(0x01)
         # Field 18 (reference inputs) - optional, always 0 for now
         data.extend((0).to_bytes(2, 'big'))
-        # Field 19 (voting procedures) - optional, always 0 for now
-        data.extend((0).to_bytes(2, 'big'))
+        # Field 19 (voting procedures) - optional
+        data.extend(num_voters.to_bytes(2, 'big'))
         # Field 21 (treasury) - optional, always false for now
         data.append(0x01)
         # Field 22 (donation) - optional, always false for now
@@ -178,6 +179,7 @@ class CommandSender:
             include_validity_interval_start=include_validity_interval_start,
             num_mint_asset_groups=num_mint_asset_groups,
             num_witnesses=num_witnesses,
+            num_voters=num_voters,
         ))
 
     @contextmanager

@@ -153,7 +153,8 @@ class CommandBuilder:
                             num_withdrawals: int = 0,
                             include_validity_interval_start: bool = False,
                             num_mint_asset_groups: int = 0,
-                            num_witnesses: int = 0) -> bytes:
+                            num_witnesses: int = 0,
+                            num_voters: int = 0) -> bytes:
         data = bytearray()
         data.extend(options.to_bytes(8, "big"))
         data.append(network_id)
@@ -168,15 +169,15 @@ class CommandBuilder:
         data.append(0x02 if include_validity_interval_start else 0x01)
         data.extend(num_mint_asset_groups.to_bytes(2, "big"))
         data.append(0x01)
-        data.extend((0).to_bytes(2, "big"))
-        data.extend((0).to_bytes(2, "big"))
-        data.append(0x01)
-        data.append(0x01)
-        data.append(0x01)
-        data.extend((0).to_bytes(2, "big"))
-        data.extend((0).to_bytes(2, "big"))
-        data.append(0x01)
-        data.append(0x01)
+        data.extend((0).to_bytes(2, "big"))  # num_collateral_inputs (field 13)
+        data.extend((0).to_bytes(2, "big"))  # num_required_signers (field 14)
+        data.append(0x01)  # includeNetworkId (field 15)
+        data.append(0x01)  # includeCollateralOutput (field 16)
+        data.append(0x01)  # includeTotalCollateral (field 17)
+        data.extend((0).to_bytes(2, "big"))  # num_reference_inputs (field 18)
+        data.extend(num_voters.to_bytes(2, "big"))  # num_voters (field 19)
+        data.append(0x01)  # includeTreasury (field 21)
+        data.append(0x01)  # includeDonation (field 22)
         data.extend(num_witnesses.to_bytes(2, "big"))
         return self._serialize(InsType.INS_SIGN_TX, P1Type.P1_TX_INIT, P2Type.P2_UNUSED, bytes(data))
 
@@ -292,6 +293,44 @@ class CommandBuilder:
             for reference_input in reference_inputs:
                 data.extend(bytes.fromhex(reference_input.txHashHex))
                 data.extend(reference_input.outputIndex.to_bytes(4, "big"))
+
+        voting_procedures = getattr(tx, "votingProcedures", None)
+        if voting_procedures:
+            for voter_votes in voting_procedures:
+                # Serialize voter type
+                data.append(voter_votes.voter.type)
+
+                # Serialize voter data based on type
+                if voter_votes.voter.type in [100, 102, 104]:  # KEY_PATH types
+                    data.extend(pack_derivation_path(voter_votes.voter.keyValue))
+                else:  # KEY_HASH or SCRIPT_HASH types
+                    data.extend(bytes.fromhex(voter_votes.voter.keyValue))
+
+                # Serialize number of votes for this voter
+                data.extend(len(voter_votes.votes).to_bytes(2, "big"))
+
+                # Serialize each vote
+                for vote in voter_votes.votes:
+                    # gov_action_id: tx_hash + index
+                    data.extend(bytes.fromhex(vote.govActionId.txHashHex))
+                    data.extend(vote.govActionId.govActionIndex.to_bytes(4, "big"))
+
+                    # voting_procedure: vote option
+                    data.append(vote.votingProcedure.vote)
+
+                    # anchor inclusion flag
+                    if vote.votingProcedure.anchor is not None:
+                        data.append(0x02)  # ITEM_INCLUDED_YES
+
+                        # anchor URL
+                        anchor_url_bytes = vote.votingProcedure.anchor.url.encode('utf-8')
+                        data.extend(len(anchor_url_bytes).to_bytes(2, "big"))
+                        data.extend(anchor_url_bytes)
+
+                        # anchor hash
+                        data.extend(bytes.fromhex(vote.votingProcedure.anchor.hashHex))
+                    else:
+                        data.append(0x01)  # ITEM_INCLUDED_NO
 
         if getattr(tx, "treasury", None) is not None:
             data.extend(tx.treasury.to_bytes(8, "big"))

@@ -40,6 +40,7 @@ static parser_status_e parse_tx_withdrawals(buffer_t *buf, transaction_t *tx);
 static parser_status_e parse_tx_collateral_inputs(buffer_t *buf, transaction_t *tx);
 static parser_status_e parse_tx_required_signers(buffer_t *buf, transaction_t *tx);
 static parser_status_e parse_tx_collateral_output(buffer_t *buf, transaction_t *tx);
+static parser_status_e parse_tx_voting_procedures(buffer_t *buf, transaction_t *tx);
 
 static uint16_t _map_parser_status_to_swo(parser_status_e status) {
     switch (status) {
@@ -65,14 +66,22 @@ static uint16_t _map_parser_status_to_swo(parser_status_e status) {
             return SWO_TX_PARSING_FAIL_VALIDITY_INTERVAL_START;
         case MINT_PARSING_ERROR:                // key 9
             return SWO_TX_PARSING_FAIL_MINT;
-        // key 11 is script data hash (parsed inline)
-        // key 13 is required signers (parsed inline)
-        // key 14 is network id (parsed inline)
-        // key 15 is collateral return (parsed inline)
-        // key 16 is total collateral (parsed inline)
-        // key 17 is reference inputs (parsed inline)
-        // key 19 is voting procedures (not supported in this version)
-        // key 20 is proposal procedures (NOT SUPPORTED - intentionally excluded from Ledger Cardano app
+        case SCRIPT_DATA_HASH_PARSING_ERROR:    // key 11
+            return SWO_TX_PARSING_FAIL_SCRIPT_DATA_HASH;
+        case COLLATERAL_INPUTS_PARSING_ERROR:   // key 13
+            return SWO_TX_PARSING_FAIL_COLLATERAL_INPUTS;
+        case REQUIRED_SIGNERS_PARSING_ERROR:    // key 14
+            return SWO_TX_PARSING_FAIL_REQUIRED_SIGNERS;
+        // key 15: network id - nothing to parse in body
+        case COLLATERAL_OUTPUT_PARSING_ERROR:   // key 16
+            return SWO_TX_PARSING_FAIL_COLLATERAL_OUTPUT;
+        case TOTAL_COLLATERAL_PARSING_ERROR:    // key 17
+            return SWO_TX_PARSING_FAIL_TOTAL_COLLATERAL;
+        case REFERENCE_INPUTS_PARSING_ERROR:    // key 18
+            return SWO_TX_PARSING_FAIL_REFERENCE_INPUTS;
+        case VOTING_PROCEDURES_PARSING_ERROR:   // key 19
+            return SWO_TX_PARSING_FAIL_VOTING_PROCEDURES;
+        // key 20 is proposal procedures (NOT SUPPORTED - intentionally excluded from Ledger Cardano app)
         case TREASURY_PARSING_ERROR:        // key 21
             return SWO_TX_PARSING_FAIL_TREASURY;
         case DONATION_PARSING_ERROR:        // key 22
@@ -205,6 +214,14 @@ parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
             if (status != PARSING_OK) {
                 return status;
             }
+        }
+    }
+
+    // key 19: voting procedures
+    if (tx->num_voters > 0) {
+        status = parse_tx_voting_procedures(buf, tx);
+        if (status != PARSING_OK) {
+            return status;
         }
     }
 
@@ -946,6 +963,133 @@ static parser_status_e parse_tx_collateral_output(buffer_t *buf, transaction_t *
     }
 
     buf->offset += output_len;
+    return PARSING_OK;
+}
+
+static parser_status_e parse_tx_voting_procedures(buffer_t *buf, transaction_t *tx) {
+    // For each voter in the outer map
+    for (uint16_t voter_idx = 0; voter_idx < tx->num_voters; voter_idx++) {
+        // Allocate list node for this voter
+        voter_votes_list_item_t *voter_item =
+            (voter_votes_list_item_t *) app_mem_alloc(sizeof(voter_votes_list_item_t));
+        if (voter_item == NULL) {
+            return OUT_OF_MEMORY_ERROR;
+        }
+
+        // Initialize votes list
+        voter_item->voter_votes_data.votes = NULL;
+
+        // Parse voter (ext_voter_t)
+        uint8_t voter_type_byte;
+        if (!buffer_read_u8(buf, &voter_type_byte)) {
+            return VOTING_PROCEDURES_PARSING_ERROR;
+        }
+        voter_item->voter_votes_data.voter.type = (ext_voter_type_t) voter_type_byte;
+
+        // Parse voter key/hash based on type
+        switch (voter_item->voter_votes_data.voter.type) {
+            case EXT_VOTER_COMMITTEE_HOT_KEY_PATH:
+            case EXT_VOTER_DREP_KEY_PATH:
+            case EXT_VOTER_STAKE_POOL_KEY_PATH:
+                if (!buffer_read_bip44_path(buf, &voter_item->voter_votes_data.voter.keyPath)) {
+                    return VOTING_PROCEDURES_PARSING_ERROR;
+                }
+                break;
+
+            case EXT_VOTER_COMMITTEE_HOT_KEY_HASH:
+            case EXT_VOTER_DREP_KEY_HASH:
+            case EXT_VOTER_STAKE_POOL_KEY_HASH:
+                if (!buffer_read_bytes(buf, voter_item->voter_votes_data.voter.keyHash,
+                                      ADDRESS_KEY_HASH_LENGTH)) {
+                    return VOTING_PROCEDURES_PARSING_ERROR;
+                }
+                break;
+
+            case EXT_VOTER_COMMITTEE_HOT_SCRIPT_HASH:
+            case EXT_VOTER_DREP_SCRIPT_HASH:
+                if (!buffer_read_bytes(buf, voter_item->voter_votes_data.voter.scriptHash,
+                                      SCRIPT_HASH_LENGTH)) {
+                    return VOTING_PROCEDURES_PARSING_ERROR;
+                }
+                break;
+
+            default:
+                return VOTING_PROCEDURES_PARSING_ERROR;
+        }
+
+        // Read number of votes for this voter
+        if (!buffer_read_u16(buf, &voter_item->voter_votes_data.numVotes, BE)) {
+            return VOTING_PROCEDURES_PARSING_ERROR;
+        }
+
+        // Parse each vote for this voter
+        for (uint16_t vote_idx = 0; vote_idx < voter_item->voter_votes_data.numVotes; vote_idx++) {
+            // Allocate list node for this vote
+            vote_list_item_t *vote_item =
+                (vote_list_item_t *) app_mem_alloc(sizeof(vote_list_item_t));
+            if (vote_item == NULL) {
+                return OUT_OF_MEMORY_ERROR;
+            }
+
+            // Parse gov_action_id (tx_hash + index)
+            uint8_t *tx_hash_ptr = NULL;
+            if (!buffer_read_bytes_ptr(buf, &tx_hash_ptr, TX_HASH_LENGTH)) {
+                return VOTING_PROCEDURES_PARSING_ERROR;
+            }
+            vote_item->vote_data.govActionId.txHash = tx_hash_ptr;
+
+            if (!buffer_read_u32(buf, &vote_item->vote_data.govActionId.govActionIndex, BE)) {
+                return VOTING_PROCEDURES_PARSING_ERROR;
+            }
+
+            // Parse voting_procedure (vote + optional anchor)
+            uint8_t vote_byte;
+            if (!buffer_read_u8(buf, &vote_byte)) {
+                return VOTING_PROCEDURES_PARSING_ERROR;
+            }
+            vote_item->vote_data.voteOption = (vote_t) vote_byte;
+
+            // Parse anchor inclusion flag using parseIncluded pattern
+            uint8_t anchor_included_byte;
+            if (!buffer_read_u8(buf, &anchor_included_byte)) {
+                return VOTING_PROCEDURES_PARSING_ERROR;
+            }
+            if (!parseIncluded(anchor_included_byte, &vote_item->vote_data.anchor.isIncluded)) {
+                return VOTING_PROCEDURES_PARSING_ERROR;
+            }
+
+            if (vote_item->vote_data.anchor.isIncluded) {
+                // Parse URL length and pointer
+                uint16_t url_len;
+                if (!buffer_read_u16(buf, &url_len, BE)) {
+                    return VOTING_PROCEDURES_PARSING_ERROR;
+                }
+                vote_item->vote_data.anchor.urlLength = url_len;
+
+                uint8_t *url_ptr = NULL;
+                if (!buffer_read_bytes_ptr(buf, &url_ptr, url_len)) {
+                    return VOTING_PROCEDURES_PARSING_ERROR;
+                }
+                vote_item->vote_data.anchor.url = url_ptr;
+
+                // Parse hash (32 bytes)
+                uint8_t *hash_ptr = NULL;
+                if (!buffer_read_bytes_ptr(buf, &hash_ptr, ANCHOR_HASH_LENGTH)) {
+                    return VOTING_PROCEDURES_PARSING_ERROR;
+                }
+                vote_item->vote_data.anchor.hash = hash_ptr;
+            }
+
+            // Add vote to voter's vote list
+            vote_item->node.next = NULL;
+            flist_push_back(&voter_item->voter_votes_data.votes, (s_flist_node *) vote_item);
+        }
+
+        // Add voter to transaction's voter list
+        voter_item->node.next = NULL;
+        flist_push_back(&tx->voting_procedures, (s_flist_node *) voter_item);
+    }
+
     return PARSING_OK;
 }
 
