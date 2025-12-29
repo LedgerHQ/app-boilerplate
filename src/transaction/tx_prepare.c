@@ -215,8 +215,11 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                 if (output_item->output_data.assetGroups != NULL) {
                     for (uint16_t ag = 0; ag < output_item->output_data.numAssetGroups; ag++) {
                         asset_group_t *group = &output_item->output_data.assetGroups[ag];
-                        if (group->tokens != NULL) {
-                            plan->pair_count += 2 * group->numTokens;
+                        // Count tokens in linked list
+                        s_flist_node *token_node = group->tokens;
+                        while (token_node != NULL) {
+                            plan->pair_count += 2;  // fingerprint + amount per token
+                            token_node = token_node->next;
                         }
                     }
                 }
@@ -259,12 +262,16 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                                                MINTING_POLICY_ID_LENGTH,
                                                group->numTokens);
 
-            for (uint16_t tk = 0; tk < group->numTokens; tk++) {
-                output_token_t *token = &group->tokens[tk];
+            // Iterate through linked list of tokens instead of array
+            s_flist_node *token_node = group->tokens;
+            while (token_node != NULL) {
+                output_token_list_item_t *token_item = (output_token_list_item_t *) token_node;
+                output_token_t *token = &token_item->token_data;
                 txHashBuilder_addOutput_token(&txHashBuilder,
                                               token->assetName,
                                               token->assetNameLen,
                                               (uint64_t)token->amount);
+                token_node = token_node->next;
             }
         }
 
@@ -747,12 +754,16 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                                              MINTING_POLICY_ID_LENGTH,
                                              mint_item->asset_group.numTokens);
 
-            for (uint16_t tk = 0; tk < mint_item->asset_group.numTokens; tk++) {
-                mint_token_t *token = &mint_item->asset_group.tokens[tk];
+            // Iterate through linked list of tokens instead of array
+            s_flist_node *token_node = mint_item->asset_group.tokens;
+            while (token_node != NULL) {
+                mint_token_list_item_t *token_item = (mint_token_list_item_t *) token_node;
+                mint_token_t *token = &token_item->token_data;
                 txHashBuilder_addMint_token(&txHashBuilder,
                                             token->assetName,
                                             token->assetNameLen,
                                             (uint64_t)token->amount);
+                token_node = token_node->next;
             }
 
             mint_node = mint_node->next;

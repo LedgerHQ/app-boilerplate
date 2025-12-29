@@ -71,8 +71,8 @@ static uint16_t _map_parser_status_to_swo(parser_status_e status) {
         // key 15 is collateral return (parsed inline)
         // key 16 is total collateral (parsed inline)
         // key 17 is reference inputs (parsed inline)
-        // key 19 is voting procedures (not supported)
-        // key 20 is proposal procedures (not supported)
+        // key 19 is voting procedures (not supported in this version)
+        // key 20 is proposal procedures (NOT SUPPORTED - intentionally excluded from Ledger Cardano app
         case TREASURY_PARSING_ERROR:        // key 21
             return SWO_TX_PARSING_FAIL_TREASURY;
         case DONATION_PARSING_ERROR:        // key 22
@@ -346,13 +346,18 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                 }
                 TRACE("Deserialize: Asset group %u: %u tokens", ag, group->numTokens);
 
-                group->tokens = (output_token_t *) app_mem_alloc(group->numTokens * sizeof(output_token_t));
-                if (group->tokens == NULL) {
-                    return OUT_OF_MEMORY_ERROR;
-                }
+                // Initialize tokens linked list
+                group->tokens = NULL;
 
                 for (uint16_t tk = 0; tk < group->numTokens; tk++) {
-                    output_token_t *token = &group->tokens[tk];
+                    // Allocate list node for this token
+                    output_token_list_item_t *token_item =
+                        (output_token_list_item_t *) app_mem_alloc(sizeof(output_token_list_item_t));
+                    if (token_item == NULL) {
+                        return OUT_OF_MEMORY_ERROR;
+                    }
+
+                    output_token_t *token = &token_item->token_data;
                     if (!buffer_read_u8(&output_buf, &token->assetNameLen)) {
                         return OUTPUTS_PARSING_ERROR;
                     }
@@ -376,6 +381,10 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                     TRACE("Deserialize: Token %u: name_len=%u, amount=",
                           tk, token->assetNameLen);
                     TRACE_UINT64(token->amount);
+
+                    // Add token to asset group's token list
+                    token_item->node.next = NULL;
+                    flist_push_back(&group->tokens, (s_flist_node *) token_item);
                 }
             }
         } else {
@@ -440,13 +449,17 @@ static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
         }
         TRACE("Deserialize: Mint asset group %u: %u tokens", ag, item->asset_group.numTokens);
 
-        item->asset_group.tokens = (mint_token_t *) app_mem_alloc(item->asset_group.numTokens * sizeof(mint_token_t));
-        if (item->asset_group.tokens == NULL) {
-            return OUT_OF_MEMORY_ERROR;
-        }
+        // Initialize tokens linked list
+        item->asset_group.tokens = NULL;
 
         for (uint16_t tk = 0; tk < item->asset_group.numTokens; tk++) {
-            mint_token_t *token = &item->asset_group.tokens[tk];
+            // Allocate list node for this token
+            mint_token_list_item_t *token_item = (mint_token_list_item_t *) app_mem_alloc(sizeof(mint_token_list_item_t));
+            if (token_item == NULL) {
+                return OUT_OF_MEMORY_ERROR;
+            }
+
+            mint_token_t *token = &token_item->token_data;
             if (!buffer_read_u8(buf, &token->assetNameLen)) {
                 return MINT_PARSING_ERROR;
             }
@@ -469,6 +482,10 @@ static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
 
             TRACE("Deserialize: Mint token %u: name_len=%u, amount=", tk, token->assetNameLen);
             TRACE_INT64(token->amount);
+
+            // Add token to asset group's token list
+            token_item->node.next = NULL;
+            flist_push_back(&item->asset_group.tokens, (s_flist_node *) token_item);
         }
 
         item->node.next = NULL;
@@ -598,8 +615,12 @@ void transaction_free_outputs(transaction_t *tx) {
         // Free asset groups and their tokens
         if (item->output_data.assetGroups != NULL) {
             for (uint16_t i = 0; i < item->output_data.numAssetGroups; i++) {
-                if (item->output_data.assetGroups[i].tokens != NULL) {
-                    app_mem_free(item->output_data.assetGroups[i].tokens);
+                // Free all token nodes in the linked list
+                s_flist_node *token_node = item->output_data.assetGroups[i].tokens;
+                while (token_node != NULL) {
+                    s_flist_node *token_next = token_node->next;
+                    app_mem_free(token_node);
+                    token_node = token_next;
                 }
             }
             app_mem_free(item->output_data.assetGroups);
@@ -653,9 +674,12 @@ void transaction_free_mint(transaction_t *tx) {
         mint_asset_group_list_item_t *item = (mint_asset_group_list_item_t *) mint_node;
         s_flist_node *next = mint_node->next;
 
-        // Free tokens array
-        if (item->asset_group.tokens != NULL) {
-            app_mem_free(item->asset_group.tokens);
+        // Free all token nodes in the linked list
+        s_flist_node *token_node = item->asset_group.tokens;
+        while (token_node != NULL) {
+            s_flist_node *token_next = token_node->next;
+            app_mem_free(token_node);
+            token_node = token_next;
         }
 
         // Free the list item itself
@@ -851,13 +875,18 @@ static parser_status_e parse_output_structure(buffer_t *output_buf,
                 return OUTPUTS_PARSING_ERROR;
             }
 
-            group->tokens = (output_token_t *) app_mem_alloc(group->numTokens * sizeof(output_token_t));
-            if (group->tokens == NULL) {
-                return OUT_OF_MEMORY_ERROR;
-            }
+            // Initialize tokens linked list
+            group->tokens = NULL;
 
             for (uint16_t tk = 0; tk < group->numTokens; tk++) {
-                output_token_t *token = &group->tokens[tk];
+                // Allocate list node for this token
+                output_token_list_item_t *token_item =
+                    (output_token_list_item_t *) app_mem_alloc(sizeof(output_token_list_item_t));
+                if (token_item == NULL) {
+                    return OUT_OF_MEMORY_ERROR;
+                }
+
+                output_token_t *token = &token_item->token_data;
                 if (!buffer_read_u8(output_buf, &token->assetNameLen)) {
                     return OUTPUTS_PARSING_ERROR;
                 }
@@ -875,6 +904,10 @@ static parser_status_e parse_output_structure(buffer_t *output_buf,
                 if (!buffer_read_u64(output_buf, &token->amount, BE)) {
                     return OUTPUTS_PARSING_ERROR;
                 }
+
+                // Add token to asset group's token list
+                token_item->node.next = NULL;
+                flist_push_back(&group->tokens, (s_flist_node *) token_item);
             }
         }
     } else {

@@ -165,12 +165,13 @@ static int ui_materialize_strings(void) {
                 if (output_item->output_data.assetGroups != NULL) {
                     for (uint16_t ag = 0; ag < output_item->output_data.numAssetGroups; ag++) {
                         asset_group_t *group = &output_item->output_data.assetGroups[ag];
-                        if (group->tokens == NULL) {
-                            continue;
-                        }
 
-                        for (uint16_t tk = 0; tk < group->numTokens; tk++) {
-                            output_token_t *token = &group->tokens[tk];
+                        // Iterate through linked list of tokens
+                        s_flist_node *token_node = group->tokens;
+                        while (token_node != NULL) {
+                            output_token_list_item_t *token_item = (output_token_list_item_t *) token_node;
+                            output_token_t *token = &token_item->token_data;
+                            s_flist_node *token_next = token_node->next;
 
                             // Display token fingerprint
                             char *fingerprint_tmp = ui_alloc_temp(MAX_TOKEN_FINGERPRINT_STRING_LENGTH);
@@ -209,6 +210,10 @@ static int ui_materialize_strings(void) {
                             if (status != SWO_SUCCESS) {
                                 return status;
                             }
+
+                            // Free token node immediately after UI strings are materialized
+                            app_mem_free(token_node);
+                            token_node = token_next;
                         }
                     }
                 }
@@ -222,9 +227,8 @@ static int ui_materialize_strings(void) {
 
         if (output_item->output_data.assetGroups != NULL) {
             for (uint16_t ag = 0; ag < output_item->output_data.numAssetGroups; ag++) {
-                if (output_item->output_data.assetGroups[ag].tokens != NULL) {
-                    app_mem_free(output_item->output_data.assetGroups[ag].tokens);
-                }
+                // Token nodes are already freed during UI materialization
+                // Only free the asset group array itself
             }
             app_mem_free(output_item->output_data.assetGroups);
         }
@@ -766,8 +770,12 @@ static int ui_materialize_strings(void) {
                     continue;
                 }
 
-                for (uint16_t tk = 0; tk < item->asset_group.numTokens; tk++) {
-                    mint_token_t *token = &item->asset_group.tokens[tk];
+                // Iterate through linked list of tokens
+                s_flist_node *token_node = item->asset_group.tokens;
+                while (token_node != NULL) {
+                    mint_token_list_item_t *token_item = (mint_token_list_item_t *) token_node;
+                    mint_token_t *token = &token_item->token_data;
+                    s_flist_node *token_next = token_node->next;
 
                     char *fingerprint_tmp = ui_alloc_temp(MAX_TOKEN_FINGERPRINT_STRING_LENGTH);
                     if (fingerprint_tmp == NULL) {
@@ -801,6 +809,10 @@ static int ui_materialize_strings(void) {
                     if (status != SWO_SUCCESS) {
                         return status;
                     }
+
+                    // Free token node immediately after UI strings are materialized
+                    app_mem_free(token_node);
+                    token_node = token_next;
                 }
 
                 mint_node = mint_node->next;
@@ -818,11 +830,10 @@ static int ui_materialize_strings(void) {
 
     s_flist_node *mint_node = tx->mint_asset_groups;
     while (mint_node != NULL) {
-        mint_asset_group_list_item_t *item = (mint_asset_group_list_item_t *) mint_node;
         s_flist_node *next = mint_node->next;
-        if (item->asset_group.tokens != NULL) {
-            app_mem_free(item->asset_group.tokens);
-        }
+
+        // Token nodes are already freed during UI materialization
+        // Only free the asset group node itself
         app_mem_free(mint_node);
         mint_node = next;
     }

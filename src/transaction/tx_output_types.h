@@ -70,9 +70,14 @@ typedef struct {
 } output_token_t;
 
 typedef struct {
+    s_flist_node node;
+    output_token_t token_data;
+} output_token_list_item_t;
+
+typedef struct {
     const uint8_t* policyId;
     uint16_t numTokens;
-    output_token_t* tokens;
+    s_flist_node* tokens;
 } asset_group_t;
 
 typedef struct {
