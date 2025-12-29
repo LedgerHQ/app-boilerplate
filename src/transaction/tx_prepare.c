@@ -144,13 +144,13 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                       G_context.tx_info.transaction.includeAuxDataHash,
                       G_context.tx_info.transaction.includeValidityIntervalStart,
                       G_context.tx_info.transaction.num_mint_asset_groups > 0,
-                      false,
-                      0,
-                      0,
-                      false,
-                      false,
-                      false,
-                      0,
+                      G_context.tx_info.transaction.includeScriptDataHash,
+                      G_context.tx_info.transaction.num_collateral_inputs,
+                      G_context.tx_info.transaction.num_required_signers,
+                      G_context.tx_info.transaction.includeNetworkId,
+                      G_context.tx_info.transaction.includeCollateralOutput,
+                      G_context.tx_info.transaction.includeTotalCollateral,
+                      G_context.tx_info.transaction.num_reference_inputs,
                       0,
                       false,
                       false);
@@ -266,6 +266,30 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                                               token->assetNameLen,
                                               (uint64_t)token->amount);
             }
+        }
+
+        // Add datum if present
+        if (output_item->output_data.datum.hasDatum) {
+            if (output_item->output_data.datum.type == DATUM_HASH) {
+                txHashBuilder_addOutput_datum(&txHashBuilder,
+                                             DATUM_HASH,
+                                             output_item->output_data.datum.hash,
+                                             OUTPUT_DATUM_HASH_LENGTH);
+            } else {  // DATUM_INLINE
+                txHashBuilder_addOutput_datum(&txHashBuilder,
+                                             DATUM_INLINE,
+                                             output_item->output_data.datum.inline_data.data,
+                                             output_item->output_data.datum.inline_data.size);
+            }
+        }
+
+        // Add reference script if present
+        if (output_item->output_data.hasRefScript) {
+            txHashBuilder_addOutput_referenceScript(&txHashBuilder,
+                                                   output_item->output_data.refScript.size);
+            txHashBuilder_addOutput_referenceScript_dataChunk(&txHashBuilder,
+                                                             output_item->output_data.refScript.data,
+                                                             output_item->output_data.refScript.size);
         }
 
         output_node = output_node->next;
@@ -732,6 +756,157 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             }
 
             mint_node = mint_node->next;
+        }
+    }
+
+    // key 11: script data hash
+    if (G_context.tx_info.transaction.includeScriptDataHash) {
+        security_policy_t policy = policyForSignTxScriptDataHash(
+            G_context.tx_info.transaction.txSigningMode
+        );
+
+        switch (policy) {
+            case POLICY_DENY:
+                TRACE("Script data hash security policy denied");
+                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            case POLICY_SHOW:
+                plan->pair_count += 1;  // Display script data hash
+                break;
+            case POLICY_HIDE:
+                break;
+        }
+
+        txHashBuilder_addScriptDataHash(&txHashBuilder,
+                                        G_context.tx_info.transaction.scriptDataHash,
+                                        SCRIPT_DATA_HASH_LENGTH);
+    }
+
+    // key 13: collateral inputs
+    if (G_context.tx_info.transaction.num_collateral_inputs > 0) {
+        txHashBuilder_enterCollateralInputs(&txHashBuilder);
+
+        s_flist_node *collateral_input_node = G_context.tx_info.transaction.collateral_inputs;
+        while (collateral_input_node != NULL) {
+            tx_collateral_input_list_item_t *input_item =
+                (tx_collateral_input_list_item_t *) collateral_input_node;
+
+            security_policy_t input_policy = policyForSignTxCollateralInput(
+                G_context.tx_info.transaction.txSigningMode,
+                G_context.tx_info.transaction.includeTotalCollateral
+            );
+
+            switch (input_policy) {
+                case POLICY_DENY:
+                    TRACE("Collateral input security policy denied");
+                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                case POLICY_SHOW:
+                    plan->pair_count += 1;  // Display collateral input
+                    break;
+                case POLICY_HIDE:
+                    break;
+            }
+
+            txHashBuilder_addCollateralInput(&txHashBuilder, &input_item->input_data);
+            collateral_input_node = collateral_input_node->next;
+        }
+    }
+
+    // key 14: required signers
+    if (G_context.tx_info.transaction.num_required_signers > 0) {
+        txHashBuilder_enterRequiredSigners(&txHashBuilder);
+
+        s_flist_node *required_signer_node = G_context.tx_info.transaction.required_signers;
+        while (required_signer_node != NULL) {
+            tx_required_signer_list_item_t *signer_item =
+                (tx_required_signer_list_item_t *) required_signer_node;
+
+            security_policy_t signer_policy = policyForSignTxRequiredSigner(
+                G_context.tx_info.transaction.txSigningMode,
+                &signer_item->required_signer_data
+            );
+
+            switch (signer_policy) {
+                case POLICY_DENY:
+                    TRACE("Required signer security policy denied");
+                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                case POLICY_SHOW:
+                    plan->pair_count += 1;  // Display required signer
+                    break;
+                case POLICY_HIDE:
+                    break;
+            }
+
+            // Add to hash - derive key hash if path provided
+            uint8_t keyHash[ADDRESS_KEY_HASH_LENGTH];
+            if (signer_item->required_signer_data.type == REQUIRED_SIGNER_WITH_PATH) {
+                bip44_pathToKeyHash(&signer_item->required_signer_data.keyPath,
+                                   keyHash, sizeof(keyHash));
+            } else {
+                ASSERT(signer_item->required_signer_data.type == REQUIRED_SIGNER_WITH_HASH);
+                memmove(keyHash, signer_item->required_signer_data.keyHash, sizeof(keyHash));
+            }
+            txHashBuilder_addRequiredSigner(&txHashBuilder, keyHash, sizeof(keyHash));
+
+            required_signer_node = required_signer_node->next;
+        }
+    }
+
+    // key 15: network ID
+    if (G_context.tx_info.transaction.includeNetworkId) {
+        txHashBuilder_addNetworkId(&txHashBuilder, G_context.tx_info.transaction.networkId);
+        // No UI display - network already shown during init
+    }
+
+    // key 16: collateral return output
+    if (G_context.tx_info.transaction.includeCollateralOutput) {
+        // TODO: Implement collateral output hash building and UI
+        // This is complex - needs to reuse output building logic from regular outputs
+        // May require helper functions for consistency
+    }
+
+    // key 17: total collateral
+    if (G_context.tx_info.transaction.includeTotalCollateral) {
+        security_policy_t policy = policyForSignTxTotalCollateral();
+
+        switch (policy) {
+            case POLICY_DENY:
+                TRACE("Total collateral security policy denied");
+                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            case POLICY_SHOW:
+                plan->pair_count += 1;  // Display total collateral amount
+                break;
+            case POLICY_HIDE:
+                break;
+        }
+
+        txHashBuilder_addTotalCollateral(&txHashBuilder, G_context.tx_info.transaction.totalCollateral);
+    }
+
+    // key 18: reference inputs
+    if (G_context.tx_info.transaction.num_reference_inputs > 0) {
+        txHashBuilder_enterReferenceInputs(&txHashBuilder);
+
+        s_flist_node *reference_input_node = G_context.tx_info.transaction.reference_inputs;
+        while (reference_input_node != NULL) {
+            tx_input_list_item_t *input_item = (tx_input_list_item_t *) reference_input_node;
+
+            security_policy_t input_policy = policyForSignTxReferenceInput(
+                G_context.tx_info.transaction.txSigningMode
+            );
+
+            switch (input_policy) {
+                case POLICY_DENY:
+                    TRACE("Reference input security policy denied");
+                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                case POLICY_SHOW:
+                    plan->pair_count += 1;  // Display reference input
+                    break;
+                case POLICY_HIDE:
+                    break;
+            }
+
+            txHashBuilder_addReferenceInput(&txHashBuilder, &input_item->input_data);
+            reference_input_node = reference_input_node->next;
         }
     }
 

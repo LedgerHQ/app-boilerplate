@@ -32,6 +32,7 @@ static const tx_fixture_t FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREAS
     .raw_tx_len = sizeof(FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREASURY_RAW_TX),
     .tx_body_cbor_hex = "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018182582b82d818582183581c9e1c71de652ec8b85fec296f0685ca3988781c94a2e1a5d89d92f45fa0001a0d0c25611a002dd2e802182a030a15181b",
     .expected_hash_hex = "c3fb3f4330d9f051b567db11d56ab8174cba081373936c9fde80d809b178326f",
+    .signing_mode = 3,
     .network_id = 1,
     .protocol_magic = 764824073,
     .num_inputs = 1,
@@ -43,6 +44,7 @@ static const tx_fixture_t FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREAS
     .include_ttl = true,
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
+    .include_script_data_hash = false,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -66,6 +68,7 @@ static const tx_fixture_t FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_DONAT
     .raw_tx_len = sizeof(FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_DONATION_RAW_TX),
     .tx_body_cbor_hex = "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018182582b82d818582183581c9e1c71de652ec8b85fec296f0685ca3988781c94a2e1a5d89d92f45fa0001a0d0c25611a002dd2e802182a030a16181c",
     .expected_hash_hex = "618718225c0c876fd429ca25957a23ad894eaebc1831365c5b41cba50993a1bf",
+    .signing_mode = 3,
     .network_id = 1,
     .protocol_magic = 764824073,
     .num_inputs = 1,
@@ -77,6 +80,7 @@ static const tx_fixture_t FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_DONAT
     .include_ttl = true,
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
+    .include_script_data_hash = false,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -100,6 +104,7 @@ static const tx_fixture_t FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREAS
     .raw_tx_len = sizeof(FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREASURY_AND_DONATION_RAW_TX),
     .tx_body_cbor_hex = "a600818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018182582b82d818582183581c9e1c71de652ec8b85fec296f0685ca3988781c94a2e1a5d89d92f45fa0001a0d0c25611a002dd2e802182a030a15181b16181c",
     .expected_hash_hex = "37e2cf72599186d1ec571af568ea0ab39f7f73ba2e8c5f4725bfd0d4fb8c58e7",
+    .signing_mode = 3,
     .network_id = 1,
     .protocol_magic = 764824073,
     .num_inputs = 1,
@@ -111,6 +116,7 @@ static const tx_fixture_t FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREAS
     .include_ttl = true,
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
+    .include_script_data_hash = false,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };

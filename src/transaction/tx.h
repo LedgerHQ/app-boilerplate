@@ -80,6 +80,14 @@ typedef struct {
     withdrawal_data_t withdrawal_data;
 } tx_withdrawal_list_item_t;
 
+typedef struct {
+    s_flist_node node;
+    required_signer_t required_signer_data;
+} tx_required_signer_list_item_t;
+
+// Collateral inputs use the same structure as regular inputs
+typedef tx_input_list_item_t tx_collateral_input_list_item_t;
+
 // Certificate data structure supporting multiple certificate types
 // Fields are used selectively depending on certificate type:
 // - STAKE_REGISTRATION/DEREGISTRATION: stakeCredential
@@ -121,6 +129,10 @@ typedef struct {
     uint32_t protocolMagic;
     bool tagCborSets;
 
+    // Note: We use linked lists (via flist) for parsed transaction items because
+    // the memory allocated to list nodes may be gradually reused/reallocated for UI
+    // string formatting during processing. Arrays would prevent this reallocation.
+
     // CBOR key order (matches transaction_body CDDL)
     uint16_t num_inputs;                // key 0
     s_flist_node* inputs;
@@ -147,4 +159,33 @@ typedef struct {
     bool includeAuxDataHash;
     aux_data_type_t auxDataType;
     uint8_t auxDataHash[AUX_DATA_HASH_LENGTH];
+
+    bool includeScriptDataHash;         // key 11
+    uint8_t scriptDataHash[SCRIPT_DATA_HASH_LENGTH];
+
+    uint16_t num_collateral_inputs;     // key 13
+    s_flist_node* collateral_inputs;
+
+    uint16_t num_required_signers;      // key 14
+    s_flist_node* required_signers;
+
+    bool includeNetworkId;              // key 15
+
+    bool includeCollateralOutput;       // key 16
+    struct {
+        tx_output_destination_storage_t destination;
+        uint64_t adaAmount;
+        uint16_t numAssetGroups;
+        asset_group_t* assetGroups;
+        output_datum_t datum;
+        bool hasRefScript;
+        ref_script_t refScript;
+        tx_output_serialization_format_t format;
+    } collateral_output;
+
+    bool includeTotalCollateral;        // key 17
+    uint64_t totalCollateral;
+
+    uint16_t num_reference_inputs;      // key 18
+    s_flist_node* reference_inputs;
 } transaction_t;

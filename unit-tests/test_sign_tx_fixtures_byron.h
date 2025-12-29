@@ -32,6 +32,7 @@ static const tx_fixture_t FIXTURE_BYRON_SIGN_TX_WITH_THIRD_PARTY_BYRON_MAINNET_O
     .raw_tx_len = sizeof(FIXTURE_BYRON_SIGN_TX_WITH_THIRD_PARTY_BYRON_MAINNET_OUTPUT_RAW_TX),
     .tx_body_cbor_hex = "a400818258201af8fa0b754ff99253d983894e63a2b09cbb56c833ba18c3384210163f63dcfc00018182582b82d818582183581c9e1c71de652ec8b85fec296f0685ca3988781c94a2e1a5d89d92f45fa0001a0d0c25611a002dd2e802182a030a",
     .expected_hash_hex = "73e09bdebf98a9e0f17f86a2d11e0f14f4f8dae77cdf26ff1678e821f20c8db6",
+    .signing_mode = 3,
     .network_id = 1,
     .protocol_magic = 764824073,
     .num_inputs = 1,
@@ -43,6 +44,7 @@ static const tx_fixture_t FIXTURE_BYRON_SIGN_TX_WITH_THIRD_PARTY_BYRON_MAINNET_O
     .include_ttl = true,
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
+    .include_script_data_hash = false,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -68,6 +70,7 @@ static const tx_fixture_t FIXTURE_BYRON_SIGN_TX_WITH_THIRD_PARTY_BYRON_DAEDALUS_
     .raw_tx_len = sizeof(FIXTURE_BYRON_SIGN_TX_WITH_THIRD_PARTY_BYRON_DAEDALUS_MAINNET_OUTPUT_RAW_TX),
     .tx_body_cbor_hex = "a400818258201af8fa0b754ff99253d983894e63a2b09cbb56c833ba18c3384210163f63dcfc00018182584c82d818584283581cd2348b8ef7b8a6d1c922efa499c669b151eeef99e4ce3521e88223f8a101581e581cf281e648a89015a9861bd9e992414d1145ddaf80690be53235b0e2e5001a199834651a002dd2e802182a030a",
     .expected_hash_hex = "3cf35b4d9bfa87b8eab5de659e0520bdac37b0de0b3840c1d8abd683330a9756",
+    .signing_mode = 3,
     .network_id = 1,
     .protocol_magic = 764824073,
     .num_inputs = 1,
@@ -79,6 +82,7 @@ static const tx_fixture_t FIXTURE_BYRON_SIGN_TX_WITH_THIRD_PARTY_BYRON_DAEDALUS_
     .include_ttl = true,
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
+    .include_script_data_hash = false,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -102,6 +106,7 @@ static const tx_fixture_t FIXTURE_BYRON_SIGN_TX_WITH_THIRD_PARTY_BYRON_TESTNET_O
     .raw_tx_len = sizeof(FIXTURE_BYRON_SIGN_TX_WITH_THIRD_PARTY_BYRON_TESTNET_OUTPUT_RAW_TX),
     .tx_body_cbor_hex = "a400818258201af8fa0b754ff99253d983894e63a2b09cbb56c833ba18c3384210163f63dcfc00018182582f82d818582583581c709bfb5d9733cbdd72f520cd2c8b9f8f942da5e6cd0b6994e1803b0aa10242182a001aef14e76d1a002dd2e802182a030a",
     .expected_hash_hex = "e2319ee8317ac537af4c2c3322aaf9fb6c64a95e3921ad75ab91b4f5b5306963",
+    .signing_mode = 3,
     .network_id = 0,
     .protocol_magic = 42,
     .num_inputs = 1,
@@ -113,6 +118,7 @@ static const tx_fixture_t FIXTURE_BYRON_SIGN_TX_WITH_THIRD_PARTY_BYRON_TESTNET_O
     .include_ttl = true,
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
+    .include_script_data_hash = false,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };

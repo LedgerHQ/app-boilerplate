@@ -154,6 +154,8 @@ def main():
             else:
                 include_aux_data_hash = False
 
+        include_script_data_hash = getattr(tx, "scriptDataHash", None) is not None
+
         options_value = "TX_OPTIONS_TAG_CBOR_SETS" if "d90102" in expected_cbor_hex.lower() else "0"
         network_id_value = int(test_case.tx.network.networkId)
         protocol_magic_value = int(test_case.tx.network.protocol)
@@ -173,6 +175,7 @@ def main():
         header_lines.append(f"    .raw_tx_len = sizeof({fixture_prefix}_RAW_TX),")
         header_lines.append(f'    .tx_body_cbor_hex = "{expected_cbor_hex}",')
         header_lines.append(f'    .expected_hash_hex = "{expected_hash_hex}",')
+        header_lines.append(f"    .signing_mode = {int(test_case.signingMode)},")
         header_lines.append(f"    .network_id = {network_id_value},")
         header_lines.append(f"    .protocol_magic = {protocol_magic_value},")
         header_lines.append(f"    .num_inputs = {len(tx.inputs)},")
@@ -184,6 +187,14 @@ def main():
         header_lines.append(f"    .include_ttl = {bool_to_c(tx.ttl is not None)},")
         header_lines.append(f"    .include_validity_interval_start = {bool_to_c(tx.validityIntervalStart is not None)},")
         header_lines.append(f"    .include_aux_data_hash = {bool_to_c(include_aux_data_hash)},")
+        header_lines.append(f"    .include_script_data_hash = {bool_to_c(include_script_data_hash)},")
+        header_lines.append(f"    .num_collateral_inputs = {len(tx.collateralInputs) if hasattr(tx, 'collateralInputs') and tx.collateralInputs else 0},")
+        header_lines.append(f"    .num_required_signers = {len(tx.requiredSigners) if hasattr(tx, 'requiredSigners') and tx.requiredSigners else 0},")
+        header_lines.append(f"    .include_network_id = {bool_to_c(getattr(tx, 'includeNetworkId', False) if hasattr(tx, 'includeNetworkId') else False)},")
+        header_lines.append(f"    .include_collateral_output = {bool_to_c(getattr(tx, 'collateralOutput', None) is not None)},")
+        header_lines.append(f"    .include_total_collateral = {bool_to_c(getattr(tx, 'totalCollateral', None) is not None)},")
+        header_lines.append(f"    .num_reference_inputs = {len(tx.referenceInputs) if hasattr(tx, 'referenceInputs') and tx.referenceInputs else 0},")
+
         if include_aux_data_hash and aux_data_hash_hex is not None:
             header_lines.append(f'    .aux_data_hash_hex = "{aux_data_hash_hex}",')
         else:

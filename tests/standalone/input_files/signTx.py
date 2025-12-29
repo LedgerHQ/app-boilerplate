@@ -193,7 +193,7 @@ class TxAuxiliaryData:
 @dataclass
 class RequiredSigner:
     type: TxRequiredSignerType
-    addressHex: str  # signerPath or signerHash
+    pathOrHashHex: str  # BIP44 path (for PATH type) or 28-byte key hash hex (for HASH type)
 
 
 @dataclass
@@ -2035,10 +2035,22 @@ testsAlonzo: List[SignTxTestCase] = [
                                [],
                                42,
                                10,
-                               collateralInputs=[inputs["utxoShelley"]],
+                               collateralInputs=[inputs["utxoByron"]],
                                includeNetworkId=True),
                    TransactionSigningMode.PLUTUS_TRANSACTION,
                    "a600818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018002182a030a0d818258201af8fa0b754ff99253d983894e63a2b09cbb56c833ba18c3384210163f63dcfc000f01",
+                   nano_skip=True),
+
+    SignTxTestCase("Sign_tx_with_collateral_inputs_shelley",
+                   Transaction(Mainnet,
+                               [inputs["utxoShelley"]],
+                               [],
+                               42,
+                               10,
+                               collateralInputs=[inputs["utxoShelley"]],
+                               includeNetworkId=True),
+                   TransactionSigningMode.PLUTUS_TRANSACTION,
+                   "a600818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018002182a030a0d818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000f01",
                    nano_skip=True),
     SignTxTestCase("Sign_tx_with_required_signers_-_mixed",
                    Transaction(Mainnet,

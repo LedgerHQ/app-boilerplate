@@ -2074,4 +2074,48 @@ class CommandBuilder:
                 # KEY_HASH or SCRIPT_HASH: serialize as raw bytes (28 bytes, no length prefix)
                 data.extend(bytes.fromhex(withdrawal.stakeCredential.keyValue))
 
+        # Script data hash (optional - only if present in transaction)
+        if hasattr(tx, 'scriptDataHash') and tx.scriptDataHash is not None:
+            data.extend(bytes.fromhex(tx.scriptDataHash))
+
+        # Collateral inputs (num_collateral_inputs is sent in INIT APDU)
+        if hasattr(tx, 'collateralInputs') and tx.collateralInputs is not None:
+            for collateral_input in tx.collateralInputs:
+                # Transaction hash (32 bytes)
+                data.extend(bytes.fromhex(collateral_input.txHashHex))
+                # Input index (uint32, BE)
+                data.extend(collateral_input.outputIndex.to_bytes(4, 'big'))
+
+        # Required signers (num_required_signers is sent in INIT APDU)
+        if hasattr(tx, 'requiredSigners') and tx.requiredSigners is not None:
+            for required_signer in tx.requiredSigners:
+                if required_signer.type == 0:  # TxRequiredSignerType.PATH
+                    # Path-based signer
+                    data.append(0x00)  # REQUIRED_SIGNER_WITH_PATH
+                    data.extend(pack_derivation_path(required_signer.pathOrHashHex))
+                else:  # TxRequiredSignerType.HASH (type == 1)
+                    # Hash-based signer (28-byte key hash)
+                    data.append(0x01)  # REQUIRED_SIGNER_WITH_HASH
+                    data.extend(bytes.fromhex(required_signer.pathOrHashHex))
+
+        # Network ID (optional - sent as flag in INIT APDU, no data serialization needed)
+
+        # Collateral output (optional - only if present in transaction)
+        if hasattr(tx, 'collateralOutput') and tx.collateralOutput is not None:
+            # Reuse output serialization logic
+            collateral_output_data = self._serializeOutput(tx.collateralOutput)
+            data.extend(collateral_output_data)
+
+        # Total collateral (optional - only if present in transaction)
+        if hasattr(tx, 'totalCollateral') and tx.totalCollateral is not None:
+            data.extend(tx.totalCollateral.to_bytes(8, 'big'))
+
+        # Reference inputs (num_reference_inputs is sent in INIT APDU)
+        if hasattr(tx, 'referenceInputs') and tx.referenceInputs is not None:
+            for reference_input in tx.referenceInputs:
+                # Transaction hash (32 bytes)
+                data.extend(bytes.fromhex(reference_input.txHashHex))
+                # Input index (uint32, BE)
+                data.extend(reference_input.outputIndex.to_bytes(4, 'big'))
+
         return bytes(data)

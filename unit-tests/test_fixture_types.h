@@ -19,8 +19,16 @@ typedef struct {
     bool include_ttl;
     bool include_validity_interval_start;
     bool include_aux_data_hash;
+    bool include_script_data_hash;
+    uint16_t num_collateral_inputs;
+    uint16_t num_required_signers;
+    bool include_network_id;
+    bool include_collateral_output;
+    bool include_total_collateral;
+    uint16_t num_reference_inputs;
     const char *aux_data_hash_hex;
     uint64_t options;
+    uint8_t signing_mode;
     uint8_t network_id;
     uint32_t protocol_magic;
 } tx_fixture_t;

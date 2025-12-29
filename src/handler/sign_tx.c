@@ -163,56 +163,47 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
     if (!parseIncluded(includeScriptDataHashByte, &includeScriptDataHash)) {
         return send_error_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
-    // TODO: Store includeScriptDataHash when script data hash is implemented
+    G_context.tx_info.transaction.includeScriptDataHash = includeScriptDataHash;
 
-    // Field 13 (collateral inputs) - optional, not implemented yet
-    uint16_t num_collateral_inputs_dummy;
-    if (!buffer_read_u16(cdata, &num_collateral_inputs_dummy, BE)) {
+    // Field 13 (collateral inputs)
+    if (!buffer_read_u16(cdata, &G_context.tx_info.transaction.num_collateral_inputs, BE)) {
         return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
-    // Field 14 (required signers) - optional, not implemented yet
-    uint16_t num_required_signers_dummy;
-    if (!buffer_read_u16(cdata, &num_required_signers_dummy, BE)) {
+    // Field 14 (required signers)
+    if (!buffer_read_u16(cdata, &G_context.tx_info.transaction.num_required_signers, BE)) {
         return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
-    // Field 15 (network ID) - optional, not implemented yet
+    // Field 15 (network ID)
     uint8_t includeNetworkIdByte;
-    bool includeNetworkId = false;
     if (!buffer_read_u8(cdata, &includeNetworkIdByte)) {
         return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
-    if (!parseIncluded(includeNetworkIdByte, &includeNetworkId)) {
+    if (!parseIncluded(includeNetworkIdByte, &G_context.tx_info.transaction.includeNetworkId)) {
         return send_error_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
-    // TODO: Store includeNetworkId when network ID is implemented
 
-    // Field 16 (collateral output) - optional, not implemented yet
+    // Field 16 (collateral output)
     uint8_t includeCollateralOutputByte;
-    bool includeCollateralOutput = false;
     if (!buffer_read_u8(cdata, &includeCollateralOutputByte)) {
         return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
-    if (!parseIncluded(includeCollateralOutputByte, &includeCollateralOutput)) {
+    if (!parseIncluded(includeCollateralOutputByte, &G_context.tx_info.transaction.includeCollateralOutput)) {
         return send_error_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
-    // TODO: Store includeCollateralOutput when collateral output is implemented
 
-    // Field 17 (total collateral) - optional, not implemented yet
+    // Field 17 (total collateral)
     uint8_t includeTotalCollateralByte;
-    bool includeTotalCollateral = false;
     if (!buffer_read_u8(cdata, &includeTotalCollateralByte)) {
         return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
-    if (!parseIncluded(includeTotalCollateralByte, &includeTotalCollateral)) {
+    if (!parseIncluded(includeTotalCollateralByte, &G_context.tx_info.transaction.includeTotalCollateral)) {
         return send_error_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
-    // TODO: Store includeTotalCollateral when total collateral is implemented
 
-    // Field 18 (reference inputs) - optional, not implemented yet
-    uint16_t num_reference_inputs_dummy;
-    if (!buffer_read_u16(cdata, &num_reference_inputs_dummy, BE)) {
+    // Field 18 (reference inputs)
+    if (!buffer_read_u16(cdata, &G_context.tx_info.transaction.num_reference_inputs, BE)) {
         return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
@@ -271,13 +262,13 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         G_context.tx_info.transaction.num_certificates,
         G_context.tx_info.transaction.num_withdrawals,
         false,  // includeMint - not implemented yet
-        false,  // includeScriptDataHash - not implemented yet
-        0,      // numCollateralInputs - not implemented yet
-        0,      // numRequiredSigners - not implemented yet
-        false,  // includeNetworkId - not implemented yet
-        false,  // includeCollateralOutput - not implemented yet
-        false,  // includeTotalCollateral - not implemented yet
-        0,      // numReferenceInputs - not implemented yet
+        G_context.tx_info.transaction.includeScriptDataHash,
+        G_context.tx_info.transaction.num_collateral_inputs,
+        G_context.tx_info.transaction.num_required_signers,
+        G_context.tx_info.transaction.includeNetworkId,
+        G_context.tx_info.transaction.includeCollateralOutput,
+        G_context.tx_info.transaction.includeTotalCollateral,
+        G_context.tx_info.transaction.num_reference_inputs,
         0,      // numVotingProcedures - not implemented yet
         false,  // includeTreasury - not implemented yet
         false,  // includeDonation - not implemented yet

@@ -31,11 +31,15 @@
 #include "tx_output_types.h"
 #include "globals.h"
 
+static parser_status_e parse_input_item(buffer_t *buf, s_flist_node **list_head, parser_status_e error_on_failure);
 static parser_status_e parse_tx_inputs(buffer_t *buf, transaction_t *tx);
 static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx);
 static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx);
 static parser_status_e parse_tx_certificates(buffer_t *buf, transaction_t *tx);
 static parser_status_e parse_tx_withdrawals(buffer_t *buf, transaction_t *tx);
+static parser_status_e parse_tx_collateral_inputs(buffer_t *buf, transaction_t *tx);
+static parser_status_e parse_tx_required_signers(buffer_t *buf, transaction_t *tx);
+static parser_status_e parse_tx_collateral_output(buffer_t *buf, transaction_t *tx);
 
 static uint16_t _map_parser_status_to_swo(parser_status_e status) {
     switch (status) {
@@ -151,6 +155,56 @@ parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
         return status;
     }
 
+    // key 11: script data hash
+    if (tx->includeScriptDataHash) {
+        if (!buffer_read_bytes(buf, tx->scriptDataHash, SCRIPT_DATA_HASH_LENGTH)) {
+            return SCRIPT_DATA_HASH_PARSING_ERROR;
+        }
+    }
+
+    // key 13: collateral inputs
+    if (tx->num_collateral_inputs > 0) {
+        status = parse_tx_collateral_inputs(buf, tx);
+        if (status != PARSING_OK) {
+            return status;
+        }
+    }
+
+    // key 14: required signers
+    if (tx->num_required_signers > 0) {
+        status = parse_tx_required_signers(buf, tx);
+        if (status != PARSING_OK) {
+            return status;
+        }
+    }
+
+    // key 15: network ID - nothing to parse, just a flag (already in init APDU)
+
+    // key 16: collateral output
+    if (tx->includeCollateralOutput) {
+        status = parse_tx_collateral_output(buf, tx);
+        if (status != PARSING_OK) {
+            return status;
+        }
+    }
+
+    // key 17: total collateral
+    if (tx->includeTotalCollateral) {
+        if (!buffer_read_u64(buf, &tx->totalCollateral, BE)) {
+            return TOTAL_COLLATERAL_PARSING_ERROR;
+        }
+    }
+
+    // key 18: reference inputs (parsed same as regular inputs)
+    if (tx->num_reference_inputs > 0) {
+        for (uint16_t i = 0; i < tx->num_reference_inputs; i++) {
+            status = parse_input_item(buf, &tx->reference_inputs, REFERENCE_INPUTS_PARSING_ERROR);
+            if (status != PARSING_OK) {
+                return status;
+            }
+        }
+    }
+
     if (buffer_can_read(buf, 1)) {
         TRACE("TX parsing: buffer not fully consumed");
         return TX_BUFFER_NOT_FULLY_CONSUMED_ERROR;
@@ -167,27 +221,37 @@ int tx_handle_parse_error(parser_status_e status) {
     return send_error_and_reset(swo);
 }
 
+// Helper function to parse a single input (reused for inputs, collateral inputs, reference inputs)
+// error_on_failure: error code to return if parsing fails (e.g., INPUTS_PARSING_ERROR, COLLATERAL_INPUTS_PARSING_ERROR)
+static parser_status_e parse_input_item(buffer_t *buf, s_flist_node **list_head, parser_status_e error_on_failure) {
+    tx_input_list_item_t *item = (tx_input_list_item_t *) app_mem_alloc(sizeof(tx_input_list_item_t));
+    if (item == NULL) {
+        return OUT_OF_MEMORY_ERROR;
+    }
+
+    // Store pointer to tx hash in raw buffer instead of copying
+    uint8_t *hash_ptr = NULL;
+    if (!buffer_read_bytes_ptr(buf, &hash_ptr, TX_HASH_LENGTH)) {
+        return error_on_failure;
+    }
+    ASSERT(hash_ptr != NULL);
+    item->input_data.txHash = hash_ptr;
+
+    if (!buffer_read_u32(buf, &item->input_data.index, BE)) {
+        return error_on_failure;
+    }
+
+    item->node.next = NULL;
+    flist_push_back(list_head, (s_flist_node *) item);
+    return PARSING_OK;
+}
+
 static parser_status_e parse_tx_inputs(buffer_t *buf, transaction_t *tx) {
     for (uint16_t i = 0; i < tx->num_inputs; i++) {
-        tx_input_list_item_t *item = (tx_input_list_item_t *) app_mem_alloc(sizeof(tx_input_list_item_t));
-        if (item == NULL) {
-            return OUT_OF_MEMORY_ERROR;
+        parser_status_e status = parse_input_item(buf, &tx->inputs, INPUTS_PARSING_ERROR);
+        if (status != PARSING_OK) {
+            return status;
         }
-
-        // Store pointer to tx hash in raw buffer instead of copying
-        uint8_t *hash_ptr = NULL;
-        if (!buffer_read_bytes_ptr(buf, &hash_ptr, TX_HASH_LENGTH)) {
-            return INPUTS_PARSING_ERROR;
-        }
-        ASSERT(hash_ptr != NULL);
-        item->input_data.txHash = hash_ptr;
-
-        if (!buffer_read_u32(buf, &item->input_data.index, BE)) {
-            return INPUTS_PARSING_ERROR;
-        }
-
-        item->node.next = NULL;
-        flist_push_back(&tx->inputs, (s_flist_node *) item);
     }
     return PARSING_OK;
 }
@@ -584,13 +648,53 @@ void transaction_free_mint(transaction_t *tx) {
     tx->mint_asset_groups = NULL;
 }
 
+/// Clean up collateral inputs (same structure as regular inputs)
+void transaction_free_collateral_inputs(transaction_t *tx) {
+    LEDGER_ASSERT(tx != NULL, "NULL tx");
+
+    s_flist_node *input_node = tx->collateral_inputs;
+    while (input_node != NULL) {
+        s_flist_node *next = input_node->next;
+        app_mem_free(input_node);
+        input_node = next;
+    }
+    tx->collateral_inputs = NULL;
+}
+
+/// Clean up required signers
+void transaction_free_required_signers(transaction_t *tx) {
+    LEDGER_ASSERT(tx != NULL, "NULL tx");
+
+    s_flist_node *signer_node = tx->required_signers;
+    while (signer_node != NULL) {
+        s_flist_node *next = signer_node->next;
+        app_mem_free(signer_node);
+        signer_node = next;
+    }
+    tx->required_signers = NULL;
+}
+
+/// Clean up reference inputs (same structure as regular inputs)
+void transaction_free_reference_inputs(transaction_t *tx) {
+    LEDGER_ASSERT(tx != NULL, "NULL tx");
+
+    s_flist_node *input_node = tx->reference_inputs;
+    while (input_node != NULL) {
+        s_flist_node *next = input_node->next;
+        app_mem_free(input_node);
+        input_node = next;
+    }
+    tx->reference_inputs = NULL;
+}
+
 /**
  * Cleanup transaction lists by freeing all allocated memory
  */
 void tx_context_cleanup(void) {
     transaction_t *tx = &G_context.tx_info.transaction;
 
-    // Free all input items from the linked list
+    // Free in CBOR key order (matches transaction_body CDDL)
+    // key 0: inputs
     s_flist_node *input_node = tx->inputs;
     while (input_node != NULL) {
         s_flist_node *next = input_node->next;
@@ -599,17 +703,26 @@ void tx_context_cleanup(void) {
     }
     tx->inputs = NULL;
 
-    // Free all output items with their associated data (asset groups, datums, ref scripts)
+    // key 1: outputs
     transaction_free_outputs(tx);
 
-    // Free all certificate items
+    // key 4: certificates
     transaction_free_certificates(tx);
 
-    // Free all mint asset groups with their tokens
+    // key 5: withdrawals
+    transaction_free_withdrawals(tx);
+
+    // key 9: mint
     transaction_free_mint(tx);
 
-    // Free all withdrawal items
-    transaction_free_withdrawals(tx);
+    // key 13: collateral inputs
+    transaction_free_collateral_inputs(tx);
+
+    // key 14: required signers
+    transaction_free_required_signers(tx);
+
+    // key 18: reference inputs
+    transaction_free_reference_inputs(tx);
 
     // Free raw tx buffer
     if (G_context.tx_info.raw_tx != NULL) {
@@ -618,3 +731,172 @@ void tx_context_cleanup(void) {
     }
     G_context.tx_info.planned_ui_pairs = 0;
 }
+
+// ================== Parsing functions for elements 13-18 ==================
+
+static parser_status_e parse_tx_collateral_inputs(buffer_t *buf, transaction_t *tx) {
+    for (uint16_t i = 0; i < tx->num_collateral_inputs; i++) {
+        parser_status_e status = parse_input_item(buf, &tx->collateral_inputs, COLLATERAL_INPUTS_PARSING_ERROR);
+        if (status != PARSING_OK) {
+            return status;
+        }
+    }
+    return PARSING_OK;
+}
+
+static parser_status_e parse_tx_required_signers(buffer_t *buf, transaction_t *tx) {
+    for (uint16_t i = 0; i < tx->num_required_signers; i++) {
+        tx_required_signer_list_item_t *item =
+            (tx_required_signer_list_item_t *) app_mem_alloc(sizeof(tx_required_signer_list_item_t));
+        if (item == NULL) {
+            return OUT_OF_MEMORY_ERROR;
+        }
+
+        // Read signer type (1 byte)
+        uint8_t type;
+        if (!buffer_read_u8(buf, &type)) {
+            return REQUIRED_SIGNERS_PARSING_ERROR;
+        }
+        item->required_signer_data.type = (required_signer_type_t) type;
+
+        // Read path or hash based on type
+        switch (item->required_signer_data.type) {
+            case REQUIRED_SIGNER_WITH_PATH:
+                // Parse BIP44 path
+                if (!buffer_read_bip44_path(buf, &item->required_signer_data.keyPath)) {
+                    return REQUIRED_SIGNERS_PARSING_ERROR;
+                }
+                break;
+            case REQUIRED_SIGNER_WITH_HASH:
+                // Read 28-byte key hash
+                if (!buffer_read_bytes(buf, item->required_signer_data.keyHash, ADDRESS_KEY_HASH_LENGTH)) {
+                    return REQUIRED_SIGNERS_PARSING_ERROR;
+                }
+                break;
+            default:
+                return REQUIRED_SIGNERS_PARSING_ERROR;
+        }
+
+        item->node.next = NULL;
+        flist_push_back(&tx->required_signers, (s_flist_node *) item);
+    }
+    return PARSING_OK;
+}
+
+// Helper function to parse output structure (reused for regular and collateral outputs)
+static parser_status_e parse_output_structure(buffer_t *output_buf,
+                                             tx_output_destination_storage_t *destination,
+                                             uint64_t *adaAmount,
+                                             tx_output_serialization_format_t *format,
+                                             uint16_t *numAssetGroups,
+                                             asset_group_t **assetGroups,
+                                             uint8_t networkId) {
+    // Parse destination
+    parser_status_e status = parse_output_destination(output_buf, destination, networkId);
+    if (status != PARSING_OK) {
+        return status;
+    }
+
+    // Read ADA amount
+    if (!buffer_read_u64(output_buf, adaAmount, BE)) {
+        return OUTPUTS_PARSING_ERROR;
+    }
+
+    // Parse output format
+    status = parse_output_format(output_buf, format);
+    if (status != PARSING_OK) {
+        return status;
+    }
+
+    // Read asset group count
+    if (!buffer_read_u16(output_buf, numAssetGroups, BE)) {
+        return OUTPUTS_PARSING_ERROR;
+    }
+
+    // Parse asset groups
+    if (*numAssetGroups > 0) {
+        *assetGroups = (asset_group_t *) app_mem_alloc(*numAssetGroups * sizeof(asset_group_t));
+        if (*assetGroups == NULL) {
+            return OUT_OF_MEMORY_ERROR;
+        }
+
+        for (uint16_t ag = 0; ag < *numAssetGroups; ag++) {
+            asset_group_t *group = &(*assetGroups)[ag];
+
+            uint8_t *policy_ptr = NULL;
+            if (!buffer_read_bytes_ptr(output_buf, &policy_ptr, MINTING_POLICY_ID_LENGTH)) {
+                return OUTPUTS_PARSING_ERROR;
+            }
+            ASSERT(policy_ptr != NULL);
+            group->policyId = policy_ptr;
+
+            if (!buffer_read_u16(output_buf, &group->numTokens, BE)) {
+                return OUTPUTS_PARSING_ERROR;
+            }
+
+            group->tokens = (output_token_t *) app_mem_alloc(group->numTokens * sizeof(output_token_t));
+            if (group->tokens == NULL) {
+                return OUT_OF_MEMORY_ERROR;
+            }
+
+            for (uint16_t tk = 0; tk < group->numTokens; tk++) {
+                output_token_t *token = &group->tokens[tk];
+                if (!buffer_read_u8(output_buf, &token->assetNameLen)) {
+                    return OUTPUTS_PARSING_ERROR;
+                }
+                if (token->assetNameLen > MAX_ASSET_NAME_LENGTH) {
+                    return OUTPUTS_PARSING_ERROR;
+                }
+
+                uint8_t *name_ptr = NULL;
+                if (!buffer_read_bytes_ptr(output_buf, &name_ptr, token->assetNameLen)) {
+                    return OUTPUTS_PARSING_ERROR;
+                }
+                ASSERT(name_ptr != NULL);
+                token->assetName = name_ptr;
+
+                if (!buffer_read_u64(output_buf, &token->amount, BE)) {
+                    return OUTPUTS_PARSING_ERROR;
+                }
+            }
+        }
+    } else {
+        *assetGroups = NULL;
+    }
+
+    return PARSING_OK;
+}
+
+static parser_status_e parse_tx_collateral_output(buffer_t *buf, transaction_t *tx) {
+    uint16_t output_len;
+    if (!buffer_read_u16(buf, &output_len, BE)) {
+        return COLLATERAL_OUTPUT_PARSING_ERROR;
+    }
+
+    if (!buffer_can_read(buf, output_len)) {
+        return COLLATERAL_OUTPUT_PARSING_ERROR;
+    }
+
+    buffer_t output_buf = {
+        .ptr = buf->ptr + buf->offset,
+        .size = output_len,
+        .offset = 0
+    };
+
+    // Reuse output structure parsing
+    parser_status_e status = parse_output_structure(&output_buf,
+                                                   &tx->collateral_output.destination,
+                                                   &tx->collateral_output.adaAmount,
+                                                   &tx->collateral_output.format,
+                                                   &tx->collateral_output.numAssetGroups,
+                                                   &tx->collateral_output.assetGroups,
+                                                   tx->networkId);
+    if (status != PARSING_OK) {
+        return status;
+    }
+
+    buf->offset += output_len;
+    return PARSING_OK;
+}
+
+// Reference inputs parsing is inline in parse_tx() since they use the same format as regular inputs

@@ -157,6 +157,10 @@ def main():
 """
 
     # Write to file
+        header_content += f"    .signing_mode = {int(test_case.signingMode)},\n"
+        header_content += f"    .network_id = {network_id_value},\n"
+        header_content += f"    .protocol_magic = {protocol_magic_value},\n"
+
     output_file = Path(__file__).parent / f"test_sign_tx_fixtures_{era.lower()}.h"
     output_file.write_text(header_content)
 

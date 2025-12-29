@@ -32,6 +32,7 @@ static const tx_fixture_t FIXTURE_ALLEGRA_SIGN_TX_WITH_NO_TTL_AND_NO_VALIDITY_IN
     .raw_tx_len = sizeof(FIXTURE_ALLEGRA_SIGN_TX_WITH_NO_TTL_AND_NO_VALIDITY_INTERVAL_START_RAW_TX),
     .tx_body_cbor_hex = "a300818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181825839017cb05fce110fb999f01abb4f62bc455e217d4a51fde909fa9aea545443ac53c046cf6a42095e3c60310fa802771d0672f8fe2d1861138b090102182a",
     .expected_hash_hex = "cbb6ee600297d0b5067b1e79cf1dc6361de4e5e731eacc57c42765944381ff18",
+    .signing_mode = 3,
     .network_id = 1,
     .protocol_magic = 764824073,
     .num_inputs = 1,
@@ -43,6 +44,7 @@ static const tx_fixture_t FIXTURE_ALLEGRA_SIGN_TX_WITH_NO_TTL_AND_NO_VALIDITY_IN
     .include_ttl = false,
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
+    .include_script_data_hash = false,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -66,6 +68,7 @@ static const tx_fixture_t FIXTURE_ALLEGRA_SIGN_TX_WITH_NO_TTL_BUT_WITH_VALIDITY_
     .raw_tx_len = sizeof(FIXTURE_ALLEGRA_SIGN_TX_WITH_NO_TTL_BUT_WITH_VALIDITY_INTERVAL_START_RAW_TX),
     .tx_body_cbor_hex = "a400818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181825839017cb05fce110fb999f01abb4f62bc455e217d4a51fde909fa9aea545443ac53c046cf6a42095e3c60310fa802771d0672f8fe2d1861138b090102182a08182f",
     .expected_hash_hex = "9fbc15167cfdf408998b0348ff6e69e63f404d1f0acf65763a057003f8a3a93b",
+    .signing_mode = 3,
     .network_id = 1,
     .protocol_magic = 764824073,
     .num_inputs = 1,
@@ -77,6 +80,7 @@ static const tx_fixture_t FIXTURE_ALLEGRA_SIGN_TX_WITH_NO_TTL_BUT_WITH_VALIDITY_
     .include_ttl = false,
     .include_validity_interval_start = true,
     .include_aux_data_hash = false,
+    .include_script_data_hash = false,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };

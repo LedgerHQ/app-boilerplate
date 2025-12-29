@@ -1,7 +1,7 @@
 // Auto-generated fixtures for ALONZO era transaction tests
 // Generated from LedgerJS signTx.ts test cases
 //
-// Total tests: 9
+// Total tests: 10
 
 #pragma once
 
@@ -19,7 +19,9 @@ static const uint8_t FIXTURE_ALONZO_SIGN_TX_WITH_SCRIPT_DATA_HASH_RAW_TX[] = {
     0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83,
     0x46, 0x1A, 0xCE, 0x32, 0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2A, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x0A,
+    0x00, 0x00, 0x00, 0x0A, 0xFF, 0xD4, 0xD0, 0x09, 0xF5, 0x54, 0xBA, 0x4F, 0xD8, 0xED, 0x1F, 0x1D,
+    0x70, 0x32, 0x44, 0x81, 0x98, 0x61, 0xA9, 0xD3, 0x4F, 0xD4, 0x75, 0x3B, 0xCF, 0x3F, 0xF3, 0x2F,
+    0x04, 0x3C, 0xE1, 0x88,
 };
 
 static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_SCRIPT_DATA_HASH = {
@@ -28,6 +30,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_SCRIPT_DATA_HASH = {
     .raw_tx_len = sizeof(FIXTURE_ALONZO_SIGN_TX_WITH_SCRIPT_DATA_HASH_RAW_TX),
     .tx_body_cbor_hex = "a600818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018002182a030a0b5820ffd4d009f554ba4fd8ed1f1d703244819861a9d34fd4753bcf3ff32f043ce1880f01",
     .expected_hash_hex = "7c5aac719dd3e0888deef0c59d6daba9e578d0dc27f82ff4978fc2893cdc2202",
+    .signing_mode = 3,
     .network_id = 1,
     .protocol_magic = 764824073,
     .num_inputs = 1,
@@ -39,6 +42,13 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_SCRIPT_DATA_HASH = {
     .include_ttl = true,
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
+    .include_script_data_hash = true,
+    .num_collateral_inputs = 0,
+    .num_required_signers = 0,
+    .include_network_id = true,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
+    .num_reference_inputs = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -62,6 +72,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_CHANGE_OUTPUT_AS_ARRAY = {
     .raw_tx_len = sizeof(FIXTURE_ALONZO_SIGN_TX_WITH_CHANGE_OUTPUT_AS_ARRAY_RAW_TX),
     .tx_body_cbor_hex = "a400818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b70001818258390114c16d7f43243bd81478e68b9db53a8528fd4fb1078d58d54a7f11241d227aefa4b773149170885aadba30aab3127cc611ddbc4999def61c1a006ca79302182a030a",
     .expected_hash_hex = "b72616520aac51e8f4d081cec9899d8113ba61488d736c81bff39521684d52ad",
+    .signing_mode = 7,
     .network_id = 1,
     .protocol_magic = 764824073,
     .num_inputs = 1,
@@ -73,6 +84,13 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_CHANGE_OUTPUT_AS_ARRAY = {
     .include_ttl = true,
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
+    .include_script_data_hash = false,
+    .num_collateral_inputs = 0,
+    .num_required_signers = 0,
+    .include_network_id = false,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
+    .num_reference_inputs = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -98,6 +116,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_DATUM_HASH_IN_OUTPUT_AS_AR
     .raw_tx_len = sizeof(FIXTURE_ALONZO_SIGN_TX_WITH_DATUM_HASH_IN_OUTPUT_AS_ARRAY_RAW_TX),
     .tx_body_cbor_hex = "a400818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181835839105e2f080eb93bad86d401545e0ce5f2221096d6477e11e6643922fa8d2ed495234dc0d667c1316ff84e572310e265edb31330448b36b7179e1a006ca7935820ffd4d009f554ba4fd8ed1f1d703244819861a9d34fd4753bcf3ff32f043ce18802182a030a",
     .expected_hash_hex = "0ac3011036018a6ff19105464f2b98fd7c13e42eb369f930f23fe24f48fc40f4",
+    .signing_mode = 3,
     .network_id = 0,
     .protocol_magic = 42,
     .num_inputs = 1,
@@ -109,6 +128,13 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_DATUM_HASH_IN_OUTPUT_AS_AR
     .include_ttl = true,
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
+    .include_script_data_hash = false,
+    .num_collateral_inputs = 0,
+    .num_required_signers = 0,
+    .include_network_id = false,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
+    .num_reference_inputs = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -138,6 +164,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_DATUM_HASH_IN_OUTPUT_AS_AR
     .raw_tx_len = sizeof(FIXTURE_ALONZO_SIGN_TX_WITH_DATUM_HASH_IN_OUTPUT_AS_ARRAY_WITH_TOKENS_RAW_TX),
     .tx_body_cbor_hex = "a400818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181835839105e2f080eb93bad86d401545e0ce5f2221096d6477e11e6643922fa8d2ed495234dc0d667c1316ff84e572310e265edb31330448b36b7179e821a006ca793a1581c75a292ffee938be03e9bae5657982a74e9014eb4960108c9e23a5b39a2487564247542686911182f4875642475426869121a007838625820ffd4d009f554ba4fd8ed1f1d703244819861a9d34fd4753bcf3ff32f043ce18802182a030a",
     .expected_hash_hex = "7ffbaefea15f1c24c069b39b30360f6a36da6e6dae1666108e873156c338e543",
+    .signing_mode = 3,
     .network_id = 0,
     .protocol_magic = 42,
     .num_inputs = 1,
@@ -149,6 +176,13 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_DATUM_HASH_IN_OUTPUT_AS_AR
     .include_ttl = true,
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
+    .include_script_data_hash = false,
+    .num_collateral_inputs = 0,
+    .num_required_signers = 0,
+    .include_network_id = false,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
+    .num_reference_inputs = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -176,6 +210,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_MISSING_DATUM_HASH_IN_OUTP
     .raw_tx_len = sizeof(FIXTURE_ALONZO_SIGN_TX_WITH_MISSING_DATUM_HASH_IN_OUTPUT_WITH_TOKENS_RAW_TX),
     .tx_body_cbor_hex = "a400818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181825839105e2f080eb93bad86d401545e0ce5f2221096d6477e11e6643922fa8d2ed495234dc0d667c1316ff84e572310e265edb31330448b36b7179e821a006ca793a1581c75a292ffee938be03e9bae5657982a74e9014eb4960108c9e23a5b39a2487564247542686911182f4875642475426869121a0078386202182a030a",
     .expected_hash_hex = "c236cfde289e669a04fca8bd9a2b9b632fe4c08d31627da25ac517a40082df2a",
+    .signing_mode = 3,
     .network_id = 0,
     .protocol_magic = 42,
     .num_inputs = 1,
@@ -187,6 +222,13 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_MISSING_DATUM_HASH_IN_OUTP
     .include_ttl = true,
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
+    .include_script_data_hash = false,
+    .num_collateral_inputs = 0,
+    .num_required_signers = 0,
+    .include_network_id = false,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
+    .num_reference_inputs = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -197,7 +239,9 @@ static const uint8_t FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS_RAW_TX[] = {
     0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83,
     0x46, 0x1A, 0xCE, 0x32, 0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2A, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x0A,
+    0x00, 0x00, 0x00, 0x0A, 0x1A, 0xF8, 0xFA, 0x0B, 0x75, 0x4F, 0xF9, 0x92, 0x53, 0xD9, 0x83, 0x89,
+    0x4E, 0x63, 0xA2, 0xB0, 0x9C, 0xBB, 0x56, 0xC8, 0x33, 0xBA, 0x18, 0xC3, 0x38, 0x42, 0x10, 0x16,
+    0x3F, 0x63, 0xDC, 0xFC, 0x00, 0x00, 0x00, 0x00,
 };
 
 static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS = {
@@ -206,6 +250,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS = {
     .raw_tx_len = sizeof(FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS_RAW_TX),
     .tx_body_cbor_hex = "a600818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018002182a030a0d818258201af8fa0b754ff99253d983894e63a2b09cbb56c833ba18c3384210163f63dcfc000f01",
     .expected_hash_hex = "f08021608db631b5b5c1553042ac9722efbcdf738e0b256e7300963e66e41638",
+    .signing_mode = 7,
     .network_id = 1,
     .protocol_magic = 764824073,
     .num_inputs = 1,
@@ -217,17 +262,67 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS = {
     .include_ttl = true,
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
+    .include_script_data_hash = false,
+    .num_collateral_inputs = 1,
+    .num_required_signers = 0,
+    .include_network_id = true,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
+    .num_reference_inputs = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
 
-// Test 6: Sign_tx_with_required_signers_-_mixed
+// Test 6: Sign_tx_with_collateral_inputs_shelley
+//
+static const uint8_t FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS_SHELLEY_RAW_TX[] = {
+    0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83,
+    0x46, 0x1A, 0xCE, 0x32, 0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2A, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x0A, 0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95,
+    0xB3, 0xA0, 0xBF, 0x83, 0x46, 0x1A, 0xCE, 0x32, 0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39, 0xB3,
+    0xAA, 0xD1, 0xC0, 0xB7, 0x00, 0x00, 0x00, 0x00,
+};
+
+static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS_SHELLEY = {
+    .name = "Sign_tx_with_collateral_inputs_shelley",
+    .raw_tx = FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS_SHELLEY_RAW_TX,
+    .raw_tx_len = sizeof(FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS_SHELLEY_RAW_TX),
+    .tx_body_cbor_hex = "a600818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018002182a030a0d818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000f01",
+    .expected_hash_hex = "4e94b319a7e5a28f333932b0e2337b7c16da22f5eacae684edf2b2fbca2bf2f7",
+    .signing_mode = 7,
+    .network_id = 1,
+    .protocol_magic = 764824073,
+    .num_inputs = 1,
+    .num_outputs = 0,
+    .num_witnesses = 7,
+    .num_certificates = 0,
+    .num_withdrawals = 0,
+    .num_mint_asset_groups = 0,
+    .include_ttl = true,
+    .include_validity_interval_start = false,
+    .include_aux_data_hash = false,
+    .include_script_data_hash = false,
+    .num_collateral_inputs = 1,
+    .num_required_signers = 0,
+    .include_network_id = true,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
+    .num_reference_inputs = 0,
+    .aux_data_hash_hex = NULL,
+    .options = 0,
+};
+
+// Test 7: Sign_tx_with_required_signers_-_mixed
 //
 static const uint8_t FIXTURE_ALONZO_SIGN_TX_WITH_REQUIRED_SIGNERS_MIXED_RAW_TX[] = {
     0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83,
     0x46, 0x1A, 0xCE, 0x32, 0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2A, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x0A,
+    0x00, 0x00, 0x00, 0x0A, 0x01, 0xFE, 0xA6, 0x64, 0x6C, 0x67, 0xFB, 0x46, 0x7F, 0x8A, 0x54, 0x25,
+    0xE9, 0xC7, 0x52, 0xE1, 0xE2, 0x62, 0xB0, 0x42, 0x0B, 0xA4, 0xB6, 0x38, 0xF3, 0x95, 0x14, 0x04,
+    0x9A, 0x00, 0x05, 0x80, 0x00, 0x07, 0x3C, 0x80, 0x00, 0x07, 0x17, 0x80, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
 static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_REQUIRED_SIGNERS_MIXED = {
@@ -236,6 +331,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_REQUIRED_SIGNERS_MIXED = {
     .raw_tx_len = sizeof(FIXTURE_ALONZO_SIGN_TX_WITH_REQUIRED_SIGNERS_MIXED_RAW_TX),
     .tx_body_cbor_hex = "a600818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018002182a030a0e82581cfea6646c67fb467f8a5425e9c752e1e262b0420ba4b638f39514049a581c14c16d7f43243bd81478e68b9db53a8528fd4fb1078d58d54a7f11240f01",
     .expected_hash_hex = "9e41ce0d7bcc1bbef0d96fd025054a54d1435e7a1e1e66595f2ed594dabb5faf",
+    .signing_mode = 7,
     .network_id = 1,
     .protocol_magic = 764824073,
     .num_inputs = 1,
@@ -247,11 +343,18 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_REQUIRED_SIGNERS_MIXED = {
     .include_ttl = true,
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
+    .include_script_data_hash = false,
+    .num_collateral_inputs = 0,
+    .num_required_signers = 2,
+    .include_network_id = true,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
+    .num_reference_inputs = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
 
-// Test 7: Sign_tx_with_mint_path_in_a_required_signer
+// Test 8: Sign_tx_with_mint_path_in_a_required_signer
 //
 static const uint8_t FIXTURE_ALONZO_SIGN_TX_WITH_MINT_PATH_IN_A_REQUIRED_SIGNER_RAW_TX[] = {
     0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83,
@@ -261,7 +364,7 @@ static const uint8_t FIXTURE_ALONZO_SIGN_TX_WITH_MINT_PATH_IN_A_REQUIRED_SIGNER_
     0x39, 0x88, 0x78, 0x1C, 0x94, 0xA2, 0xE1, 0xA5, 0xD8, 0x9D, 0x92, 0xF4, 0x5F, 0xA0, 0x00, 0x1A,
     0x0D, 0x0C, 0x25, 0x61, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2D, 0xD2, 0xE8, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x0A,
+    0x0A, 0x00, 0x03, 0x80, 0x00, 0x07, 0x3F, 0x80, 0x00, 0x07, 0x17, 0x80, 0x00, 0x00, 0x00,
 };
 
 static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_MINT_PATH_IN_A_REQUIRED_SIGNER = {
@@ -270,6 +373,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_MINT_PATH_IN_A_REQUIRED_SI
     .raw_tx_len = sizeof(FIXTURE_ALONZO_SIGN_TX_WITH_MINT_PATH_IN_A_REQUIRED_SIGNER_RAW_TX),
     .tx_body_cbor_hex = "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018182582b82d818582183581c9e1c71de652ec8b85fec296f0685ca3988781c94a2e1a5d89d92f45fa0001a0d0c25611a002dd2e802182a030a0e81581c43040068ce85252be6164296d6dca9595644bbf424b56b7424458227",
     .expected_hash_hex = "728bbc72445c3a17a9d56d1cb6a99b1362d3bcbf508fcb153320dfa62e4b42ba",
+    .signing_mode = 7,
     .network_id = 1,
     .protocol_magic = 764824073,
     .num_inputs = 1,
@@ -281,11 +385,18 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_MINT_PATH_IN_A_REQUIRED_SI
     .include_ttl = true,
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
+    .include_script_data_hash = false,
+    .num_collateral_inputs = 0,
+    .num_required_signers = 1,
+    .include_network_id = false,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
+    .num_reference_inputs = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
 
-// Test 8: Sign_tx_with_key_hash_in_stake_credential
+// Test 9: Sign_tx_with_key_hash_in_stake_credential
 //
 static const uint8_t FIXTURE_ALONZO_SIGN_TX_WITH_KEY_HASH_IN_STAKE_CREDENTIAL_RAW_TX[] = {
     0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83,
@@ -306,6 +417,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_KEY_HASH_IN_STAKE_CREDENTI
     .raw_tx_len = sizeof(FIXTURE_ALONZO_SIGN_TX_WITH_KEY_HASH_IN_STAKE_CREDENTIAL_RAW_TX),
     .tx_body_cbor_hex = "a700818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018002182a030a048183028200581c29fb5fd4aa8cadd6705acc8263cee0fc62edca5ac38db593fec2f9fd581cf61c42cbf7c8c53af3f520508212ad3e72f674f957fe23ff0acb497305a1581de129fb5fd4aa8cadd6705acc8263cee0fc62edca5ac38db593fec2f9fd1903e80f01",
     .expected_hash_hex = "7ae1c854aad0469a08cd678786ed9a70791808afd6dd1a7deaae72df12430baa",
+    .signing_mode = 7,
     .network_id = 1,
     .protocol_magic = 764824073,
     .num_inputs = 1,
@@ -317,6 +429,13 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_KEY_HASH_IN_STAKE_CREDENTI
     .include_ttl = true,
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
+    .include_script_data_hash = false,
+    .num_collateral_inputs = 0,
+    .num_required_signers = 0,
+    .include_network_id = true,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
+    .num_reference_inputs = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
