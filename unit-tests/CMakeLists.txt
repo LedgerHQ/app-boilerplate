@@ -580,6 +580,45 @@ target_link_libraries(test_opcert
 )
 add_test(test_opcert test_opcert)
 
+
+add_executable(test_derive_address_rejects 
+    test_derive_address_rejects.c
+    mock_globals.c
+    ../src/handler/derive_address.c
+    ../src/securityPolicy/securityPolicy.c
+    ../src/securityPolicy/securityPolicy_privkey.c
+    ../src/messageSigning/messageSigning
+    ../src/utils/cardano_os_utils.c
+    ../src/addressUtils/addressUtilsShelley.c
+    ../src/addressUtils/addressUtilsByron.c
+    ../src/transaction/tx_utils.c
+    ../src/keyDerivation/keyDerivation.c
+)
+
+target_link_libraries(test_derive_address_rejects
+    PUBLIC
+        cmocka
+        gcov
+        text_utils
+        hex_utils
+        base58
+        bech32_lib
+        bip44_real
+        buffer_utils_lib
+        cbor_lib
+        blake2b_lib
+        sha3_lib
+        hash_mocks_lib
+        crypto_mocks_lib
+        buffer
+        write
+        read
+        varint
+        bip32
+        cx_crc_support
+)
+add_test(test_derive_address_rejects test_derive_address_rejects)
+
 # TODO: uncomment when test files are created
 # target_link_libraries(test_tx_parser PUBLIC
 #                       transaction_deserialize
