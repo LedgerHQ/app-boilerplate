@@ -2118,4 +2118,12 @@ class CommandBuilder:
                 # Input index (uint32, BE)
                 data.extend(reference_input.outputIndex.to_bytes(4, 'big'))
 
+        # Treasury (optional)
+        if getattr(tx, 'treasury', None) is not None:
+            data.extend(tx.treasury.to_bytes(8, 'big'))
+
+        # Donation (optional)
+        if getattr(tx, 'donation', None) is not None:
+            data.extend(tx.donation.to_bytes(8, 'big'))
+
         return bytes(data)

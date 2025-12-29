@@ -188,4 +188,10 @@ typedef struct {
 
     uint16_t num_reference_inputs;      // key 18
     s_flist_node* reference_inputs;
+
+    bool includeTreasury;                // key 21
+    uint64_t treasury;
+
+    bool includeDonation;                // key 22
+    uint64_t donation;
 } transaction_t;

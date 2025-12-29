@@ -104,8 +104,8 @@ static inline void run_fixture(const tx_fixture_t *fixture) {
         .includeTotalCollateral = fixture->include_total_collateral,
         .numReferenceInputs = fixture->num_reference_inputs,
         .numVotingProcedures = 0,
-        .includeTreasury = false,
-        .includeDonation = false,
+        .includeTreasury = fixture->include_treasury,
+        .includeDonation = fixture->include_donation,
         .numWitnesses = fixture->num_witnesses,
     };
     size_t init_len = build_init_apdu(&params, init_raw, sizeof(init_raw));

@@ -213,27 +213,23 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
-    // Field 21 (treasury) - optional, not implemented yet
+    // Field 21 (treasury) - optional
     uint8_t includeTreasuryByte;
-    bool includeTreasury = false;
     if (!buffer_read_u8(cdata, &includeTreasuryByte)) {
         return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
-    if (!parseIncluded(includeTreasuryByte, &includeTreasury)) {
+    if (!parseIncluded(includeTreasuryByte, &G_context.tx_info.transaction.includeTreasury)) {
         return send_error_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
-    // TODO: Store includeTreasury when treasury is implemented
 
-    // Field 22 (donation) - optional, not implemented yet
+    // Field 22 (donation) - optional
     uint8_t includeDonationByte;
-    bool includeDonation = false;
     if (!buffer_read_u8(cdata, &includeDonationByte)) {
         return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
-    if (!parseIncluded(includeDonationByte, &includeDonation)) {
+    if (!parseIncluded(includeDonationByte, &G_context.tx_info.transaction.includeDonation)) {
         return send_error_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
-    // TODO: Store includeDonation when donation is implemented
 
     // Read number of witnesses
     if (!buffer_read_u16(cdata, &G_context.tx_info.num_witnesses, BE)) {
@@ -270,8 +266,8 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         G_context.tx_info.transaction.includeTotalCollateral,
         G_context.tx_info.transaction.num_reference_inputs,
         0,      // numVotingProcedures - not implemented yet
-        false,  // includeTreasury - not implemented yet
-        false,  // includeDonation - not implemented yet
+        G_context.tx_info.transaction.includeTreasury,
+        G_context.tx_info.transaction.includeDonation,
         &G_context.tx_info.warning_bits);
 
     TRACE("Transaction init security policy: %d", (int) init_policy);

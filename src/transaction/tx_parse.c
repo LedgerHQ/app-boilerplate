@@ -73,7 +73,10 @@ static uint16_t _map_parser_status_to_swo(parser_status_e status) {
         // key 17 is reference inputs (parsed inline)
         // key 19 is voting procedures (not supported)
         // key 20 is proposal procedures (not supported)
-        // key 21 is treasury donation (not supported)
+        case TREASURY_PARSING_ERROR:        // key 21
+            return SWO_TX_PARSING_FAIL_TREASURY;
+        case DONATION_PARSING_ERROR:        // key 22
+            return SWO_TX_PARSING_FAIL_DONATION;
         case TX_SIZE_TOO_LARGE_ERROR:
             return SWO_INVALID_TX_LENGTH;
         case TX_BUFFER_NOT_FULLY_CONSUMED_ERROR:
@@ -202,6 +205,20 @@ parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
             if (status != PARSING_OK) {
                 return status;
             }
+        }
+    }
+
+    // key 21: treasury (optional)
+    if (tx->includeTreasury) {
+        if (!buffer_read_u64(buf, &tx->treasury, BE)) {
+            return TREASURY_PARSING_ERROR;
+        }
+    }
+
+    // key 22: donation (optional)
+    if (tx->includeDonation) {
+        if (!buffer_read_u64(buf, &tx->donation, BE)) {
+            return DONATION_PARSING_ERROR;
         }
     }
 

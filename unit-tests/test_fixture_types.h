@@ -26,6 +26,10 @@ typedef struct {
     bool include_collateral_output;
     bool include_total_collateral;
     uint16_t num_reference_inputs;
+    bool include_treasury;
+    uint64_t treasury;
+    bool include_donation;
+    uint64_t donation;
     const char *aux_data_hash_hex;
     uint64_t options;
     uint8_t signing_mode;

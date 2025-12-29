@@ -14,10 +14,63 @@ Examples:
 import sys
 from pathlib import Path
 import hashlib
+import types
+
+ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+ALPHABET_INDEX = {char: index for index, char in enumerate(ALPHABET)}
+
+
+def _ensure_base58_module():
+    if "base58" in sys.modules:
+        return
+
+    def b58encode(data: bytes) -> bytes:
+        if not data:
+            return b""
+
+        zero_prefix = 0
+        for byte in data:
+            if byte == 0:
+                zero_prefix += 1
+            else:
+                break
+        num = int.from_bytes(data, "big")
+        encoded_bytes = bytearray()
+        while num > 0:
+            num, remainder = divmod(num, 58)
+            encoded_bytes.append(ord(ALPHABET[remainder]))
+        encoded_bytes.reverse()
+        result = bytearray(b"1" * zero_prefix)
+        if encoded_bytes:
+            result.extend(encoded_bytes)
+        elif zero_prefix == 0:
+            result.extend(b"1")
+        return bytes(result)
+
+    def b58decode(value):
+        if isinstance(value, bytes):
+            value = value.decode("ascii")
+        if value == "":
+            return b""
+        num = 0
+        for char in value:
+            num = num * 58 + ALPHABET_INDEX[char]
+        decoded = num.to_bytes((num.bit_length() + 7) // 8, "big") if num > 0 else b""
+        zero_prefix = len(value) - len(value.lstrip("1"))
+        return b"\x00" * zero_prefix + decoded
+
+    module = types.ModuleType("base58")
+    module.b58encode = b58encode
+    module.b58decode = b58decode
+    sys.modules["base58"] = module
+
+
+_ensure_base58_module()
 
 # Add test paths
 sys.path.insert(0, str(Path(__file__).parent.parent / "tests"))
 sys.path.insert(0, str(Path(__file__).parent.parent / "tests" / "application_client"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "tests" / "standalone"))
 
 from standalone.input_files.signTx import (
     testsMary,
@@ -194,6 +247,12 @@ def main():
         header_lines.append(f"    .include_collateral_output = {bool_to_c(getattr(tx, 'collateralOutput', None) is not None)},")
         header_lines.append(f"    .include_total_collateral = {bool_to_c(getattr(tx, 'totalCollateral', None) is not None)},")
         header_lines.append(f"    .num_reference_inputs = {len(tx.referenceInputs) if hasattr(tx, 'referenceInputs') and tx.referenceInputs else 0},")
+        treasury_value = getattr(tx, 'treasury', None)
+        donation_value = getattr(tx, 'donation', None)
+        header_lines.append(f"    .include_treasury = {bool_to_c(treasury_value is not None)},")
+        header_lines.append(f"    .treasury = {treasury_value if treasury_value is not None else 0},")
+        header_lines.append(f"    .include_donation = {bool_to_c(donation_value is not None)},")
+        header_lines.append(f"    .donation = {donation_value if donation_value is not None else 0},")
 
         if include_aux_data_hash and aux_data_hash_hex is not None:
             header_lines.append(f'    .aux_data_hash_hex = "{aux_data_hash_hex}",')

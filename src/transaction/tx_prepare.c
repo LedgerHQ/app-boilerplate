@@ -151,9 +151,9 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                       G_context.tx_info.transaction.includeCollateralOutput,
                       G_context.tx_info.transaction.includeTotalCollateral,
                       G_context.tx_info.transaction.num_reference_inputs,
-                      0,
-                      false,
-                      false);
+                      0,  // numVotingProcedures - not implemented yet
+                      G_context.tx_info.transaction.includeTreasury,
+                      G_context.tx_info.transaction.includeDonation);
 
     txHashBuilder_enterInputs(&txHashBuilder);
     s_flist_node *input_node = G_context.tx_info.transaction.inputs;
@@ -908,6 +908,42 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             txHashBuilder_addReferenceInput(&txHashBuilder, &input_item->input_data);
             reference_input_node = reference_input_node->next;
         }
+    }
+
+    // key 21: treasury
+    if (G_context.tx_info.transaction.includeTreasury) {
+        security_policy_t treasury_policy = policyForSignTxTreasury(
+            G_context.tx_info.transaction.txSigningMode,
+            G_context.tx_info.transaction.treasury
+        );
+        switch (treasury_policy) {
+            case POLICY_DENY:
+                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            case POLICY_SHOW:
+                plan->pair_count++;
+                break;
+            case POLICY_HIDE:
+                break;
+        }
+        txHashBuilder_addTreasury(&txHashBuilder, G_context.tx_info.transaction.treasury);
+    }
+
+    // key 22: donation
+    if (G_context.tx_info.transaction.includeDonation) {
+        security_policy_t donation_policy = policyForSignTxDonation(
+            G_context.tx_info.transaction.txSigningMode,
+            G_context.tx_info.transaction.donation
+        );
+        switch (donation_policy) {
+            case POLICY_DENY:
+                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            case POLICY_SHOW:
+                plan->pair_count++;
+                break;
+            case POLICY_HIDE:
+                break;
+        }
+        txHashBuilder_addDonation(&txHashBuilder, G_context.tx_info.transaction.donation);
     }
 
     txHashBuilder_finalize(&txHashBuilder,
