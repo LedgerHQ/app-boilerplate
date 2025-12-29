@@ -31,6 +31,8 @@ from standalone.input_files.signTx import (
     testsConwayWithoutCertificates,
     testsConwayVotingProcedures,
     testsMultisig,
+    TxAuxiliaryDataType,
+    TxAuxiliaryDataHash,
 )
 from application_client.command_builder import CommandBuilder
 
@@ -76,6 +78,10 @@ def sanitize_name_for_c(name: str) -> str:
         safe = safe.replace('__', '_')
     return safe.upper()
 
+def bool_to_c(value: bool) -> str:
+    """Convert Python bool to lowercase C bool literal."""
+    return "true" if value else "false"
+
 def cbor_hex_to_bytes(hex_str: str) -> bytes:
     """Convert hex string to bytes."""
     # Remove any whitespace
@@ -111,6 +117,7 @@ def main():
         "",
         "#include <stdint.h>",
         "#include <stddef.h>",
+        '#include "test_fixture_types.h"',
         "",
         "// ======================================================================",
         "// Fixtures",
@@ -135,6 +142,22 @@ def main():
         safe_name = sanitize_name_for_c(test_case.name)
         fixture_prefix = f"FIXTURE_{era.upper()}_{safe_name}"
 
+        include_aux_data_hash = (
+            tx.auxiliaryData is not None and
+            tx.auxiliaryData.type == TxAuxiliaryDataType.ARBITRARY_HASH
+        )
+        aux_data_hash_hex = None
+        if include_aux_data_hash:
+            aux_params = tx.auxiliaryData.params
+            if isinstance(aux_params, TxAuxiliaryDataHash):
+                aux_data_hash_hex = aux_params.hashHex
+            else:
+                include_aux_data_hash = False
+
+        options_value = "TX_OPTIONS_TAG_CBOR_SETS" if "d90102" in expected_cbor_hex.lower() else "0"
+        network_id_value = int(test_case.tx.network.networkId)
+        protocol_magic_value = int(test_case.tx.network.protocol)
+
         # Add fixture comment
         header_lines.append(f"// Test {test_index}: {test_case.name}")
         header_lines.append("//")
@@ -143,21 +166,30 @@ def main():
         array_lines = format_bytes_as_c_array(raw_tx_bytes, f'{fixture_prefix}_RAW_TX').split('\n')
         header_lines.extend(array_lines)
         header_lines.append("")
-
-        # Add macros
-        header_lines.append(f"#define {fixture_prefix}_RAW_TX_LEN {len(raw_tx_bytes)}")
-        header_lines.append(f"#define {fixture_prefix}_TX_BODY_CBOR_HEX \\")
-        header_lines.append(f'    "{expected_cbor_hex}"')
-        header_lines.append(f"#define {fixture_prefix}_EXPECTED_HASH_HEX \\")
-        header_lines.append(f'    "{expected_hash_hex}"')
-        header_lines.append(f"#define {fixture_prefix}_NUM_INPUTS {len(tx.inputs)}")
-        header_lines.append(f"#define {fixture_prefix}_NUM_OUTPUTS {len(tx.outputs)}")
-        header_lines.append(f"#define {fixture_prefix}_NUM_WITNESSES {test_case.signingMode}")
-        header_lines.append(f"#define {fixture_prefix}_INCLUDE_TTL {str(tx.ttl is not None).lower()}")
-        header_lines.append(f"#define {fixture_prefix}_INCLUDE_VALIDITY_INTERVAL_START {str(tx.validityIntervalStart is not None).lower()}")
-        header_lines.append(f"#define {fixture_prefix}_NUM_CERTIFICATES {len(tx.certificates) if tx.certificates else 0}")
-        header_lines.append(f"#define {fixture_prefix}_NUM_WITHDRAWALS {len(tx.withdrawals) if tx.withdrawals else 0}")
-        header_lines.append(f"#define {fixture_prefix}_NUM_MINT_ASSET_GROUPS {len(tx.mint) if tx.mint else 0}")
+        # Add fixture struct
+        header_lines.append(f"static const tx_fixture_t {fixture_prefix} = {{")
+        header_lines.append(f'    .name = "{test_case.name}",')
+        header_lines.append(f"    .raw_tx = {fixture_prefix}_RAW_TX,")
+        header_lines.append(f"    .raw_tx_len = sizeof({fixture_prefix}_RAW_TX),")
+        header_lines.append(f'    .tx_body_cbor_hex = "{expected_cbor_hex}",')
+        header_lines.append(f'    .expected_hash_hex = "{expected_hash_hex}",')
+        header_lines.append(f"    .network_id = {network_id_value},")
+        header_lines.append(f"    .protocol_magic = {protocol_magic_value},")
+        header_lines.append(f"    .num_inputs = {len(tx.inputs)},")
+        header_lines.append(f"    .num_outputs = {len(tx.outputs)},")
+        header_lines.append(f"    .num_witnesses = {test_case.signingMode},")
+        header_lines.append(f"    .num_certificates = {len(tx.certificates) if tx.certificates else 0},")
+        header_lines.append(f"    .num_withdrawals = {len(tx.withdrawals) if tx.withdrawals else 0},")
+        header_lines.append(f"    .num_mint_asset_groups = {len(tx.mint) if tx.mint else 0},")
+        header_lines.append(f"    .include_ttl = {bool_to_c(tx.ttl is not None)},")
+        header_lines.append(f"    .include_validity_interval_start = {bool_to_c(tx.validityIntervalStart is not None)},")
+        header_lines.append(f"    .include_aux_data_hash = {bool_to_c(include_aux_data_hash)},")
+        if include_aux_data_hash and aux_data_hash_hex is not None:
+            header_lines.append(f'    .aux_data_hash_hex = "{aux_data_hash_hex}",')
+        else:
+            header_lines.append(f"    .aux_data_hash_hex = NULL,")
+        header_lines.append(f"    .options = {options_value},")
+        header_lines.append("};")
         header_lines.append("")
 
     # Write to file

@@ -2054,15 +2054,13 @@ class CommandBuilder:
             # Amount (uint64, BE)
             data.extend(withdrawal.amount.to_bytes(8, 'big'))
 
-            # Credential type (uint8) - convert to staking_data_source_t values
-            # Python CredentialParamsType: KEY_HASH=0x00, SCRIPT_HASH=0x01, KEY_PATH=0x02
-            # C staking_data_source_t: STAKING_KEY_PATH=0x22, STAKING_KEY_HASH=0x33, STAKING_SCRIPT_HASH=0x55
+            # Credential type (uint8) - use the same encoding as certificates
             if withdrawal.stakeCredential.type == CredentialParamsType.KEY_PATH:
-                credential_type_wire = 0x22  # STAKING_KEY_PATH
+                credential_type_wire = 0x02  # KEY_PATH
             elif withdrawal.stakeCredential.type == CredentialParamsType.SCRIPT_HASH:
-                credential_type_wire = 0x55  # STAKING_SCRIPT_HASH
+                credential_type_wire = 0x01  # SCRIPT_HASH
             elif withdrawal.stakeCredential.type == CredentialParamsType.KEY_HASH:
-                credential_type_wire = 0x33  # STAKING_KEY_HASH
+                credential_type_wire = 0x00  # KEY_HASH
             else:
                 raise ValueError(f"Unknown credential type: {withdrawal.stakeCredential.type}")
 
