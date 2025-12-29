@@ -476,6 +476,11 @@ add_test(test_address_utils_byron test_address_utils_byron)
 add_test(test_address_utils_shelley test_address_utils_shelley)
 add_test(test_key_derivation test_key_derivation)
 add_test(test_message_signing test_message_signing)
+
+add_executable(test_opcert_message test_opcert_message.c hexUtils.c)
+target_link_libraries(test_opcert_message PUBLIC cmocka gcov)
+add_test(test_opcert_message test_opcert_message)
+
 # add_test(test_tokens test_tokens)  # TODO: uncomment when crypto dependencies are mocked
 # add_test(test_tx_parser test_tx_parser)  # TODO: uncomment when created
 # add_test(test_tx_utils test_tx_utils)    # TODO: uncomment when created

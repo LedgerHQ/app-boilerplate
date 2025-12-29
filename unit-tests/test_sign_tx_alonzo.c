@@ -157,6 +157,11 @@ static void test_sign_tx_with_collateral_inputs(void **state) {
     run_fixture(&FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS);
 }
 
+static void test_sign_tx_with_collateral_inputs_shelley(void **state) {
+    (void) state;
+    run_fixture(&FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS_SHELLEY);
+}
+
 static void test_sign_tx_with_required_signers_mixed(void **state) {
     (void) state;
     run_fixture(&FIXTURE_ALONZO_SIGN_TX_WITH_REQUIRED_SIGNERS_MIXED);
@@ -184,6 +189,7 @@ int main(void) {
         cmocka_unit_test(test_sign_tx_with_datum_hash_in_output_as_array_with_tokens),
         cmocka_unit_test(test_sign_tx_with_missing_datum_hash_in_output_with_tokens),
         cmocka_unit_test(test_sign_tx_with_collateral_inputs),
+        cmocka_unit_test(test_sign_tx_with_collateral_inputs_shelley),
         cmocka_unit_test(test_sign_tx_with_required_signers_mixed),
         cmocka_unit_test(test_sign_tx_with_mint_path_in_a_required_signer),
         cmocka_unit_test(test_sign_tx_with_key_hash_in_stake_credential),

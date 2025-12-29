@@ -247,6 +247,7 @@ def main():
         header_lines.append(f"    .include_collateral_output = {bool_to_c(getattr(tx, 'collateralOutput', None) is not None)},")
         header_lines.append(f"    .include_total_collateral = {bool_to_c(getattr(tx, 'totalCollateral', None) is not None)},")
         header_lines.append(f"    .num_reference_inputs = {len(tx.referenceInputs) if hasattr(tx, 'referenceInputs') and tx.referenceInputs else 0},")
+        header_lines.append(f"    .num_voters = {len(tx.votingProcedures) if hasattr(tx, 'votingProcedures') and tx.votingProcedures else 0},")
         treasury_value = getattr(tx, 'treasury', None)
         donation_value = getattr(tx, 'donation', None)
         header_lines.append(f"    .include_treasury = {bool_to_c(treasury_value is not None)},")

@@ -26,6 +26,7 @@ typedef struct {
     bool include_collateral_output;
     bool include_total_collateral;
     uint16_t num_reference_inputs;
+    uint16_t num_voters;
     bool include_treasury;
     uint64_t treasury;
     bool include_donation;

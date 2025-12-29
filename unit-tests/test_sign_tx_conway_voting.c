@@ -167,6 +167,21 @@ static void test_sign_tx_with_voting_procedures_stake_pool_key_hash_voter(void *
     run_fixture(&FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_STAKE_POOL_KEY_HASH_VOTER);
 }
 
+static void test_sign_tx_with_voting_procedures_single_voter_multiple_votes(void **state) {
+    (void) state;
+    run_fixture(&FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_SINGLE_VOTER_MULTIPLE_VOTES);
+}
+
+static void test_sign_tx_with_voting_procedures_multiple_voters_single_vote(void **state) {
+    (void) state;
+    run_fixture(&FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_MULTIPLE_VOTERS_SINGLE_VOTE);
+}
+
+static void test_sign_tx_with_voting_procedures_multiple_voters_multiple_votes(void **state) {
+    (void) state;
+    run_fixture(&FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_MULTIPLE_VOTERS_MULTIPLE_VOTES);
+}
+
 // ======================================================================
 // Main
 // ======================================================================
@@ -181,6 +196,9 @@ int main(void) {
         cmocka_unit_test(test_sign_tx_with_voting_procedures_drep_key_hash_voter),
         cmocka_unit_test(test_sign_tx_with_voting_procedures_drep_script_hash_voter),
         cmocka_unit_test(test_sign_tx_with_voting_procedures_stake_pool_key_hash_voter),
+        cmocka_unit_test(test_sign_tx_with_voting_procedures_single_voter_multiple_votes),
+        cmocka_unit_test(test_sign_tx_with_voting_procedures_multiple_voters_single_vote),
+        cmocka_unit_test(test_sign_tx_with_voting_procedures_multiple_voters_multiple_votes),
     };
     return _cmocka_run_group_tests("test_sign_tx_conway_voting", tests, ARRAY_LEN(tests), NULL, NULL);
 }
