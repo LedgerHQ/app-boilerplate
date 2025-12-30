@@ -54,16 +54,13 @@ static inline void run_tx_and_verify(const uint8_t* init_raw,
     assert_true(cbor_len > 0);
 
     uint8_t expected_hash[TX_HASH_LENGTH];
-    assert_int_equal(blake2b(expected_hash, TX_HASH_LENGTH, expected_cbor, cbor_len), 0);
+    size_t expected_hash_len = hex_to_bytes(expected_hash_hex, expected_hash, sizeof(expected_hash));
+    assert_int_equal(expected_hash_len, TX_HASH_LENGTH);
 
     assert_int_equal(*response_len, TX_HASH_LENGTH);
     assert_memory_equal(response_buf, expected_hash, TX_HASH_LENGTH);
     assert_int_equal(*response_sw, SWO_SUCCESS);
     assert_int_equal(G_context.req_type, REQUEST_NONE);
-
-    uint8_t expected_hash_from_fixture[TX_HASH_LENGTH];
-    hex_to_bytes(expected_hash_hex, expected_hash_from_fixture, sizeof(expected_hash_from_fixture));
-    assert_memory_equal(expected_hash, expected_hash_from_fixture, TX_HASH_LENGTH);
 
     tx_context_cleanup();
 }
@@ -103,7 +100,7 @@ static inline void run_fixture(const tx_fixture_t *fixture) {
         .includeCollateralOutput = fixture->include_collateral_output,
         .includeTotalCollateral = fixture->include_total_collateral,
         .numReferenceInputs = fixture->num_reference_inputs,
-        .numVotingProcedures = 0,
+        .numVoters = fixture->num_voters,
         .includeTreasury = fixture->include_treasury,
         .includeDonation = fixture->include_donation,
         .numWitnesses = fixture->num_witnesses,

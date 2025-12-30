@@ -9,6 +9,7 @@ flow, and utility helpers shared by the standalone tests that still rely on this
 module.
 """
 
+from dataclasses import dataclass
 from enum import IntEnum
 from typing import List, Optional
 
@@ -17,18 +18,28 @@ from ragger.bip import pack_derivation_path
 from application_client.app_def import AddressType, StakingDataSourceType
 from standalone.input_files.signOpCert import OpCertTestCase
 from standalone.input_files.signTx import (
+    AnchorParams,
+    AuthorizeCommitteeParams,
+    Certificate,
     CertificateType,
     CredentialParams,
     CredentialParamsType,
+    DRepParams,
+    DRepRegistrationParams,
+    DRepUpdateParams,
     PoolRetirementParams,
+    ResignCommitteeParams,
     StakeDelegationParams,
     StakeRegistrationConwayParams,
     StakeRegistrationParams,
     Transaction,
+    TxAuxiliaryDataHash,
+    TxAuxiliaryDataType,
     TxOutput,
     TxOutputBabbage,
     TxOutputDestinationType,
     TxRequiredSignerType,
+    VoteDelegationParams,
     MAX_SIGN_TX_CHUNK_SIZE,
     Withdrawal,
 )
@@ -109,6 +120,34 @@ def gather_witness_paths(tx: Transaction, additional_witness_paths: List[str]) -
     return witness_paths
 
 
+@dataclass(frozen=True)
+class TxInitParams:
+    options: int
+    network_id: int
+    protocol_magic: int
+    signing_mode: int
+    num_inputs: int
+    num_outputs: int
+    include_ttl: bool
+    num_certificates: int
+    num_withdrawals: int
+    include_aux_data_hash: bool
+    aux_data_hash_hex: Optional[str]
+    include_validity_interval_start: bool
+    num_mint_asset_groups: int
+    include_script_data_hash: bool
+    num_collateral_inputs: int
+    num_required_signers: int
+    include_network_id: bool
+    include_collateral_output: bool
+    include_total_collateral: bool
+    num_reference_inputs: int
+    num_voters: int
+    include_treasury: bool
+    include_donation: bool
+    num_witnesses: int
+
+
 class CommandBuilder:
     def _serialize(self,
                    ins: InsType,
@@ -141,45 +180,80 @@ class CommandBuilder:
         data.extend(pack_derivation_path(testCase.opCert.path))
         return self._serialize(InsType.INS_SIGN_OPCERT, 0x00, 0x00, bytes(data))
 
-    def sign_tx_init_simple(self,
-                            options: int,
-                            tx_signing_mode: int,
-                            network_id: int,
-                            protocol_magic: int,
-                            num_inputs: int,
-                            num_outputs: int,
-                            include_ttl: bool,
-                            num_certificates: int = 0,
-                            num_withdrawals: int = 0,
-                            include_validity_interval_start: bool = False,
-                            num_mint_asset_groups: int = 0,
-                            num_witnesses: int = 0,
-                            num_voters: int = 0) -> bytes:
+    def sign_tx_init(self, params: TxInitParams) -> bytes:
         data = bytearray()
-        data.extend(options.to_bytes(8, "big"))
-        data.append(network_id)
-        data.extend(protocol_magic.to_bytes(4, "big"))
-        data.append(tx_signing_mode)
-        data.extend(num_inputs.to_bytes(2, "big"))
-        data.extend(num_outputs.to_bytes(2, "big"))
-        data.append(0x02 if include_ttl else 0x01)
-        data.extend(num_certificates.to_bytes(2, "big"))
-        data.extend(num_withdrawals.to_bytes(2, "big"))
-        data.append(0x01)
-        data.append(0x02 if include_validity_interval_start else 0x01)
-        data.extend(num_mint_asset_groups.to_bytes(2, "big"))
-        data.append(0x01)
-        data.extend((0).to_bytes(2, "big"))  # num_collateral_inputs (field 13)
-        data.extend((0).to_bytes(2, "big"))  # num_required_signers (field 14)
-        data.append(0x01)  # includeNetworkId (field 15)
-        data.append(0x01)  # includeCollateralOutput (field 16)
-        data.append(0x01)  # includeTotalCollateral (field 17)
-        data.extend((0).to_bytes(2, "big"))  # num_reference_inputs (field 18)
-        data.extend(num_voters.to_bytes(2, "big"))  # num_voters (field 19)
-        data.append(0x01)  # includeTreasury (field 21)
-        data.append(0x01)  # includeDonation (field 22)
-        data.extend(num_witnesses.to_bytes(2, "big"))
+        data.extend(params.options.to_bytes(8, "big"))
+        data.append(params.network_id)
+        data.extend(params.protocol_magic.to_bytes(4, "big"))
+        data.append(params.signing_mode)
+        data.extend(params.num_inputs.to_bytes(2, "big"))
+        data.extend(params.num_outputs.to_bytes(2, "big"))
+        data.append(0x02 if params.include_ttl else 0x01)
+        data.extend(params.num_certificates.to_bytes(2, "big"))
+        data.extend(params.num_withdrawals.to_bytes(2, "big"))
+        data.append(0x02 if params.include_aux_data_hash else 0x01)
+        if params.include_aux_data_hash:
+            if params.aux_data_hash_hex is None:
+                raise ValueError("Auxiliary data hash is required when include_aux_data_hash is set")
+            data.extend(bytes.fromhex(params.aux_data_hash_hex))
+        data.append(0x02 if params.include_validity_interval_start else 0x01)
+        data.extend(params.num_mint_asset_groups.to_bytes(2, "big"))
+        data.append(0x02 if params.include_script_data_hash else 0x01)
+        data.extend(params.num_collateral_inputs.to_bytes(2, "big"))
+        data.extend(params.num_required_signers.to_bytes(2, "big"))
+        data.append(0x02 if params.include_network_id else 0x01)
+        data.append(0x02 if params.include_collateral_output else 0x01)
+        data.append(0x02 if params.include_total_collateral else 0x01)
+        data.extend(params.num_reference_inputs.to_bytes(2, "big"))
+        data.extend(params.num_voters.to_bytes(2, "big"))
+        data.append(0x02 if params.include_treasury else 0x01)
+        data.append(0x02 if params.include_donation else 0x01)
+        data.extend(params.num_witnesses.to_bytes(2, "big"))
         return self._serialize(InsType.INS_SIGN_TX, P1Type.P1_TX_INIT, P2Type.P2_UNUSED, bytes(data))
+
+    def build_tx_init_params(self,
+                             tx: Transaction,
+                             signing_mode: int,
+                             witness_paths: List[str],
+                             options: int = 0) -> TxInitParams:
+        include_aux_data_hash = (
+            tx.auxiliaryData is not None and
+            tx.auxiliaryData.type == TxAuxiliaryDataType.ARBITRARY_HASH
+        )
+        aux_data_hash_hex = None
+        if include_aux_data_hash:
+            aux_params = tx.auxiliaryData.params
+            if isinstance(aux_params, TxAuxiliaryDataHash):
+                aux_data_hash_hex = aux_params.hashHex
+            else:
+                include_aux_data_hash = False
+
+        return TxInitParams(
+            options=options,
+            network_id=tx.network.networkId,
+            protocol_magic=tx.network.protocol,
+            signing_mode=signing_mode,
+            num_inputs=len(tx.inputs),
+            num_outputs=len(tx.outputs),
+            include_ttl=tx.ttl is not None,
+            num_certificates=len(tx.certificates),
+            num_withdrawals=len(tx.withdrawals),
+            include_aux_data_hash=include_aux_data_hash,
+            aux_data_hash_hex=aux_data_hash_hex,
+            include_validity_interval_start=tx.validityIntervalStart is not None,
+            num_mint_asset_groups=len(tx.mint),
+            include_script_data_hash=tx.scriptDataHash is not None,
+            num_collateral_inputs=len(tx.collateralInputs) if getattr(tx, "collateralInputs", None) else 0,
+            num_required_signers=len(tx.requiredSigners) if getattr(tx, "requiredSigners", None) else 0,
+            include_network_id=bool(getattr(tx, "includeNetworkId", False)),
+            include_collateral_output=getattr(tx, "collateralOutput", None) is not None,
+            include_total_collateral=getattr(tx, "totalCollateral", None) is not None,
+            num_reference_inputs=len(tx.referenceInputs) if getattr(tx, "referenceInputs", None) else 0,
+            num_voters=len(tx.votingProcedures) if getattr(tx, "votingProcedures", None) else 0,
+            include_treasury=getattr(tx, "treasury", None) is not None,
+            include_donation=getattr(tx, "donation", None) is not None,
+            num_witnesses=len(witness_paths),
+        )
 
     def sign_tx_witness(self, path: str) -> bytes:
         data = pack_derivation_path(path)
@@ -220,30 +294,7 @@ class CommandBuilder:
             data.extend(tx.ttl.to_bytes(8, "big"))
 
         for certificate in tx.certificates:
-            data.append(certificate.type)
-            if certificate.type in (CertificateType.STAKE_REGISTRATION, CertificateType.STAKE_DEREGISTRATION):
-                assert isinstance(certificate.params, StakeRegistrationParams)
-                cred = certificate.params.stakeCredential
-                data.extend(self._serialize_credential_inline(cred))
-            elif certificate.type in (CertificateType.STAKE_REGISTRATION_CONWAY, CertificateType.STAKE_DEREGISTRATION_CONWAY):
-                assert isinstance(certificate.params, StakeRegistrationConwayParams)
-                cred = certificate.params.stakeCredential
-                data.extend(self._serialize_credential_inline(cred))
-                data.extend(certificate.params.deposit.to_bytes(8, "big"))
-            elif certificate.type == CertificateType.STAKE_DELEGATION:
-                assert isinstance(certificate.params, StakeDelegationParams)
-                cred = certificate.params.stakeCredential
-                data.extend(self._serialize_credential_inline(cred))
-                data.extend(bytes.fromhex(certificate.params.poolKeyHash))
-            elif certificate.type == CertificateType.STAKE_POOL_RETIREMENT:
-                assert isinstance(certificate.params, PoolRetirementParams)
-                data.extend(self._serialize_credential_inline(certificate.params.poolCredential))
-                data.extend(certificate.params.retirementEpoch.to_bytes(8, "big"))
-            elif certificate.type == CertificateType.VOTE_DELEGATION:
-                assert isinstance(certificate.params, VoteDelegationParams)
-                cred = certificate.params.stakeCredential
-                data.extend(self._serialize_credential_inline(cred))
-            # unsupported certificate types are ignored
+            data.extend(self._serialize_certificate(certificate))
 
         if tx.validityIntervalStart is not None:
             data.extend(tx.validityIntervalStart.to_bytes(8, "big"))
@@ -436,3 +487,83 @@ class CommandBuilder:
         else:
             raise ValueError(f"Unsupported credential type: {credential.type}")
         return bytes(data)
+
+    def _serialize_drep(self, drep: DRepParams) -> bytes:
+        result = bytearray()
+        result.append(int(drep.type))
+        if drep.keyValue is not None:
+            if drep.keyValue.startswith("m/"):
+                result.extend(pack_derivation_path(drep.keyValue))
+            else:
+                result.extend(bytes.fromhex(drep.keyValue))
+        return bytes(result)
+
+    def _serialize_anchor(self, anchor: Optional[AnchorParams]) -> bytes:
+        result = bytearray()
+        if anchor is None:
+            result.append(0x00)
+            return bytes(result)
+
+        result.append(0x01)
+        url_bytes = anchor.url.encode("utf-8")
+        if len(url_bytes) > 0xFF:
+            raise ValueError("Anchor URL exceeds maximum length")
+        result.append(len(url_bytes))
+        result.extend(url_bytes)
+        hash_bytes = bytes.fromhex(anchor.hashHex)
+        if len(hash_bytes) != 32:
+            raise ValueError("Anchor hash must be 32 bytes")
+        result.extend(hash_bytes)
+        return bytes(result)
+
+    def _serialize_certificate(self, certificate: Certificate) -> bytes:
+        result = bytearray()
+        result.append(int(certificate.type))
+
+        cert_type = certificate.type
+        params = certificate.params
+
+        if cert_type in (CertificateType.STAKE_REGISTRATION, CertificateType.STAKE_DEREGISTRATION):
+            assert isinstance(params, StakeRegistrationParams)
+            result.extend(self._serialize_credential_inline(params.stakeCredential))
+        elif cert_type in (CertificateType.STAKE_REGISTRATION_CONWAY, CertificateType.STAKE_DEREGISTRATION_CONWAY):
+            assert isinstance(params, StakeRegistrationConwayParams)
+            result.extend(self._serialize_credential_inline(params.stakeCredential))
+            result.extend(params.deposit.to_bytes(8, "big"))
+        elif cert_type == CertificateType.STAKE_DELEGATION:
+            assert isinstance(params, StakeDelegationParams)
+            result.extend(self._serialize_credential_inline(params.stakeCredential))
+            result.extend(bytes.fromhex(params.poolKeyHash))
+        elif cert_type == CertificateType.VOTE_DELEGATION:
+            assert isinstance(params, VoteDelegationParams)
+            result.extend(self._serialize_credential_inline(params.stakeCredential))
+            result.extend(self._serialize_drep(params.dRep))
+        elif cert_type == CertificateType.AUTHORIZE_COMMITTEE_HOT:
+            assert isinstance(params, AuthorizeCommitteeParams)
+            result.extend(self._serialize_credential_inline(params.coldCredential))
+            result.extend(self._serialize_credential_inline(params.hotCredential))
+        elif cert_type == CertificateType.RESIGN_COMMITTEE_COLD:
+            assert isinstance(params, ResignCommitteeParams)
+            result.extend(self._serialize_credential_inline(params.coldCredential))
+            result.extend(self._serialize_anchor(params.anchor))
+        elif cert_type == CertificateType.DREP_REGISTRATION:
+            assert isinstance(params, DRepRegistrationParams)
+            result.extend(self._serialize_credential_inline(params.dRepCredential))
+            result.extend(params.deposit.to_bytes(8, "big"))
+            result.extend(self._serialize_anchor(params.anchor))
+        elif cert_type == CertificateType.DREP_DEREGISTRATION:
+            assert isinstance(params, DRepRegistrationParams)
+            result.extend(self._serialize_credential_inline(params.dRepCredential))
+            result.extend(params.deposit.to_bytes(8, "big"))
+        elif cert_type == CertificateType.DREP_UPDATE:
+            assert isinstance(params, DRepUpdateParams)
+            result.extend(self._serialize_credential_inline(params.dRepCredential))
+            result.extend(self._serialize_anchor(params.anchor))
+        elif cert_type == CertificateType.STAKE_POOL_RETIREMENT:
+            assert isinstance(params, PoolRetirementParams)
+            result.extend(self._serialize_credential_inline(params.poolCredential))
+            result.extend(params.retirementEpoch.to_bytes(8, "big"))
+        else:
+            raise ValueError(f"Unsupported certificate type: {cert_type}")
+
+        return bytes(result)

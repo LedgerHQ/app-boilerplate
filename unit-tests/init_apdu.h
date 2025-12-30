@@ -30,7 +30,7 @@ typedef struct {
     bool includeCollateralOutput;
     bool includeTotalCollateral;
     uint16_t numReferenceInputs;
-    uint16_t numVotingProcedures;
+    uint16_t numVoters;
     bool includeTreasury;
     bool includeDonation;
     uint16_t numWitnesses;
@@ -98,7 +98,7 @@ static inline size_t build_init_apdu(const init_apdu_params_t* params,
     _append_u8(out, &pos, _item_flag(params->includeCollateralOutput));
     _append_u8(out, &pos, _item_flag(params->includeTotalCollateral));
     _append_u16_be(out, &pos, params->numReferenceInputs);
-    _append_u16_be(out, &pos, params->numVotingProcedures);
+    _append_u16_be(out, &pos, params->numVoters);
     _append_u8(out, &pos, _item_flag(params->includeTreasury));
     _append_u8(out, &pos, _item_flag(params->includeDonation));
     _append_u16_be(out, &pos, params->numWitnesses);

@@ -89,10 +89,6 @@ static void test_opcert_message_construction(void** state) {
 static void test_opcert_message_size(void** state) {
     (void)state;
 
-    uint8_t kes_public_key[KES_PUBLIC_KEY_LENGTH] = {0};
-    uint64_t kes_period = 0;
-    uint64_t issue_counter = 0;
-
     // Total size should be KES key + 2x uint64_t
     size_t message_size = KES_PUBLIC_KEY_LENGTH + OPCERT_ISSUE_COUNTER_SIZE + OPCERT_KES_PERIOD_SIZE;
     assert_int_equal(48, message_size);

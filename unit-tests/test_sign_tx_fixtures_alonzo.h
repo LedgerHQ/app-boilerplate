@@ -13,6 +13,14 @@
 // Fixtures
 // ======================================================================
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverlength-strings"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverlength-strings"
+#endif
+
 // Test 0: Sign_tx_with_script_data_hash
 //
 static const uint8_t FIXTURE_ALONZO_SIGN_TX_WITH_SCRIPT_DATA_HASH_RAW_TX[] = {
@@ -35,7 +43,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_SCRIPT_DATA_HASH = {
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 0,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -49,6 +57,11 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_SCRIPT_DATA_HASH = {
     .include_collateral_output = false,
     .include_total_collateral = false,
     .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -77,7 +90,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_CHANGE_OUTPUT_AS_ARRAY = {
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -91,6 +104,11 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_CHANGE_OUTPUT_AS_ARRAY = {
     .include_collateral_output = false,
     .include_total_collateral = false,
     .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -121,7 +139,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_DATUM_HASH_IN_OUTPUT_AS_AR
     .protocol_magic = 42,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -135,6 +153,11 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_DATUM_HASH_IN_OUTPUT_AS_AR
     .include_collateral_output = false,
     .include_total_collateral = false,
     .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -169,7 +192,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_DATUM_HASH_IN_OUTPUT_AS_AR
     .protocol_magic = 42,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -183,6 +206,11 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_DATUM_HASH_IN_OUTPUT_AS_AR
     .include_collateral_output = false,
     .include_total_collateral = false,
     .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -215,7 +243,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_MISSING_DATUM_HASH_IN_OUTP
     .protocol_magic = 42,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -229,6 +257,11 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_MISSING_DATUM_HASH_IN_OUTP
     .include_collateral_output = false,
     .include_total_collateral = false,
     .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -255,7 +288,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS = {
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 0,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -269,6 +302,11 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS = {
     .include_collateral_output = false,
     .include_total_collateral = false,
     .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -295,7 +333,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS_SHELLEY 
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 0,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -309,6 +347,11 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS_SHELLEY 
     .include_collateral_output = false,
     .include_total_collateral = false,
     .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -336,7 +379,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_REQUIRED_SIGNERS_MIXED = {
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 0,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -350,6 +393,11 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_REQUIRED_SIGNERS_MIXED = {
     .include_collateral_output = false,
     .include_total_collateral = false,
     .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -378,7 +426,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_MINT_PATH_IN_A_REQUIRED_SI
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 2,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -392,6 +440,11 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_MINT_PATH_IN_A_REQUIRED_SI
     .include_collateral_output = false,
     .include_total_collateral = false,
     .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -422,7 +475,7 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_KEY_HASH_IN_STAKE_CREDENTI
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 0,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 1,
     .num_withdrawals = 1,
     .num_mint_asset_groups = 0,
@@ -436,6 +489,17 @@ static const tx_fixture_t FIXTURE_ALONZO_SIGN_TX_WITH_KEY_HASH_IN_STAKE_CREDENTI
     .include_collateral_output = false,
     .include_total_collateral = false,
     .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

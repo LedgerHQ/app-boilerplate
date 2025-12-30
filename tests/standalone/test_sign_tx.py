@@ -11,7 +11,6 @@ from ragger.navigator.navigation_scenario import NavigateWithScenario
 
 from application_client.status_words import StatusWord
 from application_client.command_sender import CommandSender
-from application_client.command_builder import gather_witness_paths
 from standalone.utils import verify_signature, idTestFunc
 from standalone.input_files.signTx import (
     testsByron,
@@ -56,38 +55,11 @@ def test_sign_tx_simple(device: Device,
     client = CommandSender(backend)
     tx = testCase.tx
 
-    # Gather unique witness paths from transaction elements
-    witness_paths = gather_witness_paths(tx, testCase.additionalWitnessPaths)
-    assert witness_paths, "No witness paths found in transaction"
-
     # Calculate expected transaction hash from the CBOR txBody
     expected_cbor = bytes.fromhex(testCase.txBody)
     expected_hash = blake2b(expected_cbor, digest_size=32).digest()
     print(f"Expected tx hash: {expected_hash.hex()}")
-    print(f"Witness paths: {witness_paths}")
-
-    # Step 1: Send INIT APDU with transaction description
-    response = client.sign_tx_init_simple(
-        options=testCase.options,
-        tx_signing_mode=testCase.signingMode,
-        network_id=tx.network.networkId,
-        protocol_magic=tx.network.protocol,
-        num_inputs=len(tx.inputs),
-        num_outputs=len(tx.outputs),
-        include_ttl=tx.ttl is not None,
-        num_certificates=len(tx.certificates),
-        num_withdrawals=len(tx.withdrawals),
-        include_validity_interval_start=tx.validityIntervalStart is not None,
-        num_mint_asset_groups=len(tx.mint),
-        num_witnesses=len(witness_paths)
-    )
-    assert response.status == StatusWord.SWO_SUCCESS, f"Init failed: {hex(response.status)}"
-
-    # Step 2: Send transaction data chunks
-    # Deserialization only happens after the final chunk is received
-    # If deserialization fails, ExceptionRAPDU will be raised automatically
-    with client.sign_tx_send_chunks(tx):
-        # Navigate while the final chunk is being processed
+    def review_transaction() -> None:
         if device.is_nano:
             # TODO: Add proper navigation for nano devices
             navigator.navigate_until_text(NavInsID.RIGHT_CLICK, [NavInsID.BOTH_CLICK], "Sign transaction")
@@ -97,11 +69,14 @@ def test_sign_tx_simple(device: Device,
             else:
                 scenario_navigator.review_approve(do_comparison=False)
 
-    # Get the response from the final chunk after navigation
-    # The final chunk response contains the transaction hash
-    response = client.get_async_response()
-    assert response is not None, "No response from final chunk"
-    tx_hash = response.data
+    tx_hash, witness_paths = client.sign_tx(
+        tx=tx,
+        signing_mode=testCase.signingMode,
+        additional_witness_paths=testCase.additionalWitnessPaths,
+        options=testCase.options,
+        on_review=review_transaction
+    )
+    print(f"Witness paths: {witness_paths}")
     print(f"Actual tx hash:   {tx_hash.hex()}")
     assert len(tx_hash) == 32, f"Expected 32-byte tx hash, got {len(tx_hash)}"
     # TODO this check should be moved to unit tests (for a fixed seed,

@@ -13,6 +13,14 @@
 // Fixtures
 // ======================================================================
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverlength-strings"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverlength-strings"
+#endif
+
 // Test 0: Sign_tx_without_change_address_with_Shelley_scripthash_output
 //
 static const uint8_t FIXTURE_MULTISIG_SIGN_TX_WITHOUT_CHANGE_ADDRESS_WITH_SHELLEY_SCRIPTHASH_OUTPUT_RAW_TX[] = {
@@ -37,7 +45,7 @@ static const tx_fixture_t FIXTURE_MULTISIG_SIGN_TX_WITHOUT_CHANGE_ADDRESS_WITH_S
     .protocol_magic = 42,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 6,
+    .num_witnesses = 2,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -45,6 +53,17 @@ static const tx_fixture_t FIXTURE_MULTISIG_SIGN_TX_WITHOUT_CHANGE_ADDRESS_WITH_S
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
     .include_script_data_hash = false,
+    .num_collateral_inputs = 0,
+    .num_required_signers = 0,
+    .include_network_id = false,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
+    .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -75,7 +94,7 @@ static const tx_fixture_t FIXTURE_MULTISIG_SIGN_TX_WITH_SCRIPT_BASED_WITHDRAWAL 
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 6,
+    .num_witnesses = 2,
     .num_certificates = 0,
     .num_withdrawals = 1,
     .num_mint_asset_groups = 0,
@@ -83,6 +102,17 @@ static const tx_fixture_t FIXTURE_MULTISIG_SIGN_TX_WITH_SCRIPT_BASED_WITHDRAWAL 
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
     .include_script_data_hash = false,
+    .num_collateral_inputs = 0,
+    .num_required_signers = 0,
+    .include_network_id = false,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
+    .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -112,7 +142,7 @@ static const tx_fixture_t FIXTURE_MULTISIG_SIGN_TX_WITH_A_STAKE_REGISTRATION_SCR
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 6,
+    .num_witnesses = 2,
     .num_certificates = 1,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -120,6 +150,17 @@ static const tx_fixture_t FIXTURE_MULTISIG_SIGN_TX_WITH_A_STAKE_REGISTRATION_SCR
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
     .include_script_data_hash = false,
+    .num_collateral_inputs = 0,
+    .num_required_signers = 0,
+    .include_network_id = false,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
+    .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -151,7 +192,7 @@ static const tx_fixture_t FIXTURE_MULTISIG_SIGN_TX_WITH_A_STAKE_DELEGATION_SCRIP
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 6,
+    .num_witnesses = 2,
     .num_certificates = 1,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -159,6 +200,17 @@ static const tx_fixture_t FIXTURE_MULTISIG_SIGN_TX_WITH_A_STAKE_DELEGATION_SCRIP
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
     .include_script_data_hash = false,
+    .num_collateral_inputs = 0,
+    .num_required_signers = 0,
+    .include_network_id = false,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
+    .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -188,7 +240,7 @@ static const tx_fixture_t FIXTURE_MULTISIG_SIGN_TX_WITH_A_STAKE_DEREGISTRATION_S
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 6,
+    .num_witnesses = 2,
     .num_certificates = 1,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -196,6 +248,23 @@ static const tx_fixture_t FIXTURE_MULTISIG_SIGN_TX_WITH_A_STAKE_DEREGISTRATION_S
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
     .include_script_data_hash = false,
+    .num_collateral_inputs = 0,
+    .num_required_signers = 0,
+    .include_network_id = false,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
+    .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

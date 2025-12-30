@@ -1,11 +1,12 @@
-from typing import Generator, Optional
+from typing import Callable, Generator, List, Optional, Tuple
 from contextlib import contextmanager
 
 from ragger.backend.interface import BackendInterface, RAPDU
 
 from standalone.input_files.signOpCert import OpCertTestCase
-from application_client.command_builder import CommandBuilder
+from application_client.command_builder import CommandBuilder, gather_witness_paths
 from application_client.status_words import StatusWord
+from standalone.input_files.signTx import Transaction
 
 
 class CommandSender:
@@ -91,96 +92,43 @@ class CommandSender:
         with self._exchange_async(self._cmd_builder.sign_tx_witness(path)):
             yield
 
-    def sign_tx_init_simple(self, options: int, tx_signing_mode: int, network_id: int,
-                           protocol_magic: int, num_inputs: int, num_outputs: int, include_ttl: bool,
-                           num_certificates: int = 0, num_withdrawals: int = 0, include_validity_interval_start: bool = False,
-                           num_mint_asset_groups: int = 0, num_witnesses: int = 0, num_voters: int = 0) -> RAPDU:
-        """APDU Sign TX Init (simple chunked mode)
+    def sign_tx(self,
+                tx: Transaction,
+                signing_mode: int,
+                additional_witness_paths: Optional[List[str]] = None,
+                options: int = 0,
+                on_review: Optional[Callable[[], None]] = None) -> Tuple[bytes, List[str]]:
+        """Sign a transaction and return its hash plus the witness paths used.
 
-        Args:
-            options (int): Transaction options (bit 0 = tagCborSets)
-            tx_signing_mode (int): Transaction signing mode (3=ORDINARY, 4=POOL_OWNER, etc.)
-            network_id (int): Network ID (0=testnet, 1=mainnet)
-            protocol_magic (int): Protocol magic number
-            num_inputs (int): Number of inputs
-            num_outputs (int): Number of outputs
-            include_ttl (bool): Whether TTL is included
-            num_certificates (int): Number of certificates (default 0)
-            num_withdrawals (int): Number of withdrawals (default 0)
-            include_validity_interval_start (bool): Whether validity interval start is included (default False)
-            num_mint_asset_groups (int): Number of mint asset groups (default 0)
-            num_witnesses (int): Number of witnesses (default 0)
-            num_voters (int): Number of voters in voting procedures (default 0)
-
-        Returns:
-            Response APDU
+        This builds the init APDU from the transaction body, sends the raw chunks,
+        and waits for the final response after the user approves the transaction.
         """
-        data = bytearray()
+        extra_paths = additional_witness_paths or []
+        witness_paths = gather_witness_paths(tx, extra_paths)
+        if not witness_paths:
+            raise AssertionError("No witness paths found in transaction")
 
-        # Fixed header: options, networkId, protocolMagic, signingMode
-        data.extend(options.to_bytes(8, 'big'))
-        data.append(network_id)
-        data.extend(protocol_magic.to_bytes(4, 'big'))
-        data.append(tx_signing_mode)
-
-        # Fields 0-1: inputs and outputs (always present)
-        data.extend(num_inputs.to_bytes(2, 'big'))
-        data.extend(num_outputs.to_bytes(2, 'big'))
-
-        # Field 3 (TTL) - optional
-        data.append(0x02 if include_ttl else 0x01)
-        # Field 4 (certificates) - optional
-        data.extend(num_certificates.to_bytes(2, 'big'))
-        # Field 5 (withdrawals) - optional
-        data.extend(num_withdrawals.to_bytes(2, 'big'))
-
-        # Field 7 (auxiliary data hash) - optional, always false for now
-        data.append(0x01)
-        # Field 8 (validity interval start) - optional
-        data.append(0x02 if include_validity_interval_start else 0x01)
-
-        # Field 9 (mint) - optional
-        data.extend(num_mint_asset_groups.to_bytes(2, 'big'))
-
-        # Field 11 (script data hash) - optional, always false for now
-        data.append(0x01)
-        # Field 13 (collateral inputs) - optional, always 0 for now
-        data.extend((0).to_bytes(2, 'big'))
-        # Field 14 (required signers) - optional, always 0 for now
-        data.extend((0).to_bytes(2, 'big'))
-        # Field 15 (network ID) - optional, always false for now
-        data.append(0x01)
-        # Field 16 (collateral output) - optional, always false for now
-        data.append(0x01)
-        # Field 17 (total collateral) - optional, always false for now
-        data.append(0x01)
-        # Field 18 (reference inputs) - optional, always 0 for now
-        data.extend((0).to_bytes(2, 'big'))
-        # Field 19 (voting procedures) - optional
-        data.extend(num_voters.to_bytes(2, 'big'))
-        # Field 21 (treasury) - optional, always false for now
-        data.append(0x01)
-        # Field 22 (donation) - optional, always false for now
-        data.append(0x01)
-
-        # Number of witness paths
-        data.extend(num_witnesses.to_bytes(2, 'big'))
-
-        return self._exchange(self._cmd_builder.sign_tx_init_simple(
+        init_params = self._cmd_builder.build_tx_init_params(
+            tx=tx,
+            signing_mode=signing_mode,
+            witness_paths=witness_paths,
             options=options,
-            tx_signing_mode=tx_signing_mode,
-            network_id=network_id,
-            protocol_magic=protocol_magic,
-            num_inputs=num_inputs,
-            num_outputs=num_outputs,
-            include_ttl=include_ttl,
-            num_certificates=num_certificates,
-            num_withdrawals=num_withdrawals,
-            include_validity_interval_start=include_validity_interval_start,
-            num_mint_asset_groups=num_mint_asset_groups,
-            num_witnesses=num_witnesses,
-            num_voters=num_voters,
-        ))
+        )
+        response = self._exchange(self._cmd_builder.sign_tx_init(init_params))
+        if response.status != StatusWord.SWO_SUCCESS:
+            raise AssertionError(f"Init failed: {hex(response.status)}")
+
+        with self.sign_tx_send_chunks(tx):
+            if on_review is not None:
+                on_review()
+
+        response = self.get_async_response()
+        if response is None:
+            raise AssertionError("No response from final chunk")
+        if response.status != StatusWord.SWO_SUCCESS:
+            raise AssertionError(f"Transaction failed: {hex(response.status)}")
+
+        return response.data, witness_paths
 
     @contextmanager
     def sign_tx_send_chunks(self, tx) -> Generator[None, None, None]:

@@ -13,6 +13,14 @@
 // Fixtures
 // ======================================================================
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverlength-strings"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverlength-strings"
+#endif
+
 // Test 0: Sign_tx_with_treasury
 //
 static const uint8_t FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREASURY_RAW_TX[] = {
@@ -37,7 +45,7 @@ static const tx_fixture_t FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREAS
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -51,6 +59,7 @@ static const tx_fixture_t FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREAS
     .include_collateral_output = false,
     .include_total_collateral = false,
     .num_reference_inputs = 0,
+    .num_voters = 0,
     .include_treasury = true,
     .treasury = 27,
     .include_donation = false,
@@ -83,7 +92,7 @@ static const tx_fixture_t FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_DONAT
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -97,6 +106,7 @@ static const tx_fixture_t FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_DONAT
     .include_collateral_output = false,
     .include_total_collateral = false,
     .num_reference_inputs = 0,
+    .num_voters = 0,
     .include_treasury = false,
     .treasury = 0,
     .include_donation = true,
@@ -130,7 +140,7 @@ static const tx_fixture_t FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREAS
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -144,6 +154,7 @@ static const tx_fixture_t FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREAS
     .include_collateral_output = false,
     .include_total_collateral = false,
     .num_reference_inputs = 0,
+    .num_voters = 0,
     .include_treasury = true,
     .treasury = 27,
     .include_donation = true,
@@ -151,3 +162,9 @@ static const tx_fixture_t FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREAS
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

@@ -13,6 +13,14 @@
 // Fixtures
 // ======================================================================
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverlength-strings"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverlength-strings"
+#endif
+
 // Test 0: Sign_tx_with_voting_procedures,_COMMITTEE_KEY_PATH_voter
 //
 static const uint8_t FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_COMMITTEE_KEY_PATH_VOTER_RAW_TX[] = {
@@ -44,7 +52,7 @@ static const tx_fixture_t FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_C
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -94,7 +102,7 @@ static const tx_fixture_t FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_D
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -144,7 +152,7 @@ static const tx_fixture_t FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_S
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -198,7 +206,7 @@ static const tx_fixture_t FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_C
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -249,7 +257,7 @@ static const tx_fixture_t FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_C
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -300,7 +308,7 @@ static const tx_fixture_t FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_D
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -354,7 +362,7 @@ static const tx_fixture_t FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_D
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -408,7 +416,7 @@ static const tx_fixture_t FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_S
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -450,23 +458,23 @@ static const uint8_t FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_SINGLE
     0xA8, 0x6C, 0x09, 0xA2, 0x87, 0x2F, 0x76, 0x74, 0x1D, 0xC7, 0xA6, 0x8E, 0x21, 0x49, 0xC8, 0xDE,
     0xAD, 0xBE, 0xEF, 0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3,
     0xA0, 0xBF, 0x83, 0x46, 0x1A, 0xCE, 0x32, 0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA,
-    0xD1, 0xC0, 0xB7, 0x00, 0x00, 0x00, 0x03, 0x00, 0x01, 0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB,
+    0xD1, 0xC0, 0xB7, 0x00, 0x00, 0x00, 0x04, 0x00, 0x01, 0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB,
     0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83, 0x46, 0x1A, 0xCE, 0x32, 0xD7, 0x93, 0x36,
-    0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7, 0x00, 0x00, 0x00, 0x03, 0x01, 0x01,
+    0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7, 0x00, 0x00, 0x00, 0x05, 0x01, 0x01,
 };
 
 static const tx_fixture_t FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_SINGLE_VOTER_MULTIPLE_VOTES = {
     .name = "Sign_tx_with_voting_procedures_single_voter_multiple_votes",
     .raw_tx = FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_SINGLE_VOTER_MULTIPLE_VOTES_RAW_TX,
     .raw_tx_len = sizeof(FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_SINGLE_VOTER_MULTIPLE_VOTES_RAW_TX),
-    .tx_body_cbor_hex = "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018182582b82d818582183581c9e1c71de652ec8b85fec296f0685ca3988781c94a2e1a5d89d92f45fa0001a0d0c25611a002dd2e802182a030a13a18202581ca6293536eb7ea36d28b50d0260d5cded29bece9fa40092f654c7a3bda38258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b703820282727777772e76616375756d6c6162732e636f6d58201afd028b504c3668102b129b37a86c09a2872f76741dc7a68e2149c8deadbeef8258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7038200f68258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7038201f6",
-    .expected_hash_hex = "1afeac7f51d2f4c5227e50b3b5bcb1a76ed8495874248300ca34669290783b8b",
+    .tx_body_cbor_hex = "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018182582b82d818582183581c9e1c71de652ec8b85fec296f0685ca3988781c94a2e1a5d89d92f45fa0001a0d0c25611a002dd2e802182a030a13a18202581cba41c59ac6e1a0e4ac304af98db801097d0bf8d2a5b28a54752426a1a38258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b703820282727777772e76616375756d6c6162732e636f6d58201afd028b504c3668102b129b37a86c09a2872f76741dc7a68e2149c8deadbeef8258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7048200f68258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7058201f6",
+    .expected_hash_hex = "8d68ef12ff966b65659ce6949062c0e9629db6dc05d5a71ccf1e74a099997b18",
     .signing_mode = 3,
     .network_id = 1,
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -509,25 +517,25 @@ static const uint8_t FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_MULTIP
     0xAD, 0xBE, 0xEF, 0x66, 0x05, 0x80, 0x00, 0x07, 0x3C, 0x80, 0x00, 0x07, 0x17, 0x80, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x3B, 0x40, 0x26, 0x51, 0x11,
     0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83, 0x46, 0x1A, 0xCE, 0x32, 0xD7,
-    0x93, 0x36, 0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7, 0x00, 0x00, 0x00, 0x03, 0x00,
+    0x93, 0x36, 0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7, 0x00, 0x00, 0x00, 0x04, 0x00,
     0x01, 0x68, 0x04, 0x80, 0x00, 0x07, 0x3D, 0x80, 0x00, 0x07, 0x17, 0x80, 0x00, 0x00, 0x00, 0x80,
     0x00, 0x00, 0x00, 0x00, 0x01, 0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D,
     0x95, 0xB3, 0xA0, 0xBF, 0x83, 0x46, 0x1A, 0xCE, 0x32, 0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39,
-    0xB3, 0xAA, 0xD1, 0xC0, 0xB7, 0x00, 0x00, 0x00, 0x03, 0x01, 0x01,
+    0xB3, 0xAA, 0xD1, 0xC0, 0xB7, 0x00, 0x00, 0x00, 0x05, 0x01, 0x01,
 };
 
 static const tx_fixture_t FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_MULTIPLE_VOTERS_SINGLE_VOTE = {
     .name = "Sign_tx_with_voting_procedures_multiple_voters_single_vote",
     .raw_tx = FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_MULTIPLE_VOTERS_SINGLE_VOTE_RAW_TX,
     .raw_tx_len = sizeof(FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_MULTIPLE_VOTERS_SINGLE_VOTE_RAW_TX),
-    .tx_body_cbor_hex = "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018182582b82d818582183581c9e1c71de652ec8b85fec296f0685ca3988781c94a2e1a5d89d92f45fa0001a0d0c25611a002dd2e802182a030a13a38200581c674c08841f10a7c307de8dc7c6d4be24f94255082069d5e1b03f0762a18258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b703820282727777772e76616375756d6c6162732e636f6d58201afd028b504c3668102b129b37a86c09a2872f76741dc7a68e2149c8deadbeef8202581ca6293536eb7ea36d28b50d0260d5cded29bece9fa40092f654c7a3bda18258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7038200f68204581cdbfee4665e58c8f8e9b9ff02b17f32e08a42c855476a5d867c2737b7a18258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7038201f6",
-    .expected_hash_hex = "d699a47e8baecc608d1cd3e400f5eaf56872b5166e97f096bb74c0bc2750a54b",
+    .tx_body_cbor_hex = "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018182582b82d818582183581c9e1c71de652ec8b85fec296f0685ca3988781c94a2e1a5d89d92f45fa0001a0d0c25611a002dd2e802182a030a13a38200581cd098c6a0a621f3343abe55877ee88fd5a83363e3c7887b3c48839092a18258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b703820282727777772e76616375756d6c6162732e636f6d58201afd028b504c3668102b129b37a86c09a2872f76741dc7a68e2149c8deadbeef8202581cba41c59ac6e1a0e4ac304af98db801097d0bf8d2a5b28a54752426a1a18258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7048200f68204581cdbfee4665e58c8f8e9b9ff02b17f32e08a42c855476a5d867c2737b7a18258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7058201f6",
+    .expected_hash_hex = "4b4f2527c642b26c2f53ccdb8ad992daab2bb71547c7d24f5377f00fdfec79ca",
     .signing_mode = 3,
     .network_id = 1,
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -569,28 +577,28 @@ static const uint8_t FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_MULTIP
     0xA8, 0x6C, 0x09, 0xA2, 0x87, 0x2F, 0x76, 0x74, 0x1D, 0xC7, 0xA6, 0x8E, 0x21, 0x49, 0xC8, 0xDE,
     0xAD, 0xBE, 0xEF, 0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3,
     0xA0, 0xBF, 0x83, 0x46, 0x1A, 0xCE, 0x32, 0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA,
-    0xD1, 0xC0, 0xB7, 0x00, 0x00, 0x00, 0x03, 0x00, 0x01, 0x01, 0x8A, 0xFD, 0x02, 0x8B, 0x50, 0x4C,
+    0xD1, 0xC0, 0xB7, 0x00, 0x00, 0x00, 0x04, 0x00, 0x01, 0x01, 0x8A, 0xFD, 0x02, 0x8B, 0x50, 0x4C,
     0x36, 0x68, 0x10, 0x2B, 0x12, 0x9B, 0x37, 0xA8, 0x6C, 0x09, 0xA2, 0x87, 0x2F, 0x76, 0x74, 0x1D,
     0xC7, 0xA6, 0x8E, 0x21, 0x49, 0xC8, 0x00, 0x02, 0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C,
     0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83, 0x46, 0x1A, 0xCE, 0x32, 0xD7, 0x93, 0x36, 0x57,
-    0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7, 0x00, 0x00, 0x00, 0x03, 0x00, 0x01, 0x3B, 0x40,
+    0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7, 0x00, 0x00, 0x00, 0x04, 0x00, 0x01, 0x3B, 0x40,
     0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83, 0x46, 0x1A,
     0xCE, 0x32, 0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7, 0x00, 0x00,
-    0x00, 0x03, 0x01, 0x01,
+    0x00, 0x05, 0x01, 0x01,
 };
 
 static const tx_fixture_t FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_MULTIPLE_VOTERS_MULTIPLE_VOTES = {
     .name = "Sign_tx_with_voting_procedures_multiple_voters_multiple_votes",
     .raw_tx = FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_MULTIPLE_VOTERS_MULTIPLE_VOTES_RAW_TX,
     .raw_tx_len = sizeof(FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_MULTIPLE_VOTERS_MULTIPLE_VOTES_RAW_TX),
-    .tx_body_cbor_hex = "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018182582b82d818582183581c9e1c71de652ec8b85fec296f0685ca3988781c94a2e1a5d89d92f45fa0001a0d0c25611a002dd2e802182a030a13a28201581c8afd028b504c3668102b129b37a86c09a2872f76741dc7a68e2149c8a28258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7038200f68258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7038201f68202581ca6293536eb7ea36d28b50d0260d5cded29bece9fa40092f654c7a3bda28258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b703820282727777772e76616375756d6c6162732e636f6d58201afd028b504c3668102b129b37a86c09a2872f76741dc7a68e2149c8deadbeef8258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7038200f6",
-    .expected_hash_hex = "611c43fa6973bf625135bd01f2e65a57365332bfc6ba9114ee249de9a4313d38",
+    .tx_body_cbor_hex = "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018182582b82d818582183581c9e1c71de652ec8b85fec296f0685ca3988781c94a2e1a5d89d92f45fa0001a0d0c25611a002dd2e802182a030a13a28202581cba41c59ac6e1a0e4ac304af98db801097d0bf8d2a5b28a54752426a1a28258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b703820282727777772e76616375756d6c6162732e636f6d58201afd028b504c3668102b129b37a86c09a2872f76741dc7a68e2149c8deadbeef8258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7048200f68201581c8afd028b504c3668102b129b37a86c09a2872f76741dc7a68e2149c8a28258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7048200f68258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7058201f6",
+    .expected_hash_hex = "cf4a9e8813fd812b27bc9c609d52d645075bdb89269c24a03c555f12074d5a84",
     .signing_mode = 7,
     .network_id = 1,
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -612,3 +620,9 @@ static const tx_fixture_t FIXTURE_CONWAY_VOTING_SIGN_TX_WITH_VOTING_PROCEDURES_M
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

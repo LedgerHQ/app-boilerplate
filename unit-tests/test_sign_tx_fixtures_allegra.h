@@ -13,6 +13,14 @@
 // Fixtures
 // ======================================================================
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverlength-strings"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverlength-strings"
+#endif
+
 // Test 0: Sign_tx_with_no_ttl_and_no_validity_interval_start
 //
 static const uint8_t FIXTURE_ALLEGRA_SIGN_TX_WITH_NO_TTL_AND_NO_VALIDITY_INTERVAL_START_RAW_TX[] = {
@@ -37,7 +45,7 @@ static const tx_fixture_t FIXTURE_ALLEGRA_SIGN_TX_WITH_NO_TTL_AND_NO_VALIDITY_IN
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -45,6 +53,17 @@ static const tx_fixture_t FIXTURE_ALLEGRA_SIGN_TX_WITH_NO_TTL_AND_NO_VALIDITY_IN
     .include_validity_interval_start = false,
     .include_aux_data_hash = false,
     .include_script_data_hash = false,
+    .num_collateral_inputs = 0,
+    .num_required_signers = 0,
+    .include_network_id = false,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
+    .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
@@ -73,7 +92,7 @@ static const tx_fixture_t FIXTURE_ALLEGRA_SIGN_TX_WITH_NO_TTL_BUT_WITH_VALIDITY_
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -81,6 +100,23 @@ static const tx_fixture_t FIXTURE_ALLEGRA_SIGN_TX_WITH_NO_TTL_BUT_WITH_VALIDITY_
     .include_validity_interval_start = true,
     .include_aux_data_hash = false,
     .include_script_data_hash = false,
+    .num_collateral_inputs = 0,
+    .num_required_signers = 0,
+    .include_network_id = false,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
+    .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

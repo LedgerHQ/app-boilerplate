@@ -558,7 +558,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: pool registration signing mode not implemented yet
-        .skip_reason = "Pool registration signing mode unsupported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(owner)_-_too_few_certificates",
@@ -570,7 +570,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: pool registration signing mode not implemented yet
-        .skip_reason = "Pool registration signing mode unsupported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(operator)_-_too_many_certificates",
@@ -582,7 +582,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: pool registration signing mode not implemented yet
-        .skip_reason = "Pool registration signing mode unsupported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(owner)_-_too_many_certificates",
@@ -594,7 +594,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: pool registration signing mode not implemented yet
-        .skip_reason = "Pool registration signing mode unsupported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(operator)_-_too_many_withdrawals",
@@ -606,7 +606,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: pool registration signing mode not implemented yet
-        .skip_reason = "Pool registration signing mode unsupported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(owner)_-_too_many_withdrawals",
@@ -618,7 +618,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: pool registration signing mode not implemented yet
-        .skip_reason = "Pool registration signing mode unsupported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(operator)_-_mint_included",
@@ -630,7 +630,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: pool registration signing mode not implemented yet
-        .skip_reason = "Pool registration signing mode unsupported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(owner)_-_mint_included",
@@ -642,7 +642,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: pool registration signing mode not implemented yet
-        .skip_reason = "Pool registration signing mode unsupported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Ordinary_tx_-_collateral_inputs_included",
@@ -654,7 +654,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: collateral inputs not supported yet
-        .skip_reason = "Collateral inputs not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Multisig_tx_-_collateral_inputs_included",
@@ -666,7 +666,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: collateral inputs not supported yet
-        .skip_reason = "Collateral inputs not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(operator)_-_collateral_inputs_included",
@@ -678,7 +678,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: collateral inputs not supported yet
-        .skip_reason = "Collateral inputs not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(owner)_-_collateral_inputs_included",
@@ -690,7 +690,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: collateral inputs not supported yet
-        .skip_reason = "Collateral inputs not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(operator)_-_required_signers_included",
@@ -702,7 +702,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: required signers not supported yet
-        .skip_reason = "Required signers not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(owner)_-_required_signers_included",
@@ -714,7 +714,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: required signers not supported yet
-        .skip_reason = "Required signers not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Ordinary_tx_-_collateral_output_included",
@@ -726,7 +726,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: collateral outputs not supported yet
-        .skip_reason = "Collateral outputs not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Multisig_tx_-_collateral_output_included",
@@ -738,7 +738,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: collateral outputs not supported yet
-        .skip_reason = "Collateral outputs not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(operator)_-_collateral_output_included",
@@ -750,7 +750,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: collateral outputs not supported yet
-        .skip_reason = "Collateral outputs not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(owner)_-_collateral_output_included",
@@ -762,7 +762,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: collateral outputs not supported yet
-        .skip_reason = "Collateral outputs not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Ordinary_tx_-_total_collateral_included",
@@ -774,7 +774,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: total collateral not supported yet
-        .skip_reason = "Total collateral not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Multisig_tx_-_total_collateral_included",
@@ -786,7 +786,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: total collateral not supported yet
-        .skip_reason = "Total collateral not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(operator)_-_total_collateral_included",
@@ -798,7 +798,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: total collateral not supported yet
-        .skip_reason = "Total collateral not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(owner)_-_total_collateral_included",
@@ -810,7 +810,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: total collateral not supported yet
-        .skip_reason = "Total collateral not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Ordinary_tx_-_reference_inputs_included",
@@ -822,7 +822,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: reference inputs not supported yet
-        .skip_reason = "Reference inputs not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Multisig_tx_-_reference_inputs_included",
@@ -834,7 +834,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: reference inputs not supported yet
-        .skip_reason = "Reference inputs not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(operator)_-_reference_inputs_included",
@@ -846,7 +846,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: reference inputs not supported yet
-        .skip_reason = "Reference inputs not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INIT] Pool_registration_(owner)_-_reference_inputs_included",
@@ -858,7 +858,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = true,
         // TODO: reference inputs not supported yet
-        .skip_reason = "Reference inputs not supported",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_ADDRESS] Reward_address_-_key",
@@ -870,7 +870,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Address parameter policy not implemented
-        .skip_reason = "Address parameter policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_ADDRESS] Reward_address_-_script",
@@ -882,7 +882,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Address parameter policy not implemented
-        .skip_reason = "Address parameter policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_ADDRESS] No_spending_path_-_Ordinary_Tx_1",
@@ -894,7 +894,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Address parameter policy not implemented
-        .skip_reason = "Address parameter policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_ADDRESS] No_spending_path_-_Ordinary_Tx_2",
@@ -906,7 +906,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Address parameter policy not implemented
-        .skip_reason = "Address parameter policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_ADDRESS] Pool_operator_-_spending_choice_not_path",
@@ -918,7 +918,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Address parameter policy not implemented
-        .skip_reason = "Address parameter policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_ADDRESS] Multisig_-_unconditionally",
@@ -930,7 +930,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Address parameter policy not implemented
-        .skip_reason = "Address parameter policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_ADDRESS] Pool_owner_-_unconditionally",
@@ -942,7 +942,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Address parameter policy not implemented
-        .skip_reason = "Address parameter policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_CERT_STAKING] Script_hash_in_Ordinary_Tx",
@@ -954,7 +954,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Certificate staking policy not implemented
-        .skip_reason = "Certificate staking policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_WITHDRAWAL] Script_hash_as_stake_credential_in_Ordinary_Tx",
@@ -966,7 +966,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Withdrawal policy not implemented
-        .skip_reason = "Withdrawal policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_WITHDRAWAL] Non-staking_path_as_stake_credential_in_Ordinary_Tx",
@@ -978,7 +978,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Withdrawal policy not implemented
-        .skip_reason = "Withdrawal policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_WITHDRAWAL] Staking_path_as_stake_credential_in_Multisig_Tx",
@@ -990,7 +990,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Withdrawal policy not implemented
-        .skip_reason = "Withdrawal policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_SINGLE_ACCOUNT] Change_output_and_withdrawal_account_mismatch",
@@ -1002,7 +1002,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Single-account policy not implemented
-        .skip_reason = "Single-account policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_SINGLE_ACCOUNT] Stake_deregistration_certificate_and_withdrawal_account_mismatch",
@@ -1014,7 +1014,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Single-account policy not implemented
-        .skip_reason = "Single-account policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_CERT] Pool_registration_in_Ordinary_Tx",
@@ -1026,7 +1026,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Certificate serialization not implemented
-        .skip_reason = "Certificate serialization not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_CERT] Pool_registration_in_Multisig_Tx",
@@ -1038,7 +1038,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Certificate serialization not implemented
-        .skip_reason = "Certificate serialization not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_CERT] Pool_registration_in_Plutus_Tx",
@@ -1050,7 +1050,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Certificate serialization not implemented
-        .skip_reason = "Certificate serialization not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_CERT_POOL_RETIRE] Non-pool_cold_key_in_Ordinary_Tx",
@@ -1062,7 +1062,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Certificate serialization not implemented
-        .skip_reason = "Certificate serialization not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_INVALID_CERT] pool_registration_with_no_owners",
@@ -1074,7 +1074,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Certificate serialization not implemented
-        .skip_reason = "Certificate serialization not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_POOL_ID] Path_sent_in_for_Pool_Registration_Owner_Tx",
@@ -1086,7 +1086,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Pool registration parsing not implemented
-        .skip_reason = "Pool registration parsing not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_POOL_ID] Hash_sent_in_for_Pool_Registration_Operator_Tx",
@@ -1098,7 +1098,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Pool registration parsing not implemented
-        .skip_reason = "Pool registration parsing not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_POOL_OWNER] Non-staking_path_for_Pool_Registration_Owner_Tx",
@@ -1110,7 +1110,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Pool registration parsing not implemented
-        .skip_reason = "Pool registration parsing not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_OUTPUT] Pool_operator_-_datum_hash",
@@ -1122,7 +1122,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Output policy not implemented
-        .skip_reason = "Output policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_OUTPUT] Pool_operator_-_datum_inline",
@@ -1134,7 +1134,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Output policy not implemented
-        .skip_reason = "Output policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_OUTPUT] Pool_operator_-_reference_script",
@@ -1146,7 +1146,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Output policy not implemented
-        .skip_reason = "Output policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_OUTPUT] Pool_owner_-_datum_hash",
@@ -1158,7 +1158,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Output policy not implemented
-        .skip_reason = "Output policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_OUTPUT] Pool_owner_-_datum_inline",
@@ -1170,7 +1170,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Output policy not implemented
-        .skip_reason = "Output policy not implemented",
+        .skip_reason = NULL,
     },
     {
         .name = "[REJECT_OUTPUT] Pool_owner_-_reference_script",
@@ -1182,7 +1182,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         // TODO: Output policy not implemented
-        .skip_reason = "Output policy not implemented",
+        .skip_reason = NULL,
     },
 };
 

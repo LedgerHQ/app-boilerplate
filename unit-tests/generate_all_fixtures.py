@@ -87,7 +87,7 @@ from standalone.input_files.signTx import (
     TxAuxiliaryDataType,
     TxAuxiliaryDataHash,
 )
-from application_client.command_builder import CommandBuilder
+from application_client.command_builder import CommandBuilder, gather_witness_paths
 
 # Map era names to test collections
 ERA_TESTS = {
@@ -116,6 +116,10 @@ def format_bytes_as_c_array(data: bytes, name: str, bytes_per_line: int = 16) ->
     result += '\n'.join(lines)
     result += '\n};'
     return result
+
+def split_hex_string(hex_str: str, chunk_size: int = 1024) -> list[str]:
+    """Split a hexadecimal string into smaller chunks."""
+    return [hex_str[i:i + chunk_size] for i in range(0, len(hex_str), chunk_size)]
 
 def compute_blake2b_256(data: bytes) -> str:
     """Compute blake2b-256 hash and return as hex string."""
@@ -176,6 +180,14 @@ def main():
         "// Fixtures",
         "// ======================================================================",
         "",
+        "#if defined(__clang__)",
+        "#pragma clang diagnostic push",
+        "#pragma clang diagnostic ignored \"-Woverlength-strings\"",
+        "#elif defined(__GNUC__)",
+        "#pragma GCC diagnostic push",
+        "#pragma GCC diagnostic ignored \"-Woverlength-strings\"",
+        "#endif",
+        "",
     ]
 
     # Generate fixture for each test
@@ -226,14 +238,22 @@ def main():
         header_lines.append(f'    .name = "{test_case.name}",')
         header_lines.append(f"    .raw_tx = {fixture_prefix}_RAW_TX,")
         header_lines.append(f"    .raw_tx_len = sizeof({fixture_prefix}_RAW_TX),")
-        header_lines.append(f'    .tx_body_cbor_hex = "{expected_cbor_hex}",')
+        tx_body_chunks = split_hex_string(expected_cbor_hex, chunk_size=1024)
+        if len(tx_body_chunks) == 1:
+            header_lines.append(f'    .tx_body_cbor_hex = "{tx_body_chunks[0]}",')
+        else:
+            header_lines.append(f'    .tx_body_cbor_hex = "{tx_body_chunks[0]}"')
+            for chunk in tx_body_chunks[1:-1]:
+                header_lines.append(f'                         "{chunk}"')
+            header_lines.append(f'                         "{tx_body_chunks[-1]}",')
         header_lines.append(f'    .expected_hash_hex = "{expected_hash_hex}",')
         header_lines.append(f"    .signing_mode = {int(test_case.signingMode)},")
         header_lines.append(f"    .network_id = {network_id_value},")
         header_lines.append(f"    .protocol_magic = {protocol_magic_value},")
         header_lines.append(f"    .num_inputs = {len(tx.inputs)},")
         header_lines.append(f"    .num_outputs = {len(tx.outputs)},")
-        header_lines.append(f"    .num_witnesses = {test_case.signingMode},")
+        witness_paths = gather_witness_paths(tx, getattr(test_case, "additionalWitnessPaths", []))
+        header_lines.append(f"    .num_witnesses = {len(witness_paths)},")
         header_lines.append(f"    .num_certificates = {len(tx.certificates) if tx.certificates else 0},")
         header_lines.append(f"    .num_withdrawals = {len(tx.withdrawals) if tx.withdrawals else 0},")
         header_lines.append(f"    .num_mint_asset_groups = {len(tx.mint) if tx.mint else 0},")
@@ -262,6 +282,13 @@ def main():
         header_lines.append(f"    .options = {options_value},")
         header_lines.append("};")
         header_lines.append("")
+
+    header_lines.append("#if defined(__clang__)")
+    header_lines.append("#pragma clang diagnostic pop")
+    header_lines.append("#elif defined(__GNUC__)")
+    header_lines.append("#pragma GCC diagnostic pop")
+    header_lines.append("#endif")
+    header_lines.append("")
 
     # Write to file
     header_content = '\n'.join(header_lines)

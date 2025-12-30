@@ -13,6 +13,14 @@
 // Fixtures
 // ======================================================================
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverlength-strings"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverlength-strings"
+#endif
+
 // Test 0: Sign_tx_with_short_inline_datum_in_output_with_tokens
 //
 static const uint8_t FIXTURE_BABBAGE_SIGN_TX_WITH_SHORT_INLINE_DATUM_IN_OUTPUT_WITH_TOKENS_RAW_TX[] = {
@@ -45,7 +53,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_SHORT_INLINE_DATUM_IN_OUT
     .protocol_magic = 1097911063,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -118,14 +126,15 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_480_B_I
     .name = "Sign_tx_with_long_inline_datum_(480_B)_in_output",
     .raw_tx = FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_480_B_IN_OUTPUT_RAW_TX,
     .raw_tx_len = sizeof(FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_480_B_IN_OUTPUT_RAW_TX),
-    .tx_body_cbor_hex = "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181a3005839105e2f080eb93bad86d401545e0ce5f2221096d6477e11e6643922fa8d2ed495234dc0d667c1316ff84e572310e265edb31330448b36b7179e011a006ca793028201d8185901e012b8240c5470b47c159597b6f71d78c7fc99d1d8d911cb19b8f50211938ef361a22d30cd8f6354ec50e99a7d3cf3e06797ed4af3d358e01b2a957caa4010da328720b9fbe7a3a6d10209a13d2eb11933eb1bf2ab02713117e421b6dcc66297c41b95ad32d3457a0e6b44d8482385f311465964c3daff226acfb7bbda47011f1a6531db30e5b5977143c48f8b8eb739487f87dc13896f58529cfb48e415fc6123e708cdc3cb15cc1900ecf88c5fc9ff66d8ad6dae18c79e4a3c392a0df4d16ffa3e370f4dad8d8e9d171c5656bb317c78a2711057e7ae0beb1dc66ba01aa69d0c0db244e6742d7758ce8da00dfed6225d4aed4b01c42a0352688ed5803f3fd64873f11355305d9db309f4a2a6673cc408a06b8827a5edef7b0fd8742627fb8aa102a084b7db72fcb5c3d1bf437e2a936b738902a9c0258b462b9f2e9befd2c6bcfc036143bb34342b9124888a5b29fa5d60909c81319f034c11542b05ca3ff6c64c7642ff1e2b25fb60dc9bb6f5c914dd4149f31896955d4d204d822deddc46f852115a479edf7521cdf4ce596805875011855158fd303c33a2a7916a9cb7acaaf5aeca7e6efb75960e9597cd845bd9a93610bf1ab47ab0de943e8a96e26a24c4996f7b07fad437829fee5bc3496192608d4c04ac642cdec7bdbb8a948ad1d43402182a030a0b58203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7",
+    .tx_body_cbor_hex = "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181a3005839105e2f080eb93bad86d401545e0ce5f2221096d6477e11e6643922fa8d2ed495234dc0d667c1316ff84e572310e265edb31330448b36b7179e011a006ca793028201d8185901e012b8240c5470b47c159597b6f71d78c7fc99d1d8d911cb19b8f50211938ef361a22d30cd8f6354ec50e99a7d3cf3e06797ed4af3d358e01b2a957caa4010da328720b9fbe7a3a6d10209a13d2eb11933eb1bf2ab02713117e421b6dcc66297c41b95ad32d3457a0e6b44d8482385f311465964c3daff226acfb7bbda47011f1a6531db30e5b5977143c48f8b8eb739487f87dc13896f58529cfb48e415fc6123e708cdc3cb15cc1900ecf88c5fc9ff66d8ad6dae18c79e4a3c392a0df4d16ffa3e370f4dad8d8e9d171c5656bb317c78a2711057e7ae0beb1dc66ba01aa69d0c0db244e6742d7758ce8da00dfed6225d4aed4b01c42a0352688ed5803f3fd64873f11355305d9db309f4a2a6673cc408a06b8827a5edef7b0fd8742627fb8aa102a084b7db72fcb5c3d1bf437e2a936b738902a9c0258b462b9f2e9befd2c6bcfc036143bb34342b9124888a5b29fa5d60909c81319f034c11542b05ca3ff6c64c7642ff1e2b25fb60dc9bb6f5c914dd4149f31896955d4d204d822deddc46f852115a479edf7521cdf4ce59"
+                         "6805875011855158fd303c33a2a7916a9cb7acaaf5aeca7e6efb75960e9597cd845bd9a93610bf1ab47ab0de943e8a96e26a24c4996f7b07fad437829fee5bc3496192608d4c04ac642cdec7bdbb8a948ad1d43402182a030a0b58203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7",
     .expected_hash_hex = "0cccea3eb974bd362720a460d84d4970e89c523b2145cbe29bb56f36cec4b826",
     .signing_mode = 7,
     .network_id = 0,
     .protocol_magic = 1097911063,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -191,14 +200,15 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_304_B_I
     .name = "Sign_tx_with_long_inline_datum_(304_B)_in_output_with_tokens",
     .raw_tx = FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_304_B_IN_OUTPUT_WITH_TOKENS_RAW_TX,
     .raw_tx_len = sizeof(FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_304_B_IN_OUTPUT_WITH_TOKENS_RAW_TX),
-    .tx_body_cbor_hex = "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181a3005839105e2f080eb93bad86d401545e0ce5f2221096d6477e11e6643922fa8d2ed495234dc0d667c1316ff84e572310e265edb31330448b36b7179e01821a006ca793a1581c75a292ffee938be03e9bae5657982a74e9014eb4960108c9e23a5b39a2487564247542686911182f4875642475426869121a00783862028201d8185901305579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f7468657220637468657202182a030a0b58203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7",
+    .tx_body_cbor_hex = "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181a3005839105e2f080eb93bad86d401545e0ce5f2221096d6477e11e6643922fa8d2ed495234dc0d667c1316ff84e572310e265edb31330448b36b7179e01821a006ca793a1581c75a292ffee938be03e9bae5657982a74e9014eb4960108c9e23a5b39a2487564247542686911182f4875642475426869121a00783862028201d8185901305579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f7468657220637468657202182a030a0b58203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a19"
+                         "39b3aad1c0b7",
     .expected_hash_hex = "92f83ca3e05fb48ffe0f90e6d7ac653a684039476b4963984b84fdc6fecea67d",
     .signing_mode = 7,
     .network_id = 0,
     .protocol_magic = 1097911063,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -249,7 +259,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_SHORT_REF_
     .protocol_magic = 1097911063,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -314,7 +324,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_REF_SCRIPT
     .protocol_magic = 1097911063,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -383,7 +393,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_SCRIPT_REF
     .protocol_magic = 1097911063,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -436,7 +446,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_IN_OUTPUT_WITH
     .protocol_magic = 1097911063,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -499,7 +509,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_A_COMPLEX_MULTIASSET_OUTP
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 2,
-    .num_witnesses = 3,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -554,7 +564,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_CHANGE_OUTPUT_AS_MAP_AND_
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -603,7 +613,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_CHANGE_OUTPUT_AS_MAP_AND_
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -655,7 +665,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_CHANGE_OUTPUT_AS_MAP_AND_
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -713,7 +723,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_CHANGE_COLLATERAL_OUTPUT_
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -771,7 +781,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_CHANGE_COLLATERAL_OUTPUT_
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -839,7 +849,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_THIRD_PARTY_COLLATERAL_OU
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -907,7 +917,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_THIRD_PARTY_COLLATERAL_OU
     .protocol_magic = 764824073,
     .num_inputs = 1,
     .num_outputs = 1,
-    .num_witnesses = 7,
+    .num_witnesses = 1,
     .num_certificates = 0,
     .num_withdrawals = 0,
     .num_mint_asset_groups = 0,
@@ -929,3 +939,9 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_THIRD_PARTY_COLLATERAL_OU
     .aux_data_hash_hex = NULL,
     .options = 0,
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
