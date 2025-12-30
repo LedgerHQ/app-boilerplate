@@ -1,5 +1,6 @@
 #pragma once
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -8,11 +9,8 @@
 #include "memory/flist.h"
 #include "addressUtils/addressUtilsShelley.h"
 
-// Note: No artificial limits on asset groups or tokens per output.
-// The wire format uses uint16_t for counts, so the natural limit is UINT16_MAX.
-// Memory allocation is dynamic, so we can handle any count up to that limit.
-#define MAX_DATUM_INLINE_LENGTH 256
-#define MAX_REF_SCRIPT_LENGTH 512
+#define MAX_DATUM_INLINE_LENGTH INT16_MAX  // TODO: inline datum length currently bounded only by wire/data limits (effectively unlimited)
+#define MAX_REF_SCRIPT_LENGTH INT16_MAX    // TODO: reference script length currently bounded only by wire/data limits (effectively unlimited)
 #define ASSET_NAME_HASH_SIZE 32
 #define ASSET_NAME_DISPLAY_SIZE 32
 

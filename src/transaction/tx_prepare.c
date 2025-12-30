@@ -319,6 +319,9 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                                              DATUM_INLINE,
                                              output_item->output_data.datum.inline_data.data,
                                              output_item->output_data.datum.inline_data.size);
+                txHashBuilder_addOutput_datum_inline_chunk(&txHashBuilder,
+                                                           output_item->output_data.datum.inline_data.data,
+                                                           output_item->output_data.datum.inline_data.size);
             }
         }
 
@@ -902,9 +905,110 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
 
     // key 16: collateral return output
     if (G_context.tx_info.transaction.includeCollateralOutput) {
-        // TODO: Implement collateral output hash building and UI
-        // This is complex - needs to reuse output building logic from regular outputs
-        // May require helper functions for consistency
+        tx_output_description_t collateral_desc;
+        collateral_desc.format = G_context.tx_info.transaction.collateral_output.format;
+        collateral_desc.amount = G_context.tx_info.transaction.collateral_output.adaAmount;
+        collateral_desc.numAssetGroups = G_context.tx_info.transaction.collateral_output.numAssetGroups;
+        collateral_desc.includeDatum = G_context.tx_info.transaction.collateral_output.datum.hasDatum;
+        collateral_desc.includeRefScript = G_context.tx_info.transaction.collateral_output.hasRefScript;
+
+        if (G_context.tx_info.transaction.collateral_output.destination.type == DESTINATION_THIRD_PARTY) {
+            collateral_desc.destination.type = DESTINATION_THIRD_PARTY;
+            collateral_desc.destination.address.buffer =
+                G_context.tx_info.transaction.collateral_output.destination.address.buffer;
+            collateral_desc.destination.address.size =
+                G_context.tx_info.transaction.collateral_output.destination.address.size;
+        } else {
+            collateral_desc.destination.type = DESTINATION_DEVICE_OWNED;
+            collateral_desc.destination.params =
+                &G_context.tx_info.transaction.collateral_output.destination.params;
+        }
+
+        security_policy_t collateral_policy;
+        if (collateral_desc.destination.type == DESTINATION_THIRD_PARTY) {
+            collateral_policy = policyForSignTxCollateralOutputAddressBytes(
+                &collateral_desc,
+                G_context.tx_info.transaction.txSigningMode,
+                G_context.tx_info.transaction.networkId,
+                G_context.tx_info.transaction.protocolMagic
+            );
+        } else {
+            collateral_policy = policyForSignTxCollateralOutputAddressParams(
+                &collateral_desc,
+                G_context.tx_info.transaction.txSigningMode,
+                G_context.tx_info.transaction.networkId,
+                G_context.tx_info.transaction.protocolMagic,
+                G_context.tx_info.transaction.includeTotalCollateral
+            );
+        }
+
+        switch (collateral_policy) {
+            case POLICY_DENY:
+                TRACE("Collateral output security policy denied");
+                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            case POLICY_SHOW:
+                plan->pair_count += 3;
+                if (G_context.tx_info.transaction.collateral_output.assetGroups != NULL) {
+                    for (uint16_t ag = 0;
+                         ag < G_context.tx_info.transaction.collateral_output.numAssetGroups;
+                         ag++) {
+                        asset_group_t *group = &G_context.tx_info.transaction.collateral_output.assetGroups[ag];
+                        s_flist_node *token_node = group->tokens;
+                        while (token_node != NULL) {
+                            plan->pair_count += 2;
+                            token_node = token_node->next;
+                        }
+                    }
+                }
+                break;
+            case POLICY_HIDE:
+                break;
+        }
+
+        if (collateral_desc.destination.type == DESTINATION_THIRD_PARTY) {
+            txHashBuilder_addCollateralOutput(&txHashBuilder, &collateral_desc);
+        } else {
+            uint8_t *address_bytes = (uint8_t *) app_mem_alloc(MAX_ADDRESS_LENGTH);
+            if (address_bytes == NULL) {
+                return send_error_and_reset(SWO_TX_PARSING_FAIL);
+            }
+
+            size_t address_size = deriveAddress(
+                &G_context.tx_info.transaction.collateral_output.destination.params,
+                address_bytes,
+                MAX_ADDRESS_LENGTH
+            );
+
+            if (address_size == 0 || address_size > MAX_ADDRESS_LENGTH) {
+                app_mem_free(address_bytes);
+                return send_error_and_reset(SWO_TX_PARSING_FAIL);
+            }
+
+            collateral_desc.destination.type = DESTINATION_THIRD_PARTY;
+            collateral_desc.destination.address.buffer = address_bytes;
+            collateral_desc.destination.address.size = address_size;
+            txHashBuilder_addCollateralOutput(&txHashBuilder, &collateral_desc);
+            app_mem_free(address_bytes);
+        }
+
+        for (uint16_t ag = 0; ag < G_context.tx_info.transaction.collateral_output.numAssetGroups; ag++) {
+            asset_group_t *group = &G_context.tx_info.transaction.collateral_output.assetGroups[ag];
+            txHashBuilder_addCollateralOutput_tokenGroup(&txHashBuilder,
+                                                        group->policyId,
+                                                        MINTING_POLICY_ID_LENGTH,
+                                                        group->numTokens);
+
+            s_flist_node *token_node = group->tokens;
+            while (token_node != NULL) {
+                output_token_list_item_t *token_item = (output_token_list_item_t *) token_node;
+                output_token_t *token = &token_item->token_data;
+                txHashBuilder_addCollateralOutput_token(&txHashBuilder,
+                                                       token->assetName,
+                                                       token->assetNameLen,
+                                                       (uint64_t)token->amount);
+                token_node = token_node->next;
+            }
+        }
     }
 
     // key 17: total collateral

@@ -281,8 +281,10 @@ class CommandBuilder:
                     data.append(0x01)
                     data.extend(bytes.fromhex(required_signer.pathOrHashHex))
 
-        if getattr(tx, "collateralOutput", None) is not None:
-            collateral_data = self._serialize_output(tx.collateralOutput, tx)
+        collateral_output = getattr(tx, "collateralOutput", None)
+        if collateral_output is not None:
+            collateral_data = self._serialize_output(collateral_output, tx)
+            data.extend(len(collateral_data).to_bytes(2, "big"))
             data.extend(collateral_data)
 
         if getattr(tx, "totalCollateral", None) is not None:
