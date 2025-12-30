@@ -1,75 +1,50 @@
-We are converting old version of Ledger Cardano app into a new modernized version, with changed UI.
-Old app / shelley app: ../app-cardano
-You should look into the code of the old app (instead of guessing how to process something).
-Most of code has already been copied to the new app, so before copying anything you have to search new app repository first.
+# Cardano Ledger App Development Guidelines
 
-New app: ../ledger-app-cardano
-The "new app" is a fork of boilerplate app. If you find any traces of boilerplate or apparently useless leftover code in the new app, ask about removing them.
+We are converting an old version of the Ledger Cardano app into a new modernized version with a refreshed UI.
 
-We are no longer supporting Nano S, and all features will be included for every device.
-Only nbgl library will be used for UI, but in a different fashion than in the old app (different UI flow, but nbgl screens should be good).
+## Context
+- **Old app (Shelley):** `../app-cardano`. Refer to this for established logic and processing patterns.
+- **New app:** `../ledger-app-cardano`. A fork of the Ledger boilerplate app.
+- **Device Support:** Supporting Stax, Flex, Nano X, and Nano S+. *Nano S is no longer supported.*
+- **UI Framework:** NBGL is used exclusively for UI. Prefer high-level functions for standard use cases.
 
-App architecture:
-src contains C code, cannot be compiled directly (ledger plugin for vs code with appropriate docker containers is used by hand).
-When app is build for a specific device (we use Stax), it can receive APDU from Python client.
-When APDU is received, it is handled by dispatcher.c and then by the right handler. Each handler parses input, checks it is valid and not dangerous (see securityPolicy.c --- this is especially important for every bip44 path received), computes return value, and prepares UI to display. We want the code to be consistent across different handlers as much as reasonable.
+## Architectural Overview
+For detailed analysis, see:
+- [doc/OVERVIEW.md](doc/OVERVIEW.md): High-level architecture and data flow.
+- [doc/TX.md](doc/TX.md): Detailed transaction body processing and hashing.
 
-Python client that sends APDU:
-../ledger-app-cardano/tests/application_client
-Ragger tests:
-../ledger-app-cardano/tests/standalone
-(eventually will cover all codebase, at this point they are somewhat broken and copied from the old app)
-Test fixtures:
-../ledger-app-cardano/tests/standalone/input_files
-Tests are run by hand.
+## Instructions for Coding Agent
 
-Transaction body uses CBOR (via CDDL spec in `conway.cddl`), do not modify code in txhashbuilder.c, it is trusted and correct, so is addressUtilsShelley.c and bip44.c.
-Do not add any CBOR serialization or address manipulation or bip44 path manipulations functions on your own (if it seems necessary, ask first).
-Order of items in transaction body (should be followed in general when organizing code and ordering UI display items):
-In raw_tx (or elsewhere), we do not serialize constants (e.g. if some item is always 28 bytes, both C and Python should have a named constant for that length and apply it, no need to serialize 28 as a prefix in any buffer).
+### What to DO
+- **Mimic Established Patterns:** Search the new app repository before copying logic from the old app.
+- **Style:** Use long, descriptive variable names.
+- **Security:** Use `STATIC_ASSERT` and `LEDGER_ASSERT` liberally for parameter validation and state machine invariants.
+- **Debugging:** Use `TRACE` (avoid `PRINTF`).
+- **Memory Management:** Be extremely mindful of scarce memory. Global context data should be strictly necessary.
+- **Imports:** Organize imports logically and avoid forward declarations.
+- **Legacy Code:** Identify and propose removal of any boilerplate leftovers.
 
-transaction_body =
-  {   0  : set<transaction_input>  // inputs
-  ,   1  : [* transaction_output]  // outputs
-  ,   2  : coin  // fee
-  , ? 3  : slot_no  // ttl
-  , ? 4  : certificates
-  , ? 5  : withdrawals
-  , ? 7  : auxiliary_data_hash
-  , ? 8  : slot_no  // validity interval
-  , ? 9  : mint
-  , ? 11 : script_data_hash
-  , ? 13 : nonempty_set<transaction_input>  // collateral inputs
-  , ? 14 : required_signers
-  , ? 15 : network_id
-  , ? 16 : transaction_output  // collateral output
-  , ? 17 : coin  // total collateral
-  , ? 18 : nonempty_set<transaction_input>  // reference inputs
-  , ? 19 : voting_procedures
-  , ? 20 : proposal_procedures
-  , ? 21 : coin  // treasury
-  , ? 22 : positive_coin  // donation
-  }
+### What NOT to DO
+- **Do NOT modify `src/transaction/tx_hash_builder.c`, `src/addressUtils/addressUtilsShelley.c`, or `src/addressUtils/bip44.c`** without explicit confirmation. They are trusted components.
+- **Do NOT add custom CBOR serialization**, address manipulation, or BIP44 path functions. Use existing utilities.
+- **Do NOT remove original comments** explaining crucial details without confirmation.
+- **Do NOT perform git operations** (modifications/writes).
 
-Style:
-Use longer more clear variable names.
-Correctness and security are paramount. Use lots of STATIC_ASSERT and LEDGER_ASSERT wherever appropriate, check in this way for function parameters, invariants in loops and state machine checks, etc. Make sure no memory bugs, overflows etc. appear. Use TRACE liberally to help debugging (prefer against PRINTF). Memory is scarce, so data stored in global context during whole transaction processing (e.g. in raw tx buffer) should really be needed repeatedly, and not just temporarily created/destroyed at a single point. Never use forward declarations, instead suggest how to better organize imports (must be confirmed before coding).
+## Instructions for Reviewing Agent
 
-IMPORTANT: you must not remove original comments that explain crucial details; if you see a comment that does not make sense or is useless, just suggest removing it and wait for confirmation.
+- **Security focus:** Be thorough and paranoid about security and correctness. Unless a security policy allows HIDE, all data must be displayed or confirmed by human app users.
+- **Verification:** Ensure that every received BIP44 path is validated against `securityPolicy.c` (typically applies to other incoming data too, e.g. tx body elements).
+- **Consistency:** Verify that new handlers are consistent with existing ones.
+- **Memory Safety:** Check for potential memory leaks, overflows, or excessive stack usage.
+- **UI Logic:** Ensure that UI display items follow the order of items in the transaction body and display format/encoding is consistent with old app.
+- **Instruction Interleaving:** Confirm that handlers correctly guard against instruction interleaving attacks.
 
-Additional resources:
-BOLOS SDK (underlying library for system calls, crypto, nbgl lib):
-../../ledger/ledger-secure-sdk
-Ethereum eth app (modern code you will be ask to consult occasionally to copy or mimic):
-../../ledger/app-ethereum
-Bitcoin btc app (modern code you will be ask to consult occasionally to copy or mimic):
-../../ledger/app-bitcoin-new
-Ledgerjs, typescript API to be used with companion apps:
-../ledgerjs-cardano-shelley
-hw interop lib:
-../cardano-hw-interop-lib
-documentation for unit tests, including on how to derive keys from paths for mock:
-unit-tests/README.md
-
-You can read git commits or changes from the last commit, but do not do any git operations/modifications/writes.
+## Additional Resources
+- **BOLOS SDK:** `../../ledger/ledger-secure-sdk` (underlying library).
+- **Reference Apps:** `../../ledger/app-ethereum` (eth app) and `../../ledger/app-bitcoin-new` (btc app) for modern coding patterns.
+- **Client Libraries:** `../ledgerjs-cardano-shelley` and `../cardano-hw-interop-lib`.
+- **Testing:**
+    - [unit-tests/UNIT-TESTS.md](unit-tests/UNIT-TESTS.md): Setup and mock data management.
+    - [fuzzing/FUZZING.md](fuzzing/FUZZING.md): Fuzzing harnesses and usage.
+    - [tests/standalone](tests/standalone): ragger UI tests, using [Python client](tests/application_client), see [tests/TESTS.md](tests/TESTS.md).
 

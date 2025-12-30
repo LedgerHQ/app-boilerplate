@@ -2,7 +2,7 @@
 
 ## Overview
 
-Fuzzing allows us to test how a program behaves when provided with invalid, unexpected, or random data as input.
+Fuzzing allows us to test how a program behaves when provided with invalid, unexpected, or random data as input. Fuzzing is part of our comprehensive testing strategy, which is described in the testing section of [doc/OVERVIEW.md](../doc/OVERVIEW.md).
 
 This directory contains multiple fuzzing harnesses for security-critical components of the Cardano app:
 - **`fuzz_signOpCert`** - Tests operational certificate signing
