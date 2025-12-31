@@ -1,4 +1,5 @@
 pytest
+pytest-timeout
 ragger[speculos,ledgerwallet]>=1.37.0
 ecdsa>=0.17.0
 pycryptodome

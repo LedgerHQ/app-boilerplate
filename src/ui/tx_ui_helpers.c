@@ -16,6 +16,7 @@
  *****************************************************************************/
 
 #include <string.h>
+#include <stdio.h>
 
 #include "tx_ui_helpers.h"
 #include "ui_utils.h"
@@ -46,29 +47,12 @@ static int ui_add_pair_or_fail(const char *label, char *tmp_buf) {
     return SWO_SUCCESS;
 }
 
-/**
- * Display credential (key path, key hash, or script hash) with context-specific bech32 prefix
- *
- * This follows the old app's pattern of displaying credentials appropriately based on their type:
- * - KEY_PATH: Shows the BIP44 derivation path
- * - KEY_HASH: Shows bech32-encoded key hash with specified prefix
- * - SCRIPT_HASH: Shows bech32-encoded script hash with specified prefix
- *
- * @param[in]  credential       Credential to display (type + data)
- * @param[in]  keyPathLabel     Label for KEY_PATH type (e.g., "Stake key")
- * @param[in]  keyHashLabel     Label for KEY_HASH type (e.g., "Stake key hash")
- * @param[in]  keyHashPrefix    Bech32 prefix for KEY_HASH (e.g., "stake_vkh")
- * @param[in]  scriptHashLabel  Label for SCRIPT_HASH type (e.g., "Stake script hash")
- * @param[in]  scriptHashPrefix Bech32 prefix for SCRIPT_HASH (e.g., "script")
- *
- * @return SWO_SUCCESS on success, or error code on failure
- */
-int displayCredential(const ext_credential_t *credential,
-                     const char *keyPathLabel,
-                     const char *keyHashLabel,
-                     const char *keyHashPrefix,
-                     const char *scriptHashLabel,
-                     const char *scriptHashPrefix) {
+int addCredentialUIPairs(const ext_credential_t *credential,
+                        const char *keyPathLabel,
+                        const char *keyHashLabel,
+                        const char *keyHashPrefix,
+                        const char *scriptHashLabel,
+                        const char *scriptHashPrefix) {
     LEDGER_ASSERT(credential != NULL, "NULL credential");
     LEDGER_ASSERT(keyPathLabel != NULL, "NULL keyPathLabel");
     LEDGER_ASSERT(keyHashLabel != NULL, "NULL keyHashLabel");
@@ -80,12 +64,12 @@ int displayCredential(const ext_credential_t *credential,
 
     switch (credential->type) {
         case EXT_CREDENTIAL_KEY_PATH: {
-            // Display BIP44 path
             char *path_tmp = ui_alloc_temp(MAX_BIP44_PATH_STRING_LENGTH + 1);
             if (path_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
             if (!format_bip44_path(&credential->keyPath, path_tmp, MAX_BIP44_PATH_STRING_LENGTH + 1)) {
+                LEDGER_ASSERT(false, "Unable to format credential path");
                 return SWO_TX_PARSING_FAIL;
             }
             status = ui_add_pair_or_fail(keyPathLabel, path_tmp);
@@ -95,8 +79,7 @@ int displayCredential(const ext_credential_t *credential,
             break;
         }
         case EXT_CREDENTIAL_KEY_HASH: {
-            // Display key hash as bech32
-            char *keyhash_tmp = ui_alloc_temp(MAX_BECH32_STRING_LENGTH);
+            char *keyhash_tmp = ui_alloc_temp(MAX_BECH32_STRING_LENGTH + 1);
             if (keyhash_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
@@ -104,7 +87,8 @@ int displayCredential(const ext_credential_t *credential,
                               credential->keyHash,
                               ADDRESS_KEY_HASH_LENGTH,
                               keyhash_tmp,
-                              MAX_BECH32_STRING_LENGTH)) {
+                              MAX_BECH32_STRING_LENGTH + 1)) {
+                LEDGER_ASSERT(false, "Unable to format credential key hash");
                 return SWO_TX_PARSING_FAIL;
             }
             status = ui_add_pair_or_fail(keyHashLabel, keyhash_tmp);
@@ -114,8 +98,7 @@ int displayCredential(const ext_credential_t *credential,
             break;
         }
         case EXT_CREDENTIAL_SCRIPT_HASH: {
-            // Display script hash as bech32
-            char *scripthash_tmp = ui_alloc_temp(MAX_BECH32_STRING_LENGTH);
+            char *scripthash_tmp = ui_alloc_temp(MAX_BECH32_STRING_LENGTH + 1);
             if (scripthash_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
@@ -123,7 +106,8 @@ int displayCredential(const ext_credential_t *credential,
                               credential->scriptHash,
                               SCRIPT_HASH_LENGTH,
                               scripthash_tmp,
-                              MAX_BECH32_STRING_LENGTH)) {
+                              MAX_BECH32_STRING_LENGTH + 1)) {
+                LEDGER_ASSERT(false, "Unable to format credential script hash");
                 return SWO_TX_PARSING_FAIL;
             }
             status = ui_add_pair_or_fail(scriptHashLabel, scripthash_tmp);
@@ -139,22 +123,68 @@ int displayCredential(const ext_credential_t *credential,
     return SWO_SUCCESS;
 }
 
-/**
- * Display DRep (Delegated Representative) with appropriate formatting
- *
- * Handles all DRep types:
- * - KEY_PATH: Shows the BIP44 derivation path
- * - KEY_HASH: Shows bech32-encoded key hash with "drep" prefix
- * - SCRIPT_HASH: Shows bech32-encoded script hash with "drep" prefix
- * - ABSTAIN: Shows "Abstain"
- * - NO_CONFIDENCE: Shows "No Confidence"
- *
- * @param[in]  drep             DRep to display (type + data)
- * @param[in]  label            Label for the UI pair (e.g., "DRep")
- *
- * @return SWO_SUCCESS on success, or error code on failure
- */
-int displayDRep(const ext_drep_t *drep, const char *label) {
+int addVoterUIPairs(const ext_voter_t *voter) {
+    LEDGER_ASSERT(voter != NULL, "NULL voter");
+    int status = SWO_TX_PARSING_FAIL;
+
+    switch (voter->type) {
+        case EXT_VOTER_COMMITTEE_HOT_KEY_PATH:
+            status = addCredentialUIPairs((const ext_credential_t*) voter,
+                                          "Committee hot key",
+                                          "", "", "", ""); // Path only needs first label
+            break;
+        case EXT_VOTER_COMMITTEE_HOT_KEY_HASH:
+            status = addCredentialUIPairs((const ext_credential_t*) voter,
+                                          "",
+                                          "Committee hot key hash",
+                                          "cc_hot",
+                                          "", "");
+            break;
+        case EXT_VOTER_COMMITTEE_HOT_SCRIPT_HASH:
+            status = addCredentialUIPairs((const ext_credential_t*) voter,
+                                          "", "", "",
+                                          "Committee hot script hash",
+                                          "cc_hot");
+            break;
+        case EXT_VOTER_DREP_KEY_PATH:
+            status = addCredentialUIPairs((const ext_credential_t*) voter,
+                                          "DRep key",
+                                          "", "", "", "");
+            break;
+        case EXT_VOTER_DREP_KEY_HASH:
+            status = addCredentialUIPairs((const ext_credential_t*) voter,
+                                          "",
+                                          "DRep key hash",
+                                          "drep",
+                                          "", "");
+            break;
+        case EXT_VOTER_DREP_SCRIPT_HASH:
+            status = addCredentialUIPairs((const ext_credential_t*) voter,
+                                          "", "", "",
+                                          "DRep script hash",
+                                          "drep");
+            break;
+        case EXT_VOTER_STAKE_POOL_KEY_PATH:
+            status = addCredentialUIPairs((const ext_credential_t*) voter,
+                                          "Stake pool key",
+                                          "", "", "", "");
+            break;
+        case EXT_VOTER_STAKE_POOL_KEY_HASH:
+            status = addCredentialUIPairs((const ext_credential_t*) voter,
+                                          "",
+                                          "Stake pool key hash",
+                                          "pool",
+                                          "", "");
+            break;
+        default:
+            status = SWO_TX_PARSING_FAIL;
+            break;
+    }
+
+    return status;
+}
+
+int addDRepUIPairs(const ext_drep_t *drep, const char *label) {
     LEDGER_ASSERT(drep != NULL, "NULL drep");
     LEDGER_ASSERT(label != NULL, "NULL label");
 
@@ -163,7 +193,6 @@ int displayDRep(const ext_drep_t *drep, const char *label) {
 
     switch (drep->type) {
         case EXT_DREP_KEY_PATH: {
-            // Display BIP44 path
             tmp = ui_alloc_temp(MAX_BIP44_PATH_STRING_LENGTH + 1);
             if (tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
@@ -174,8 +203,7 @@ int displayDRep(const ext_drep_t *drep, const char *label) {
             break;
         }
         case EXT_DREP_KEY_HASH: {
-            // Display key hash as bech32 with "drep" prefix
-            tmp = ui_alloc_temp(MAX_BECH32_STRING_LENGTH);
+            tmp = ui_alloc_temp(MAX_BECH32_STRING_LENGTH + 1);
             if (tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
@@ -183,14 +211,13 @@ int displayDRep(const ext_drep_t *drep, const char *label) {
                               drep->keyHash,
                               ADDRESS_KEY_HASH_LENGTH,
                               tmp,
-                              MAX_BECH32_STRING_LENGTH)) {
+                              MAX_BECH32_STRING_LENGTH + 1)) {
                 return SWO_TX_PARSING_FAIL;
             }
             break;
         }
         case EXT_DREP_SCRIPT_HASH: {
-            // Display script hash as bech32 with "drep" prefix
-            tmp = ui_alloc_temp(MAX_BECH32_STRING_LENGTH);
+            tmp = ui_alloc_temp(MAX_BECH32_STRING_LENGTH + 1);
             if (tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
@@ -198,27 +225,25 @@ int displayDRep(const ext_drep_t *drep, const char *label) {
                               drep->scriptHash,
                               SCRIPT_HASH_LENGTH,
                               tmp,
-                              MAX_BECH32_STRING_LENGTH)) {
+                              MAX_BECH32_STRING_LENGTH + 1)) {
                 return SWO_TX_PARSING_FAIL;
             }
             break;
         }
         case EXT_DREP_ABSTAIN: {
-            // Display special case: Abstain
-            tmp = ui_alloc_temp(16);  // "Abstain" + null
+            tmp = ui_alloc_temp(MAX_VOTE_OPTION_LENGTH + 1);
             if (tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
-            snprintf(tmp, 16, "Abstain");
+            snprintf(tmp, MAX_VOTE_OPTION_LENGTH + 1, "Abstain");
             break;
         }
         case EXT_DREP_NO_CONFIDENCE: {
-            // Display special case: No Confidence
-            tmp = ui_alloc_temp(32);  // "No Confidence" + null
+            tmp = ui_alloc_temp(MAX_DREP_OPTION_LENGTH + 1);
             if (tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
-            snprintf(tmp, 32, "No Confidence");
+            snprintf(tmp, MAX_DREP_OPTION_LENGTH + 1, "No Confidence");
             break;
         }
         default:
@@ -284,7 +309,7 @@ bool formatRewardAddressFromCredential(uint8_t networkId,
     );
 }
 
-int displayAnchorIfPresent(const anchor_t *anchor) {
+int addAnchorUIPairs(const anchor_t *anchor) {
     LEDGER_ASSERT(anchor != NULL, "NULL anchor");
 
     if (!anchor->isIncluded) {
@@ -293,7 +318,6 @@ int displayAnchorIfPresent(const anchor_t *anchor) {
 
     int status;
 
-    // Display anchor URL
     char *anchor_url_tmp = ui_alloc_temp(ANCHOR_URL_LENGTH_MAX + 1);
     if (anchor_url_tmp == NULL) {
         return SWO_INSUFFICIENT_MEMORY;
@@ -307,8 +331,7 @@ int displayAnchorIfPresent(const anchor_t *anchor) {
         return status;
     }
 
-    // Display anchor hash
-    char *anchor_hash_tmp = ui_alloc_temp(MAX_BECH32_STRING_LENGTH);
+    char *anchor_hash_tmp = ui_alloc_temp(MAX_BECH32_STRING_LENGTH + 1);
     if (anchor_hash_tmp == NULL) {
         return SWO_INSUFFICIENT_MEMORY;
     }
@@ -316,7 +339,7 @@ int displayAnchorIfPresent(const anchor_t *anchor) {
                       anchor->hash,
                       ANCHOR_HASH_LENGTH,
                       anchor_hash_tmp,
-                      MAX_BECH32_STRING_LENGTH)) {
+                      MAX_BECH32_STRING_LENGTH + 1)) {
         return SWO_TX_PARSING_FAIL;
     }
     status = ui_add_pair_or_fail("Anchor hash", anchor_hash_tmp);
@@ -327,27 +350,27 @@ int displayAnchorIfPresent(const anchor_t *anchor) {
     return SWO_SUCCESS;
 }
 
-int displayDeposit(uint64_t deposit, const char *label) {
+int addDepositUIPairs(uint64_t deposit, const char *label) {
     LEDGER_ASSERT(label != NULL, "NULL label");
 
-    char *deposit_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH);
+    char *deposit_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH + 1);
     if (deposit_tmp == NULL) {
         return SWO_INSUFFICIENT_MEMORY;
     }
     bool deposit_formatted = str_formatAdaAmount(
         deposit,
         deposit_tmp,
-        MAX_ADA_AMOUNT_STRING_LENGTH
+        MAX_ADA_AMOUNT_STRING_LENGTH + 1
     );
     ASSERT(deposit_formatted);
     return ui_add_pair_or_fail(label, deposit_tmp);
 }
 
-int displayPoolKeyHash(const uint8_t *poolKeyHash, const char *label) {
+int addPoolKeyHashUIPairs(const uint8_t *poolKeyHash, const char *label) {
     LEDGER_ASSERT(poolKeyHash != NULL, "NULL poolKeyHash");
     LEDGER_ASSERT(label != NULL, "NULL label");
 
-    char *pool_tmp = ui_alloc_temp(MAX_BECH32_STRING_LENGTH);
+    char *pool_tmp = ui_alloc_temp(MAX_BECH32_STRING_LENGTH + 1);
     if (pool_tmp == NULL) {
         return SWO_INSUFFICIENT_MEMORY;
     }
@@ -355,17 +378,16 @@ int displayPoolKeyHash(const uint8_t *poolKeyHash, const char *label) {
                       poolKeyHash,
                       POOL_KEY_HASH_LENGTH,
                       pool_tmp,
-                      MAX_BECH32_STRING_LENGTH)) {
+                      MAX_BECH32_STRING_LENGTH + 1)) {
         return SWO_TX_PARSING_FAIL;
     }
     return ui_add_pair_or_fail(label, pool_tmp);
 }
 
-int displayRewardAccountFromCredential(uint8_t networkId, const ext_credential_t *credential) {
+int addRewardAccountUIPairs(uint8_t networkId, const ext_credential_t *credential) {
     LEDGER_ASSERT(credential != NULL, "NULL credential");
 
-    // Build the reward address first (needed for all credential types)
-    char reward_addr_buf[MAX_HUMAN_ADDRESS_LENGTH];
+    char reward_addr_buf[MAX_HUMAN_ADDRESS_LENGTH + 1];
     if (!formatRewardAddressFromCredential(networkId, credential, reward_addr_buf, sizeof(reward_addr_buf))) {
         return SWO_TX_PARSING_FAIL;
     }
@@ -373,32 +395,29 @@ int displayRewardAccountFromCredential(uint8_t networkId, const ext_credential_t
     char *value_tmp = NULL;
 
     if (credential->type == EXT_CREDENTIAL_KEY_PATH) {
-        // For KEY_PATH: combine path and address in value
         char path_buf[MAX_BIP44_PATH_STRING_LENGTH + 1];
         if (!format_bip44_path(&credential->keyPath, path_buf, sizeof(path_buf))) {
             return SWO_TX_PARSING_FAIL;
         }
 
-        // Allocate and combine path and address with space separator
         value_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 2);
         if (value_tmp == NULL) {
             return SWO_INSUFFICIENT_MEMORY;
         }
-        snprintf(value_tmp,
+        int written = snprintf(value_tmp,
                 MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 2,
                 "%s %s",
                 path_buf,
                 reward_addr_buf);
+        if (written < 0 || (size_t)written >= MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 2) return SWO_INSUFFICIENT_MEMORY;
     } else {
-        // For KEY_HASH/SCRIPT_HASH: show just the address
-        value_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH);
+        value_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH + 1);
         if (value_tmp == NULL) {
             return SWO_INSUFFICIENT_MEMORY;
         }
-        snprintf(value_tmp, MAX_HUMAN_ADDRESS_LENGTH, "%s", reward_addr_buf);
+        snprintf(value_tmp, MAX_HUMAN_ADDRESS_LENGTH + 1, "%s", reward_addr_buf);
     }
 
-    // Use same label for all types
     return ui_add_pair_or_fail("Reward account", value_tmp);
 }
 

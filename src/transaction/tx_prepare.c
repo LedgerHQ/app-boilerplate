@@ -101,7 +101,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
     plan->pair_count = 2;  // fee + tx hash
     security_policy_t input_policy = policyForSignTxInput(G_context.tx_info.transaction.txSigningMode);
     if (input_policy == POLICY_SHOW) {
-        plan->pair_count += G_context.tx_info.transaction.num_inputs;
+        plan->pair_count += 2 * G_context.tx_info.transaction.num_inputs;
     }
     if (G_context.tx_info.transaction.includeTtl) {
         security_policy_t ttl_policy = policyForSignTxTtl(G_context.tx_info.transaction.ttl);
@@ -241,14 +241,14 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                 &G_context.tx_info.warning_bits
             );
         }
-        datum_policy = policyForSignTxOutputDatumHash(output_policy);
-        ref_script_policy = policyForSignTxOutputRefScript(output_policy);
-
         switch (output_policy) {
             case POLICY_DENY:
                 TRACE("Output security policy denied");
                 return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
             case POLICY_SHOW: {
+                datum_policy = policyForSignTxOutputDatumHash(output_policy);
+                ref_script_policy = policyForSignTxOutputRefScript(output_policy);
+
                 // Count pairs for output: output number, address, amount
                 plan->pair_count += 3;
                 if (datum_policy == POLICY_SHOW) {
@@ -273,6 +273,8 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                 break;
             }
             case POLICY_HIDE:
+                datum_policy = policyForSignTxOutputDatumHash(output_policy);
+                ref_script_policy = policyForSignTxOutputRefScript(output_policy);
                 break;
         }
 
@@ -1303,7 +1305,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                     s_flist_node *vote_node = voter_item->voter_votes_data.votes;
                     while (vote_node != NULL) {
                         vote_list_item_t *vote_item = (vote_list_item_t *) vote_node;
-                        plan->pair_count += 3;  // gov action hash, gov action index, vote option
+                        plan->pair_count += 3;  // gov action tx hash, gov action index, vote option
                         if (vote_item->vote_data.anchor.isIncluded) {
                             plan->pair_count += 2;  // anchor URL + anchor hash
                         }

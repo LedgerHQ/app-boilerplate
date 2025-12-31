@@ -690,31 +690,35 @@ security_policy_t policyForSignTxOutputAddressParams(const tx_output_description
 }
 
 security_policy_t policyForSignTxOutputDatumHash(security_policy_t outputPolicy) {
-    if (outputPolicy == POLICY_HIDE) {
-        HIDE();
+    switch (outputPolicy) {
+        case POLICY_DENY:
+            LEDGER_ASSERT(false, "Output policy DENY should not reach datum policy");
+            DENY();
+        case POLICY_SHOW:
+            SHOW_IF(is_expert_mode());
+            HIDE();
+        case POLICY_HIDE:
+            HIDE();
+        default:
+            ASSERT(false);
+            DENY();
     }
-
-    if (outputPolicy == POLICY_SHOW) {
-        SHOW_IF(is_expert_mode());
-        HIDE();
-    }
-
-    ASSERT(false);
-    DENY();
 }
 
 security_policy_t policyForSignTxOutputRefScript(security_policy_t outputPolicy) {
-    if (outputPolicy == POLICY_HIDE) {
-        HIDE();
+    switch (outputPolicy) {
+        case POLICY_DENY:
+            LEDGER_ASSERT(false, "Output policy DENY should not reach ref script policy");
+            DENY();
+        case POLICY_SHOW:
+            SHOW_IF(is_expert_mode());
+            HIDE();
+        case POLICY_HIDE:
+            HIDE();
+        default:
+            ASSERT(false);
+            DENY();
     }
-
-    if (outputPolicy == POLICY_SHOW) {
-        SHOW_IF(is_expert_mode());
-        HIDE();
-    }
-
-    ASSERT(false);
-    DENY();
 }
 
 // For final output confirmation
@@ -722,19 +726,21 @@ security_policy_t policyForSignTxOutputConfirm(security_policy_t outputPolicy,
                                                uint64_t numAssetGroups,
                                                bool containsDatum,
                                                bool containsRefScript) {
-    if (outputPolicy == POLICY_HIDE) {
-        HIDE();
+    switch (outputPolicy) {
+        case POLICY_DENY:
+            LEDGER_ASSERT(false, "Output policy DENY should not reach confirm policy");
+            DENY();
+        case POLICY_SHOW:
+            SHOW_IF(numAssetGroups > 0);
+            SHOW_IF(containsDatum && is_expert_mode());
+            SHOW_IF(containsRefScript && is_expert_mode());
+            HIDE();
+        case POLICY_HIDE:
+            HIDE();
+        default:
+            ASSERT(false);
+            DENY();
     }
-
-    if (outputPolicy == POLICY_SHOW) {
-        SHOW_IF(numAssetGroups > 0);
-        SHOW_IF(containsDatum && is_expert_mode());
-        SHOW_IF(containsRefScript && is_expert_mode());
-        HIDE();
-    }
-
-    ASSERT(false);
-    DENY();
 }
 
 static bool is_address_suitable_for_collateral_output(const tx_output_description_t* output) {

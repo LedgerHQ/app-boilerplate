@@ -42,12 +42,7 @@ bool formatRewardAddressFromCredential(uint8_t networkId,
                                       size_t buffer_size);
 
 /**
- * Display credential (key path, key hash, or script hash) with context-specific bech32 prefix
- *
- * Follows the old app's pattern of displaying credentials appropriately based on their type:
- * - KEY_PATH: Shows the BIP44 derivation path
- * - KEY_HASH: Shows bech32-encoded key hash with specified prefix
- * - SCRIPT_HASH: Shows bech32-encoded script hash with specified prefix
+ * Add credential (key path, key hash, or script hash) to UI pairs with context-specific bech32 prefix
  *
  * @param[in]  credential       Credential to display (type + data)
  * @param[in]  keyPathLabel     Label for KEY_PATH type (e.g., "Stake key")
@@ -58,75 +53,70 @@ bool formatRewardAddressFromCredential(uint8_t networkId,
  *
  * @return SWO_SUCCESS on success, or error code on failure
  */
-int displayCredential(const ext_credential_t *credential,
-                     const char *keyPathLabel,
-                     const char *keyHashLabel,
-                     const char *keyHashPrefix,
-                     const char *scriptHashLabel,
-                     const char *scriptHashPrefix);
+int addCredentialUIPairs(const ext_credential_t *credential,
+                        const char *keyPathLabel,
+                        const char *keyHashLabel,
+                        const char *keyHashPrefix,
+                        const char *scriptHashLabel,
+                        const char *scriptHashPrefix);
 
 /**
- * Display DRep (Delegated Representative) with appropriate formatting
+ * Add voter (key path, key hash, or script hash) to UI pairs with appropriate labels and prefixes
  *
- * Handles all DRep types:
- * - KEY_PATH: Shows the BIP44 derivation path
- * - KEY_HASH: Shows bech32-encoded key hash with "drep" prefix
- * - SCRIPT_HASH: Shows bech32-encoded script hash with "drep" prefix
- * - ABSTAIN: Shows "Abstain"
- * - NO_CONFIDENCE: Shows "No Confidence"
+ * @param[in]  voter            Voter to display (type + data)
+ *
+ * @return SWO_SUCCESS on success, or error code on failure
+ */
+int addVoterUIPairs(const ext_voter_t *voter);
+
+/**
+ * Add DRep (Delegated Representative) to UI pairs with appropriate formatting
  *
  * @param[in]  drep             DRep to display (type + data)
  * @param[in]  label            Label for the UI pair (e.g., "DRep")
  *
  * @return SWO_SUCCESS on success, or error code on failure
  */
-int displayDRep(const ext_drep_t *drep, const char *label);
+int addDRepUIPairs(const ext_drep_t *drep, const char *label);
 
 /**
- * Display anchor (URL + hash) if present and add to UI pairs
- *
- * Handles both URL and hash formatting and pair addition atomically.
+ * Add anchor (URL + hash) to UI pairs if present
  *
  * @param[in]  anchor        Anchor structure to display
  *
  * @return SWO_SUCCESS on success, or error code on failure
  */
-int displayAnchorIfPresent(const anchor_t *anchor);
+int addAnchorUIPairs(const anchor_t *anchor);
 
 /**
- * Display deposit amount and add to UI pair
- *
- * Handles formatting of deposit as Ada amount and UI pair addition.
+ * Add deposit amount to UI pair
  *
  * @param[in]  deposit       Deposit amount in lovelace
  * @param[in]  label         Label for the UI pair (default: "Deposit")
  *
  * @return SWO_SUCCESS on success, or error code on failure
  */
-int displayDeposit(uint64_t deposit, const char *label);
+int addDepositUIPairs(uint64_t deposit, const char *label);
 
 /**
- * Display pool key hash in bech32 format with "pool" prefix
+ * Add pool key hash to UI pairs in bech32 format with "pool" prefix
  *
  * @param[in]  poolKeyHash   28-byte pool key hash
  * @param[in]  label         Label for the UI pair (e.g., "Pool", "Pool ID")
  *
  * @return SWO_SUCCESS on success, or error code on failure
  */
-int displayPoolKeyHash(const uint8_t *poolKeyHash, const char *label);
+int addPoolKeyHashUIPairs(const uint8_t *poolKeyHash, const char *label);
 
 /**
- * Display reward account from credential for withdrawals
- *
- * For KEY_PATH: Shows both the derivation path and the full reward address (for network ID verification)
- * For KEY_HASH/SCRIPT_HASH: Shows only the full reward address
+ * Add reward account from credential to UI pairs for withdrawals
  *
  * @param[in]  networkId     Network ID for reward address construction
  * @param[in]  credential    Credential to display (type + data)
  *
  * @return SWO_SUCCESS on success, or error code on failure
  */
-int displayRewardAccountFromCredential(uint8_t networkId, const ext_credential_t *credential);
+int addRewardAccountUIPairs(uint8_t networkId, const ext_credential_t *credential);
 
 /**
  * Get human-readable name for a certificate type

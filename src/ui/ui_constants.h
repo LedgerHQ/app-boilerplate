@@ -13,3 +13,7 @@
 #define MAX_WARNING_MESSAGE_LENGTH 128       // For warning/error message text
 #define MAX_OUTPUT_LABEL_LENGTH 32           // For output labels (e.g., "Output 999 Address")
 #define MAX_TX_HASH_DISPLAY_LENGTH 65        // For transaction hash hex display (32 bytes + null)
+#define MAX_UI_LABEL_SIZE 64                 // Generic size for dynamic labels (e.g. "Input #123 Tx Hash")
+#define MAX_PROFIT_MARGIN_LENGTH 50          // For pool margin "num/den"
+#define MAX_VOTE_OPTION_LENGTH 16            // For vote option strings ("Abstain", "Yes", "No")
+#define MAX_DREP_OPTION_LENGTH 32            // For DRep option strings ("No Confidence")

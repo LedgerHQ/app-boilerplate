@@ -1645,7 +1645,7 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_MULTIASSET_REJECT_TX_WITH_MI
 static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_INIT] Nonmainnet_protocol_magic",
+        .name = "[REJECT_INIT] Nonmainnet_protocol_magic_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0803000100010200000000010100000100000000"
         "0101010000000001010001",
@@ -1657,7 +1657,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.NETWORK_INVALID_NETWORK_ID
     {
-        .name = "[REJECT_INIT] Invalid_network_id",
+        .name = "[REJECT_INIT] Invalid_network_id_NETWORK_INVALID_NETWORK_ID",
         .init_hex =
         "0000000000000000102D964A0903000100010200000000010100000100000000"
         "0101010000000001010001",
@@ -1669,7 +1669,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OPERATOR__SINGLE_POOL_REG_CERTIFICATE_REQUIRED
     {
-        .name = "[REJECT_INIT] Pool_registration_(operator)_too_few_certificates",
+        .name = "[REJECT_INIT] Pool_registration_(operator)_too_few_certificates_SIGN_MODE_POOL_OPERATOR_SINGLE_POOL_REG_CERTIFICATE_REQUIRED",
         .init_hex =
         "0000000000000000012D964A0905000100010200000000010100000100000000"
         "0101010000000001010001",
@@ -1681,7 +1681,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OWNER__SINGLE_POOL_REG_CERTIFICATE_REQUIRED
     {
-        .name = "[REJECT_INIT] Pool_registration_(owner)_too_few_certificates",
+        .name = "[REJECT_INIT] Pool_registration_(owner)_too_few_certificates_SIGN_MODE_POOL_OWNER_SINGLE_POOL_REG_CERTIFICATE_REQUIRED",
         .init_hex =
         "0000000000000000012D964A0904000100010200000000010100000100000000"
         "0101010000000001010000",
@@ -1693,7 +1693,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OPERATOR__SINGLE_POOL_REG_CERTIFICATE_REQUIRED
     {
-        .name = "[REJECT_INIT] Pool_registration_(operator)_too_many_certificates",
+        .name = "[REJECT_INIT] Pool_registration_(operator)_too_many_certificates_SIGN_MODE_POOL_OPERATOR_SINGLE_POOL_REG_CERTIFICATE_REQUIRED",
         .init_hex =
         "0000000000000000012D964A0905000100010200020000010100000100000000"
         "0101010000000001010001",
@@ -1705,7 +1705,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OWNER__SINGLE_POOL_REG_CERTIFICATE_REQUIRED
     {
-        .name = "[REJECT_INIT] Pool_registration_(owner)_too_many_certificates",
+        .name = "[REJECT_INIT] Pool_registration_(owner)_too_many_certificates_SIGN_MODE_POOL_OWNER_SINGLE_POOL_REG_CERTIFICATE_REQUIRED",
         .init_hex =
         "0000000000000000012D964A0904000100010200020000010100000100000000"
         "0101010000000001010000",
@@ -1717,7 +1717,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OPERATOR__WITHDRAWALS_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Pool_registration_(operator)_too_many_withdrawals",
+        .name = "[REJECT_INIT] Pool_registration_(operator)_too_many_withdrawals_SIGN_MODE_POOL_OPERATOR_WITHDRAWALS_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0905000100010200010001010100000100000000"
         "0101010000000001010001",
@@ -1729,7 +1729,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OWNER__WITHDRAWALS_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Pool_registration_(owner)_too_many_withdrawals",
+        .name = "[REJECT_INIT] Pool_registration_(owner)_too_many_withdrawals_SIGN_MODE_POOL_OWNER_WITHDRAWALS_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0904000100010200010001010100000100000000"
         "0101010000000001010000",
@@ -1741,7 +1741,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OPERATOR__MINT_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Pool_registration_(operator)_mint_included",
+        .name = "[REJECT_INIT] Pool_registration_(operator)_mint_included_SIGN_MODE_POOL_OPERATOR_MINT_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100010100000000"
         "0101010000000001010001",
@@ -1753,7 +1753,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OWNER__MINT_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Pool_registration_(owner)_mint_included",
+        .name = "[REJECT_INIT] Pool_registration_(owner)_mint_included_SIGN_MODE_POOL_OWNER_MINT_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0904000100010200010000010100010100000000"
         "0101010000000001010000",
@@ -1765,7 +1765,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_ORDINARY__COLLATERAL_INPUTS_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Ordinary_tx_collateral_inputs_included",
+        .name = "[REJECT_INIT] Ordinary_tx_collateral_inputs_included_SIGN_MODE_ORDINARY_COLLATERAL_INPUTS_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100010000"
         "0101010000000001010001",
@@ -1777,7 +1777,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_MULTISIG__COLLATERAL_INPUTS_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Multisig_tx_collateral_inputs_included",
+        .name = "[REJECT_INIT] Multisig_tx_collateral_inputs_included_SIGN_MODE_MULTISIG_COLLATERAL_INPUTS_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0906000100010200000000010100000100010000"
         "0101010000000001010001",
@@ -1789,7 +1789,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OPERATOR__COLLATERAL_INPUTS_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Pool_registration_(operator)_collateral_inputs_included",
+        .name = "[REJECT_INIT] Pool_registration_(operator)_collateral_inputs_included_SIGN_MODE_POOL_OPERATOR_COLLATERAL_INPUTS_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100010000"
         "0101010000000001010001",
@@ -1801,7 +1801,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OWNER__COLLATERAL_INPUTS_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Pool_registration_(owner)_collateral_inputs_included",
+        .name = "[REJECT_INIT] Pool_registration_(owner)_collateral_inputs_included_SIGN_MODE_POOL_OWNER_COLLATERAL_INPUTS_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0904000100010200010000010100000100010000"
         "0101010000000001010000",
@@ -1813,7 +1813,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OPERATOR__REQUIRED_SIGNERS_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Pool_registration_(operator)_required_signers_included",
+        .name = "[REJECT_INIT] Pool_registration_(operator)_required_signers_included_SIGN_MODE_POOL_OPERATOR_REQUIRED_SIGNERS_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000001"
         "0101010000000001010001",
@@ -1825,7 +1825,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OWNER__REQUIRED_SIGNERS_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Pool_registration_(owner)_required_signers_included",
+        .name = "[REJECT_INIT] Pool_registration_(owner)_required_signers_included_SIGN_MODE_POOL_OWNER_REQUIRED_SIGNERS_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0904000100010200010000010100000100000001"
         "0101010000000001010000",
@@ -1837,7 +1837,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_ORDINARY__COLLATERAL_OUTPUT_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Ordinary_tx_collateral_output_included",
+        .name = "[REJECT_INIT] Ordinary_tx_collateral_output_included_SIGN_MODE_ORDINARY_COLLATERAL_OUTPUT_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0102010000000001010001",
@@ -1849,7 +1849,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_MULTISIG__COLLATERAL_OUTPUT_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Multisig_tx_collateral_output_included",
+        .name = "[REJECT_INIT] Multisig_tx_collateral_output_included_SIGN_MODE_MULTISIG_COLLATERAL_OUTPUT_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0906000100010200000000010100000100000000"
         "0102010000000001010001",
@@ -1861,7 +1861,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OPERATOR__COLLATERAL_OUTPUT_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Pool_registration_(operator)_collateral_output_included",
+        .name = "[REJECT_INIT] Pool_registration_(operator)_collateral_output_included_SIGN_MODE_POOL_OPERATOR_COLLATERAL_OUTPUT_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000000"
         "0102010000000001010001",
@@ -1873,7 +1873,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OWNER__REFERENCE_INPUTS_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Pool_registration_(owner)_collateral_output_included",
+        .name = "[REJECT_INIT] Pool_registration_(owner)_collateral_output_included_SIGN_MODE_POOL_OWNER_REFERENCE_INPUTS_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0904000100010200010000010100000100000000"
         "0102010000000001010000",
@@ -1885,7 +1885,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_ORDINARY__TOTAL_COLLATERAL_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Ordinary_tx_total_collateral_included",
+        .name = "[REJECT_INIT] Ordinary_tx_total_collateral_included_SIGN_MODE_ORDINARY_TOTAL_COLLATERAL_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0101020000000001010001",
@@ -1897,7 +1897,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_MULTISIG__TOTAL_COLLATERAL_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Multisig_tx_total_collateral_included",
+        .name = "[REJECT_INIT] Multisig_tx_total_collateral_included_SIGN_MODE_MULTISIG_TOTAL_COLLATERAL_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0906000100010200000000010100000100000000"
         "0101020000000001010001",
@@ -1909,7 +1909,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OPERATOR__TOTAL_COLLATERAL_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Pool_registration_(operator)_total_collateral_included",
+        .name = "[REJECT_INIT] Pool_registration_(operator)_total_collateral_included_SIGN_MODE_POOL_OPERATOR_TOTAL_COLLATERAL_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000000"
         "0101020000000001010001",
@@ -1921,7 +1921,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OWNER__TOTAL_COLLATERAL_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Pool_registration_(owner)_total_collateral_included",
+        .name = "[REJECT_INIT] Pool_registration_(owner)_total_collateral_included_SIGN_MODE_POOL_OWNER_TOTAL_COLLATERAL_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0904000100010200010000010100000100000000"
         "0101020000000001010000",
@@ -1933,7 +1933,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_ORDINARY__REFERENCE_INPUTS_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Ordinary_tx_reference_inputs_included",
+        .name = "[REJECT_INIT] Ordinary_tx_reference_inputs_included_SIGN_MODE_ORDINARY_REFERENCE_INPUTS_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0101010001000001010001",
@@ -1945,7 +1945,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_MULTISIG__REFERENCE_INPUTS_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Multisig_tx_reference_inputs_included",
+        .name = "[REJECT_INIT] Multisig_tx_reference_inputs_included_SIGN_MODE_MULTISIG_REFERENCE_INPUTS_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0906000100010200000000010100000100000000"
         "0101010001000001010001",
@@ -1957,7 +1957,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OPERATOR__REFERENCE_INPUTS_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Pool_registration_(operator)_reference_inputs_included",
+        .name = "[REJECT_INIT] Pool_registration_(operator)_reference_inputs_included_SIGN_MODE_POOL_OPERATOR_REFERENCE_INPUTS_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000000"
         "0101010001000001010001",
@@ -1969,7 +1969,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OWNER__REFERENCE_INPUTS_NOT_ALLOWED
     {
-        .name = "[REJECT_INIT] Pool_registration_(owner)_reference_inputs_included",
+        .name = "[REJECT_INIT] Pool_registration_(owner)_reference_inputs_included_SIGN_MODE_POOL_OWNER_REFERENCE_INPUTS_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0904000100010200010000010100000100000000"
         "0101010001000001010000",
@@ -1981,7 +1981,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.OUTPUT_INVALID_ADDRESS_PARAMS
     {
-        .name = "[REJECT_ADDRESS] Reward_address_key",
+        .name = "[REJECT_ADDRESS] Reward_address_key_OUTPUT_INVALID_ADDRESS_PARAMS",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0101010000000001010001",
@@ -1993,7 +1993,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.OUTPUT_INVALID_ADDRESS_PARAMS
     {
-        .name = "[REJECT_ADDRESS] Reward_address_script",
+        .name = "[REJECT_ADDRESS] Reward_address_script_OUTPUT_INVALID_ADDRESS_PARAMS",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0101010000000001010001",
@@ -2005,7 +2005,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.OUTPUT_INVALID_ADDRESS_PARAMS
     {
-        .name = "[REJECT_ADDRESS] No_spending_path_Ordinary_Tx_1",
+        .name = "[REJECT_ADDRESS] No_spending_path_Ordinary_Tx_1_OUTPUT_INVALID_ADDRESS_PARAMS",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0101010000000001010001",
@@ -2017,7 +2017,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.OUTPUT_INVALID_ADDRESS_PARAMS
     {
-        .name = "[REJECT_ADDRESS] No_spending_path_Ordinary_Tx_2",
+        .name = "[REJECT_ADDRESS] No_spending_path_Ordinary_Tx_2_OUTPUT_INVALID_ADDRESS_PARAMS",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0101010000000001010001",
@@ -2029,7 +2029,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.OUTPUT_INVALID_ADDRESS_PARAMS
     {
-        .name = "[REJECT_ADDRESS] Pool_operator_spending_choice_not_path",
+        .name = "[REJECT_ADDRESS] Pool_operator_spending_choice_not_path_OUTPUT_INVALID_ADDRESS_PARAMS",
         .init_hex =
         "0000000000000000012D964A0905000100010200000000010100000100000000"
         "0101010000000001010001",
@@ -2041,7 +2041,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_MULTISIG__DEVICE_OWNED_ADDRESS_NOT_ALLOWED
     {
-        .name = "[REJECT_ADDRESS] Multisig_unconditionally",
+        .name = "[REJECT_ADDRESS] Multisig_unconditionally_SIGN_MODE_MULTISIG_DEVICE_OWNED_ADDRESS_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0906000100010200000000010100000100000000"
         "0101010000000001010001",
@@ -2053,7 +2053,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OWNER__DEVICE_OWNED_ADDRESS_NOT_ALLOWED
     {
-        .name = "[REJECT_ADDRESS] Pool_owner_unconditionally",
+        .name = "[REJECT_ADDRESS] Pool_owner_unconditionally_SIGN_MODE_POOL_OWNER_DEVICE_OWNED_ADDRESS_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0904000100010200000000010100000100000000"
         "0101010000000001010000",
@@ -2065,43 +2065,43 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_ORDINARY__POOL_REGISTRATION_NOT_ALLOWED
     {
-        .name = "[REJECT_CERT] Pool_registration_in_Ordinary_Tx",
+        .name = "[REJECT_CERT] Pool_registration_in_Ordinary_Tx_SIGN_MODE_ORDINARY_POOL_REGISTRATION_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0903000100010200010000010100000100000000"
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_ORDINARY_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_ORDINARY_TX),
-        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
+        .expected_sw = SWO_TX_PARSING_FAIL_CERTIFICATES,
         .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.SIGN_MODE_MULTISIG__POOL_REGISTRATION_NOT_ALLOWED
     {
-        .name = "[REJECT_CERT] Pool_registration_in_Multisig_Tx",
+        .name = "[REJECT_CERT] Pool_registration_in_Multisig_Tx_SIGN_MODE_MULTISIG_POOL_REGISTRATION_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0906000100010200010000010100000100000000"
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_MULTISIG_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_MULTISIG_TX),
-        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
+        .expected_sw = SWO_TX_PARSING_FAIL_CERTIFICATES,
         .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.SIGN_MODE_PLUTUS__POOL_REGISTRATION_NOT_ALLOWED
     {
-        .name = "[REJECT_CERT] Pool_registration_in_Plutus_Tx",
+        .name = "[REJECT_CERT] Pool_registration_in_Plutus_Tx_SIGN_MODE_PLUTUS_POOL_REGISTRATION_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0907000100010200010000010100000100000000"
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_PLUTUS_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_PLUTUS_TX),
-        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
+        .expected_sw = SWO_TX_PARSING_FAIL_CERTIFICATES,
         .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.SIGN_MODE_MULTISIG__POOL_RETIREMENT_NOT_ALLOWED
     {
-        .name = "[REJECT_CERT] Pool_retirement_in_Multisig_Tx",
+        .name = "[REJECT_CERT] Pool_retirement_in_Multisig_Tx_SIGN_MODE_MULTISIG_POOL_RETIREMENT_NOT_ALLOWED",
         .init_hex =
         "0000000000000000012D964A0906000100010200010000010100000100000000"
         "0101010000000001010002",
@@ -2113,103 +2113,103 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_POOL_OPERATOR__SINGLE_POOL_REG_CERTIFICATE_REQUIRED
     {
-        .name = "[REJECT_CERT] Stake_registration_in_Pool_Registration_Operator",
+        .name = "[REJECT_CERT] Stake_registration_in_Pool_Registration_Operator_SIGN_MODE_POOL_OPERATOR_SINGLE_POOL_REG_CERTIFICATE_REQUIRED",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000000"
         "0101010000000001010002",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_STAKE_REGISTRATION_IN_POOL_REGISTRATION_OPERATOR,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_STAKE_REGISTRATION_IN_POOL_REGISTRATION_OPERATOR),
-        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
+        .expected_sw = SWO_TX_PARSING_FAIL_CERTIFICATES,
         .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.SIGN_MODE_POOL_OWNER__SINGLE_POOL_REG_CERTIFICATE_REQUIRED
     {
-        .name = "[REJECT_CERT] Stake_registration_in_Pool_Registration_Owner",
+        .name = "[REJECT_CERT] Stake_registration_in_Pool_Registration_Owner_SIGN_MODE_POOL_OWNER_SINGLE_POOL_REG_CERTIFICATE_REQUIRED",
         .init_hex =
         "0000000000000000012D964A0904000000010200010000010100000100000000"
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_STAKE_REGISTRATION_IN_POOL_REGISTRATION_OWNER,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_STAKE_REGISTRATION_IN_POOL_REGISTRATION_OWNER),
-        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
+        .expected_sw = SWO_TX_PARSING_FAIL_CERTIFICATES,
         .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.SIGN_MODE_POOL_OPERATOR__SINGLE_POOL_REG_CERTIFICATE_REQUIRED
     {
-        .name = "[REJECT_CERT] Stake_deregistration_in_Pool_Registration_Operator",
+        .name = "[REJECT_CERT] Stake_deregistration_in_Pool_Registration_Operator_SIGN_MODE_POOL_OPERATOR_SINGLE_POOL_REG_CERTIFICATE_REQUIRED",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000000"
         "0101010000000001010002",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_STAKE_DEREGISTRATION_IN_POOL_REGISTRATION_OPERATOR,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_STAKE_DEREGISTRATION_IN_POOL_REGISTRATION_OPERATOR),
-        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
+        .expected_sw = SWO_TX_PARSING_FAIL_CERTIFICATES,
         .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.SIGN_MODE_POOL_OWNER__SINGLE_POOL_REG_CERTIFICATE_REQUIRED
     {
-        .name = "[REJECT_CERT] Stake_deregistration_in_Pool_Registration_Owner",
+        .name = "[REJECT_CERT] Stake_deregistration_in_Pool_Registration_Owner_SIGN_MODE_POOL_OWNER_SINGLE_POOL_REG_CERTIFICATE_REQUIRED",
         .init_hex =
         "0000000000000000012D964A0904000000010200010000010100000100000000"
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_STAKE_DEREGISTRATION_IN_POOL_REGISTRATION_OWNER,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_STAKE_DEREGISTRATION_IN_POOL_REGISTRATION_OWNER),
-        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
+        .expected_sw = SWO_TX_PARSING_FAIL_CERTIFICATES,
         .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.CERTIFICATE_INVALID_POOL_KEY_HASH
     {
-        .name = "[REJECT_CERT] Stake_delegation_in_Pool_Registration_Operator",
+        .name = "[REJECT_CERT] Stake_delegation_in_Pool_Registration_Operator_CERTIFICATE_INVALID_POOL_KEY_HASH",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000000"
         "0101010000000001010002",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_STAKE_DELEGATION_IN_POOL_REGISTRATION_OPERATOR,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_STAKE_DELEGATION_IN_POOL_REGISTRATION_OPERATOR),
-        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
+        .expected_sw = SWO_TX_PARSING_FAIL_CERTIFICATES,
         .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.CERTIFICATE_INVALID_POOL_KEY_HASH
     {
-        .name = "[REJECT_CERT] Stake_delegation_in_Pool_Registration_Owner",
+        .name = "[REJECT_CERT] Stake_delegation_in_Pool_Registration_Owner_CERTIFICATE_INVALID_POOL_KEY_HASH",
         .init_hex =
         "0000000000000000012D964A0904000000010200010000010100000100000000"
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_STAKE_DELEGATION_IN_POOL_REGISTRATION_OWNER,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_STAKE_DELEGATION_IN_POOL_REGISTRATION_OWNER),
-        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
+        .expected_sw = SWO_TX_PARSING_FAIL_CERTIFICATES,
         .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.SIGN_MODE_POOL_OPERATOR__SINGLE_POOL_REG_CERTIFICATE_REQUIRED
     {
-        .name = "[REJECT_CERT] Pool_retirement_in_Pool_Registration_Operator",
+        .name = "[REJECT_CERT] Pool_retirement_in_Pool_Registration_Operator_SIGN_MODE_POOL_OPERATOR_SINGLE_POOL_REG_CERTIFICATE_REQUIRED",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000000"
         "0101010000000001010002",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_POOL_RETIREMENT_IN_POOL_REGISTRATION_OPERATOR,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_POOL_RETIREMENT_IN_POOL_REGISTRATION_OPERATOR),
-        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
+        .expected_sw = SWO_TX_PARSING_FAIL_CERTIFICATES,
         .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.SIGN_MODE_POOL_OWNER__SINGLE_POOL_REG_CERTIFICATE_REQUIRED
     {
-        .name = "[REJECT_CERT] Pool_retirement_in_Pool_Registration_Owner",
+        .name = "[REJECT_CERT] Pool_retirement_in_Pool_Registration_Owner_SIGN_MODE_POOL_OWNER_SINGLE_POOL_REG_CERTIFICATE_REQUIRED",
         .init_hex =
         "0000000000000000012D964A0904000000010200010000010100000100000000"
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_POOL_RETIREMENT_IN_POOL_REGISTRATION_OWNER,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_POOL_RETIREMENT_IN_POOL_REGISTRATION_OWNER),
-        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
+        .expected_sw = SWO_TX_PARSING_FAIL_CERTIFICATES,
         .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.SIGN_MODE_ORDINARY__CERTIFICATE_STAKE_CREDENTIAL_ONLY_AS_PATH
     {
-        .name = "[REJECT_CERT_STAKING] Script_hash_in_Ordinary_Tx",
+        .name = "[REJECT_CERT_STAKING] Script_hash_in_Ordinary_Tx_SIGN_MODE_ORDINARY_CERTIFICATE_STAKE_CREDENTIAL_ONLY_AS_PATH",
         .init_hex =
         "0000000000000000012D964A0903000100010200010000010100000100000000"
         "0101010000000001010001",
@@ -2221,7 +2221,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_CERT_STAKING] Nonstaking_path_in_Ordinary_Tx",
+        .name = "[REJECT_CERT_STAKING] Nonstaking_path_in_Ordinary_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100010200010000010100000100000000"
         "0101010000000001010001",
@@ -2233,7 +2233,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_MULTISIG__CERTIFICATE_CREDENTIAL_ONLY_AS_SCRIPT
     {
-        .name = "[REJECT_CERT_STAKING] Path_in_Multisig_Tx",
+        .name = "[REJECT_CERT_STAKING] Path_in_Multisig_Tx_SIGN_MODE_MULTISIG_CERTIFICATE_CREDENTIAL_ONLY_AS_SCRIPT",
         .init_hex =
         "0000000000000000012D964A0906000100010200010000010100000100000000"
         "0101010000000001010002",
@@ -2245,7 +2245,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_CERT_POOL_RETIRE] Nonpool_cold_key_in_Ordinary_Tx",
+        .name = "[REJECT_CERT_POOL_RETIRE] Nonpool_cold_key_in_Ordinary_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100010200010000010100000100000000"
         "0101010000000001010002",
@@ -2257,7 +2257,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.INVALID_DATA_SUPPLIED_TO_LEDGER
     {
-        .name = "[REJECT_WITHDRAWAL] Reject_tx_with_invalid_canonical_ordering_of_withdrawals",
+        .name = "[REJECT_WITHDRAWAL] Reject_tx_with_invalid_canonical_ordering_of_withdrawals_INVALID_DATA_SUPPLIED_TO_LEDGER",
         .init_hex =
         "0000000000000000012D964A0903000100000200000002010100000100000000"
         "0101010000000001010003",
@@ -2269,7 +2269,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_ORDINARY__WITHDRAWAL_ONLY_AS_PATH
     {
-        .name = "[REJECT_WITHDRAWAL] Script_hash_as_stake_credential_in_Ordinary_Tx",
+        .name = "[REJECT_WITHDRAWAL] Script_hash_as_stake_credential_in_Ordinary_Tx_SIGN_MODE_ORDINARY_WITHDRAWAL_ONLY_AS_PATH",
         .init_hex =
         "0000000000000000012D964A0903000100010200000001010100000100000000"
         "0101010000000001010001",
@@ -2281,7 +2281,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITHDRAWAL] Nonstaking_path_as_stake_credential_in_Ordinary_Tx",
+        .name = "[REJECT_WITHDRAWAL] Nonstaking_path_as_stake_credential_in_Ordinary_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100010200000001010100000100000000"
         "0101010000000001010001",
@@ -2293,7 +2293,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.SIGN_MODE_MULTISIG__WITHDRAWAL_ONLY_AS_SCRIPT
     {
-        .name = "[REJECT_WITHDRAWAL] Staking_path_as_stake_credential_in_Multisig_Tx",
+        .name = "[REJECT_WITHDRAWAL] Staking_path_as_stake_credential_in_Multisig_Tx_SIGN_MODE_MULTISIG_WITHDRAWAL_ONLY_AS_SCRIPT",
         .init_hex =
         "0000000000000000012D964A0906000100010200000001010100000100000000"
         "0101010000000001010002",
@@ -2305,7 +2305,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITHDRAWAL] Nonstaking_path_as_stake_credential_in_Plutus_Tx",
+        .name = "[REJECT_WITHDRAWAL] Nonstaking_path_as_stake_credential_in_Plutus_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0907000100010200000001010100000100000000"
         "0101010000000001010001",
@@ -2317,7 +2317,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Ordinary_account_path_in_Ordinary_Tx",
+        .name = "[REJECT_WITNESS] Ordinary_account_path_in_Ordinary_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0101010000000001010002",
@@ -2329,7 +2329,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Multisig_account_path_in_Ordinary_Tx",
+        .name = "[REJECT_WITNESS] Multisig_account_path_in_Ordinary_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0101010000000001010002",
@@ -2341,7 +2341,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Multisig_spending_path_in_Ordinary_Tx",
+        .name = "[REJECT_WITNESS] Multisig_spending_path_in_Ordinary_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0101010000000001010002",
@@ -2353,7 +2353,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Multisig_staking_path_in_Ordinary_Tx",
+        .name = "[REJECT_WITNESS] Multisig_staking_path_in_Ordinary_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0101010000000001010002",
@@ -2365,7 +2365,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Mint_path_in_Ordinary_Tx",
+        .name = "[REJECT_WITNESS] Mint_path_in_Ordinary_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0101010000000001010002",
@@ -2377,7 +2377,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Ordinary_account_path_in_Multisig_Tx",
+        .name = "[REJECT_WITNESS] Ordinary_account_path_in_Multisig_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0906000100010200000000010100000100000000"
         "0101010000000001010002",
@@ -2389,7 +2389,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Multisig_account_path_in_Multisig_Tx",
+        .name = "[REJECT_WITNESS] Multisig_account_path_in_Multisig_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0906000100010200000000010100000100000000"
         "0101010000000001010002",
@@ -2401,7 +2401,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Ordinary_spending_path_in_Multisig_Tx",
+        .name = "[REJECT_WITNESS] Ordinary_spending_path_in_Multisig_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0906000100010200000000010100000100000000"
         "0101010000000001010002",
@@ -2413,7 +2413,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Ordinary_staking_path_in_Multisig_Tx",
+        .name = "[REJECT_WITNESS] Ordinary_staking_path_in_Multisig_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0906000100010200000000010100000100000000"
         "0101010000000001010002",
@@ -2425,7 +2425,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Mint_path_in_Multisig_Tx",
+        .name = "[REJECT_WITNESS] Mint_path_in_Multisig_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0906000100010200000000010100000100000000"
         "0101010000000001010002",
@@ -2437,7 +2437,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Pool_cold_path_in_Multisig_Tx",
+        .name = "[REJECT_WITNESS] Pool_cold_path_in_Multisig_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0906000100010200000000010100000100000000"
         "0101010000000001010002",
@@ -2449,7 +2449,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Ordinary_account_path_in_Plutus_Tx",
+        .name = "[REJECT_WITNESS] Ordinary_account_path_in_Plutus_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0907000100010200000000010100000100000000"
         "0101010000000001010002",
@@ -2461,7 +2461,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Multisig_account_path_in_Plutus_Tx",
+        .name = "[REJECT_WITNESS] Multisig_account_path_in_Plutus_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0907000100010200000000010100000100000000"
         "0101010000000001010002",
@@ -2473,7 +2473,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Multisig_account_path_in_Pool_Registration_(Owner)_Tx",
+        .name = "[REJECT_WITNESS] Multisig_account_path_in_Pool_Registration_(Owner)_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0904000100010200010000010100000100000000"
         "0101010000000001010001",
@@ -2485,7 +2485,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Ordinary_spending_path_in_Pool_Registration_(Owner)_Tx",
+        .name = "[REJECT_WITNESS] Ordinary_spending_path_in_Pool_Registration_(Owner)_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0904000100010200010000010100000100000000"
         "0101010000000001010001",
@@ -2497,7 +2497,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Multisig_spending_path_in_Pool_Registration_(Owner)_Tx",
+        .name = "[REJECT_WITNESS] Multisig_spending_path_in_Pool_Registration_(Owner)_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0904000100010200010000010100000100000000"
         "0101010000000001010001",
@@ -2509,7 +2509,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Multisig_staking_path_in_Pool_Registration_(Owner)_Tx",
+        .name = "[REJECT_WITNESS] Multisig_staking_path_in_Pool_Registration_(Owner)_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0904000100010200010000010100000100000000"
         "0101010000000001010001",
@@ -2521,7 +2521,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Mint_path_in_Pool_Registration_(Owner)_Tx",
+        .name = "[REJECT_WITNESS] Mint_path_in_Pool_Registration_(Owner)_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0904000100010200010000010100000100000000"
         "0101010000000001010001",
@@ -2533,7 +2533,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Pool_cold_path_in_Pool_Registration_(Owner)_Tx",
+        .name = "[REJECT_WITNESS] Pool_cold_path_in_Pool_Registration_(Owner)_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0904000100010200010000010100000100000000"
         "0101010000000001010001",
@@ -2545,7 +2545,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Multisig_account_path_in_Pool_Registration_(Operator)_Tx",
+        .name = "[REJECT_WITNESS] Multisig_account_path_in_Pool_Registration_(Operator)_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000000"
         "0101010000000001010002",
@@ -2557,7 +2557,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Multisig_spending_path_in_Pool_Registration_(Operator)_Tx",
+        .name = "[REJECT_WITNESS] Multisig_spending_path_in_Pool_Registration_(Operator)_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000000"
         "0101010000000001010002",
@@ -2569,7 +2569,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Ordinary_staking_path_in_Pool_Registration_(Operator)_Tx",
+        .name = "[REJECT_WITNESS] Ordinary_staking_path_in_Pool_Registration_(Operator)_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000000"
         "0101010000000001010002",
@@ -2581,7 +2581,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Multisig_staking_path_in_Pool_Registration_(Operator)_Tx",
+        .name = "[REJECT_WITNESS] Multisig_staking_path_in_Pool_Registration_(Operator)_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000000"
         "0101010000000001010002",
@@ -2593,7 +2593,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_WITNESS] Mint_path_in_Pool_Registration_(Operator)_Tx",
+        .name = "[REJECT_WITNESS] Mint_path_in_Pool_Registration_(Operator)_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000000"
         "0101010000000001010002",
@@ -2605,7 +2605,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_SINGLE_ACCOUNT] Input_and_change_output_account_mismatch",
+        .name = "[REJECT_SINGLE_ACCOUNT] Input_and_change_output_account_mismatch_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100020200000000010100000100000000"
         "0101010000000001010001",
@@ -2617,7 +2617,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_SINGLE_ACCOUNT] Input_and_stake_deregistration_certificate_account_mismatch",
+        .name = "[REJECT_SINGLE_ACCOUNT] Input_and_stake_deregistration_certificate_account_mismatch_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100010200010000010100000100000000"
         "0101010000000001010002",
@@ -2629,7 +2629,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_SINGLE_ACCOUNT] Input_and_withdrawal_account_mismatch",
+        .name = "[REJECT_SINGLE_ACCOUNT] Input_and_withdrawal_account_mismatch_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100010200000001010100000100000000"
         "0101010000000001010002",
@@ -2641,7 +2641,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_SINGLE_ACCOUNT] Change_output_and_stake_deregistration_account_mismatch",
+        .name = "[REJECT_SINGLE_ACCOUNT] Change_output_and_stake_deregistration_account_mismatch_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100020200010000010100000100000000"
         "0101010000000001010002",
@@ -2653,7 +2653,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_SINGLE_ACCOUNT] Change_output_and_withdrawal_account_mismatch",
+        .name = "[REJECT_SINGLE_ACCOUNT] Change_output_and_withdrawal_account_mismatch_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100020200000001010100000100000000"
         "0101010000000001010002",
@@ -2665,7 +2665,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_SINGLE_ACCOUNT] Stake_deregistration_certificate_and_withdrawal_account_mismatch",
+        .name = "[REJECT_SINGLE_ACCOUNT] Stake_deregistration_certificate_and_withdrawal_account_mismatch_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100010200010001010100000100000000"
         "0101010000000001010003",
@@ -2677,7 +2677,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_SINGLE_ACCOUNT] Byron_to_Shelley_transfer_input_account_mismatch",
+        .name = "[REJECT_SINGLE_ACCOUNT] Byron_to_Shelley_transfer_input_account_mismatch_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000200010200000000010100000100000000"
         "0101010000000001010002",
@@ -2689,7 +2689,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.LEDGER_POLICY
     {
-        .name = "[REJECT_SINGLE_ACCOUNT] Byron_to_Shelley_transfer_output_account_mismatch",
+        .name = "[REJECT_SINGLE_ACCOUNT] Byron_to_Shelley_transfer_output_account_mismatch_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0101010000000001010001",
@@ -2701,7 +2701,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.COLLATERAL_INPUT_CONTAINS_DATUM
     {
-        .name = "[REJECT_COLLATERAL_OUTPUT] Collateral_output_with_datum_hash",
+        .name = "[REJECT_COLLATERAL_OUTPUT] Collateral_output_with_datum_hash_COLLATERAL_INPUT_CONTAINS_DATUM",
         .init_hex =
         "0000000000000000012D964A0907000100010200000000010100000100000000"
         "0102010000000001010001",
@@ -2713,7 +2713,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.COLLATERAL_INPUT_CONTAINS_DATUM
     {
-        .name = "[REJECT_COLLATERAL_OUTPUT] Collateral_output_with_inline_datum",
+        .name = "[REJECT_COLLATERAL_OUTPUT] Collateral_output_with_inline_datum_COLLATERAL_INPUT_CONTAINS_DATUM",
         .init_hex =
         "0000000000000000012D964A0907000100010200000000010100000100000000"
         "0102010000000001010001",
@@ -2725,7 +2725,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.COLLATERAL_INPUT_CONTAINS_REFERENCE_SCRIPT
     {
-        .name = "[REJECT_COLLATERAL_OUTPUT] Collateral_output_with_reference_script",
+        .name = "[REJECT_COLLATERAL_OUTPUT] Collateral_output_with_reference_script_COLLATERAL_INPUT_CONTAINS_REFERENCE_SCRIPT",
         .init_hex =
         "0000000000000000012D964A0907000100010200000000010100000100000000"
         "0102010000000001010001",
@@ -2737,7 +2737,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.MULTIASSET_INVALID_TOKEN_BUNDLE_ORDERING
     {
-        .name = "[REJECT_MULTIASSET] Reject_tx_where_asset_groups_are_not_ordered",
+        .name = "[REJECT_MULTIASSET] Reject_tx_where_asset_groups_are_not_ordered_MULTIASSET_INVALID_TOKEN_BUNDLE_ORDERING",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0101010000000001010001",
@@ -2749,7 +2749,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.MULTIASSET_INVALID_TOKEN_BUNDLE_NOT_UNIQUE
     {
-        .name = "[REJECT_MULTIASSET] Reject_tx_where_asset_groups_are_not_unique",
+        .name = "[REJECT_MULTIASSET] Reject_tx_where_asset_groups_are_not_unique_MULTIASSET_INVALID_TOKEN_BUNDLE_NOT_UNIQUE",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0101010000000001010001",
@@ -2761,7 +2761,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.MULTIASSET_INVALID_ASSET_GROUP_ORDERING
     {
-        .name = "[REJECT_MULTIASSET] Reject_tx_where_tokens_within_an_asset_group_are_not_ordered_alphabetical",
+        .name = "[REJECT_MULTIASSET] Reject_tx_where_tokens_within_an_asset_group_are_not_ordered_alphabetical_MULTIASSET_INVALID_ASSET_GROUP_ORDERING",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0101010000000001010001",
@@ -2773,7 +2773,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.MULTIASSET_INVALID_ASSET_GROUP_ORDERING
     {
-        .name = "[REJECT_MULTIASSET] Reject_tx_where_tokens_within_an_asset_group_are_not_ordered_length",
+        .name = "[REJECT_MULTIASSET] Reject_tx_where_tokens_within_an_asset_group_are_not_ordered_length_MULTIASSET_INVALID_ASSET_GROUP_ORDERING",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0101010000000001010001",
@@ -2785,7 +2785,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.MULTIASSET_INVALID_ASSET_GROUP_NOT_UNIQUE
     {
-        .name = "[REJECT_MULTIASSET] Reject_tx_where_tokens_within_an_asset_group_are_not_unique",
+        .name = "[REJECT_MULTIASSET] Reject_tx_where_tokens_within_an_asset_group_are_not_unique_MULTIASSET_INVALID_ASSET_GROUP_NOT_UNIQUE",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
         "0101010000000001010001",
@@ -2797,7 +2797,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.MULTIASSET_INVALID_TOKEN_BUNDLE_ORDERING
     {
-        .name = "[REJECT_MULTIASSET] Reject_tx_with_mint_fields_with_invalid_canonical_ordering_of_policies",
+        .name = "[REJECT_MULTIASSET] Reject_tx_with_mint_fields_with_invalid_canonical_ordering_of_policies_MULTIASSET_INVALID_TOKEN_BUNDLE_ORDERING",
         .init_hex =
         "0000000000000000012D964A0903000100000200000000010100020100000000"
         "0101010000000001010001",
@@ -2809,7 +2809,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
     },
     // InvalidDataReason.MULTIASSET_INVALID_ASSET_GROUP_ORDERING
     {
-        .name = "[REJECT_MULTIASSET] Reject_tx_with_mint_fields_with_invalid_canonical_ordering_of_asset_names",
+        .name = "[REJECT_MULTIASSET] Reject_tx_with_mint_fields_with_invalid_canonical_ordering_of_asset_names_MULTIASSET_INVALID_ASSET_GROUP_ORDERING",
         .init_hex =
         "0000000000000000012D964A0903000100000200000000010100010100000000"
         "0101010000000001010001",

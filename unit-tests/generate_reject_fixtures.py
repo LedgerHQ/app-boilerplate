@@ -138,10 +138,16 @@ TSIGNING_MODE_MAP = {
 REJECT_REASON_SW: Dict[str, str] = {
     "InvalidDataReason.NETWORK_INVALID_NETWORK_ID": "SWO_INVALID_NETWORK_ID",
     "InvalidDataReason.NETWORK_INVALID_PROTOCOL_MAGIC": "SWO_INVALID_PROTOCOL_MAGIC",
-    "InvalidDataReason.MULTIASSET_INVALID_TOKEN_BUNDLE_ORDERING": "SWO_TX_CANONICAL_ORDER",
-    "InvalidDataReason.MULTIASSET_INVALID_TOKEN_BUNDLE_NOT_UNIQUE": "SWO_TX_CANONICAL_ORDER",
-    "InvalidDataReason.MULTIASSET_INVALID_ASSET_GROUP_ORDERING": "SWO_TX_CANONICAL_ORDER",
-    "InvalidDataReason.MULTIASSET_INVALID_ASSET_GROUP_NOT_UNIQUE": "SWO_TX_CANONICAL_ORDER",
+    "InvalidDataReason.MULTIASSET_INVALID_TOKEN_BUNDLE_ORDERING": "SWO_TX_PARSING_FAIL_CANONICAL_ORDER",
+    "InvalidDataReason.MULTIASSET_INVALID_TOKEN_BUNDLE_NOT_UNIQUE": "SWO_TX_PARSING_FAIL_CANONICAL_ORDER",
+    "InvalidDataReason.MULTIASSET_INVALID_ASSET_GROUP_ORDERING": "SWO_TX_PARSING_FAIL_CANONICAL_ORDER",
+    "InvalidDataReason.MULTIASSET_INVALID_ASSET_GROUP_NOT_UNIQUE": "SWO_TX_PARSING_FAIL_CANONICAL_ORDER",
+    "InvalidDataReason.SIGN_MODE_ORDINARY__POOL_REGISTRATION_NOT_ALLOWED": "SWO_TX_PARSING_FAIL_CERTIFICATES",
+    "InvalidDataReason.SIGN_MODE_MULTISIG__POOL_REGISTRATION_NOT_ALLOWED": "SWO_TX_PARSING_FAIL_CERTIFICATES",
+    "InvalidDataReason.SIGN_MODE_PLUTUS__POOL_REGISTRATION_NOT_ALLOWED": "SWO_TX_PARSING_FAIL_CERTIFICATES",
+    "InvalidDataReason.SIGN_MODE_POOL_OPERATOR__SINGLE_POOL_REG_CERTIFICATE_REQUIRED": "SWO_TX_PARSING_FAIL_CERTIFICATES",
+    "InvalidDataReason.SIGN_MODE_POOL_OWNER__SINGLE_POOL_REG_CERTIFICATE_REQUIRED": "SWO_TX_PARSING_FAIL_CERTIFICATES",
+    "InvalidDataReason.CERTIFICATE_INVALID_POOL_KEY_HASH": "SWO_TX_PARSING_FAIL_CERTIFICATES",
 }
 
 def parse_enum(enum_cls: Type[Any], value: Any):
@@ -511,9 +517,14 @@ def sanitize_name(name: str) -> str:
     return cleaned
 
 
-def format_display_name(prefix: str, test_name: str) -> str:
+def format_display_name(prefix: str, test_name: str, reason: Optional[str] = None) -> str:
     cleaned = test_name.replace("-", "").replace(" ", "_")
     cleaned = "_".join(part for part in cleaned.split("_") if part)
+    if reason:
+        reason_label = reason.split(".")[-1]
+        reason_label = sanitize_name(reason_label)
+        if reason_label:
+            cleaned = f"{cleaned}_{reason_label}"
     return f"[{prefix}] {cleaned}"
 
 
@@ -528,11 +539,16 @@ def to_hex_lines(hex_str: str, indent: int = 4, append_comma: bool = False) -> L
     return lines
 
 
-def reject_reason_to_status_word(reason: Optional[str], fixture_name: str, tx: Transaction) -> str:
+def reject_reason_to_status_word(prefix: str,
+                                 reason: Optional[str],
+                                 fixture_name: str,
+                                 tx: Transaction) -> str:
     if fixture_name == "Non-mainnet protocol magic":
         return "SWO_INVALID_PROTOCOL_MAGIC"
     if fixture_name == "Invalid network id":
         return "SWO_INVALID_NETWORK_ID"
+    if prefix == "REJECT_INIT":
+        return "SWO_SECURITY_CONDITION_NOT_SATISFIED"
     if reason and reason in REJECT_REASON_SW:
         return REJECT_REASON_SW[reason]
     return "SWO_SECURITY_CONDITION_NOT_SATISFIED"
@@ -578,7 +594,7 @@ def build_fixture(fixture_json: Dict[str, Any], prefix: str) -> FixtureInfo:
     ]
     reason = fixture_json.get("rejectReason")
     expect_init_failure = prefix == "REJECT_INIT"
-    display_name = format_display_name(prefix, fixture_json["testName"])
+    display_name = format_display_name(prefix, fixture_json["testName"], reason)
     return FixtureInfo(
         name=fixture_json["testName"],
         display_name=display_name,
@@ -586,7 +602,7 @@ def build_fixture(fixture_json: Dict[str, Any], prefix: str) -> FixtureInfo:
         sanitized_name=sanitize_name(fixture_json["testName"]),
         init_hex=init_payload.hex().upper(),
         chunks=chunks,
-        expected_sw=reject_reason_to_status_word(reason, fixture_json["testName"], tx),
+        expected_sw=reject_reason_to_status_word(prefix, reason, fixture_json["testName"], tx),
         expect_init_failure=expect_init_failure,
         reject_reason=reason,
     )

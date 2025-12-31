@@ -154,7 +154,7 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
-    // Field 11 (script data hash) - optional, not implemented yet
+    // Field 11 (script data hash) - optional
     uint8_t includeScriptDataHashByte;
     bool includeScriptDataHash = false;
     if (!buffer_read_u8(cdata, &includeScriptDataHashByte)) {
@@ -266,7 +266,7 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         G_context.tx_info.transaction.includeCollateralOutput,
         G_context.tx_info.transaction.includeTotalCollateral,
         G_context.tx_info.transaction.num_reference_inputs,
-        0,      // numVotingProcedures - not implemented yet
+        G_context.tx_info.transaction.num_voters,
         G_context.tx_info.transaction.includeTreasury,
         G_context.tx_info.transaction.includeDonation,
         &G_context.tx_info.warning_bits);

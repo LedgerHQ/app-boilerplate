@@ -1075,6 +1075,18 @@ static parser_status_e parse_tx_collateral_output(buffer_t *buf, transaction_t *
         return status;
     }
 
+    status = parse_output_datum(&output_buf, &tx->collateral_output.datum);
+    if (status != PARSING_OK) {
+        return status;
+    }
+
+    status = parse_output_ref_script(&output_buf,
+                                     &tx->collateral_output.refScript,
+                                     &tx->collateral_output.hasRefScript);
+    if (status != PARSING_OK) {
+        return status;
+    }
+
     buf->offset += output_len;
     return PARSING_OK;
 }
