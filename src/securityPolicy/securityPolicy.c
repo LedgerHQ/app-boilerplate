@@ -2037,6 +2037,11 @@ static const warning_definition_t WARNING_DEFINITIONS[WARNING_BIT_COUNT] = {
         .title = "Collateral not specified",
         .description = "Plutus transaction without total collateral information",
     },
+    [WARNING_BIT_COLLATERAL_OUTPUT_WARNING] = {
+        .bit = WARNING_BIT_COLLATERAL_OUTPUT_WARNING,
+        .title = "Collateral tokens returned",
+        .description = "Collateral return output includes tokens",
+    },
     [WARNING_BIT_PLUTUS_MISSING_SCRIPT_DATA_HASH] = {
         .bit = WARNING_BIT_PLUTUS_MISSING_SCRIPT_DATA_HASH,
         .title = "Missing script data hash",

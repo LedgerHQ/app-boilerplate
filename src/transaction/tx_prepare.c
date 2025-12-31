@@ -99,6 +99,10 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
     TRACE("Expert mode: %d", is_expert_mode());
 
     plan->pair_count = 2;  // fee + tx hash
+    security_policy_t input_policy = policyForSignTxInput(G_context.tx_info.transaction.txSigningMode);
+    if (input_policy == POLICY_SHOW) {
+        plan->pair_count += G_context.tx_info.transaction.num_inputs;
+    }
     if (G_context.tx_info.transaction.includeTtl) {
         security_policy_t ttl_policy = policyForSignTxTtl(G_context.tx_info.transaction.ttl);
         switch (ttl_policy) {
@@ -217,6 +221,8 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             output_desc.destination.params = &output_item->output_data.destination.params;
         }
 
+        security_policy_t datum_policy;
+        security_policy_t ref_script_policy;
         security_policy_t output_policy;
         if (output_item->output_data.destination.type == DESTINATION_THIRD_PARTY) {
             output_policy = policyForSignTxOutputAddressBytes(
@@ -235,6 +241,8 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                 &G_context.tx_info.warning_bits
             );
         }
+        datum_policy = policyForSignTxOutputDatumHash(output_policy);
+        ref_script_policy = policyForSignTxOutputRefScript(output_policy);
 
         switch (output_policy) {
             case POLICY_DENY:
@@ -243,6 +251,12 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             case POLICY_SHOW: {
                 // Count pairs for output: output number, address, amount
                 plan->pair_count += 3;
+                if (datum_policy == POLICY_SHOW) {
+                    plan->pair_count++;
+                }
+                if (ref_script_policy == POLICY_SHOW) {
+                    plan->pair_count++;
+                }
 
                 // Count pairs for tokens (2 pairs per token: fingerprint + amount)
                 if (output_item->output_data.assetGroups != NULL) {
@@ -1025,12 +1039,12 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             tx_collateral_input_list_item_t *input_item =
                 (tx_collateral_input_list_item_t *) collateral_input_node;
 
-            security_policy_t input_policy = policyForSignTxCollateralInput(
+            security_policy_t collateral_input_policy = policyForSignTxCollateralInput(
                 G_context.tx_info.transaction.txSigningMode,
                 G_context.tx_info.transaction.includeTotalCollateral
             );
 
-            switch (input_policy) {
+            switch (collateral_input_policy) {
                 case POLICY_DENY:
                     TRACE("Collateral input security policy denied");
                     return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
@@ -1131,17 +1145,32 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             );
         }
 
+        security_policy_t collateral_ada_policy =
+            policyForSignTxCollateralOutputAdaAmount(
+                collateral_policy,
+                G_context.tx_info.transaction.includeTotalCollateral
+            );
+        security_policy_t collateral_tokens_policy =
+            policyForSignTxCollateralOutputTokens(
+                collateral_policy,
+                &collateral_desc
+            );
+
         switch (collateral_policy) {
             case POLICY_DENY:
                 TRACE("Collateral output security policy denied");
                 return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
-            case POLICY_SHOW:
-                plan->pair_count += 3;
-                if (G_context.tx_info.transaction.collateral_output.assetGroups != NULL) {
-                    for (uint16_t ag = 0;
-                         ag < G_context.tx_info.transaction.collateral_output.numAssetGroups;
-                         ag++) {
-                        asset_group_t *group = &G_context.tx_info.transaction.collateral_output.assetGroups[ag];
+            case POLICY_SHOW: {
+                plan->pair_count += 2;  // label + address
+                if (collateral_ada_policy == POLICY_SHOW) {
+                    plan->pair_count += 1;
+                }
+                asset_group_t *collateral_groups = G_context.tx_info.transaction.collateral_output.assetGroups;
+                uint16_t collateral_group_count = G_context.tx_info.transaction.collateral_output.numAssetGroups;
+                if (collateral_tokens_policy == POLICY_SHOW &&
+                    collateral_groups != NULL) {
+                    for (uint16_t ag = 0; ag < collateral_group_count; ag++) {
+                        asset_group_t *group = &collateral_groups[ag];
                         s_flist_node *token_node = group->tokens;
                         while (token_node != NULL) {
                             plan->pair_count += 2;
@@ -1150,6 +1179,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                     }
                 }
                 break;
+            }
             case POLICY_HIDE:
                 break;
         }
@@ -1226,11 +1256,11 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
         while (reference_input_node != NULL) {
             tx_input_list_item_t *input_item = (tx_input_list_item_t *) reference_input_node;
 
-            security_policy_t input_policy = policyForSignTxReferenceInput(
+            security_policy_t reference_input_policy = policyForSignTxReferenceInput(
                 G_context.tx_info.transaction.txSigningMode
             );
 
-            switch (input_policy) {
+            switch (reference_input_policy) {
                 case POLICY_DENY:
                     TRACE("Reference input security policy denied");
                     return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
