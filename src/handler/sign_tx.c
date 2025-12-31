@@ -249,6 +249,8 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
     );
 
     // Check security policy
+    bool includeMint = (G_context.tx_info.transaction.num_mint_asset_groups > 0);
+
     security_policy_t init_policy = policyForSignTxInit(
         G_context.tx_info.transaction.txSigningMode,
         G_context.tx_info.transaction.networkId,
@@ -256,7 +258,7 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         G_context.tx_info.transaction.num_outputs,
         G_context.tx_info.transaction.num_certificates,
         G_context.tx_info.transaction.num_withdrawals,
-        false,  // includeMint - not implemented yet
+        includeMint,
         G_context.tx_info.transaction.includeScriptDataHash,
         G_context.tx_info.transaction.num_collateral_inputs,
         G_context.tx_info.transaction.num_required_signers,
@@ -454,7 +456,7 @@ int handler_sign_tx_witness(buffer_t *cdata) {
 
     // Check security policy for witness signing
     // Determine if mint is present in the transaction
-    bool mintPresent = false; // TODO mint not implemented yet
+    bool mintPresent = (G_context.tx_info.transaction.num_mint_asset_groups > 0);
 
     // Get pool owner path if this is a pool registration
     const bip44_path_t* poolOwnerPath = NULL;
