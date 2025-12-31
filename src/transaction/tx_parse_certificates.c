@@ -17,6 +17,7 @@
 
 #include "buffer.h"
 #include "memory/mem.h"
+#include "memory/flist.h"
 
 #include "os.h"
 
@@ -499,5 +500,380 @@ parser_status_e parse_certificate_drep_update(buffer_t *buf,
         return status;
     }
     TRACE("Successfully parsed DREP_UPDATE");
+    return PARSING_OK;
+}
+
+/// Helper to parse pool ID (operator key - hash or path)
+static parser_status_e _parse_pool_id(buffer_t *buf, pool_id_t *pool_id) {
+    TRACE("Parsing pool ID");
+    uint8_t pool_id_type_wire;
+    if (!buffer_read_u8(buf, &pool_id_type_wire)) {
+        TRACE("Failed to read pool ID type byte");
+        return CERTIFICATES_PARSING_ERROR;
+    }
+
+    TRACE("Pool ID type wire=0x%02x", pool_id_type_wire);
+    switch (pool_id_type_wire) {
+        case 0x00:  // KEY_HASH (pool key hash)
+            pool_id->keyReferenceType = KEY_REFERENCE_HASH;
+            if (!buffer_read_bytes(buf, pool_id->hash, POOL_KEY_HASH_LENGTH)) {
+                TRACE("Failed to read pool key hash");
+                return CERTIFICATES_PARSING_ERROR;
+            }
+            TRACE("Successfully parsed pool ID as KEY_HASH");
+            break;
+        case 0x02:  // KEY_PATH (pool cold key path)
+            pool_id->keyReferenceType = KEY_REFERENCE_PATH;
+            if (!buffer_read_bip44_path(buf, &pool_id->path)) {
+                TRACE("Failed to read pool key path");
+                return CERTIFICATES_PARSING_ERROR;
+            }
+            TRACE("Successfully parsed pool ID as KEY_PATH");
+            break;
+        default:
+            TRACE("Invalid pool ID type wire value: 0x%02x", pool_id_type_wire);
+            return CERTIFICATES_PARSING_ERROR;
+    }
+    return PARSING_OK;
+}
+
+/// Helper to parse a single pool relay
+static parser_status_e _parse_pool_relay(buffer_t *buf, pool_relay_t *relay) {
+    TRACE("Parsing pool relay");
+    uint8_t relay_type;
+    if (!buffer_read_u8(buf, &relay_type)) {
+        TRACE("Failed to read relay type");
+        return CERTIFICATES_PARSING_ERROR;
+    }
+
+    TRACE("Relay type: %u", relay_type);
+    switch (relay_type) {
+        case RELAY_SINGLE_HOST_IP: {
+            // Format: type (0) + port + ipv4 (optional) + ipv6 (optional)
+            relay->format = RELAY_SINGLE_HOST_IP;
+
+            // Port (2 bytes) - null or value
+            uint8_t port_present;
+            if (!buffer_read_u8(buf, &port_present)) {
+                TRACE("Failed to read port present flag");
+                return CERTIFICATES_PARSING_ERROR;
+            }
+            relay->port.isNull = (port_present == 0);
+            if (!relay->port.isNull) {
+                if (!buffer_read_u16(buf, &relay->port.number, BE)) {
+                    TRACE("Failed to read port number");
+                    return CERTIFICATES_PARSING_ERROR;
+                }
+                TRACE("Relay port: %u", relay->port.number);
+            }
+
+            // IPv4 (optional)
+            uint8_t ipv4_present;
+            if (!buffer_read_u8(buf, &ipv4_present)) {
+                TRACE("Failed to read IPv4 present flag");
+                return CERTIFICATES_PARSING_ERROR;
+            }
+            relay->ipv4.isNull = (ipv4_present == 0);
+            if (!relay->ipv4.isNull) {
+                if (!buffer_read_bytes(buf, relay->ipv4.ip, IPV4_LENGTH)) {
+                    TRACE("Failed to read IPv4 address");
+                    return CERTIFICATES_PARSING_ERROR;
+                }
+                TRACE("Relay IPv4 present");
+            }
+
+            // IPv6 (optional)
+            uint8_t ipv6_present;
+            if (!buffer_read_u8(buf, &ipv6_present)) {
+                TRACE("Failed to read IPv6 present flag");
+                return CERTIFICATES_PARSING_ERROR;
+            }
+            relay->ipv6.isNull = (ipv6_present == 0);
+            if (!relay->ipv6.isNull) {
+                if (!buffer_read_bytes(buf, relay->ipv6.ip, IPV6_LENGTH)) {
+                    TRACE("Failed to read IPv6 address");
+                    return CERTIFICATES_PARSING_ERROR;
+                }
+                TRACE("Relay IPv6 present");
+            }
+            break;
+        }
+        case RELAY_SINGLE_HOST_NAME: {
+            // Format: type (1) + port + dns_name
+            relay->format = RELAY_SINGLE_HOST_NAME;
+
+            // Port (2 bytes) - null or value
+            uint8_t port_present;
+            if (!buffer_read_u8(buf, &port_present)) {
+                TRACE("Failed to read port present flag");
+                return CERTIFICATES_PARSING_ERROR;
+            }
+            relay->port.isNull = (port_present == 0);
+            if (!relay->port.isNull) {
+                if (!buffer_read_u16(buf, &relay->port.number, BE)) {
+                    TRACE("Failed to read port number");
+                    return CERTIFICATES_PARSING_ERROR;
+                }
+                TRACE("Relay port: %u", relay->port.number);
+            }
+
+            // DNS name (length + data)
+            uint8_t dns_len;
+            if (!buffer_read_u8(buf, &dns_len)) {
+                TRACE("Failed to read DNS name length");
+                return CERTIFICATES_PARSING_ERROR;
+            }
+            relay->dnsNameSize = dns_len;
+
+            if (dns_len > 0) {
+                uint8_t *dns_ptr = NULL;
+                if (!buffer_read_bytes_ptr(buf, &dns_ptr, dns_len)) {
+                    TRACE("Failed to read DNS name");
+                    return CERTIFICATES_PARSING_ERROR;
+                }
+                relay->dnsName = dns_ptr;
+            } else {
+                relay->dnsName = NULL;
+            }
+            TRACE("Relay DNS name length: %u", dns_len);
+            break;
+        }
+        case RELAY_MULTIPLE_HOST_NAME: {
+            // Format: type (2) + dns_name (single SRV record)
+            relay->format = RELAY_MULTIPLE_HOST_NAME;
+            relay->port.isNull = true;
+            relay->ipv4.isNull = true;
+            relay->ipv6.isNull = true;
+
+            // DNS name (length + data)
+            uint8_t dns_len;
+            if (!buffer_read_u8(buf, &dns_len)) {
+                TRACE("Failed to read DNS name length");
+                return CERTIFICATES_PARSING_ERROR;
+            }
+            relay->dnsNameSize = dns_len;
+
+            if (dns_len > 0) {
+                uint8_t *dns_ptr = NULL;
+                if (!buffer_read_bytes_ptr(buf, &dns_ptr, dns_len)) {
+                    TRACE("Failed to read DNS name");
+                    return CERTIFICATES_PARSING_ERROR;
+                }
+                relay->dnsName = dns_ptr;
+            } else {
+                relay->dnsName = NULL;
+            }
+            TRACE("Relay multi-host DNS name length: %u", dns_len);
+            break;
+        }
+        default:
+            TRACE("Invalid relay type: %u", relay_type);
+            return CERTIFICATES_PARSING_ERROR;
+    }
+    TRACE("Successfully parsed pool relay");
+    return PARSING_OK;
+}
+
+/// Helper to parse pool metadata (URL + hash or null)
+static parser_status_e _parse_pool_metadata(buffer_t *buf, pool_metadata_t *metadata, bool *isNull) {
+    TRACE("Parsing pool metadata");
+    uint8_t metadata_present;
+    if (!buffer_read_u8(buf, &metadata_present)) {
+        TRACE("Failed to read metadata present flag");
+        return CERTIFICATES_PARSING_ERROR;
+    }
+
+    if (metadata_present == 0) {
+        *isNull = true;
+        TRACE("Pool metadata is null");
+        return PARSING_OK;
+    }
+
+    *isNull = false;
+    // URL (length + data)
+    uint8_t url_len;
+    if (!buffer_read_u8(buf, &url_len)) {
+        TRACE("Failed to read metadata URL length");
+        return CERTIFICATES_PARSING_ERROR;
+    }
+    metadata->urlSize = url_len;
+
+    if (url_len > ANCHOR_URL_LENGTH_MAX) {
+        TRACE("Metadata URL length exceeds maximum: %u > %u", url_len, ANCHOR_URL_LENGTH_MAX);
+        return CERTIFICATES_PARSING_ERROR;
+    }
+
+    uint8_t *url_ptr = NULL;
+    if (!buffer_read_bytes_ptr(buf, &url_ptr, url_len)) {
+        TRACE("Failed to read metadata URL");
+        return CERTIFICATES_PARSING_ERROR;
+    }
+    metadata->url = url_ptr;
+    TRACE("Metadata URL length: %u", url_len);
+
+    // Hash (32 bytes for blake2b-256)
+    uint8_t *hash_ptr = NULL;
+    if (!buffer_read_bytes_ptr(buf, &hash_ptr, ANCHOR_HASH_LENGTH)) {
+        TRACE("Failed to read metadata hash");
+        return CERTIFICATES_PARSING_ERROR;
+    }
+    metadata->hash = hash_ptr;
+    TRACE("Successfully parsed pool metadata");
+    return PARSING_OK;
+}
+
+/// Parse CERTIFICATE_STAKE_POOL_REGISTRATION
+parser_status_e parse_certificate_stake_pool_registration(buffer_t *buf,
+                                                         certificate_data_t *cert_data) {
+    TRACE("Parsing STAKE_POOL_REGISTRATION certificate");
+    cert_data->type = CERTIFICATE_STAKE_POOL_REGISTRATION;
+
+    // Parse pool ID (operator key - hash or path)
+    parser_status_e status = _parse_pool_id(buf, &cert_data->poolId);
+    if (status != PARSING_OK) {
+        TRACE("Failed to parse pool ID");
+        return status;
+    }
+
+    // Parse VRF key hash (32 bytes)
+    if (!buffer_read_bytes(buf, cert_data->vrfKeyHash, VRF_KEY_HASH_LENGTH)) {
+        TRACE("Failed to read VRF key hash");
+        return CERTIFICATES_PARSING_ERROR;
+    }
+    TRACE("Successfully parsed VRF key hash");
+
+    // Parse financials
+    if (!buffer_read_u64(buf, &cert_data->poolRegistration.pledge, BE)) {
+        TRACE("Failed to read pledge");
+        return CERTIFICATES_PARSING_ERROR;
+    }
+    TRACE("Pledge: %llu", cert_data->poolRegistration.pledge);
+
+    if (!buffer_read_u64(buf, &cert_data->poolRegistration.cost, BE)) {
+        TRACE("Failed to read cost");
+        return CERTIFICATES_PARSING_ERROR;
+    }
+    TRACE("Cost: %llu", cert_data->poolRegistration.cost);
+
+    // Parse margin (unit_interval: numerator + denominator)
+    if (!buffer_read_u64(buf, &cert_data->poolRegistration.marginNumerator, BE)) {
+        TRACE("Failed to read margin numerator");
+        return CERTIFICATES_PARSING_ERROR;
+    }
+    TRACE("Margin numerator: %llu", cert_data->poolRegistration.marginNumerator);
+
+    if (!buffer_read_u64(buf, &cert_data->poolRegistration.marginDenominator, BE)) {
+        TRACE("Failed to read margin denominator");
+        return CERTIFICATES_PARSING_ERROR;
+    }
+    TRACE("Margin denominator: %llu", cert_data->poolRegistration.marginDenominator);
+
+    // Parse reward account (hash or path)
+    uint8_t reward_account_type;
+    if (!buffer_read_u8(buf, &reward_account_type)) {
+        TRACE("Failed to read reward account type");
+        return CERTIFICATES_PARSING_ERROR;
+    }
+
+    TRACE("Reward account type wire: 0x%02x", reward_account_type);
+    switch (reward_account_type) {
+        case 0x00:  // KEY_HASH
+            cert_data->poolRegistration.rewardAccount.keyReferenceType = KEY_REFERENCE_HASH;
+            if (!buffer_read_bytes(buf, cert_data->poolRegistration.rewardAccount.hashBuffer,
+                                  REWARD_ACCOUNT_LENGTH)) {
+                TRACE("Failed to read reward account hash");
+                return CERTIFICATES_PARSING_ERROR;
+            }
+            TRACE("Successfully parsed reward account as KEY_HASH");
+            break;
+        case 0x02:  // KEY_PATH
+            cert_data->poolRegistration.rewardAccount.keyReferenceType = KEY_REFERENCE_PATH;
+            if (!buffer_read_bip44_path(buf, &cert_data->poolRegistration.rewardAccount.path)) {
+                TRACE("Failed to read reward account path");
+                return CERTIFICATES_PARSING_ERROR;
+            }
+            TRACE("Successfully parsed reward account as KEY_PATH");
+            break;
+        default:
+            TRACE("Invalid reward account type: 0x%02x", reward_account_type);
+            return CERTIFICATES_PARSING_ERROR;
+    }
+
+    // Parse pool owners array
+    uint8_t num_owners;
+    if (!buffer_read_u8(buf, &num_owners)) {
+        TRACE("Failed to read number of pool owners");
+        return CERTIFICATES_PARSING_ERROR;
+    }
+    cert_data->poolRegistration.numPoolOwners = num_owners;
+    TRACE("Number of pool owners: %u", num_owners);
+
+    if (num_owners == 0) {
+        TRACE("Pool must have at least one owner");
+        return CERTIFICATES_PARSING_ERROR;
+    }
+
+    // Parse each pool owner
+    cert_data->poolRegistration.poolOwners = NULL;
+    for (uint16_t i = 0; i < num_owners; i++) {
+        TRACE("Parsing pool owner %u", i);
+        tx_certificate_list_item_t *owner_item = (tx_certificate_list_item_t *) app_mem_alloc(sizeof(tx_certificate_list_item_t));
+        if (owner_item == NULL) {
+            TRACE("Failed to allocate memory for pool owner");
+            return CERTIFICATES_PARSING_ERROR;
+        }
+
+        status = parse_stake_credential(buf, &owner_item->certificate_data.stakeCredential);
+        if (status != PARSING_OK) {
+            TRACE("Failed to parse pool owner credential");
+            return status;
+        }
+
+        // Add to linked list
+        flist_push_back(&cert_data->poolRegistration.poolOwners, &owner_item->node);
+    }
+
+    // Parse relays array
+    uint8_t num_relays;
+    if (!buffer_read_u8(buf, &num_relays)) {
+        TRACE("Failed to read number of relays");
+        return CERTIFICATES_PARSING_ERROR;
+    }
+    cert_data->poolRegistration.numRelays = num_relays;
+    TRACE("Number of relays: %u", num_relays);
+
+    // Parse each relay
+    cert_data->poolRegistration.relays = NULL;
+    for (uint16_t i = 0; i < num_relays; i++) {
+        TRACE("Parsing relay %u", i);
+        tx_certificate_list_item_t *relay_item = (tx_certificate_list_item_t *) app_mem_alloc(sizeof(tx_certificate_list_item_t));
+        if (relay_item == NULL) {
+            TRACE("Failed to allocate memory for relay");
+            return CERTIFICATES_PARSING_ERROR;
+        }
+
+        // We need to get the certificate_data properly typed for relay
+        // The certificate_data union contains pool_relay_t space
+        pool_relay_t *relay = (pool_relay_t *) &relay_item->certificate_data;
+
+        status = _parse_pool_relay(buf, relay);
+        if (status != PARSING_OK) {
+            TRACE("Failed to parse relay");
+            return status;
+        }
+
+        // Add to linked list
+        flist_push_back(&cert_data->poolRegistration.relays, &relay_item->node);
+    }
+
+    // Parse pool metadata
+    status = _parse_pool_metadata(buf, &cert_data->poolRegistration.poolMetadata,
+                                 &cert_data->poolRegistration.poolMetadataIsNull);
+    if (status != PARSING_OK) {
+        TRACE("Failed to parse pool metadata");
+        return status;
+    }
+
+    TRACE("Successfully parsed STAKE_POOL_REGISTRATION");
     return PARSING_OK;
 }

@@ -127,7 +127,8 @@ security_policy_t policyForSignTxCertificateStakePoolRetirement(
     const ext_credential_t* poolCredential,
     uint64_t epoch);
 security_policy_t policyForSignTxStakePoolRegistrationInit(sign_tx_signingmode_t txSigningMode,
-                                                           uint32_t numOwners);
+                                                           uint32_t numOwners,
+                                                           uint32_t numPathOwners);
 security_policy_t policyForSignTxStakePoolRegistrationPoolId(sign_tx_signingmode_t txSigningMode,
                                                              const pool_id_t* poolId);
 security_policy_t policyForSignTxStakePoolRegistrationVrfKey(sign_tx_signingmode_t txSigningMode);
@@ -136,8 +137,7 @@ security_policy_t policyForSignTxStakePoolRegistrationRewardAccount(
     const reward_account_t* poolRewardAccount);
 security_policy_t policyForSignTxStakePoolRegistrationOwner(
     const sign_tx_signingmode_t txSigningMode,
-    const pool_owner_t* owner,
-    uint32_t numOwnersGivenByPath);
+    const pool_owner_t* owner);
 security_policy_t policyForSignTxStakePoolRegistrationRelay(
     const sign_tx_signingmode_t txSigningMode,
     const pool_relay_t* relay);

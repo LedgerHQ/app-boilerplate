@@ -9,6 +9,8 @@ flow, and utility helpers shared by the standalone tests that still rely on this
 module.
 """
 
+import ipaddress
+
 from dataclasses import dataclass
 from enum import IntEnum
 from typing import List, Optional
@@ -27,8 +29,17 @@ from standalone.input_files.signTx import (
     DRepParams,
     DRepRegistrationParams,
     DRepUpdateParams,
+    MultiHostRelayParams,
+    PoolKey,
+    PoolKeyType,
+    PoolMetadataParams,
+    PoolRegistrationParams,
     PoolRetirementParams,
+    Relay,
+    RelayType,
     ResignCommitteeParams,
+    SingleHostHostnameRelayParams,
+    SingleHostIpAddrRelayParams,
     StakeDelegationParams,
     StakeRegistrationConwayParams,
     StakeRegistrationParams,
@@ -516,6 +527,110 @@ class CommandBuilder:
         result.extend(hash_bytes)
         return bytes(result)
 
+    def _pool_key_to_credential(self, pool_key: PoolKey) -> CredentialParams:
+        if pool_key.type == PoolKeyType.DEVICE_OWNED:
+            return CredentialParams(type=CredentialParamsType.KEY_PATH, keyValue=pool_key.key)
+        if pool_key.type == PoolKeyType.THIRD_PARTY:
+            return CredentialParams(type=CredentialParamsType.KEY_HASH, keyValue=pool_key.key.lower())
+        raise ValueError(f"Unsupported pool key type: {pool_key.type}")
+
+    def _serialize_pool_key_reference(self, pool_key: PoolKey) -> bytes:
+        data = bytearray()
+        if pool_key.type == PoolKeyType.DEVICE_OWNED:
+            data.append(0x02)
+            data.extend(pack_derivation_path(pool_key.key))
+        elif pool_key.type == PoolKeyType.THIRD_PARTY:
+            data.append(0x00)
+            data.extend(bytes.fromhex(pool_key.key.lower()))
+        else:
+            raise ValueError(f"Unsupported pool key type: {pool_key.type}")
+        return bytes(data)
+
+    def _serialize_relay(self, relay: Relay) -> bytes:
+        data = bytearray()
+        data.append(int(relay.type))
+        if relay.type == RelayType.SINGLE_HOST_IP_ADDR:
+            params = relay.params
+            assert isinstance(params, SingleHostIpAddrRelayParams)
+            if params.portNumber is None:
+                data.append(0x00)
+            else:
+                data.append(0x02)
+                data.extend(params.portNumber.to_bytes(2, "big"))
+            if not params.ipv4:
+                data.append(0x00)
+            else:
+                data.append(0x02)
+                data.extend(ipaddress.IPv4Address(params.ipv4).packed)
+            if not params.ipv6:
+                data.append(0x00)
+            else:
+                data.append(0x02)
+                data.extend(ipaddress.IPv6Address(params.ipv6).packed)
+        elif relay.type == RelayType.SINGLE_HOST_HOSTNAME:
+            params = relay.params
+            assert isinstance(params, SingleHostHostnameRelayParams)
+            if params.portNumber is None:
+                data.append(0x00)
+            else:
+                data.append(0x02)
+                data.extend(params.portNumber.to_bytes(2, "big"))
+            dns_bytes = (params.dnsName or "").encode("utf-8")
+            if len(dns_bytes) > 0xFF:
+                raise ValueError("Relay DNS name exceeds maximum length")
+            data.append(len(dns_bytes))
+            data.extend(dns_bytes)
+        elif relay.type == RelayType.MULTI_HOST:
+            params = relay.params
+            assert isinstance(params, MultiHostRelayParams)
+            dns_bytes = (params.dnsName or "").encode("utf-8")
+            if len(dns_bytes) > 0xFF:
+                raise ValueError("Relay DNS name exceeds maximum length")
+            data.append(len(dns_bytes))
+            data.extend(dns_bytes)
+        else:
+            raise ValueError(f"Unsupported relay type: {relay.type}")
+        return bytes(data)
+
+    def _serialize_pool_metadata(self, metadata: Optional[PoolMetadataParams]) -> bytes:
+        data = bytearray()
+        if metadata is None:
+            data.append(0x00)
+            return bytes(data)
+        url_bytes = metadata.metadataUrl.encode("utf-8")
+        if len(url_bytes) > 0xFF:
+            raise ValueError("Pool metadata URL exceeds maximum length")
+        hash_bytes = bytes.fromhex(metadata.metadataHashHex.lower())
+        if len(hash_bytes) != 32:
+            raise ValueError("Pool metadata hash must be 32 bytes")
+        data.append(0x01)
+        data.append(len(url_bytes))
+        data.extend(url_bytes)
+        data.extend(hash_bytes)
+        return bytes(data)
+
+    def _serialize_pool_registration(self, params: PoolRegistrationParams) -> bytes:
+        data = bytearray()
+        data.extend(self._serialize_pool_key_reference(params.poolKey))
+        vrf_bytes = bytes.fromhex(params.vrfKeyHashHex.lower())
+        if len(vrf_bytes) != 32:
+            raise ValueError("VRF key hash must be 32 bytes")
+        data.extend(vrf_bytes)
+        data.extend(params.pledge.to_bytes(8, "big"))
+        data.extend(params.cost.to_bytes(8, "big"))
+        data.extend(params.margin.numerator.to_bytes(8, "big"))
+        data.extend(params.margin.denominator.to_bytes(8, "big"))
+        data.extend(self._serialize_pool_key_reference(params.rewardAccount))
+        data.append(len(params.poolOwners))
+        for owner in params.poolOwners:
+            credential = self._pool_key_to_credential(owner)
+            data.extend(self._serialize_credential_inline(credential))
+        data.append(len(params.relays))
+        for relay in params.relays:
+            data.extend(self._serialize_relay(relay))
+        data.extend(self._serialize_pool_metadata(params.metadata))
+        return bytes(data)
+
     def _serialize_certificate(self, certificate: Certificate) -> bytes:
         result = bytearray()
         result.append(int(certificate.type))
@@ -559,6 +674,9 @@ class CommandBuilder:
             assert isinstance(params, DRepUpdateParams)
             result.extend(self._serialize_credential_inline(params.dRepCredential))
             result.extend(self._serialize_anchor(params.anchor))
+        elif cert_type == CertificateType.STAKE_POOL_REGISTRATION:
+            assert isinstance(params, PoolRegistrationParams)
+            result.extend(self._serialize_pool_registration(params))
         elif cert_type == CertificateType.STAKE_POOL_RETIREMENT:
             assert isinstance(params, PoolRetirementParams)
             result.extend(self._serialize_credential_inline(params.poolCredential))

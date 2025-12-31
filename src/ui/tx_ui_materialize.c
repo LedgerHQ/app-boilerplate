@@ -16,8 +16,10 @@
 #include "memory/mem.h"
 #include "securityPolicy/securityPolicy.h"
 #include "securityPolicy/securityWarnings.h"
+#include "transaction/tx_utils.h"
 #include "utils/assert.h"
 #include "utils/textUtils.h"
+#include "utils/ipUtils.h"
 #include "ui/display.h"
 #include "ui/ui_utils.h"
 #include "ui/tx_ui_helpers.h"
@@ -38,8 +40,8 @@ static char *ui_alloc_temp(size_t size) {
     return tmp;
 }
 
-static int ui_add_pair_or_fail(const char *label, char *tmp_buf) {
-    if (!ui_pairs_add(label, tmp_buf)) {
+static int ui_add_pair_or_fail(const char *label, const char *tmp_buf) {
+    if (!ui_pairs_add(label, (char *) tmp_buf)) {
         return SWO_INSUFFICIENT_MEMORY;
     }
     return SWO_SUCCESS;
@@ -372,6 +374,19 @@ static int ui_materialize_strings(void) {
                 );
                 break;
 
+            case CERTIFICATE_STAKE_POOL_REGISTRATION:
+                {
+                    pool_owner_counts_t pool_owner_counts = count_pool_owner_nodes(
+                        certificate_item->certificate_data.poolRegistration.poolOwners
+                    );
+                    policy = policyForSignTxStakePoolRegistrationInit(
+                        tx->txSigningMode,
+                        certificate_item->certificate_data.poolRegistration.numPoolOwners,
+                        pool_owner_counts.path_owners
+                    );
+                }
+                break;
+
             default:
                 LEDGER_ASSERT(false, "Unknown certificate type");
                 policy = POLICY_DENY;
@@ -651,6 +666,367 @@ static int ui_materialize_strings(void) {
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
+                        break;
+                    }
+
+                    case CERTIFICATE_STAKE_POOL_REGISTRATION: {
+                        pool_owner_counts_t pool_owner_counts = count_pool_owner_nodes(
+                            certificate_item->certificate_data.poolRegistration.poolOwners
+                        );
+
+                        // Check pool ID security policy
+                        security_policy_t pool_id_policy = policyForSignTxStakePoolRegistrationPoolId(
+                            tx->txSigningMode,
+                            &certificate_item->certificate_data.poolId
+                        );
+                        LEDGER_ASSERT(pool_id_policy != POLICY_DENY, "Pool ID security policy denied");
+
+                        // Display pool ID
+                        pool_id_t *poolId = &certificate_item->certificate_data.poolId;
+                        uint8_t poolKeyHash[POOL_KEY_HASH_LENGTH];
+
+                        switch (poolId->keyReferenceType) {
+                            case KEY_REFERENCE_PATH:
+                                bip44_pathToKeyHash(&poolId->path, poolKeyHash, sizeof(poolKeyHash));
+                                break;
+                            case KEY_REFERENCE_HASH:
+                                memcpy(poolKeyHash, poolId->hash, POOL_KEY_HASH_LENGTH);
+                                break;
+                            default:
+                                LEDGER_ASSERT(false, "Unsupported pool ID type");
+                                return SWO_TX_PARSING_FAIL;
+                        }
+
+                        if (pool_id_policy == POLICY_SHOW) {
+                            status = displayPoolKeyHash(poolKeyHash, "Pool ID");
+                            if (status != SWO_SUCCESS) {
+                                return status;
+                            }
+                        }
+
+                        // Check VRF key security policy
+                        security_policy_t vrf_policy = policyForSignTxStakePoolRegistrationVrfKey(tx->txSigningMode);
+                        LEDGER_ASSERT(vrf_policy != POLICY_DENY, "VRF key security policy denied");
+
+                        // Display VRF key hash
+                        if (vrf_policy == POLICY_SHOW) {
+                            status = ui_add_pair_or_fail("VRF key hash", "[present]");
+                            if (status != SWO_SUCCESS) {
+                                return status;
+                            }
+                        }
+
+                        // Display pledge
+                        char *pledge_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH);
+                        if (pledge_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
+                        bool pledge_formatted = str_formatAdaAmount(
+                            certificate_item->certificate_data.poolRegistration.pledge,
+                            pledge_tmp,
+                            MAX_ADA_AMOUNT_STRING_LENGTH);
+                        ASSERT(pledge_formatted);
+                        status = ui_add_pair_or_fail("Pledge", pledge_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+
+                        // Display cost
+                        char *cost_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH);
+                        if (cost_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
+                        bool cost_formatted = str_formatAdaAmount(
+                            certificate_item->certificate_data.poolRegistration.cost,
+                            cost_tmp,
+                            MAX_ADA_AMOUNT_STRING_LENGTH);
+                        ASSERT(cost_formatted);
+                        status = ui_add_pair_or_fail("Cost", cost_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+
+                        // Display profit margin as fraction
+                        // Margin is two uint64 values separated by '/'
+                        // Max uint64 is "18446744073709551615" (20 chars) + '/' = 41 chars
+                        char *margin_tmp = ui_alloc_temp(50);
+                        if (margin_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
+                        uint64_t margin_num = certificate_item->certificate_data.poolRegistration.marginNumerator;
+                        uint64_t margin_den = certificate_item->certificate_data.poolRegistration.marginDenominator;
+                        if (margin_den == 0) {
+                            return SWO_TX_PARSING_FAIL;
+                        }
+                        snprintf(margin_tmp, 50, "%llu/%llu",
+                                (unsigned long long) margin_num,
+                                (unsigned long long) margin_den);
+                        status = ui_add_pair_or_fail("Profit margin", margin_tmp);
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
+
+                        // Check reward account security policy
+                        security_policy_t reward_policy = policyForSignTxStakePoolRegistrationRewardAccount(
+                            tx->txSigningMode,
+                            &certificate_item->certificate_data.poolRegistration.rewardAccount
+                        );
+                        LEDGER_ASSERT(reward_policy != POLICY_DENY, "Reward account security policy denied");
+
+                        // Display reward account
+                        if (reward_policy == POLICY_SHOW) {
+                            switch (certificate_item->certificate_data.poolRegistration.rewardAccount.keyReferenceType) {
+                                case KEY_REFERENCE_PATH:
+                                    status = ui_add_pair_or_fail("Reward account", "key path");
+                                    break;
+                                case KEY_REFERENCE_HASH:
+                                    status = ui_add_pair_or_fail("Reward account", "key hash");
+                                    break;
+                                default:
+                                    LEDGER_ASSERT(false, "Invalid reward account type");
+                                    return SWO_TX_PARSING_FAIL;
+                            }
+                            if (status != SWO_SUCCESS) {
+                                return status;
+                            }
+                        }
+
+                        // Display pool owners
+                        uint32_t owner_idx = 0;
+                        s_flist_node* owner_node = certificate_item->certificate_data.poolRegistration.poolOwners;
+                        while (owner_node != NULL) {
+                            tx_certificate_list_item_t* owner_item = (tx_certificate_list_item_t*) owner_node;
+                            ext_credential_t* owner_cred = &owner_item->certificate_data.stakeCredential;
+
+                            // Convert ext_credential to pool_owner for policy check
+                            pool_owner_t pool_owner = {
+                                .keyReferenceType = (owner_cred->type == EXT_CREDENTIAL_KEY_PATH) ?
+                                                   KEY_REFERENCE_PATH : KEY_REFERENCE_HASH
+                            };
+                            if (owner_cred->type == EXT_CREDENTIAL_KEY_PATH) {
+                                pool_owner.path = owner_cred->keyPath;
+                            } else {
+                                memcpy(pool_owner.keyHash, owner_cred->keyHash, ADDRESS_KEY_HASH_LENGTH);
+                            }
+
+                            // Check owner security policy
+                            security_policy_t owner_policy = policyForSignTxStakePoolRegistrationOwner(
+                                tx->txSigningMode,
+                                &pool_owner
+                            );
+                            LEDGER_ASSERT(owner_policy != POLICY_DENY, "Pool owner security policy denied");
+
+                            if (owner_policy == POLICY_SHOW) {
+                                char owner_label[32];
+                                snprintf(owner_label, sizeof(owner_label), "Owner #%u", owner_idx + 1);
+
+                                status = displayCredential(
+                                    owner_cred,
+                                    owner_label,                    // KEY_PATH label
+                                    owner_label,                    // KEY_HASH label
+                                    "stake_vkh",                    // KEY_HASH bech32 prefix
+                                    owner_label,                    // SCRIPT_HASH label
+                                    "script"                        // SCRIPT_HASH bech32 prefix
+                                );
+                                if (status != SWO_SUCCESS) {
+                                    return status;
+                                }
+                            }
+
+                            owner_node = owner_node->next;
+                            owner_idx++;
+                        }
+
+                        ASSERT(owner_idx == pool_owner_counts.total_owners);
+                        if (pool_owner_counts.total_owners == 0) {
+                            warning_bits_set(&G_context.tx_info.warning_bits,
+                                             WARNING_BIT_POOL_REGISTRATION_NO_OWNERS);
+                            const char *owners_value = "None";
+                            size_t owners_value_len = strlen(owners_value);
+                            size_t owners_buf_size = owners_value_len + 2;
+                            char *owners_none = ui_alloc_temp(owners_buf_size);
+                            if (owners_none == NULL) {
+                                return SWO_INSUFFICIENT_MEMORY;
+                            }
+                            LEDGER_ASSERT(owners_value_len + 1 < owners_buf_size,
+                                          "Owners buffer size too small");
+                            strncpy(owners_none, owners_value, owners_value_len + 1);
+                            LEDGER_ASSERT(strlen(owners_none) == owners_value_len,
+                                          "Owners value truncated");
+                            status = ui_add_pair_or_fail("Pool owners", owners_none);
+                            if (status != SWO_SUCCESS) {
+                                return status;
+                            }
+                        }
+
+                        // Display relays
+                        uint32_t relay_idx = 0;
+                        s_flist_node* relay_node = certificate_item->certificate_data.poolRegistration.relays;
+                        while (relay_node != NULL) {
+                            tx_certificate_list_item_t* relay_item = (tx_certificate_list_item_t*) relay_node;
+                            pool_relay_t* relay = (pool_relay_t*) &relay_item->certificate_data;
+
+                            // Check relay security policy
+                            security_policy_t relay_policy = policyForSignTxStakePoolRegistrationRelay(
+                                tx->txSigningMode,
+                                relay
+                            );
+                            LEDGER_ASSERT(relay_policy != POLICY_DENY, "Pool relay security policy denied");
+
+                            if (relay_policy == POLICY_SHOW) {
+                                char relay_label[32];
+                                snprintf(relay_label, sizeof(relay_label), "Relay #%u", relay_idx + 1);
+
+                                status = ui_add_pair_or_fail(relay_label, "");
+                                if (status != SWO_SUCCESS) {
+                                    return status;
+                                }
+
+                                // Display relay format and details
+                                switch (relay->format) {
+                                case RELAY_SINGLE_HOST_IP: {
+                                    // Display IPv4 if present
+                                    if (!relay->ipv4.isNull) {
+                                        char ipv4_str[IPV4_STR_SIZE_MAX] = {0};
+                                        snprintf(ipv4_str, sizeof(ipv4_str), "%u.%u.%u.%u",
+                                                relay->ipv4.ip[0], relay->ipv4.ip[1],
+                                                relay->ipv4.ip[2], relay->ipv4.ip[3]);
+                                        status = ui_add_pair_or_fail("  IPv4", ipv4_str);
+                                        if (status != SWO_SUCCESS) {
+                                            return status;
+                                        }
+                                    }
+
+                                    // Display IPv6 if present
+                                    if (!relay->ipv6.isNull) {
+                                        // Format IPv6 address
+                                        char ipv6_str[IPV6_STR_SIZE_MAX] = {0};
+                                        snprintf(ipv6_str, sizeof(ipv6_str),
+                                                "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
+                                                relay->ipv6.ip[0], relay->ipv6.ip[1],
+                                                relay->ipv6.ip[2], relay->ipv6.ip[3],
+                                                relay->ipv6.ip[4], relay->ipv6.ip[5],
+                                                relay->ipv6.ip[6], relay->ipv6.ip[7],
+                                                relay->ipv6.ip[8], relay->ipv6.ip[9],
+                                                relay->ipv6.ip[10], relay->ipv6.ip[11],
+                                                relay->ipv6.ip[12], relay->ipv6.ip[13],
+                                                relay->ipv6.ip[14], relay->ipv6.ip[15]);
+                                        status = ui_add_pair_or_fail("  IPv6", ipv6_str);
+                                        if (status != SWO_SUCCESS) {
+                                            return status;
+                                        }
+                                    }
+
+                                    // Display port if present
+                                    if (!relay->port.isNull) {
+                                        char port_str[10];
+                                        snprintf(port_str, sizeof(port_str), "%u", relay->port.number);
+                                        status = ui_add_pair_or_fail("  Port", port_str);
+                                        if (status != SWO_SUCCESS) {
+                                            return status;
+                                        }
+                                    }
+                                    break;
+                                }
+                                case RELAY_SINGLE_HOST_NAME: {
+                                    // Display DNS name
+                                    if (relay->dnsNameSize > 0) {
+                                        char dns_str[MAX_DNS_NAME_LENGTH + 1] = {0};
+                                        memcpy(dns_str, relay->dnsName, relay->dnsNameSize);
+                                        dns_str[relay->dnsNameSize] = '\0';
+                                        status = ui_add_pair_or_fail("  DNS name", dns_str);
+                                        if (status != SWO_SUCCESS) {
+                                            return status;
+                                        }
+                                    }
+
+                                    // Display port if present
+                                    if (!relay->port.isNull) {
+                                        char port_str[10];
+                                        snprintf(port_str, sizeof(port_str), "%u", relay->port.number);
+                                        status = ui_add_pair_or_fail("  Port", port_str);
+                                        if (status != SWO_SUCCESS) {
+                                            return status;
+                                        }
+                                    }
+                                    break;
+                                }
+                                case RELAY_MULTIPLE_HOST_NAME: {
+                                    // Display DNS name (SRV record)
+                                    if (relay->dnsNameSize > 0) {
+                                        char dns_str[MAX_DNS_NAME_LENGTH + 1] = {0};
+                                        memcpy(dns_str, relay->dnsName, relay->dnsNameSize);
+                                        dns_str[relay->dnsNameSize] = '\0';
+                                        status = ui_add_pair_or_fail("  SRV DNS", dns_str);
+                                        if (status != SWO_SUCCESS) {
+                                            return status;
+                                        }
+                                    }
+                                    break;
+                                }
+                                default:
+                                    return SWO_TX_PARSING_FAIL;
+                                }
+                            }
+
+                            relay_node = relay_node->next;
+                            relay_idx++;
+                        }
+
+                        ASSERT(relay_idx ==
+                               certificate_item->certificate_data.poolRegistration.numRelays);
+                        if (relay_idx == 0 &&
+                            tx->txSigningMode == SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR) {
+                            warning_bits_set(&G_context.tx_info.warning_bits,
+                                             WARNING_BIT_POOL_REGISTRATION_NO_RELAYS);
+                            const char *relays_value = "None";
+                            size_t relays_value_len = strlen(relays_value);
+                            size_t relays_buf_size = relays_value_len + 2;
+                            char *relays_none = ui_alloc_temp(relays_buf_size);
+                            if (relays_none == NULL) {
+                                return SWO_INSUFFICIENT_MEMORY;
+                            }
+                            LEDGER_ASSERT(relays_value_len + 1 < relays_buf_size,
+                                          "Relays buffer size too small");
+                            strncpy(relays_none, relays_value, relays_value_len + 1);
+                            LEDGER_ASSERT(strlen(relays_none) == relays_value_len,
+                                          "Relays value truncated");
+                            status = ui_add_pair_or_fail("Pool relays", relays_none);
+                            if (status != SWO_SUCCESS) {
+                                return status;
+                            }
+                        }
+
+                        // Display metadata status with appropriate security policy
+                        if (certificate_item->certificate_data.poolRegistration.poolMetadataIsNull) {
+                            security_policy_t no_metadata_policy = policyForSignTxStakePoolRegistrationNoMetadata();
+                            LEDGER_ASSERT(no_metadata_policy != POLICY_DENY, "No metadata security policy denied");
+
+                            if (no_metadata_policy == POLICY_SHOW) {
+                                status = ui_add_pair_or_fail("Metadata", "none (anonymous pool)");
+                                if (status != SWO_SUCCESS) {
+                                    return status;
+                                }
+                            }
+                        } else {
+                            security_policy_t metadata_policy = policyForSignTxStakePoolRegistrationMetadata();
+                            LEDGER_ASSERT(metadata_policy != POLICY_DENY, "Metadata security policy denied");
+
+                            if (metadata_policy == POLICY_SHOW) {
+                                status = ui_add_pair_or_fail("Pool metadata url",
+                                                            (const char*)certificate_item->certificate_data.poolRegistration.poolMetadata.url);
+                                if (status != SWO_SUCCESS) {
+                                    return status;
+                                }
+
+                                // Display metadata hash present
+                                status = ui_add_pair_or_fail("Pool metadata hash", "[present]");
+                                if (status != SWO_SUCCESS) {
+                                    return status;
+                                }
+                            }
+                        }
+
                         break;
                     }
 

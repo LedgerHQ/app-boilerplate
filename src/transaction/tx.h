@@ -100,6 +100,7 @@ typedef tx_input_list_item_t tx_collateral_input_list_item_t;
 // - STAKE_REGISTRATION_CONWAY/DEREGISTRATION_CONWAY: stakeCredential, deposit
 // - STAKE_DELEGATION: stakeCredential, poolKeyHash
 // - STAKE_POOL_RETIREMENT: poolCredential, retirementEpoch
+// - STAKE_POOL_REGISTRATION: poolId, vrfKeyHash, pledge, cost, margin, rewardAccount, poolOwners[], relays[], poolMetadata
 // - VOTE_DELEGATION: stakeCredential, drep
 // - AUTHORIZE_COMMITTEE_HOT: coldCredential, hotCredential
 // - RESIGN_COMMITTEE_COLD: coldCredential, anchor
@@ -112,6 +113,7 @@ typedef struct {
         ext_credential_t coldCredential;
         ext_credential_t dRepCredential;
         ext_credential_t poolCredential;
+        pool_id_t poolId;
     };
     union {
         ext_credential_t hotCredential;
@@ -119,8 +121,27 @@ typedef struct {
         uint64_t deposit;
         uint64_t retirementEpoch;
         ext_drep_t drep;
+        uint8_t vrfKeyHash[VRF_KEY_HASH_LENGTH];
     };
-    anchor_t anchor;  // For committee resign, DRep registration/update
+    // Extended data for pool registration
+    union {
+        anchor_t anchor;  // For committee resign, DRep registration/update
+        struct {
+            // Pool registration specific fields
+            uint64_t pledge;
+            uint64_t cost;
+            uint64_t marginNumerator;
+            uint64_t marginDenominator;
+            reward_account_t rewardAccount;
+            uint16_t numPoolOwners;
+            uint16_t numRelays;
+            pool_metadata_t poolMetadata;
+            bool poolMetadataIsNull;
+            // Arrays are stored separately during parsing
+            s_flist_node* poolOwners;
+            s_flist_node* relays;
+        } poolRegistration;
+    };
 } certificate_data_t;
 
 typedef struct {

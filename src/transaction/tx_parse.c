@@ -578,8 +578,12 @@ static parser_status_e parse_tx_certificates(buffer_t *buf, transaction_t *tx) {
                 status = parse_certificate_drep_update(buf, &item->certificate_data);
                 break;
 
+            case CERTIFICATE_STAKE_POOL_REGISTRATION:
+                status = parse_certificate_stake_pool_registration(buf, &item->certificate_data);
+                break;
+
         default:
-            // Pool registration not in scope for this implementation
+            // Unknown certificate type
             status = CERTIFICATES_PARSING_ERROR;
             break;
         }

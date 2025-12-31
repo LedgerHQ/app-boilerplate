@@ -15,6 +15,7 @@
 #include "tx_output_types.h"
 #include "transaction/tx_aux_data_types.h"
 #include "transaction/tx_hash_builder.h"
+#include "transaction/tx_utils.h"
 #include "memory/mem.h"
 #include "securityPolicy/securityPolicy.h"
 #include "securityPolicy/securityWarnings.h"
@@ -504,6 +505,194 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                             break;
                         case POLICY_HIDE:
                             break;
+                    }
+                    break;
+                }
+                case CERTIFICATE_STAKE_POOL_REGISTRATION: {
+                    pool_owner_counts_t owner_counts = count_pool_owner_nodes(
+                        certificate_item->certificate_data.poolRegistration.poolOwners
+                    );
+                    cert_policy = policyForSignTxStakePoolRegistrationInit(
+                        G_context.tx_info.transaction.txSigningMode,
+                        certificate_item->certificate_data.poolRegistration.numPoolOwners,
+                        owner_counts.path_owners
+                    );
+                    switch (cert_policy) {
+                        case POLICY_DENY:
+                            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        case POLICY_HIDE:
+                            break;
+                        case POLICY_SHOW: {
+                            uint16_t pool_pairs = 2;  // cert# + type
+
+                            security_policy_t pool_id_policy = policyForSignTxStakePoolRegistrationPoolId(
+                                G_context.tx_info.transaction.txSigningMode,
+                                &certificate_item->certificate_data.poolId
+                            );
+                            switch (pool_id_policy) {
+                                case POLICY_DENY:
+                                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                case POLICY_SHOW:
+                                    pool_pairs += 1;
+                                    break;
+                                case POLICY_HIDE:
+                                    break;
+                            }
+
+                            security_policy_t vrf_policy = policyForSignTxStakePoolRegistrationVrfKey(
+                                G_context.tx_info.transaction.txSigningMode
+                            );
+                            switch (vrf_policy) {
+                                case POLICY_DENY:
+                                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                case POLICY_SHOW:
+                                    pool_pairs += 1;
+                                    break;
+                                case POLICY_HIDE:
+                                    break;
+                            }
+
+                            pool_pairs += 3;  // pledge + cost + profit margin
+
+                            security_policy_t reward_policy = policyForSignTxStakePoolRegistrationRewardAccount(
+                                G_context.tx_info.transaction.txSigningMode,
+                                &certificate_item->certificate_data.poolRegistration.rewardAccount
+                            );
+                            switch (reward_policy) {
+                                case POLICY_DENY:
+                                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                case POLICY_SHOW:
+                                    pool_pairs += 1;
+                                    break;
+                                case POLICY_HIDE:
+                                    break;
+                            }
+
+                            s_flist_node* owner_node = certificate_item->certificate_data.poolRegistration.poolOwners;
+                            while (owner_node != NULL) {
+                                tx_certificate_list_item_t* owner_item =
+                                    (tx_certificate_list_item_t*) owner_node;
+                                ext_credential_t* owner_cred = &owner_item->certificate_data.stakeCredential;
+
+                                pool_owner_t pool_owner = {
+                                    .keyReferenceType = (owner_cred->type == EXT_CREDENTIAL_KEY_PATH) ?
+                                                       KEY_REFERENCE_PATH : KEY_REFERENCE_HASH
+                                };
+                                if (owner_cred->type == EXT_CREDENTIAL_KEY_PATH) {
+                                    pool_owner.path = owner_cred->keyPath;
+                                } else {
+                                    memcpy(pool_owner.keyHash, owner_cred->keyHash, ADDRESS_KEY_HASH_LENGTH);
+                                }
+
+                                security_policy_t owner_policy = policyForSignTxStakePoolRegistrationOwner(
+                                    G_context.tx_info.transaction.txSigningMode,
+                                    &pool_owner
+                                );
+                                switch (owner_policy) {
+                                    case POLICY_DENY:
+                                        return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                    case POLICY_SHOW:
+                                        pool_pairs += 1;
+                                        break;
+                                    case POLICY_HIDE:
+                                        break;
+                                }
+
+                                owner_node = owner_node->next;
+                            }
+                            ASSERT(owner_counts.total_owners ==
+                                   certificate_item->certificate_data.poolRegistration.numPoolOwners);
+                            if (owner_counts.total_owners == 0) {
+                                pool_pairs += 1;  // "Pool owners" "None"
+                            }
+
+                            uint32_t relay_count = 0;
+                            s_flist_node* relay_node = certificate_item->certificate_data.poolRegistration.relays;
+                            while (relay_node != NULL) {
+                                tx_certificate_list_item_t* relay_item =
+                                    (tx_certificate_list_item_t*) relay_node;
+                                pool_relay_t* relay = (pool_relay_t*) &relay_item->certificate_data;
+
+                                security_policy_t relay_policy = policyForSignTxStakePoolRegistrationRelay(
+                                    G_context.tx_info.transaction.txSigningMode,
+                                    relay
+                                );
+                                switch (relay_policy) {
+                                    case POLICY_DENY:
+                                        return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                    case POLICY_HIDE:
+                                        break;
+                                    case POLICY_SHOW:
+                                        pool_pairs += 1;  // relay label
+                                        switch (relay->format) {
+                                            case RELAY_SINGLE_HOST_IP:
+                                                if (!relay->ipv4.isNull) {
+                                                    pool_pairs += 1;
+                                                }
+                                                if (!relay->ipv6.isNull) {
+                                                    pool_pairs += 1;
+                                                }
+                                                if (!relay->port.isNull) {
+                                                    pool_pairs += 1;
+                                                }
+                                                break;
+                                            case RELAY_SINGLE_HOST_NAME:
+                                                if (relay->dnsNameSize > 0) {
+                                                    pool_pairs += 1;
+                                                }
+                                                if (!relay->port.isNull) {
+                                                    pool_pairs += 1;
+                                                }
+                                                break;
+                                            case RELAY_MULTIPLE_HOST_NAME:
+                                                if (relay->dnsNameSize > 0) {
+                                                    pool_pairs += 1;
+                                                }
+                                                break;
+                                            default:
+                                                return send_error_and_reset(SWO_TX_PARSING_FAIL);
+                                        }
+                                        break;
+                                }
+
+                                relay_node = relay_node->next;
+                                relay_count++;
+                            }
+                            ASSERT(relay_count ==
+                                   certificate_item->certificate_data.poolRegistration.numRelays);
+                            if (relay_count == 0 &&
+                                G_context.tx_info.transaction.txSigningMode ==
+                                    SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR) {
+                                pool_pairs += 1;  // "Pool relays" "None"
+                            }
+
+                            if (certificate_item->certificate_data.poolRegistration.poolMetadataIsNull) {
+                                security_policy_t no_metadata_policy = policyForSignTxStakePoolRegistrationNoMetadata();
+                                switch (no_metadata_policy) {
+                                    case POLICY_DENY:
+                                        return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                    case POLICY_SHOW:
+                                        pool_pairs += 1;
+                                        break;
+                                    case POLICY_HIDE:
+                                        break;
+                                }
+                            } else {
+                                security_policy_t metadata_policy = policyForSignTxStakePoolRegistrationMetadata();
+                                switch (metadata_policy) {
+                                    case POLICY_DENY:
+                                        return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                    case POLICY_SHOW:
+                                        pool_pairs += 2;  // metadata url + hash
+                                        break;
+                                    case POLICY_HIDE:
+                                        break;
+                                }
+                            }
+
+                            plan->pair_count += pool_pairs;
+                            break;
+                        }
                     }
                     break;
                 }

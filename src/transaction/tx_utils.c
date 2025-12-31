@@ -58,3 +58,18 @@ bool violatesSingleAccountOrStoreIt(const bip44_path_t* path) {
 
     return false;
 }
+
+pool_owner_counts_t count_pool_owner_nodes(const s_flist_node* owners) {
+    pool_owner_counts_t counts = {0};
+    const s_flist_node* node = owners;
+    while (node != NULL) {
+        const tx_certificate_list_item_t* owner_item = (const tx_certificate_list_item_t*) node;
+        const ext_credential_t* owner_cred = &owner_item->certificate_data.stakeCredential;
+        if (owner_cred->type == EXT_CREDENTIAL_KEY_PATH) {
+            counts.path_owners++;
+        }
+        counts.total_owners++;
+        node = node->next;
+    }
+    return counts;
+}

@@ -188,3 +188,26 @@ parser_status_e parse_certificate_drep_deregistration(buffer_t *buf,
  */
 parser_status_e parse_certificate_drep_update(buffer_t *buf,
                                              certificate_data_t *cert_data);
+
+/**
+ * Parse CERTIFICATE_STAKE_POOL_REGISTRATION
+ *
+ * Format:
+ * - certificate_type (1 byte): 3
+ * - pool_id (variable): operator key hash or path
+ * - vrf_keyhash (32 bytes): VRF key hash
+ * - pledge (8 bytes): pledge amount in lovelace
+ * - cost (8 bytes): pool cost in lovelace
+ * - margin (variable): unit interval (numerator + denominator)
+ * - reward_account (29 bytes): reward account address
+ * - pool_owners (variable): array of owner credentials
+ * - relays (variable): array of relay specifications
+ * - pool_metadata (variable): metadata URL and hash or null
+ *
+ * @param[in]  buf      Buffer with serialized certificate
+ * @param[out] cert_data Parsed certificate data
+ *
+ * @return PARSING_OK on success, CERTIFICATES_PARSING_ERROR on failure
+ */
+parser_status_e parse_certificate_stake_pool_registration(buffer_t *buf,
+                                                         certificate_data_t *cert_data);

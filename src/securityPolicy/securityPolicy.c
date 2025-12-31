@@ -1123,16 +1123,21 @@ security_policy_t policyForSignTxCertificateStakePoolRetirement(
 }
 
 security_policy_t policyForSignTxStakePoolRegistrationInit(sign_tx_signingmode_t txSigningMode,
-                                                           uint32_t numOwners) {
+                                                           uint32_t numOwners,
+                                                           uint32_t numPathOwners) {
     switch (txSigningMode) {
         case SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER:
             // there should be exactly one owner given by path for which we provide a witness
             DENY_IF(numOwners == 0);
-            HIDE();
+            DENY_UNLESS(numPathOwners == 1);
+            // In unified review, pool registration must always be visible.
+            SHOW();
             break;
 
         case SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR:
-            HIDE();
+            DENY_UNLESS(numPathOwners == 0);
+            // In unified review, pool registration must always be visible.
+            SHOW();
             break;
 
         case SIGN_TX_SIGNINGMODE_ORDINARY_TX:
@@ -1206,8 +1211,7 @@ security_policy_t policyForSignTxStakePoolRegistrationRewardAccount(
 
 security_policy_t policyForSignTxStakePoolRegistrationOwner(
     const sign_tx_signingmode_t txSigningMode,
-    const pool_owner_t* owner,
-    uint32_t numOwnersGivenByPath) {
+    const pool_owner_t* owner) {
     if (owner->keyReferenceType == KEY_REFERENCE_PATH) {
         // when path is present, it should be a valid staking path
         DENY_UNLESS(bip44_isOrdinaryStakingKeyPath(&owner->path));
@@ -1216,16 +1220,11 @@ security_policy_t policyForSignTxStakePoolRegistrationOwner(
 
     switch (txSigningMode) {
         case SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER:
-            // can be 0 while processing owners given by hash
-            // or if no path owner is given at all (then we just compute the tx hash and don't allow
-            // witnesses)
-            DENY_UNLESS(numOwnersGivenByPath <= 1);
             SHOW();
             break;
 
         case SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR:
             // operator should receive owners given by hash
-            ASSERT(numOwnersGivenByPath == 0);
             DENY_UNLESS(owner->keyReferenceType == KEY_REFERENCE_HASH);
             SHOW();
             break;
@@ -2013,6 +2012,16 @@ static const warning_definition_t WARNING_DEFINITIONS[WARNING_BIT_COUNT] = {
         .bit = WARNING_BIT_CVOTE_PAYMENT_NONSTANDARD_OWNED,
         .title = "Non-standard voting reward address",
         .description = "Device-owned voting reward address uses an unusual derivation",
+    },
+    [WARNING_BIT_POOL_REGISTRATION_NO_OWNERS] = {
+        .bit = WARNING_BIT_POOL_REGISTRATION_NO_OWNERS,
+        .title = "No pool owners",
+        .description = "Stake pool registration does not specify any pool owners",
+    },
+    [WARNING_BIT_POOL_REGISTRATION_NO_RELAYS] = {
+        .bit = WARNING_BIT_POOL_REGISTRATION_NO_RELAYS,
+        .title = "No pool relays",
+        .description = "Stake pool registration does not specify any pool relays",
     },
     [WARNING_BIT_HIGH_FEE] = {
         .bit = WARNING_BIT_HIGH_FEE,
