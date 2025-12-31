@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stddef.h>
+#include <stdbool.h>
+
 #include "hash.h"
 #include "addressUtils/addressUtilsShelley.h"
 #include "transaction/tx.h"
@@ -195,6 +198,19 @@ void txHashBuilder_addOutput_token(tx_hash_builder_t* builder,
                                    const uint8_t* assetNameBuffer,
                                    size_t assetNameSize,
                                    uint64_t amount);
+
+#define MAX_CBOR_VOTER_MAP_KEY_SIZE 64
+#define MAX_CBOR_GOV_ACTION_MAP_KEY_SIZE 72
+
+bool txHashBuilder_serializeVoterKey(const ext_voter_t* voter,
+                                     uint8_t* buffer,
+                                     size_t bufferLen,
+                                     size_t* bytesWritten);
+
+bool txHashBuilder_serializeGovActionKey(const gov_action_id_t* govActionId,
+                                         uint8_t* buffer,
+                                         size_t bufferLen,
+                                         size_t* bytesWritten);
 
 void txHashBuilder_addOutput_datum(tx_hash_builder_t* builder,
                                    datum_type_t datumType,

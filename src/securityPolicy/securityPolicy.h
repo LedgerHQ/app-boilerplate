@@ -143,9 +143,6 @@ security_policy_t policyForSignTxStakePoolRegistrationRelay(
     const pool_relay_t* relay);
 security_policy_t policyForSignTxStakePoolRegistrationMetadata();
 security_policy_t policyForSignTxStakePoolRegistrationNoMetadata();
-security_policy_t policyForSignTxStakePoolRegistrationConfirm(uint32_t numOwners,
-                                                              uint32_t numRelays);
-
 security_policy_t policyForSignTxWithdrawal(sign_tx_signingmode_t txSigningMode,
                                             const ext_credential_t* stakeCredential,
                                             warning_bits_t* warnings);
@@ -177,8 +174,6 @@ security_policy_t policyForSignTxVotingProcedure(sign_tx_signingmode_t txSigning
 security_policy_t policyForSignTxTreasury(sign_tx_signingmode_t txSigningMode, uint64_t treasury);
 
 security_policy_t policyForSignTxDonation(sign_tx_signingmode_t txSigningMode, uint64_t donation);
-
-security_policy_t policyForSignTxConfirm();
 
 security_policy_t policyForSignOpCert(const bip44_path_t* poolColdKeyPathSpec,
                                       warning_bits_t* warnings);

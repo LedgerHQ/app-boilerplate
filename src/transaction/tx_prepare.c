@@ -1280,6 +1280,10 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
     if (G_context.tx_info.transaction.num_voters > 0) {
         txHashBuilder_enterVotingProcedures(&txHashBuilder);
 
+        uint8_t previous_voter_key[MAX_CBOR_VOTER_MAP_KEY_SIZE];
+        size_t previous_voter_key_len = 0;
+        bool has_previous_voter_key = false;
+
         s_flist_node *voter_node = G_context.tx_info.transaction.voting_procedures;
         while (voter_node != NULL) {
             voter_votes_list_item_t *voter_item = (voter_votes_list_item_t *) voter_node;
@@ -1313,14 +1317,68 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             // Convert voter for hash building (KEY_PATH -> KEY_HASH)
             ext_voter_t voter_for_hash = _voterForTxHash(&voter_item->voter_votes_data.voter);
 
+            uint8_t voter_key[MAX_CBOR_VOTER_MAP_KEY_SIZE];
+            size_t voter_key_len = 0;
+            if (!txHashBuilder_serializeVoterKey(
+                    &voter_for_hash,
+                    voter_key,
+                    sizeof(voter_key),
+                    &voter_key_len)) {
+                TRACE("Failed to serialize voter key");
+                return send_error_and_reset(SWO_TX_PARSING_FAIL_VOTING_PROCEDURES);
+            }
+
+            if (has_previous_voter_key &&
+                !cbor_mapKeyFulfillsCanonicalOrdering(
+                    previous_voter_key,
+                    previous_voter_key_len,
+                    voter_key,
+                    voter_key_len)) {
+                TRACE("Voting procedures not in canonical order");
+                return send_error_and_reset(SWO_TX_PARSING_FAIL_VOTING_PROCEDURES);
+            }
+
+            memcpy(previous_voter_key, voter_key, voter_key_len);
+            previous_voter_key_len = voter_key_len;
+            has_previous_voter_key = true;
+
             // Add voter with all their votes to the hash
             txHashBuilder_addVoter(&txHashBuilder,
                                    &voter_for_hash,
                                    voter_item->voter_votes_data.numVotes);
 
             s_flist_node *vote_node = voter_item->voter_votes_data.votes;
+            uint8_t previous_vote_key[MAX_CBOR_GOV_ACTION_MAP_KEY_SIZE];
+            size_t previous_vote_key_len = 0;
+            bool has_previous_vote_key = false;
             while (vote_node != NULL) {
                 vote_list_item_t *vote_item = (vote_list_item_t *) vote_node;
+
+                uint8_t gov_action_key[MAX_CBOR_GOV_ACTION_MAP_KEY_SIZE];
+                size_t gov_action_key_len = 0;
+
+                if (!txHashBuilder_serializeGovActionKey(
+                        &vote_item->vote_data.govActionId,
+                        gov_action_key,
+                        sizeof(gov_action_key),
+                        &gov_action_key_len)) {
+                    TRACE("Failed to serialize gov action key");
+                    return send_error_and_reset(SWO_TX_PARSING_FAIL_VOTING_PROCEDURES);
+                }
+
+                if (has_previous_vote_key &&
+                    !cbor_mapKeyFulfillsCanonicalOrdering(
+                        previous_vote_key,
+                        previous_vote_key_len,
+                        gov_action_key,
+                        gov_action_key_len)) {
+                    TRACE("Votes not in canonical order");
+                    return send_error_and_reset(SWO_TX_PARSING_FAIL_VOTING_PROCEDURES);
+                }
+
+                memcpy(previous_vote_key, gov_action_key, gov_action_key_len);
+                previous_vote_key_len = gov_action_key_len;
+                has_previous_vote_key = true;
 
                 voting_procedure_t voting_procedure = {
                     .vote = vote_item->vote_data.voteOption,

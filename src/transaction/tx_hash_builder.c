@@ -2,6 +2,8 @@
 #include "hash.h"
 #include "cbor.h"
 #include "write.h"
+#include "utils/assert.h"
+#include <string.h>
 
 // this tracing is rarely needed
 // so we want to keep it turned off to avoid polluting the trace log
@@ -61,6 +63,122 @@ blake2b_256_append_cbor_tx_body(blake2b_256_context_t* hashCtx, uint8_t type, ui
         TRACE("appending set tag 258");                   \
         BUILDER_APPEND_CBOR(CBOR_TYPE_TAG, CBOR_TAG_SET); \
     }
+
+static bool _append_cbor_token(uint8_t* buffer,
+                               size_t bufferLen,
+                               size_t* offset,
+                               uint8_t type,
+                               uint64_t value) {
+    LEDGER_ASSERT(buffer != NULL, "NULL buffer");
+    LEDGER_ASSERT(offset != NULL, "NULL offset");
+    if (*offset >= bufferLen) {
+        return false;
+    }
+
+    size_t tokenSize = 0;
+    if (!cbor_writeToken(type, value, buffer + *offset, bufferLen - *offset, &tokenSize)) {
+        return false;
+    }
+    *offset += tokenSize;
+    return true;
+}
+
+static bool _append_map_key_bytes(uint8_t* buffer,
+                                  size_t bufferLen,
+                                  size_t* offset,
+                                  const uint8_t* data,
+                                  size_t dataLen) {
+    LEDGER_ASSERT(buffer != NULL, "NULL buffer");
+    LEDGER_ASSERT(offset != NULL, "NULL offset");
+    LEDGER_ASSERT(data != NULL, "NULL data");
+
+    if (dataLen > 0 && bufferLen - *offset < dataLen) {
+        return false;
+    }
+    memcpy(buffer + *offset, data, dataLen);
+    *offset += dataLen;
+    return true;
+}
+
+static const uint8_t* _voter_key_data_with_size(const ext_voter_t* voter, size_t* out_size) {
+    LEDGER_ASSERT(voter != NULL, "NULL voter");
+    LEDGER_ASSERT(out_size != NULL, "NULL accept");
+
+    switch (voter->type) {
+        case EXT_VOTER_COMMITTEE_HOT_KEY_HASH:
+        case EXT_VOTER_DREP_KEY_HASH:
+        case EXT_VOTER_STAKE_POOL_KEY_HASH:
+            *out_size = ADDRESS_KEY_HASH_LENGTH;
+            return voter->keyHash;
+        case EXT_VOTER_COMMITTEE_HOT_SCRIPT_HASH:
+        case EXT_VOTER_DREP_SCRIPT_HASH:
+            *out_size = SCRIPT_HASH_LENGTH;
+            return voter->scriptHash;
+        default:
+            return NULL;
+    }
+}
+
+bool txHashBuilder_serializeVoterKey(const ext_voter_t* voter,
+                                     uint8_t* buffer,
+                                     size_t bufferLen,
+                                     size_t* bytesWritten) {
+    LEDGER_ASSERT(voter != NULL, "NULL voter");
+    LEDGER_ASSERT(buffer != NULL, "NULL buffer");
+    LEDGER_ASSERT(bytesWritten != NULL, "NULL bytesWritten");
+    *bytesWritten = 0;
+
+    size_t offset = 0;
+    if (!_append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_ARRAY, 2) ||
+        !_append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_UNSIGNED, voter->type)) {
+        return false;
+    }
+
+    size_t keyLen = 0;
+    const uint8_t* keyBytes = _voter_key_data_with_size(voter, &keyLen);
+    if (keyBytes == NULL) {
+        return false;
+    }
+
+    if (!_append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_BYTES, keyLen)) {
+        return false;
+    }
+
+    if (!_append_map_key_bytes(buffer, bufferLen, &offset, keyBytes, keyLen)) {
+        return false;
+    }
+
+    *bytesWritten = offset;
+    return true;
+}
+
+bool txHashBuilder_serializeGovActionKey(const gov_action_id_t* govActionId,
+                                         uint8_t* buffer,
+                                         size_t bufferLen,
+                                         size_t* bytesWritten) {
+    LEDGER_ASSERT(govActionId != NULL, "NULL gov action id");
+    LEDGER_ASSERT(buffer != NULL, "NULL buffer");
+    LEDGER_ASSERT(govActionId->txHash != NULL, "NULL tx hash");
+    LEDGER_ASSERT(bytesWritten != NULL, "NULL bytesWritten");
+    *bytesWritten = 0;
+
+    size_t offset = 0;
+    if (!_append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_ARRAY, 2) ||
+        !_append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_BYTES, TX_HASH_LENGTH)) {
+        return false;
+    }
+
+    if (!_append_map_key_bytes(buffer, bufferLen, &offset, govActionId->txHash, TX_HASH_LENGTH)) {
+        return false;
+    }
+
+    if (!_append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_UNSIGNED, govActionId->govActionIndex)) {
+        return false;
+    }
+
+    *bytesWritten = offset;
+    return true;
+}
 
 /* End of hash computation utilities. */
 

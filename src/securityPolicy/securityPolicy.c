@@ -1297,17 +1297,6 @@ security_policy_t policyForSignTxStakePoolRegistrationNoMetadata() {
     SHOW();
 }
 
-security_policy_t policyForSignTxStakePoolRegistrationConfirm(uint32_t numOwners,
-                                                              uint32_t numRelays) {
-    // Legacy confirm policy: the new UI surfaces missing owners/relays via warning bits and
-    // explicit review items in tx_ui_materialize.c, so this is kept for completeness only.
-    // notify the user if there are no owners and/or relays
-    SHOW_IF(numOwners == 0);
-    SHOW_IF(numRelays == 0);
-
-    HIDE();
-}
-
 // For each withdrawal
 security_policy_t policyForSignTxWithdrawal(sign_tx_signingmode_t txSigningMode,
                                             const ext_credential_t* stakeCredential,
@@ -1902,10 +1891,6 @@ security_policy_t policyForSignTxTreasury(sign_tx_signingmode_t txSigningMode MA
 // For donation
 security_policy_t policyForSignTxDonation(sign_tx_signingmode_t txSigningMode MARK_UNUSED,
                                           uint64_t donation MARK_UNUSED) {
-    SHOW();
-}
-
-security_policy_t policyForSignTxConfirm() {
     SHOW();
 }
 

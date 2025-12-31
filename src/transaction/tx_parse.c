@@ -20,6 +20,7 @@
 #include "cardano_swo.h"
 #include "utils/cardano_os_utils.h"
 #include "utils/buffer_utils.h"
+#include "utils/cbor.h"
 #include "tx_parse.h"
 #include "tx_parse_certificates.h"
 #include "tx_parse_outputs.h"
@@ -86,15 +87,28 @@ static uint16_t _map_parser_status_to_swo(parser_status_e status) {
             return SWO_TX_PARSING_FAIL_TREASURY;
         case DONATION_PARSING_ERROR:        // key 22
             return SWO_TX_PARSING_FAIL_DONATION;
+        case CANONICAL_ORDERING_ERROR:
+            return SWO_TX_PARSING_FAIL_CANONICAL_ORDER;
         case TX_SIZE_TOO_LARGE_ERROR:
             return SWO_INVALID_TX_LENGTH;
         case TX_BUFFER_NOT_FULLY_CONSUMED_ERROR:
             return SWO_TX_PARSING_FAIL_BUFFER_NOT_FULLY_CONSUMED;
         case OUT_OF_MEMORY_ERROR:
             return SWO_INSUFFICIENT_MEMORY;
-        default:
-            return SWO_TX_PARSING_FAIL;
+    default:
+        return SWO_TX_PARSING_FAIL;
     }
+}
+
+static inline bool canonical_key_ok(bool has_previous,
+                                    const uint8_t* previous,
+                                    size_t previous_size,
+                                    const uint8_t* next,
+                                    size_t next_size) {
+    if (!has_previous) {
+        return true;
+    }
+    return cbor_mapKeyFulfillsCanonicalOrdering(previous, previous_size, next, next_size);
 }
 
 parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
@@ -346,6 +360,9 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                 return OUT_OF_MEMORY_ERROR;
             }
 
+            const uint8_t* previous_policy_id = NULL;
+            bool has_previous_policy = false;
+
             for (uint16_t ag = 0; ag < item->output_data.numAssetGroups; ag++) {
                 asset_group_t *group = &item->output_data.assetGroups[ag];
 
@@ -356,6 +373,18 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                 }
                 ASSERT(policy_ptr != NULL);
                 group->policyId = policy_ptr;
+
+                if (!canonical_key_ok(has_previous_policy,
+                                      previous_policy_id,
+                                      MINTING_POLICY_ID_LENGTH,
+                                      policy_ptr,
+                                      MINTING_POLICY_ID_LENGTH)) {
+                    TRACE("Output %u asset groups not canonical", i);
+                    return CANONICAL_ORDERING_ERROR;
+                }
+                previous_policy_id = policy_ptr;
+                has_previous_policy = true;
+
                 TRACE("Deserialize: Asset group %u: policy ID read", ag);
 
                 if (!buffer_read_u16(&output_buf, &group->numTokens, BE)) {
@@ -365,6 +394,10 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
 
                 // Initialize tokens linked list
                 group->tokens = NULL;
+
+                const uint8_t* previous_token_name = NULL;
+                size_t previous_token_len = 0;
+                bool has_previous_token = false;
 
                 for (uint16_t tk = 0; tk < group->numTokens; tk++) {
                     // Allocate list node for this token
@@ -390,6 +423,18 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                     }
                     ASSERT(name_ptr != NULL);
                     token->assetName = name_ptr;
+
+                    if (!canonical_key_ok(has_previous_token,
+                                          previous_token_name,
+                                          previous_token_len,
+                                          name_ptr,
+                                          token->assetNameLen)) {
+                        TRACE("Output %u asset group %u tokens not canonical", i, ag);
+                        return CANONICAL_ORDERING_ERROR;
+                    }
+                    previous_token_name = name_ptr;
+                    previous_token_len = token->assetNameLen;
+                    has_previous_token = true;
 
                     if (!buffer_read_u64(&output_buf, &token->amount, BE)) {
                         return OUTPUTS_PARSING_ERROR;
@@ -446,6 +491,9 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
 }
 
 static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
+    const uint8_t* previous_policy_id = NULL;
+    bool has_previous_policy = false;
+
     for (uint16_t ag = 0; ag < tx->num_mint_asset_groups; ag++) {
         mint_asset_group_list_item_t *item = (mint_asset_group_list_item_t *) app_mem_alloc(sizeof(mint_asset_group_list_item_t));
         if (item == NULL) {
@@ -459,6 +507,16 @@ static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
         }
         ASSERT(policy_ptr != NULL);
         item->asset_group.policyId = policy_ptr;
+        if (!canonical_key_ok(has_previous_policy,
+                              previous_policy_id,
+                              MINTING_POLICY_ID_LENGTH,
+                              policy_ptr,
+                              MINTING_POLICY_ID_LENGTH)) {
+            TRACE("Mint asset groups not canonical");
+            return CANONICAL_ORDERING_ERROR;
+        }
+        previous_policy_id = policy_ptr;
+        has_previous_policy = true;
         TRACE("Deserialize: Mint asset group %u: policy ID read", ag);
 
         if (!buffer_read_u16(buf, &item->asset_group.numTokens, BE)) {
@@ -468,6 +526,10 @@ static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
 
         // Initialize tokens linked list
         item->asset_group.tokens = NULL;
+
+        const uint8_t* previous_token_name = NULL;
+        size_t previous_token_len = 0;
+        bool has_previous_token = false;
 
         for (uint16_t tk = 0; tk < item->asset_group.numTokens; tk++) {
             // Allocate list node for this token
@@ -492,6 +554,18 @@ static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
             }
             ASSERT(name_ptr != NULL);
             token->assetName = name_ptr;
+
+            if (!canonical_key_ok(has_previous_token,
+                                  previous_token_name,
+                                  previous_token_len,
+                                  name_ptr,
+                                  token->assetNameLen)) {
+                TRACE("Mint asset group %u tokens not canonical", ag);
+                return CANONICAL_ORDERING_ERROR;
+            }
+            previous_token_name = name_ptr;
+            previous_token_len = token->assetNameLen;
+            has_previous_token = true;
 
             if (!buffer_read_int64(buf, &token->amount, BE)) {
                 return MINT_PARSING_ERROR;
@@ -600,6 +674,11 @@ static parser_status_e parse_tx_certificates(buffer_t *buf, transaction_t *tx) {
 }
 
 static parser_status_e parse_tx_withdrawals(buffer_t *buf, transaction_t *tx) {
+    // Withdrawals are serialized as a canonical CBOR map keyed by reward accounts.
+    // Building those addresses here would require deriving them before the security
+    // policies run, so the canonical-order enforcement for withdrawals is postponed
+    // to the later planning stage where the derived reward addresses are already
+    // exposed to policy checks.
     for (uint16_t i = 0; i < tx->num_withdrawals; i++) {
         tx_withdrawal_list_item_t *item = (tx_withdrawal_list_item_t *) app_mem_alloc(sizeof(tx_withdrawal_list_item_t));
         if (item == NULL) {
@@ -882,6 +961,9 @@ static parser_status_e parse_output_structure(buffer_t *output_buf,
             return OUT_OF_MEMORY_ERROR;
         }
 
+        const uint8_t* previous_policy_id = NULL;
+        bool has_previous_policy = false;
+
         for (uint16_t ag = 0; ag < *numAssetGroups; ag++) {
             asset_group_t *group = &(*assetGroups)[ag];
 
@@ -892,12 +974,27 @@ static parser_status_e parse_output_structure(buffer_t *output_buf,
             ASSERT(policy_ptr != NULL);
             group->policyId = policy_ptr;
 
+            if (!canonical_key_ok(has_previous_policy,
+                                  previous_policy_id,
+                                  MINTING_POLICY_ID_LENGTH,
+                                  policy_ptr,
+                                  MINTING_POLICY_ID_LENGTH)) {
+                TRACE("Collateral asset groups not canonical");
+                return CANONICAL_ORDERING_ERROR;
+            }
+            previous_policy_id = policy_ptr;
+            has_previous_policy = true;
+
             if (!buffer_read_u16(output_buf, &group->numTokens, BE)) {
                 return OUTPUTS_PARSING_ERROR;
             }
 
             // Initialize tokens linked list
             group->tokens = NULL;
+
+            const uint8_t* previous_token_name = NULL;
+            size_t previous_token_len = 0;
+            bool has_previous_token = false;
 
             for (uint16_t tk = 0; tk < group->numTokens; tk++) {
                 // Allocate list node for this token
@@ -921,6 +1018,18 @@ static parser_status_e parse_output_structure(buffer_t *output_buf,
                 }
                 ASSERT(name_ptr != NULL);
                 token->assetName = name_ptr;
+
+                if (!canonical_key_ok(has_previous_token,
+                                      previous_token_name,
+                                      previous_token_len,
+                                      name_ptr,
+                                      token->assetNameLen)) {
+                    TRACE("Collateral asset group %u tokens not canonical", ag);
+                    return CANONICAL_ORDERING_ERROR;
+                }
+                previous_token_name = name_ptr;
+                previous_token_len = token->assetNameLen;
+                has_previous_token = true;
 
                 if (!buffer_read_u64(output_buf, &token->amount, BE)) {
                     return OUTPUTS_PARSING_ERROR;
@@ -971,6 +1080,13 @@ static parser_status_e parse_tx_collateral_output(buffer_t *buf, transaction_t *
 }
 
 static parser_status_e parse_tx_voting_procedures(buffer_t *buf, transaction_t *tx) {
+    // The voter list is defined as a canonical CBOR map keyed by voters. The
+    // canonical ordering cannot be enforced here because the voter key encoding
+    // depends on the credential type (paths would need to be hashed/derived),
+    // and those derived bytes are not exposed before security policies execute.
+    // Validating the canonical order therefore happens later (see
+    // compute_tx_hash_and_plan_ui) after policy checks have already materialized
+    // the voter keys.
     // For each voter in the outer map
     for (uint16_t voter_idx = 0; voter_idx < tx->num_voters; voter_idx++) {
         // Allocate list node for this voter
@@ -1021,7 +1137,6 @@ static parser_status_e parse_tx_voting_procedures(buffer_t *buf, transaction_t *
                 return VOTING_PROCEDURES_PARSING_ERROR;
         }
 
-        // Read number of votes for this voter
         if (!buffer_read_u16(buf, &voter_item->voter_votes_data.numVotes, BE)) {
             return VOTING_PROCEDURES_PARSING_ERROR;
         }
@@ -1045,7 +1160,6 @@ static parser_status_e parse_tx_voting_procedures(buffer_t *buf, transaction_t *
             if (!buffer_read_u32(buf, &vote_item->vote_data.govActionId.govActionIndex, BE)) {
                 return VOTING_PROCEDURES_PARSING_ERROR;
             }
-
             // Parse voting_procedure (vote + optional anchor)
             uint8_t vote_byte;
             if (!buffer_read_u8(buf, &vote_byte)) {
