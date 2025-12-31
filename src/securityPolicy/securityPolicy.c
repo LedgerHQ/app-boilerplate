@@ -877,6 +877,8 @@ security_policy_t policyForSignTxTtl(uint32_t ttl MARK_UNUSED) {
 // does not evaluate aspects of specific certificates
 security_policy_t policyForSignTxCertificate(sign_tx_signingmode_t txSigningMode,
                                              const certificate_type_t certificateType) {
+    // This generic policy must be applied before any certificate-specific policy.
+    // The specific policies assume this gatekeeper already validated the signing mode.
     switch (txSigningMode) {
         case SIGN_TX_SIGNINGMODE_PLUTUS_TX:
         case SIGN_TX_SIGNINGMODE_ORDINARY_TX:
@@ -957,6 +959,10 @@ static bool _forbiddenCredential(sign_tx_signingmode_t txSigningMode,
 security_policy_t _policyForSignTxCertificateStakeCredential(
     sign_tx_signingmode_t txSigningMode,
     const ext_credential_t* stakeCredential) {
+    LEDGER_ASSERT(
+        txSigningMode != SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER &&
+            txSigningMode != SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR,
+        "Stake credential certificate in pool registration mode");
     DENY_IF(_forbiddenCredential(txSigningMode, stakeCredential));
 
     switch (stakeCredential->type) {
@@ -980,6 +986,10 @@ security_policy_t _policyForSignTxCertificateStakeCredential(
 security_policy_t policyForSignTxCertificateStaking(sign_tx_signingmode_t txSigningMode,
                                                     const certificate_type_t certificateType,
                                                     const ext_credential_t* stakeCredential) {
+    LEDGER_ASSERT(
+        txSigningMode != SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER &&
+            txSigningMode != SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR,
+        "Staking certificate in pool registration mode");
     switch (certificateType) {
         case CERTIFICATE_STAKE_REGISTRATION:
         case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
@@ -998,6 +1008,10 @@ security_policy_t policyForSignTxCertificateStaking(sign_tx_signingmode_t txSign
 security_policy_t policyForSignTxCertificateVoteDelegation(sign_tx_signingmode_t txSigningMode,
                                                            const ext_credential_t* stakeCredential,
                                                            const ext_drep_t* drep) {
+    LEDGER_ASSERT(
+        txSigningMode != SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER &&
+            txSigningMode != SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR,
+        "Vote delegation certificate in pool registration mode");
     switch (drep->type) {
         case EXT_DREP_KEY_PATH:
             // DRep can be anything, but if given by key path, it should be a valid path
@@ -1021,6 +1035,10 @@ security_policy_t policyForSignTxCertificateVoteDelegation(sign_tx_signingmode_t
 security_policy_t policyForSignTxCertificateCommitteeAuth(sign_tx_signingmode_t txSigningMode,
                                                           const ext_credential_t* coldCredential,
                                                           const ext_credential_t* hotCredential) {
+    LEDGER_ASSERT(
+        txSigningMode != SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER &&
+            txSigningMode != SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR,
+        "Committee auth certificate in pool registration mode");
     DENY_IF(_forbiddenCredential(txSigningMode, coldCredential));
 
     switch (coldCredential->type) {
@@ -1058,6 +1076,10 @@ security_policy_t policyForSignTxCertificateCommitteeAuth(sign_tx_signingmode_t 
 security_policy_t policyForSignTxCertificateCommitteeResign(
     sign_tx_signingmode_t txSigningMode,
     const ext_credential_t* coldCredential) {
+    LEDGER_ASSERT(
+        txSigningMode != SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER &&
+            txSigningMode != SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR,
+        "Committee resign certificate in pool registration mode");
     DENY_IF(_forbiddenCredential(txSigningMode, coldCredential));
 
     switch (coldCredential->type) {
@@ -1080,6 +1102,10 @@ security_policy_t policyForSignTxCertificateCommitteeResign(
 
 security_policy_t policyForSignTxCertificateDRep(sign_tx_signingmode_t txSigningMode,
                                                  const ext_credential_t* dRepCredential) {
+    LEDGER_ASSERT(
+        txSigningMode != SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER &&
+            txSigningMode != SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR,
+        "DRep certificate in pool registration mode");
     DENY_IF(_forbiddenCredential(txSigningMode, dRepCredential));
 
     switch (dRepCredential->type) {
@@ -1104,6 +1130,10 @@ security_policy_t policyForSignTxCertificateStakePoolRetirement(
     sign_tx_signingmode_t txSigningMode,
     const ext_credential_t* poolCredential,
     uint64_t epoch MARK_UNUSED) {
+    LEDGER_ASSERT(
+        txSigningMode != SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER &&
+            txSigningMode != SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR,
+        "Pool retirement certificate in pool registration mode");
     switch (txSigningMode) {
         case SIGN_TX_SIGNINGMODE_ORDINARY_TX:
             // pool retirement may only be present in ORDINARY_TX signing mode
@@ -1178,7 +1208,8 @@ security_policy_t policyForSignTxStakePoolRegistrationPoolId(sign_tx_signingmode
 security_policy_t policyForSignTxStakePoolRegistrationVrfKey(sign_tx_signingmode_t txSigningMode) {
     switch (txSigningMode) {
         case SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER:
-            // not interesting for an owner
+            // not interesting for an owner, show only in expert mode
+            SHOW_IF(is_expert_mode());
             HIDE();
             break;
 
@@ -1240,7 +1271,8 @@ security_policy_t policyForSignTxStakePoolRegistrationRelay(
     const pool_relay_t* relay MARK_UNUSED) {
     switch (txSigningMode) {
         case SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER:
-            // not interesting for an owner
+            // not interesting for an owner, show only in expert mode
+            SHOW_IF(is_expert_mode());
             HIDE();
             break;
 
@@ -1256,15 +1288,19 @@ security_policy_t policyForSignTxStakePoolRegistrationRelay(
 }
 
 security_policy_t policyForSignTxStakePoolRegistrationMetadata() {
+    // Metadata presence is material for pool registration and must be visible.
     SHOW();
 }
 
 security_policy_t policyForSignTxStakePoolRegistrationNoMetadata() {
+    // Explicitly show absence of metadata so owners/operators can verify this case.
     SHOW();
 }
 
 security_policy_t policyForSignTxStakePoolRegistrationConfirm(uint32_t numOwners,
                                                               uint32_t numRelays) {
+    // Legacy confirm policy: the new UI surfaces missing owners/relays via warning bits and
+    // explicit review items in tx_ui_materialize.c, so this is kept for completeness only.
     // notify the user if there are no owners and/or relays
     SHOW_IF(numOwners == 0);
     SHOW_IF(numRelays == 0);
@@ -1278,6 +1314,12 @@ security_policy_t policyForSignTxWithdrawal(sign_tx_signingmode_t txSigningMode,
                                             warning_bits_t* warnings) {
     LEDGER_ASSERT(stakeCredential != NULL, "NULL credential");
     LEDGER_ASSERT(warnings != NULL, "NULL warnings");
+    // Withdrawals can be signed by staking keys used to sign pool registration certificates,
+    // so we do not allow them.
+    LEDGER_ASSERT(
+        txSigningMode != SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER &&
+            txSigningMode != SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR,
+        "Withdrawal in pool registration mode");
     switch (stakeCredential->type) {
         case EXT_CREDENTIAL_KEY_PATH:
             DENY_UNLESS(bip44_isOrdinaryStakingKeyPath(&stakeCredential->keyPath));
@@ -1916,6 +1958,7 @@ security_policy_t policyForCVoteRegistrationPaymentDestination(
 
             // we don't know who owns the address
             // to possibly avoid this warning, send the address as parameters (see above)
+            // TODO(CVote): Add an explicit UI warning when the destination is third-party.
             SHOW();
             break;
         }
@@ -1932,12 +1975,13 @@ security_policy_t policyForCVoteRegistrationNonce() {
 }
 
 security_policy_t policyForCVoteRegistrationVotingPurpose() {
-    // since it will only be used for Catalyst, we don't show this value to non-experts
-    SHOW_IF(is_expert_mode());
-    HIDE();
+    // TODO show it on all devices now that we have a larger display?
+    // Previous policy: SHOW_IF(is_expert_mode()); HIDE();
+    SHOW();
 }
 
 security_policy_t policyForCVoteRegistrationConfirm() {
+    // TODO(CVote): Implement full CVote registration UI flow and warnings.
     SHOW();
 }
 
