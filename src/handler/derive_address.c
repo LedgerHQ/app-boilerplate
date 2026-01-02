@@ -15,17 +15,6 @@
 #include "os_io_seproxyhal.h"
 #include "display.h"
 
-enum {
-    P1_RETURN = 0x01,
-    P1_DISPLAY = 0x02,
-};
-
-enum {
-    RETURN_POLICY_DENY = -1,
-    RETURN_BAD_PARSE = -2,
-};
-
-
 static void prepareResponse() {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
     ctx->address.size =
@@ -34,7 +23,7 @@ static void prepareResponse() {
     ctx->responseReadyMagic = RESPONSE_READY_MAGIC;
 }
 
-int handler_derive_address(buffer_t *cdata, uint8_t chunk_type) {
+int handler_derive_address(buffer_t *cdata, uint8_t display_type) {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
     ctx->responseReadyMagic = 0;
     bool is_parsed = buffer_parseAddressParams(cdata, &ctx->addressParams);
@@ -42,7 +31,7 @@ int handler_derive_address(buffer_t *cdata, uint8_t chunk_type) {
         return RETURN_BAD_PARSE;
     }
 
-    switch (chunk_type) {
+    switch (display_type) {
         case P1_RETURN: {
             security_policy_t policy = policyForReturnDeriveAddress(&ctx->addressParams);
             TRACE("RETURN");

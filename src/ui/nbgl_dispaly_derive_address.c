@@ -227,7 +227,7 @@ int deriveAddress_display_ui_runStep(void) {
             ui_displayUnusualWarning(displayCallback);
             break;*/
 
-        case DISPLAY_UI_STEP_PAYMENT_INFO:
+        case DISPLAY_UI_STEP_BEGIN:
             ctx->ui_step = DISPLAY_UI_STEP_RESPOND;
             return ui_displayExportAddress();
             break;
@@ -268,7 +268,7 @@ int ui_deriveAddress_handleDisplay(security_policy_t policy) {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
     switch (policy) {
         case POLICY_SHOW:
-            ctx->ui_step = DISPLAY_UI_STEP_PAYMENT_INFO;
+            ctx->ui_step = DISPLAY_UI_STEP_BEGIN;
             break;
 
         default:

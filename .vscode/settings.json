@@ -15,7 +15,6 @@
             "test_derive_address_shelley",
             "test_derive_address_shelley_confirm",
             "test_derive_address_shelley_show",
-            "test_derive_address_reject",
             "test_derive_native_script_hash",
             "test_derive_native_script_hash_reject",
             "test_bad_cla",

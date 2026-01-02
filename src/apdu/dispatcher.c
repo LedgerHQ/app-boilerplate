@@ -37,6 +37,7 @@
 #include "sign_tx.h"
 #include "sign_opcert.h"
 #include "derive_address.h"
+#include "derive_native_script_hash.h"
 
 #ifdef DEBUG
 #include "debug_settings.h"
@@ -151,10 +152,9 @@ void apdu_dispatcher(const command_t *cmd) {
             if (cmd->p2 != P2_UNUSED) {
                 return io_send_sw(SWO_INCORRECT_P1_P2);
             }
-            // TODO: Check
+            
             // Validate P1 value
-            if (cmd->p1 != P1_TX_INIT && cmd->p1 != P1_TX_DATA_CHUNK &&
-                cmd->p1 != P1_TX_CHUNK_LAST) {
+            if (cmd->p1 != P1_RETURN && cmd->p1 != P1_DISPLAY) {
                 return io_send_sw(SWO_INCORRECT_P1_P2);
             }
 
@@ -169,6 +169,24 @@ void apdu_dispatcher(const command_t *cmd) {
             
             handler_derive_address(&deriveaddress_buf, cmd->p1);
             return ;
+
+        case INS_DERIVE_NATIVE_SCRIPT_HASH:
+            TRACE("cmd->p1 %d\n", cmd->p1);
+            // P2 must be unused for all transaction APDU types
+            if (cmd->p2 != P2_UNUSED) {
+                return io_send_sw(SWO_INCORRECT_P1_P2);
+            }
+            // Validate P1 value
+
+            if (!cmd->data) {
+                return io_send_sw(SWO_WRONG_DATA_LENGTH);
+            }
+
+            buf.ptr = cmd->data;
+            buf.size = cmd->lc;
+            buf.offset = 0;
+            
+            return handler_derive_native_script_hash(&buf, cmd->p1);
 
         case INS_SIGN_TX:
             // Check if this is a witness APDU
