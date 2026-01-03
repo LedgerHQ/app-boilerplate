@@ -104,7 +104,7 @@ class CommandSender:
         and waits for the final response after the user approves the transaction.
         """
         extra_paths = additional_witness_paths or []
-        witness_paths = gather_witness_paths(tx, extra_paths)
+        witness_paths = gather_witness_paths(tx, signing_mode, extra_paths)
         if not witness_paths:
             raise AssertionError("No witness paths found in transaction")
 

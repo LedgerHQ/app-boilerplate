@@ -279,6 +279,7 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
     }
 
     // Show spinner to indicate transaction data is being processed
+    TRACE("Calling nbgl_useCaseSpinner(\"Processing\")");
     nbgl_useCaseSpinner("Processing");
 
     // Transition to CHUNKS state - now ready to receive transaction data chunks
@@ -414,8 +415,10 @@ void finalize_witness()
         tx_context_cleanup();
         G_context.req_type = REQUEST_NONE;
         G_context.state.tx_state = TX_STATE_NONE;
+        TRACE("Calling nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main)");
         nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main);
     } else {
+        TRACE("Calling nbgl_useCaseSpinner(\"Processing\")");
         nbgl_useCaseSpinner("Processing");
     }
 }

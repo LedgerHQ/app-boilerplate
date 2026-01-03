@@ -10,6 +10,7 @@ Examples:
   python3 generate_all_fixtures.py shelley # Generate all Shelley tests
   python3 generate_all_fixtures.py byron   # Generate all Byron tests
 """
+# Requires the ragger venv (e.g., tests/standalone/venv) on PYTHONPATH or activated.
 
 import sys
 from pathlib import Path
@@ -79,10 +80,15 @@ from standalone.input_files.signTx import (
     testsAllegra,
     testsByron,
     testsAlonzo,
+    testsAlonzoTrezorComparison,
     testsBabbage,
+    testsBabbageTrezorComparison,
     testsConwayWithCertificates,
     testsConwayWithoutCertificates,
     testsConwayVotingProcedures,
+    testsMultidelegation,
+    testsCatalystRegistration,
+    testsCVoteRegistrationCIP36,
     testsMultisig,
     TxAuxiliaryDataType,
     TxAuxiliaryDataHash,
@@ -96,12 +102,14 @@ ERA_TESTS = {
     'shelley_certificates': testsShelleyWithCertificates,
     'allegra': testsAllegra,
     'mary': testsMary,
-    'alonzo': testsAlonzo,
-    'babbage': testsBabbage,
+    'alonzo': testsAlonzo + testsAlonzoTrezorComparison + testsMultidelegation,
+    'babbage': testsBabbage + testsBabbageTrezorComparison,
     'conway': testsConwayWithCertificates,
     'conway_without_certificates': testsConwayWithoutCertificates,
     'conway_voting': testsConwayVotingProcedures,
     'multisig': testsMultisig,
+    'alonzo_catalyst': testsCatalystRegistration,
+    'alonzo_cip36': testsCVoteRegistrationCIP36,
 }
 
 def format_bytes_as_c_array(data: bytes, name: str, bytes_per_line: int = 16) -> str:

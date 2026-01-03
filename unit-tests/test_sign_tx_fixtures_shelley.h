@@ -354,9 +354,9 @@ static const tx_fixture_t FIXTURE_SHELLEY_SIGN_TX_WITH_POINTER_CHANGE_ADDRESS = 
     .options = 0,
 };
 
-// Test 7: Sign_tx_with_non-reasonable_account_and_address
+// Test 7: Sign_tx_with_nonreasonable_account_and_address
 //
-static const uint8_t FIXTURE_SHELLEY_SIGN_TX_WITH_NON_REASONABLE_ACCOUNT_AND_ADDRESS_RAW_TX[] = {
+static const uint8_t FIXTURE_SHELLEY_SIGN_TX_WITH_NONREASONABLE_ACCOUNT_AND_ADDRESS_RAW_TX[] = {
     0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83,
     0x46, 0x1A, 0xCE, 0x32, 0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x3B, 0x02, 0x00, 0x01, 0x05, 0x80, 0x00, 0x07, 0x3C, 0x80, 0x00,
@@ -367,10 +367,10 @@ static const uint8_t FIXTURE_SHELLEY_SIGN_TX_WITH_NON_REASONABLE_ACCOUNT_AND_ADD
     0x0A,
 };
 
-static const tx_fixture_t FIXTURE_SHELLEY_SIGN_TX_WITH_NON_REASONABLE_ACCOUNT_AND_ADDRESS = {
-    .name = "Sign_tx_with_non-reasonable_account_and_address",
-    .raw_tx = FIXTURE_SHELLEY_SIGN_TX_WITH_NON_REASONABLE_ACCOUNT_AND_ADDRESS_RAW_TX,
-    .raw_tx_len = sizeof(FIXTURE_SHELLEY_SIGN_TX_WITH_NON_REASONABLE_ACCOUNT_AND_ADDRESS_RAW_TX),
+static const tx_fixture_t FIXTURE_SHELLEY_SIGN_TX_WITH_NONREASONABLE_ACCOUNT_AND_ADDRESS = {
+    .name = "Sign_tx_with_nonreasonable_account_and_address",
+    .raw_tx = FIXTURE_SHELLEY_SIGN_TX_WITH_NONREASONABLE_ACCOUNT_AND_ADDRESS_RAW_TX,
+    .raw_tx_len = sizeof(FIXTURE_SHELLEY_SIGN_TX_WITH_NONREASONABLE_ACCOUNT_AND_ADDRESS_RAW_TX),
     .tx_body_cbor_hex = "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018182583901f90b0dfcace47bf03e88f7469a2f4fb3a7918461aa4765bfaf55f0dae260546c20562e598fb761f419dad27edcd49f4ee4f0540b8e40d4d51a006ca79302182a030a075820deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
     .expected_hash_hex = "40b3a79c645be040139078befee154d5f935c8ba2af6144cebcf447f8ef2e580",
     .signing_mode = 3,

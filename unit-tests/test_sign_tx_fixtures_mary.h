@@ -244,7 +244,7 @@ static const tx_fixture_t FIXTURE_MARY_SIGN_TX_WITH_A_MULTIASSET_CHANGE_OUTPUT =
     .options = 0,
 };
 
-// Test 4: Sign_tx_with_zero_fee,_TTL_and_validity_interval_start
+// Test 4: Sign_tx_with_zero_fee_TTL_and_validity_interval_start
 //
 static const uint8_t FIXTURE_MARY_SIGN_TX_WITH_ZERO_FEE_TTL_AND_VALIDITY_INTERVAL_START_RAW_TX[] = {
     0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83,
@@ -258,7 +258,7 @@ static const uint8_t FIXTURE_MARY_SIGN_TX_WITH_ZERO_FEE_TTL_AND_VALIDITY_INTERVA
 };
 
 static const tx_fixture_t FIXTURE_MARY_SIGN_TX_WITH_ZERO_FEE_TTL_AND_VALIDITY_INTERVAL_START = {
-    .name = "Sign_tx_with_zero_fee,_TTL_and_validity_interval_start",
+    .name = "Sign_tx_with_zero_fee_TTL_and_validity_interval_start",
     .raw_tx = FIXTURE_MARY_SIGN_TX_WITH_ZERO_FEE_TTL_AND_VALIDITY_INTERVAL_START_RAW_TX,
     .raw_tx_len = sizeof(FIXTURE_MARY_SIGN_TX_WITH_ZERO_FEE_TTL_AND_VALIDITY_INTERVAL_START_RAW_TX),
     .tx_body_cbor_hex = "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b70001818258390114c16d7f43243bd81478e68b9db53a8528fd4fb1078d58d54a7f11241d227aefa4b773149170885aadba30aab3127cc611ddbc4999def61c1a006ca793020003000800",

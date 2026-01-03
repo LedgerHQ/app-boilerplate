@@ -12,6 +12,7 @@ Usage:
 
 The generated file replaces the handwritten fixture table in unit-tests/test_sign_tx_rejects.c.
 """
+# Requires the ragger venv (e.g., tests/standalone/venv) on PYTHONPATH or activated.
 
 from __future__ import annotations
 

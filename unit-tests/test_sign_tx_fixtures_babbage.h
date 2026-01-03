@@ -1,7 +1,7 @@
 // Auto-generated fixtures for BABBAGE era transaction tests
 // Generated from LedgerJS signTx.ts test cases
 //
-// Total tests: 15
+// Total tests: 17
 
 #pragma once
 
@@ -76,7 +76,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_SHORT_INLINE_DATUM_IN_OUT
     .options = 0,
 };
 
-// Test 1: Sign_tx_with_long_inline_datum_(480_B)_in_output
+// Test 1: Sign_tx_with_long_inline_datum_480_B_in_output
 //
 static const uint8_t FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_480_B_IN_OUTPUT_RAW_TX[] = {
     0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83,
@@ -123,7 +123,7 @@ static const uint8_t FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_480_B_IN_OUT
 };
 
 static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_480_B_IN_OUTPUT = {
-    .name = "Sign_tx_with_long_inline_datum_(480_B)_in_output",
+    .name = "Sign_tx_with_long_inline_datum_480_B_in_output",
     .raw_tx = FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_480_B_IN_OUTPUT_RAW_TX,
     .raw_tx_len = sizeof(FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_480_B_IN_OUTPUT_RAW_TX),
     .tx_body_cbor_hex = "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181a3005839105e2f080eb93bad86d401545e0ce5f2221096d6477e11e6643922fa8d2ed495234dc0d667c1316ff84e572310e265edb31330448b36b7179e011a006ca793028201d8185901e012b8240c5470b47c159597b6f71d78c7fc99d1d8d911cb19b8f50211938ef361a22d30cd8f6354ec50e99a7d3cf3e06797ed4af3d358e01b2a957caa4010da328720b9fbe7a3a6d10209a13d2eb11933eb1bf2ab02713117e421b6dcc66297c41b95ad32d3457a0e6b44d8482385f311465964c3daff226acfb7bbda47011f1a6531db30e5b5977143c48f8b8eb739487f87dc13896f58529cfb48e415fc6123e708cdc3cb15cc1900ecf88c5fc9ff66d8ad6dae18c79e4a3c392a0df4d16ffa3e370f4dad8d8e9d171c5656bb317c78a2711057e7ae0beb1dc66ba01aa69d0c0db244e6742d7758ce8da00dfed6225d4aed4b01c42a0352688ed5803f3fd64873f11355305d9db309f4a2a6673cc408a06b8827a5edef7b0fd8742627fb8aa102a084b7db72fcb5c3d1bf437e2a936b738902a9c0258b462b9f2e9befd2c6bcfc036143bb34342b9124888a5b29fa5d60909c81319f034c11542b05ca3ff6c64c7642ff1e2b25fb60dc9bb6f5c914dd4149f31896955d4d204d822deddc46f852115a479edf7521cdf4ce59"
@@ -157,7 +157,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_480_B_I
     .options = 0,
 };
 
-// Test 2: Sign_tx_with_long_inline_datum_(304_B)_in_output_with_tokens
+// Test 2: Sign_tx_with_long_inline_datum_304_B_in_output_with_tokens
 //
 static const uint8_t FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_304_B_IN_OUTPUT_WITH_TOKENS_RAW_TX[] = {
     0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83,
@@ -197,7 +197,7 @@ static const uint8_t FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_304_B_IN_OUT
 };
 
 static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_304_B_IN_OUTPUT_WITH_TOKENS = {
-    .name = "Sign_tx_with_long_inline_datum_(304_B)_in_output_with_tokens",
+    .name = "Sign_tx_with_long_inline_datum_304_B_in_output_with_tokens",
     .raw_tx = FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_304_B_IN_OUTPUT_WITH_TOKENS_RAW_TX,
     .raw_tx_len = sizeof(FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_304_B_IN_OUTPUT_WITH_TOKENS_RAW_TX),
     .tx_body_cbor_hex = "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181a3005839105e2f080eb93bad86d401545e0ce5f2221096d6477e11e6643922fa8d2ed495234dc0d667c1316ff84e572310e265edb31330448b36b7179e01821a006ca793a1581c75a292ffee938be03e9bae5657982a74e9014eb4960108c9e23a5b39a2487564247542686911182f4875642475426869121a00783862028201d8185901305579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f746865722063686f636f6c6174655579657420616e6f7468657220637468657202182a030a0b58203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a19"
@@ -231,7 +231,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_LONG_INLINE_DATUM_304_B_I
     .options = 0,
 };
 
-// Test 3: Sign_tx_with_datum_hash_and_short_ref._script_in_output
+// Test 3: Sign_tx_with_datum_hash_and_short_ref_script_in_output
 //
 static const uint8_t FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_SHORT_REF_SCRIPT_IN_OUTPUT_RAW_TX[] = {
     0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83,
@@ -249,7 +249,7 @@ static const uint8_t FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_SHORT_REF_SCRIP
 };
 
 static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_SHORT_REF_SCRIPT_IN_OUTPUT = {
-    .name = "Sign_tx_with_datum_hash_and_short_ref._script_in_output",
+    .name = "Sign_tx_with_datum_hash_and_short_ref_script_in_output",
     .raw_tx = FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_SHORT_REF_SCRIPT_IN_OUTPUT_RAW_TX,
     .raw_tx_len = sizeof(FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_SHORT_REF_SCRIPT_IN_OUTPUT_RAW_TX),
     .tx_body_cbor_hex = "a400818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181a4005839105e2f080eb93bad86d401545e0ce5f2221096d6477e11e6643922fa8d2ed495234dc0d667c1316ff84e572310e265edb31330448b36b7179e011a006ca7930282005820ffd4d009f554ba4fd8ed1f1d703244819861a9d34fd4753bcf3ff32f043ce18803d81854deadbeefdeadbeefdeadbeefdeadbeefdeadbeef02182a030a",
@@ -282,7 +282,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_SHORT_REF_
     .options = 0,
 };
 
-// Test 4: Sign_tx_with datum hash_and_ref._script_(240_B)_in_output_in_Babbage_format
+// Test 4: Sign_tx_with_datum_hash_and_ref_script_240_B_in_output_in_Babbage_format
 //
 static const uint8_t FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_REF_SCRIPT_240_B_IN_OUTPUT_IN_BABBAGE_FORMAT_RAW_TX[] = {
     0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83,
@@ -314,7 +314,7 @@ static const uint8_t FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_REF_SCRIPT_240_
 };
 
 static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_REF_SCRIPT_240_B_IN_OUTPUT_IN_BABBAGE_FORMAT = {
-    .name = "Sign_tx_with datum hash_and_ref._script_(240_B)_in_output_in_Babbage_format",
+    .name = "Sign_tx_with_datum_hash_and_ref_script_240_B_in_output_in_Babbage_format",
     .raw_tx = FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_REF_SCRIPT_240_B_IN_OUTPUT_IN_BABBAGE_FORMAT_RAW_TX,
     .raw_tx_len = sizeof(FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_REF_SCRIPT_240_B_IN_OUTPUT_IN_BABBAGE_FORMAT_RAW_TX),
     .tx_body_cbor_hex = "a400818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181a4005839105e2f080eb93bad86d401545e0ce5f2221096d6477e11e6643922fa8d2ed495234dc0d667c1316ff84e572310e265edb31330448b36b7179e011a006ca7930282005820ffd4d009f554ba4fd8ed1f1d703244819861a9d34fd4753bcf3ff32f043ce18803d81858f04784392787cc567ac21d7b5346a4a89ae112b7ff7610e402284042aa4e6efca7956a53c3f5cb3ec6745f5e21150f2a77bd71a2adc3f8b9539e9bab41934b477f60a8b302584d1a619ed9b178b5ce6fcad31adc0d6fc17023ede474c09f29fdbfb290a5b30b5240fae5de71168036201772c0d272ae90220181f9bf8c3198e79fc2ae32b076abf4d0e10d3166923ce56994b25c00909e3faab8ef1358c136cd3b197488efc883a7c6cfa3ac63ca9cebc62121c6e22f594420c2abd54e78282adec20ee7dba0e6de65554adb8ee8314f23f86cf7cf0906d4b6c643966baf6c54240c19f4131374e298f38a626a4ad63e6102182a030a",
@@ -347,7 +347,7 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_REF_SCRIPT
     .options = 0,
 };
 
-// Test 5: Sign_tx_with datum_hash_and_script_reference_(304_B)_in_output_as_map
+// Test 5: Sign_tx_with_datum_hash_and_script_reference_304_B_in_output_as_map
 //
 static const uint8_t FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_SCRIPT_REFERENCE_304_B_IN_OUTPUT_AS_MAP_RAW_TX[] = {
     0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83,
@@ -383,7 +383,7 @@ static const uint8_t FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_SCRIPT_REFERENC
 };
 
 static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_SCRIPT_REFERENCE_304_B_IN_OUTPUT_AS_MAP = {
-    .name = "Sign_tx_with datum_hash_and_script_reference_(304_B)_in_output_as_map",
+    .name = "Sign_tx_with_datum_hash_and_script_reference_304_B_in_output_as_map",
     .raw_tx = FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_SCRIPT_REFERENCE_304_B_IN_OUTPUT_AS_MAP_RAW_TX,
     .raw_tx_len = sizeof(FIXTURE_BABBAGE_SIGN_TX_WITH_DATUM_HASH_AND_SCRIPT_REFERENCE_304_B_IN_OUTPUT_AS_MAP_RAW_TX),
     .tx_body_cbor_hex = "a400818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181a4005839105e2f080eb93bad86d401545e0ce5f2221096d6477e11e6643922fa8d2ed495234dc0d667c1316ff84e572310e265edb31330448b36b7179e011a006ca7930282005820ffd4d009f554ba4fd8ed1f1d703244819861a9d34fd4753bcf3ff32f043ce18803d818590130deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeaddeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeaddeadbeef02182a030a",
@@ -804,9 +804,9 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_CHANGE_COLLATERAL_OUTPUT_
     .options = 0,
 };
 
-// Test 13: Sign_tx_with_third-party_collateral_output_as_map_without_total_collateral
+// Test 13: Sign_tx_with_thirdparty_collateral_output_as_map_without_total_collateral
 //
-static const uint8_t FIXTURE_BABBAGE_SIGN_TX_WITH_THIRD_PARTY_COLLATERAL_OUTPUT_AS_MAP_WITHOUT_TOTAL_COLLATERAL_RAW_TX[] = {
+static const uint8_t FIXTURE_BABBAGE_SIGN_TX_WITH_THIRDPARTY_COLLATERAL_OUTPUT_AS_MAP_WITHOUT_TOTAL_COLLATERAL_RAW_TX[] = {
     0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83,
     0x46, 0x1A, 0xCE, 0x32, 0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7,
     0x00, 0x00, 0x00, 0x00, 0x00, 0xFE, 0x01, 0x00, 0x39, 0x01, 0xEB, 0x0B, 0xAA, 0x5E, 0x57, 0x0C,
@@ -838,10 +838,10 @@ static const uint8_t FIXTURE_BABBAGE_SIGN_TX_WITH_THIRD_PARTY_COLLATERAL_OUTPUT_
     0x00, 0x00, 0x00,
 };
 
-static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_THIRD_PARTY_COLLATERAL_OUTPUT_AS_MAP_WITHOUT_TOTAL_COLLATERAL = {
-    .name = "Sign_tx_with_third-party_collateral_output_as_map_without_total_collateral",
-    .raw_tx = FIXTURE_BABBAGE_SIGN_TX_WITH_THIRD_PARTY_COLLATERAL_OUTPUT_AS_MAP_WITHOUT_TOTAL_COLLATERAL_RAW_TX,
-    .raw_tx_len = sizeof(FIXTURE_BABBAGE_SIGN_TX_WITH_THIRD_PARTY_COLLATERAL_OUTPUT_AS_MAP_WITHOUT_TOTAL_COLLATERAL_RAW_TX),
+static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_THIRDPARTY_COLLATERAL_OUTPUT_AS_MAP_WITHOUT_TOTAL_COLLATERAL = {
+    .name = "Sign_tx_with_thirdparty_collateral_output_as_map_without_total_collateral",
+    .raw_tx = FIXTURE_BABBAGE_SIGN_TX_WITH_THIRDPARTY_COLLATERAL_OUTPUT_AS_MAP_WITHOUT_TOTAL_COLLATERAL_RAW_TX,
+    .raw_tx_len = sizeof(FIXTURE_BABBAGE_SIGN_TX_WITH_THIRDPARTY_COLLATERAL_OUTPUT_AS_MAP_WITHOUT_TOTAL_COLLATERAL_RAW_TX),
     .tx_body_cbor_hex = "a700818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181a200583901eb0baa5e570cffbe2934db29df0b6a3d7c0430ee65d4c3a7ab2fefb91bc428e4720702ebd5dab4fb175324c192dc9bb76cc5da956e3c8dff01821904d2a2581c7eae28af2208be856f7a119668ae52a49b73725e326dc16579dcc373a34003581c1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df209015820000000000000000000000000000000000000000000000000000000000000000002581c95a292ffee938be03e9bae5657982a74e9014eb4960108c9e23a5b39a248456c204e69c3b16f1904d24874652474436f696e1a0078386202182a030a0b58203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b70d818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b70010825839017cb05fce110fb999f01abb4f62bc455e217d4a51fde909fa9aea545443ac53c046cf6a42095e3c60310fa802771d0672f8fe2d1861138b0901",
     .expected_hash_hex = "ad44aad52c32b6123220ec15548b3902b091f73c4ccfb229700a32bc6958eb6f",
     .signing_mode = 7,
@@ -872,9 +872,9 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_THIRD_PARTY_COLLATERAL_OU
     .options = 0,
 };
 
-// Test 14: Sign_tx_with_third-party_collateral_output_as_map_with_total_collateral
+// Test 14: Sign_tx_with_thirdparty_collateral_output_as_map_with_total_collateral
 //
-static const uint8_t FIXTURE_BABBAGE_SIGN_TX_WITH_THIRD_PARTY_COLLATERAL_OUTPUT_AS_MAP_WITH_TOTAL_COLLATERAL_RAW_TX[] = {
+static const uint8_t FIXTURE_BABBAGE_SIGN_TX_WITH_THIRDPARTY_COLLATERAL_OUTPUT_AS_MAP_WITH_TOTAL_COLLATERAL_RAW_TX[] = {
     0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83,
     0x46, 0x1A, 0xCE, 0x32, 0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7,
     0x00, 0x00, 0x00, 0x00, 0x00, 0xFE, 0x01, 0x00, 0x39, 0x01, 0xEB, 0x0B, 0xAA, 0x5E, 0x57, 0x0C,
@@ -906,10 +906,10 @@ static const uint8_t FIXTURE_BABBAGE_SIGN_TX_WITH_THIRD_PARTY_COLLATERAL_OUTPUT_
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05,
 };
 
-static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_THIRD_PARTY_COLLATERAL_OUTPUT_AS_MAP_WITH_TOTAL_COLLATERAL = {
-    .name = "Sign_tx_with_third-party_collateral_output_as_map_with_total_collateral",
-    .raw_tx = FIXTURE_BABBAGE_SIGN_TX_WITH_THIRD_PARTY_COLLATERAL_OUTPUT_AS_MAP_WITH_TOTAL_COLLATERAL_RAW_TX,
-    .raw_tx_len = sizeof(FIXTURE_BABBAGE_SIGN_TX_WITH_THIRD_PARTY_COLLATERAL_OUTPUT_AS_MAP_WITH_TOTAL_COLLATERAL_RAW_TX),
+static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_THIRDPARTY_COLLATERAL_OUTPUT_AS_MAP_WITH_TOTAL_COLLATERAL = {
+    .name = "Sign_tx_with_thirdparty_collateral_output_as_map_with_total_collateral",
+    .raw_tx = FIXTURE_BABBAGE_SIGN_TX_WITH_THIRDPARTY_COLLATERAL_OUTPUT_AS_MAP_WITH_TOTAL_COLLATERAL_RAW_TX,
+    .raw_tx_len = sizeof(FIXTURE_BABBAGE_SIGN_TX_WITH_THIRDPARTY_COLLATERAL_OUTPUT_AS_MAP_WITH_TOTAL_COLLATERAL_RAW_TX),
     .tx_body_cbor_hex = "a800818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181a200583901eb0baa5e570cffbe2934db29df0b6a3d7c0430ee65d4c3a7ab2fefb91bc428e4720702ebd5dab4fb175324c192dc9bb76cc5da956e3c8dff01821904d2a2581c7eae28af2208be856f7a119668ae52a49b73725e326dc16579dcc373a34003581c1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df209015820000000000000000000000000000000000000000000000000000000000000000002581c95a292ffee938be03e9bae5657982a74e9014eb4960108c9e23a5b39a248456c204e69c3b16f1904d24874652474436f696e1a0078386202182a030a0b58203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b70d818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b70010825839017cb05fce110fb999f01abb4f62bc455e217d4a51fde909fa9aea545443ac53c046cf6a42095e3c60310fa802771d0672f8fe2d1861138b09011105",
     .expected_hash_hex = "ae45aaab5ceb5234a46d1a9173fdcfa965cdd5ebc37054c18a1ac22ad5d4904e",
     .signing_mode = 7,
@@ -930,6 +930,124 @@ static const tx_fixture_t FIXTURE_BABBAGE_SIGN_TX_WITH_THIRD_PARTY_COLLATERAL_OU
     .include_network_id = false,
     .include_collateral_output = true,
     .include_total_collateral = true,
+    .num_reference_inputs = 0,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
+    .aux_data_hash_hex = NULL,
+    .options = 0,
+};
+
+// Test 15: Full_test_for_trezor_feature_parity_Babbage_elements_Plutus
+//
+static const uint8_t FIXTURE_BABBAGE_FULL_TEST_FOR_TREZOR_FEATURE_PARITY_BABBAGE_ELEMENTS_PLUTUS_RAW_TX[] = {
+    0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83,
+    0x46, 0x1A, 0xCE, 0x32, 0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x78, 0x01, 0x00, 0x39, 0x01, 0x7C, 0xB0, 0x5F, 0xCE, 0x11, 0x0F,
+    0xB9, 0x99, 0xF0, 0x1A, 0xBB, 0x4F, 0x62, 0xBC, 0x45, 0x5E, 0x21, 0x7D, 0x4A, 0x51, 0xFD, 0xE9,
+    0x09, 0xFA, 0x9A, 0xEA, 0x54, 0x54, 0x43, 0xAC, 0x53, 0xC0, 0x46, 0xCF, 0x6A, 0x42, 0x09, 0x5E,
+    0x3C, 0x60, 0x31, 0x0F, 0xA8, 0x02, 0x77, 0x1D, 0x06, 0x72, 0xF8, 0xFE, 0x2D, 0x18, 0x61, 0x13,
+    0x8B, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1E, 0x84, 0x80, 0x00, 0x00, 0x01, 0x0D, 0x63, 0xE8,
+    0xD2, 0xC5, 0xA0, 0x0C, 0xBC, 0xFF, 0xBD, 0xF9, 0x11, 0x24, 0x87, 0xC4, 0x43, 0x46, 0x6E, 0x1E,
+    0xA7, 0xD8, 0xC8, 0x34, 0xDF, 0x5A, 0xC5, 0xC4, 0x25, 0x00, 0x01, 0x08, 0x74, 0x65, 0x73, 0x74,
+    0x43, 0x6F, 0x69, 0x6E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x78, 0x38, 0x62, 0x00, 0x00, 0x00, 0x4D,
+    0x01, 0x00, 0x1D, 0x71, 0x47, 0x7E, 0x52, 0xB3, 0x11, 0x6B, 0x62, 0xFE, 0x8C, 0xD3, 0x4A, 0x31,
+    0x26, 0x15, 0xF5, 0xFC, 0xD6, 0x78, 0xC9, 0x4E, 0x1D, 0x6C, 0xDB, 0x86, 0xC1, 0xA3, 0x96, 0x4C,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x3B, 0x40, 0x26, 0x51,
+    0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83, 0x46, 0x1A, 0xCE, 0x32,
+    0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x2A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0A, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x2F, 0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D,
+    0x95, 0xB3, 0xA0, 0xBF, 0x83, 0x46, 0x1A, 0xCE, 0x32, 0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39,
+    0xB3, 0xAA, 0xD1, 0xC0, 0xB7, 0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D,
+    0x95, 0xB3, 0xA0, 0xBF, 0x83, 0x46, 0x1A, 0xCE, 0x32, 0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39,
+    0xB3, 0xAA, 0xD1, 0xC0, 0xB7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x49, 0x01, 0x00, 0x39, 0x01, 0x7C,
+    0xB0, 0x5F, 0xCE, 0x11, 0x0F, 0xB9, 0x99, 0xF0, 0x1A, 0xBB, 0x4F, 0x62, 0xBC, 0x45, 0x5E, 0x21,
+    0x7D, 0x4A, 0x51, 0xFD, 0xE9, 0x09, 0xFA, 0x9A, 0xEA, 0x54, 0x54, 0x43, 0xAC, 0x53, 0xC0, 0x46,
+    0xCF, 0x6A, 0x42, 0x09, 0x5E, 0x3C, 0x60, 0x31, 0x0F, 0xA8, 0x02, 0x77, 0x1D, 0x06, 0x72, 0xF8,
+    0xFE, 0x2D, 0x18, 0x61, 0x13, 0x8B, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0A, 0x3B, 0x40, 0x26, 0x51,
+    0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83, 0x46, 0x1A, 0xCE, 0x32,
+    0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7, 0x00, 0x00, 0x00, 0x00,
+};
+
+static const tx_fixture_t FIXTURE_BABBAGE_FULL_TEST_FOR_TREZOR_FEATURE_PARITY_BABBAGE_ELEMENTS_PLUTUS = {
+    .name = "Full_test_for_trezor_feature_parity_Babbage_elements_Plutus",
+    .raw_tx = FIXTURE_BABBAGE_FULL_TEST_FOR_TREZOR_FEATURE_PARITY_BABBAGE_ELEMENTS_PLUTUS_RAW_TX,
+    .raw_tx_len = sizeof(FIXTURE_BABBAGE_FULL_TEST_FOR_TREZOR_FEATURE_PARITY_BABBAGE_ELEMENTS_PLUTUS_RAW_TX),
+    .tx_body_cbor_hex = "ab00818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000182825839017cb05fce110fb999f01abb4f62bc455e217d4a51fde909fa9aea545443ac53c046cf6a42095e3c60310fa802771d0672f8fe2d1861138b09821a001e8480a1581c0d63e8d2c5a00cbcffbdf9112487c443466e1ea7d8c834df5ac5c425a14874657374436f696e1a0078386283581d71477e52b3116b62fe8cd34a312615f5fcd678c94e1d6cdb86c1a3964c0158203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b702182a030a08182f0b58203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b70d818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000f0110825839017cb05fce110fb999f01abb4f62bc455e217d4a51fde909fa9aea545443ac53c046cf6a42095e3c60310fa802771d0672f8fe2d1861138b0901110a12818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700",
+    .expected_hash_hex = "3e0c44577b78d0b9628167ca03bfe56d2730e3291b0992d0316e6eebabf0685e",
+    .signing_mode = 7,
+    .network_id = 1,
+    .protocol_magic = 764824073,
+    .num_inputs = 1,
+    .num_outputs = 2,
+    .num_witnesses = 1,
+    .num_certificates = 0,
+    .num_withdrawals = 0,
+    .num_mint_asset_groups = 0,
+    .include_ttl = true,
+    .include_validity_interval_start = true,
+    .include_aux_data_hash = false,
+    .include_script_data_hash = true,
+    .num_collateral_inputs = 1,
+    .num_required_signers = 0,
+    .include_network_id = true,
+    .include_collateral_output = true,
+    .include_total_collateral = true,
+    .num_reference_inputs = 1,
+    .num_voters = 0,
+    .include_treasury = false,
+    .treasury = 0,
+    .include_donation = false,
+    .donation = 0,
+    .aux_data_hash_hex = NULL,
+    .options = 0,
+};
+
+// Test 16: Full_test_for_trezor_feature_parity_Babbage_elements_ordinary
+//
+static const uint8_t FIXTURE_BABBAGE_FULL_TEST_FOR_TREZOR_FEATURE_PARITY_BABBAGE_ELEMENTS_ORDINARY_RAW_TX[] = {
+    0x3B, 0x40, 0x26, 0x51, 0x11, 0xD8, 0xBB, 0x3C, 0x3C, 0x60, 0x8D, 0x95, 0xB3, 0xA0, 0xBF, 0x83,
+    0x46, 0x1A, 0xCE, 0x32, 0xD7, 0x93, 0x36, 0x57, 0x9A, 0x19, 0x39, 0xB3, 0xAA, 0xD1, 0xC0, 0xB7,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x01, 0x00, 0x1D, 0x71, 0x47, 0x7E, 0x52, 0xB3, 0x11, 0x6B,
+    0x62, 0xFE, 0x8C, 0xD3, 0x4A, 0x31, 0x26, 0x15, 0xF5, 0xFC, 0xD6, 0x78, 0xC9, 0x4E, 0x1D, 0x6C,
+    0xDB, 0x86, 0xC1, 0xA3, 0x96, 0x4C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00,
+    0x00, 0x02, 0x00, 0x16, 0x55, 0x79, 0x65, 0x74, 0x20, 0x61, 0x6E, 0x6F, 0x74, 0x68, 0x65, 0x72,
+    0x20, 0x63, 0x68, 0x6F, 0x63, 0x6F, 0x6C, 0x61, 0x74, 0x65, 0x02, 0x00, 0x39, 0x00, 0x80, 0xF9,
+    0xE2, 0xC8, 0x8E, 0x6C, 0x81, 0x70, 0x08, 0xF3, 0xA8, 0x12, 0xED, 0x88, 0x9B, 0x4A, 0x4D, 0xA8,
+    0xE0, 0xBD, 0x10, 0x3F, 0x86, 0xE7, 0x33, 0x54, 0x22, 0xAA, 0x12, 0x2A, 0x94, 0x6B, 0x9A, 0xD3,
+    0xD2, 0xDD, 0xF0, 0x29, 0xD3, 0xA8, 0x28, 0xF0, 0x46, 0x8A, 0xEC, 0xE7, 0x68, 0x95, 0xF1, 0x5C,
+    0x9E, 0xFB, 0xD6, 0x9B, 0x42, 0x77, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2A, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2F,
+};
+
+static const tx_fixture_t FIXTURE_BABBAGE_FULL_TEST_FOR_TREZOR_FEATURE_PARITY_BABBAGE_ELEMENTS_ORDINARY = {
+    .name = "Full_test_for_trezor_feature_parity_Babbage_elements_ordinary",
+    .raw_tx = FIXTURE_BABBAGE_FULL_TEST_FOR_TREZOR_FEATURE_PARITY_BABBAGE_ELEMENTS_ORDINARY_RAW_TX,
+    .raw_tx_len = sizeof(FIXTURE_BABBAGE_FULL_TEST_FOR_TREZOR_FEATURE_PARITY_BABBAGE_ELEMENTS_ORDINARY_RAW_TX),
+    .tx_body_cbor_hex = "a600818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181a400581d71477e52b3116b62fe8cd34a312615f5fcd678c94e1d6cdb86c1a3964c0101028201d818565579657420616e6f746865722063686f636f6c61746503d81858390080f9e2c88e6c817008f3a812ed889b4a4da8e0bd103f86e7335422aa122a946b9ad3d2ddf029d3a828f0468aece76895f15c9efbd69b427702182a030a08182f0f01",
+    .expected_hash_hex = "de264f4b285415fd88932156862e775be26aab30a0003767aa8a04881595f77f",
+    .signing_mode = 3,
+    .network_id = 1,
+    .protocol_magic = 764824073,
+    .num_inputs = 1,
+    .num_outputs = 1,
+    .num_witnesses = 1,
+    .num_certificates = 0,
+    .num_withdrawals = 0,
+    .num_mint_asset_groups = 0,
+    .include_ttl = true,
+    .include_validity_interval_start = true,
+    .include_aux_data_hash = false,
+    .include_script_data_hash = false,
+    .num_collateral_inputs = 0,
+    .num_required_signers = 0,
+    .include_network_id = true,
+    .include_collateral_output = false,
+    .include_total_collateral = false,
     .num_reference_inputs = 0,
     .num_voters = 0,
     .include_treasury = false,

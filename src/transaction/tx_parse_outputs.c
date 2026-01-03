@@ -127,6 +127,7 @@ parser_status_e parse_output_datum(buffer_t* buf, output_datum_t* datum) {
             ASSERT(hash_ptr != NULL);
             datum->hash = hash_ptr;
             TRACE("Datum hash read");
+            TRACE_BUFFER(datum->hash, OUTPUT_DATUM_HASH_LENGTH);
             break;
         }
 
@@ -150,6 +151,7 @@ parser_status_e parse_output_datum(buffer_t* buf, output_datum_t* datum) {
             ASSERT(data_ptr != NULL);
             datum->inline_data.data = data_ptr;
             TRACE("Inline datum read: %u bytes", datum_size);
+            TRACE_BUFFER(datum->inline_data.data, datum->inline_data.size);
             break;
         }
 

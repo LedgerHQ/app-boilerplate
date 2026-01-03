@@ -68,9 +68,11 @@ static void opcert_review_choice(bool confirm) {
 
     if (confirm) {
         TRACE("User confirmed - showing signed status");
+        TRACE("Calling nbgl_useCaseReviewStatus(STATUS_TYPE_OPERATION_SIGNED, ui_menu_main)");
         nbgl_useCaseReviewStatus(STATUS_TYPE_OPERATION_SIGNED, ui_menu_main);
     } else {
         TRACE("User rejected - showing rejected status");
+        TRACE("Calling nbgl_useCaseReviewStatus(STATUS_TYPE_OPERATION_REJECTED, ui_menu_main)");
         nbgl_useCaseReviewStatus(STATUS_TYPE_OPERATION_REJECTED, ui_menu_main);
     }
 }
@@ -249,6 +251,7 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
         warningPtr = g_warning;
     }
 
+    TRACE("Calling nbgl_useCaseAdvancedReview(TYPE_OPERATION)");
     nbgl_useCaseAdvancedReview(TYPE_OPERATION,
                         g_pairsList,
                         &ICON_APP_CARDANO,

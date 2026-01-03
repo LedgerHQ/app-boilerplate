@@ -192,14 +192,24 @@ static void test_sign_tx_with_change_collateral_output_as_map_with_total_collate
     run_fixture(&FIXTURE_BABBAGE_SIGN_TX_WITH_CHANGE_COLLATERAL_OUTPUT_AS_MAP_WITH_TOTAL_COLLATERAL);
 }
 
-static void test_sign_tx_with_third_party_collateral_output_as_map_without_total_collateral(void **state) {
+static void test_sign_tx_with_thirdparty_collateral_output_as_map_without_total_collateral(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_BABBAGE_SIGN_TX_WITH_THIRD_PARTY_COLLATERAL_OUTPUT_AS_MAP_WITHOUT_TOTAL_COLLATERAL);
+    run_fixture(&FIXTURE_BABBAGE_SIGN_TX_WITH_THIRDPARTY_COLLATERAL_OUTPUT_AS_MAP_WITHOUT_TOTAL_COLLATERAL);
 }
 
-static void test_sign_tx_with_third_party_collateral_output_as_map_with_total_collateral(void **state) {
+static void test_sign_tx_with_thirdparty_collateral_output_as_map_with_total_collateral(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_BABBAGE_SIGN_TX_WITH_THIRD_PARTY_COLLATERAL_OUTPUT_AS_MAP_WITH_TOTAL_COLLATERAL);
+    run_fixture(&FIXTURE_BABBAGE_SIGN_TX_WITH_THIRDPARTY_COLLATERAL_OUTPUT_AS_MAP_WITH_TOTAL_COLLATERAL);
+}
+
+static void test_full_test_for_trezor_feature_parity_babbage_elements_plutus(void **state) {
+    (void) state;
+    run_fixture(&FIXTURE_BABBAGE_FULL_TEST_FOR_TREZOR_FEATURE_PARITY_BABBAGE_ELEMENTS_PLUTUS);
+}
+
+static void test_full_test_for_trezor_feature_parity_babbage_elements_ordinary(void **state) {
+    (void) state;
+    run_fixture(&FIXTURE_BABBAGE_FULL_TEST_FOR_TREZOR_FEATURE_PARITY_BABBAGE_ELEMENTS_ORDINARY);
 }
 
 // ======================================================================
@@ -221,8 +231,10 @@ int main(void) {
         cmocka_unit_test(test_sign_tx_with_change_output_as_map_and_collateral_output_as_array),
         cmocka_unit_test(test_sign_tx_with_change_collateral_output_as_map_without_total_collateral),
         cmocka_unit_test(test_sign_tx_with_change_collateral_output_as_map_with_total_collateral),
-        cmocka_unit_test(test_sign_tx_with_third_party_collateral_output_as_map_without_total_collateral),
-        cmocka_unit_test(test_sign_tx_with_third_party_collateral_output_as_map_with_total_collateral),
+        cmocka_unit_test(test_sign_tx_with_thirdparty_collateral_output_as_map_without_total_collateral),
+        cmocka_unit_test(test_sign_tx_with_thirdparty_collateral_output_as_map_with_total_collateral),
+        cmocka_unit_test(test_full_test_for_trezor_feature_parity_babbage_elements_plutus),
+        cmocka_unit_test(test_full_test_for_trezor_feature_parity_babbage_elements_ordinary),
     };
     return _cmocka_run_group_tests("test_sign_tx_babbage", tests, ARRAY_LEN(tests), NULL, NULL);
 }

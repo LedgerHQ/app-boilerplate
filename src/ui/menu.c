@@ -20,6 +20,7 @@
 #include "glyphs.h"
 #include "nbgl_use_case.h"
 #include "main_std_app.h"
+#include "utils/utils.h"
 
 #include "globals.h"
 #include "menu.h"
@@ -107,6 +108,7 @@ void ui_menu_main(void) {
     switches[SILENT_PUBKEY_EXPORT_ID].tuneId = TUNE_TAP_CASUAL;
 #endif
 
+    TRACE("Calling nbgl_useCaseHomeAndSettings(APPNAME)");
     nbgl_useCaseHomeAndSettings(APPNAME,
                                 &ICON_APP_HOME,
                                 NULL,

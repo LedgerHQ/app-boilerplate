@@ -1,4 +1,4 @@
-// Unit tests for Shelley era transaction signing
+// Unit tests for Alonzo CIP36 transaction fixtures
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -25,11 +25,16 @@
 #include "cardano_constants.h"
 #include "init_apdu.h"
 
-#include "test_sign_tx_fixtures_shelley.h"
+#include "test_sign_tx_fixtures_alonzo_cip36.h"
 
-// ======================================================================
+// Define ARRAY_LEN macro if not already defined
+#ifndef ARRAY_LEN
+#define ARRAY_LEN(a) (sizeof(a) / sizeof(a[0]))
+#endif
+
+// ----------------------------------------------------------------------
 // Simple mocks for IO and UI plumbing
-// ======================================================================
+// ----------------------------------------------------------------------
 
 static uint8_t g_last_response[TX_HASH_LENGTH];
 static size_t g_last_response_len = 0;
@@ -73,14 +78,13 @@ void ui_menu_main(void) {
     // no-op
 }
 
+// Display helper that immediately approves the transaction
 int ui_display_transaction(void) {
     io_send_response_pointer(G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash), SWO_SUCCESS);
     G_context.state.tx_state = TX_STATE_APPROVED;
     G_context.req_type = REQUEST_NONE;
-    tx_review_cleanup();
-    return 0;
+    return 0;  // UI functions return 0 on success
 }
-
 int ui_display_witness(const bip44_path_t *witnessPath,
                        security_policy_t securityPolicy,
                        warning_bits_t warnings) {
@@ -91,6 +95,7 @@ int ui_display_witness(const bip44_path_t *witnessPath,
     return SWO_SUCCESS;
 }
 
+// app_mem_* implementations backed by malloc/free
 bool app_mem_init(void) {
     return true;
 }
@@ -112,62 +117,44 @@ void app_mem_dump_stats(void) {
     // no-op
 }
 
-// ======================================================================
-// Helper functions
-// ======================================================================
+// Device-owned output indicator (from tx.h)
+enum {
+    OUTPUT_DESTINATION_TYPE_THIRD_PARTY = 1,
+    OUTPUT_DESTINATION_TYPE_DEVICE_OWNED = 2,
+};
 
 // ======================================================================
-// Shelley Era Tests
+// ALONZO Era Tests
 // ======================================================================
 
-static void test_sign_tx_without_outputs(void **state) {
+static void test_sign_tx_with_cip36_registration_with_vote_key_hex(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITHOUT_OUTPUTS);
+    run_fixture(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_VOTE_KEY_HEX);
 }
 
-static void test_sign_tx_with_258_tag_on_inputs(void **state) {
+static void test_sign_tx_with_cip36_registration_with_vote_key_path(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITH_258_TAG_ON_INPUTS);
+    run_fixture(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_VOTE_KEY_PATH);
 }
 
-static void test_sign_tx_without_change_address(void **state) {
+static void test_sign_tx_with_cip36_registration_with_unusual_vote_key_path(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITHOUT_CHANGE_ADDRESS);
+    run_fixture(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_UNUSUAL_VOTE_KEY_PATH);
 }
 
-static void test_sign_tx_with_change_base_address_with_staking_path(void **state) {
+static void test_sign_tx_with_cip36_registration_with_thirdparty_payment_address(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITH_CHANGE_BASE_ADDRESS_WITH_STAKING_PATH);
+    run_fixture(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_THIRDPARTY_PAYMENT_ADDRESS);
 }
 
-static void test_sign_tx_with_change_base_address_with_staking_key_hash(void **state) {
+static void test_sign_tx_with_cip36_registration_with_voting_purpose(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITH_CHANGE_BASE_ADDRESS_WITH_STAKING_KEY_HASH);
+    run_fixture(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_VOTING_PURPOSE);
 }
 
-static void test_sign_tx_with_enterprise_change_address(void **state) {
+static void test_sign_tx_with_cip36_registration_with_delegations(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITH_ENTERPRISE_CHANGE_ADDRESS);
-}
-
-static void test_sign_tx_with_pointer_change_address(void **state) {
-    (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITH_POINTER_CHANGE_ADDRESS);
-}
-
-static void test_sign_tx_with_nonreasonable_account_and_address(void **state) {
-    (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITH_NONREASONABLE_ACCOUNT_AND_ADDRESS);
-}
-
-static void test_sign_tx_with_path_based_withdrawal(void **state) {
-    (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITH_PATH_BASED_WITHDRAWAL);
-}
-
-static void test_sign_tx_with_auxiliary_data_hash(void **state) {
-    (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITH_AUXILIARY_DATA_HASH);
+    run_fixture(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_DELEGATIONS);
 }
 
 // ======================================================================
@@ -176,16 +163,12 @@ static void test_sign_tx_with_auxiliary_data_hash(void **state) {
 
 int main(void) {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_sign_tx_without_outputs),
-        cmocka_unit_test(test_sign_tx_with_258_tag_on_inputs),
-        cmocka_unit_test(test_sign_tx_without_change_address),
-        cmocka_unit_test(test_sign_tx_with_change_base_address_with_staking_path),
-        cmocka_unit_test(test_sign_tx_with_change_base_address_with_staking_key_hash),
-        cmocka_unit_test(test_sign_tx_with_enterprise_change_address),
-        cmocka_unit_test(test_sign_tx_with_pointer_change_address),
-        cmocka_unit_test(test_sign_tx_with_nonreasonable_account_and_address),
-        cmocka_unit_test(test_sign_tx_with_path_based_withdrawal),
-        cmocka_unit_test(test_sign_tx_with_auxiliary_data_hash),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_vote_key_hex),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_vote_key_path),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_unusual_vote_key_path),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_thirdparty_payment_address),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_voting_purpose),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_delegations),
     };
-    return _cmocka_run_group_tests("test_sign_tx_shelley", tests, ARRAY_LEN(tests), NULL, NULL);
+    return _cmocka_run_group_tests("test_sign_tx_alonzo_cip36", tests, ARRAY_LEN(tests), NULL, NULL);
 }

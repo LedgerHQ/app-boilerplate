@@ -177,6 +177,16 @@ static void test_sign_tx_with_key_hash_in_stake_credential(void **state) {
     run_fixture(&FIXTURE_ALONZO_SIGN_TX_WITH_KEY_HASH_IN_STAKE_CREDENTIAL);
 }
 
+static void test_full_test_for_trezor_feature_parity(void **state) {
+    (void) state;
+    run_fixture(&FIXTURE_ALONZO_FULL_TEST_FOR_TREZOR_FEATURE_PARITY);
+}
+
+static void test_sign_tx_with_multidelegation_keys_in_all_tx_elements(void **state) {
+    (void) state;
+    run_fixture(&FIXTURE_ALONZO_SIGN_TX_WITH_MULTIDELEGATION_KEYS_IN_ALL_TX_ELEMENTS);
+}
+
 // ======================================================================
 // Main
 // ======================================================================
@@ -193,6 +203,8 @@ int main(void) {
         cmocka_unit_test(test_sign_tx_with_required_signers_mixed),
         cmocka_unit_test(test_sign_tx_with_mint_path_in_a_required_signer),
         cmocka_unit_test(test_sign_tx_with_key_hash_in_stake_credential),
+        cmocka_unit_test(test_full_test_for_trezor_feature_parity),
+        cmocka_unit_test(test_sign_tx_with_multidelegation_keys_in_all_tx_elements),
     };
     return _cmocka_run_group_tests("test_sign_tx_alonzo", tests, ARRAY_LEN(tests), NULL, NULL);
 }

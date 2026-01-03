@@ -50,6 +50,7 @@ from standalone.input_files.signTx import (
     TxOutputBabbage,
     TxOutputDestinationType,
     TxRequiredSignerType,
+    TransactionSigningMode,
     VoteDelegationParams,
     MAX_SIGN_TX_CHUNK_SIZE,
     Withdrawal,
@@ -105,10 +106,18 @@ def _credential_path_from_certificate_params(params: object) -> Optional[str]:
     return None
 
 
-def gather_witness_paths(tx: Transaction, additional_witness_paths: List[str]) -> List[str]:
+def gather_witness_paths(tx: Transaction,
+                         signing_mode: int,
+                         additional_witness_paths: List[str]) -> List[str]:
     """Return unique witness paths present in a transaction."""
 
     witness_paths: List[str] = []
+
+    if signing_mode == TransactionSigningMode.MULTISIG_TRANSACTION:
+        for additional_path in additional_witness_paths:
+            if additional_path not in witness_paths:
+                witness_paths.append(additional_path)
+        return witness_paths
 
     for tx_input in tx.inputs:
         if tx_input.path and tx_input.path not in witness_paths:
@@ -307,6 +316,10 @@ class CommandBuilder:
         for certificate in tx.certificates:
             data.extend(self._serialize_certificate(certificate))
 
+        for withdrawal in tx.withdrawals:
+            data.extend(withdrawal.amount.to_bytes(8, "big"))
+            data.extend(self._serialize_credential_inline(withdrawal.stakeCredential))
+
         if tx.validityIntervalStart is not None:
             data.extend(tx.validityIntervalStart.to_bytes(8, "big"))
 
@@ -318,10 +331,6 @@ class CommandBuilder:
                 data.append(len(asset_name_bytes))
                 data.extend(asset_name_bytes)
                 data.extend(token.amount.to_bytes(8, "big", signed=True))
-
-        for withdrawal in tx.withdrawals:
-            data.extend(withdrawal.amount.to_bytes(8, "big"))
-            data.extend(self._serialize_credential_inline(withdrawal.stakeCredential))
 
         script_data_hash = getattr(tx, "scriptDataHash", None)
         if script_data_hash is not None:

@@ -18,43 +18,43 @@ class PubKeyTestCase:
 
 # pylint: disable=line-too-long
 testsByron = [
-    PubKeyTestCase("byron/path_1",
+    PubKeyTestCase("byronpath_1",
                    "m/44'/1815'/1'"),
-    PubKeyTestCase("byron/path_2",
+    PubKeyTestCase("byronpath_2",
                    "m/44'/1815'/1'/0/55'"),
-    PubKeyTestCase("byron/path_3",
+    PubKeyTestCase("byronpath_3",
                    "m/44'/1815'/1'/0/12'"),
 ]
 
 testsShelleyUsual = [
-    PubKeyTestCase("shelley_usual/path_0",
+    PubKeyTestCase("shelley_usual_path_0",
                    "m/1852'/1815'/4'"),
-    PubKeyTestCase("shelley_usual/path_1",
+    PubKeyTestCase("shelley_usual_path_1",
                    "m/1852'/1815'/0'/0/1"),
-    PubKeyTestCase("shelley_usual/path_2",
+    PubKeyTestCase("shelley_usual_path_2",
                    "m/1852'/1815'/0'/2/0"),
-    PubKeyTestCase("shelley_usual/path_3",
+    PubKeyTestCase("shelley_usual_path_3",
                    "m/1852'/1815'/0'/2/1001"),
-    PubKeyTestCase("shelley_usual/path_4",
+    PubKeyTestCase("shelley_usual_path_4",
                    "m/1852'/1815'/0'/3/0"),
-    PubKeyTestCase("shelley_usual/path_5",
+    PubKeyTestCase("shelley_usual_path_5",
                    "m/1852'/1815'/0'/4/0"),
-    PubKeyTestCase("shelley_usual/path_6",
+    PubKeyTestCase("shelley_usual_path_6",
                    "m/1852'/1815'/1'/5/0"),
 ]
 
 testsShelleyUnusual = [
-    PubKeyTestCase("shelley_unusual/path_1",
+    PubKeyTestCase("shelley_unusual_path_1",
                    "m/1852'/1815'/101'"),
-    PubKeyTestCase("shelley_unusual/path_2",
+    PubKeyTestCase("shelley_unusual_path_2",
                    "m/1852'/1815'/100'/0/1000001'"),
-    PubKeyTestCase("shelley_unusual/path_3",
+    PubKeyTestCase("shelley_unusual_path_3",
                    "m/1852'/1815'/0'/2/1000001"),
-    PubKeyTestCase("shelley_unusual/path_4",
+    PubKeyTestCase("shelley_unusual_path_4",
                    "m/1852'/1815'/101'/3/0"),
-    PubKeyTestCase("shelley_unusual/path_5",
+    PubKeyTestCase("shelley_unusual_path_5",
                    "m/1852'/1815'/101'/4/0"),
-    PubKeyTestCase("shelley_unusual/path_6",
+    PubKeyTestCase("shelley_unusual_path_6",
                    "m/1852'/1815'/101'/5/0"),
 ]
 
@@ -64,14 +64,14 @@ testsColdKeys = [
 ]
 
 testsCVoteKeysUsual = [
-    PubKeyTestCase("CVote_keys/path_2",
+    PubKeyTestCase("CVote_keys_path_2",
                    "m/1694'/1815'/100'"),
 ]
 
 testsCVoteKeysUnusual = [
-    PubKeyTestCase("CVote_keys/path_1",
+    PubKeyTestCase("CVote_keys_path_1",
                    "m/1694'/1815'/0'/0/1"),
-    PubKeyTestCase("CVote_keys/path_3",
+    PubKeyTestCase("CVote_keys_path_3",
                    "m/1694'/1815'/101'"),
 ]
 

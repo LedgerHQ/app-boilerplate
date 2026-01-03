@@ -50,8 +50,10 @@ static void pubkey_review_choice(bool confirm) {
 
     if (!G_context.pk_info.silentExport) {
         if (confirm) {
+            TRACE("Calling nbgl_useCaseStatus(\"Public key\\nexported\", true, ui_menu_main)");
             nbgl_useCaseStatus("Public key\nexported", true, ui_menu_main);
         } else {
+            TRACE("Calling nbgl_useCaseStatus(\"Public key\\ndenied\", true, ui_menu_main)");
             nbgl_useCaseStatus("Public key\ndenied", true, ui_menu_main);
         }
     } else {
@@ -116,6 +118,7 @@ int ui_display_pubkey(security_policy_t securityPolicy, warning_bits_t warnings)
     ASSERT(strlen(title) + 1 < SIZEOF(title));
     ASSERT(icon != NULL);
 
+    TRACE("Calling nbgl_useCaseChoice(title=%s)", title);
     nbgl_useCaseChoice(
                         icon,
                         title,

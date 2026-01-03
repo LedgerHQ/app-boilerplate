@@ -7,6 +7,7 @@
 
 // this tracing is rarely needed
 // so we want to keep it turned off to avoid polluting the trace log
+// with the current big buffer it only works in unit-tests
 
 #ifdef TRACE_TX_HASH_BUILDER
 /* keep a sizable buffer for test tracing but never enable in production */
@@ -32,8 +33,7 @@ static void trace_record_bytes(const uint8_t* buffer, size_t size) {
 /*
 The following macros and functions have dual purpose:
 1. syntactic sugar for neat recording of hash computations;
-2. tracing of hash computations (allows to reconstruct bytestrings we are hashing via speculos /
-usbtool).
+2. tracing of hash computations
 */
 
 #define BUILDER_APPEND_CBOR(type, value) \
@@ -384,6 +384,10 @@ void txHashBuilder_init(tx_hash_builder_t* builder,
     TRACE("numVotingProcedures = %u", numReferenceInputs);
     TRACE("includeTreasury = %u", includeTreasury);
     TRACE("includeDonation = %u", includeDonation);
+
+#ifdef TRACE_TX_HASH_BUILDER
+    tx_body_trace_size = 0;
+#endif
 
     builder->tagCborSets = tagCborSets;
 

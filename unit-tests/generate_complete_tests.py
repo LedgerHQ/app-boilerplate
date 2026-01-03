@@ -2,6 +2,7 @@
 """
 Generate complete test files with the tx_fixture_t + run_fixture pattern.
 """
+# Requires the ragger venv (e.g., tests/standalone/venv) on PYTHONPATH or activated.
 
 import re
 from pathlib import Path
@@ -9,9 +10,14 @@ from pathlib import Path
 BASE_PATH = Path('/home/jan/praca/vacuumlabs/cardano/ledger-app-cardano/unit-tests')
 
 ERAS = {
+    'byron': ('test_sign_tx_fixtures_byron.h', 'test_sign_tx_byron.c', 'BYRON'),
+    'shelley': ('test_sign_tx_fixtures_shelley.h', 'test_sign_tx_shelley.c', 'SHELLEY'),
+    'mary': ('test_sign_tx_fixtures_mary.h', 'test_sign_tx_mary.c', 'MARY'),
     'allegra': ('test_sign_tx_fixtures_allegra.h', 'test_sign_tx_allegra.c', 'ALLEGRA'),
     'alonzo': ('test_sign_tx_fixtures_alonzo.h', 'test_sign_tx_alonzo.c', 'ALONZO'),
     'babbage': ('test_sign_tx_fixtures_babbage.h', 'test_sign_tx_babbage.c', 'BABBAGE'),
+    'alonzo_catalyst': ('test_sign_tx_fixtures_alonzo_catalyst.h', 'test_sign_tx_alonzo_catalyst.c', 'ALONZO_CATALYST'),
+    'alonzo_cip36': ('test_sign_tx_fixtures_alonzo_cip36.h', 'test_sign_tx_alonzo_cip36.c', 'ALONZO_CIP36'),
     'conway': ('test_sign_tx_fixtures_conway.h', 'test_sign_tx_conway.c', 'CONWAY'),
     'conway_voting': ('test_sign_tx_fixtures_conway_voting.h', 'test_sign_tx_conway_voting.c', 'CONWAY_VOTING'),
     'conway_without_certificates': ('test_sign_tx_fixtures_conway_without_certificates.h',
@@ -23,6 +29,8 @@ ERAS = {
 
 ERA_COMMENT_OVERRIDES = {
     'conway_without_certificates': 'CONWAY_WITHOUT_CERTIFICATES Era Tests',
+    'alonzo_catalyst': 'ALONZO_CATALYST Era Tests',
+    'alonzo_cip36': 'ALONZO_CIP36 Era Tests',
 }
 
 

@@ -19,10 +19,15 @@ from standalone.input_files.signTx import (
     testsShelleyWithCertificates,
     testsConwayWithCertificates,
     testsAllegra,
+    testsAlonzoTrezorComparison,
+    testsBabbageTrezorComparison,
     testsAlonzo,
     testsBabbage,
     testsConwayWithoutCertificates,
     testsConwayVotingProcedures,
+    testsMultidelegation,
+    testsCatalystRegistration,
+    testsCVoteRegistrationCIP36,
     testsMultisig,
     SignTxTestCase,
     TxAuxiliaryDataType,
@@ -34,15 +39,18 @@ from standalone.input_files.signTx import (
 @pytest.mark.parametrize(
     "testCase",
     testsByron + testsMary + testsShelleyNoCertificates + testsShelleyWithCertificates +
-    testsAllegra + testsAlonzo + testsBabbage + testsConwayWithCertificates +
-    testsConwayWithoutCertificates + testsConwayVotingProcedures + testsMultisig,
+    testsAllegra + testsAlonzoTrezorComparison + testsBabbageTrezorComparison +
+    testsAlonzo + testsBabbage + testsConwayWithCertificates +
+    testsConwayWithoutCertificates + testsConwayVotingProcedures +
+    testsMultidelegation + testsCatalystRegistration + testsCVoteRegistrationCIP36 +
+    testsMultisig,
     ids=idTestFunc
 )
-def test_sign_tx_simple(device: Device,
-                       backend: BackendInterface,
-                       navigator: Navigator,
-                       scenario_navigator: NavigateWithScenario,
-                       testCase: SignTxTestCase) -> None:
+def test_sign_tx(device: Device,
+                 backend: BackendInterface,
+                 navigator: Navigator,
+                 scenario_navigator: NavigateWithScenario,
+                 testCase: SignTxTestCase) -> None:
     """Test simple transaction signing with new protocol.
 
     This test verifies the new handler_sign_tx implementation:

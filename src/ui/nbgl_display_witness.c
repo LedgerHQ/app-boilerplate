@@ -51,6 +51,7 @@ static void witness_review_choice(bool confirm) {
         tx_context_cleanup();
 
         send_error_and_reset(SWO_CONDITIONS_NOT_SATISFIED);
+        TRACE("Calling nbgl_useCaseStatus(\"Witness\\ndenied\", true, ui_menu_main)");
         nbgl_useCaseStatus("Witness\ndenied", true, ui_menu_main);
     } else {
         finalize_witness();
@@ -99,6 +100,7 @@ int ui_display_witness(const bip44_path_t* witnessPath,
     if (isUnusual) {
         // A mild warning about unusual path
         // No immediate threat, just to be aware that the witness key is unusual
+        TRACE("Calling nbgl_useCaseChoice(title=Sign with UNUSUAL key)");
         nbgl_useCaseChoice(
             &WARNING_ICON,
             "Sign with UNUSUAL key",
@@ -109,6 +111,7 @@ int ui_display_witness(const bip44_path_t* witnessPath,
         );
     } else {
         // Normal path display
+        TRACE("Calling nbgl_useCaseChoice(title=Witness)");
         nbgl_useCaseChoice(
             &ICON_APP_CARDANO,
             "Witness",

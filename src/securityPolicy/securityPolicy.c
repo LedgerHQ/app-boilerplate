@@ -372,8 +372,6 @@ security_policy_t policyForSignTxInit(sign_tx_signingmode_t txSigningMode,
                 warning_bits_set(warnings, WARNING_BIT_PLUTUS_MISSING_SCRIPT_DATA_HASH);
                 hasWarning = true;
             }
-            warning_bits_set(warnings, WARNING_BIT_PLUTUS_PRESENT);
-            hasWarning = true;
             break;
         }
 
@@ -390,11 +388,6 @@ security_policy_t policyForSignTxInit(sign_tx_signingmode_t txSigningMode,
     }
     if (!isNetworkUsual(networkId, protocolMagic)) {
         warning_bits_set(warnings, WARNING_BIT_NETWORK_UNUSUAL);
-        hasWarning = true;
-    }
-
-    if (needsRunningScriptWarning(numCollateralInputs)) {
-        warning_bits_set(warnings, WARNING_BIT_PLUTUS_PRESENT);
         hasWarning = true;
     }
 

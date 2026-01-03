@@ -127,14 +127,14 @@ enum {
 // SHELLEY_CERTIFICATES Era Tests
 // ======================================================================
 
-static void test_sign_tx_with_a_stake_registration_path_certificate_pre_conway(void **state) {
+static void test_sign_tx_with_a_stake_registration_path_certificate_preconway(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_CERTIFICATES_SIGN_TX_WITH_A_STAKE_REGISTRATION_PATH_CERTIFICATE_PRE_CONWAY);
+    run_fixture(&FIXTURE_SHELLEY_CERTIFICATES_SIGN_TX_WITH_A_STAKE_REGISTRATION_PATH_CERTIFICATE_PRECONWAY);
 }
 
-static void test_sign_tx_with_a_stake_deregistration_path_certificate_pre_conway(void **state) {
+static void test_sign_tx_with_a_stake_deregistration_path_certificate_preconway(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_CERTIFICATES_SIGN_TX_WITH_A_STAKE_DEREGISTRATION_PATH_CERTIFICATE_PRE_CONWAY);
+    run_fixture(&FIXTURE_SHELLEY_CERTIFICATES_SIGN_TX_WITH_A_STAKE_DEREGISTRATION_PATH_CERTIFICATE_PRECONWAY);
 }
 
 static void test_sign_tx_with_a_stake_delegation_path_certificate(void **state) {
@@ -163,8 +163,8 @@ static void test_sign_tx_with_pool_retirement_combined_with_stake_deregistration
 
 int main(void) {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_sign_tx_with_a_stake_registration_path_certificate_pre_conway),
-        cmocka_unit_test(test_sign_tx_with_a_stake_deregistration_path_certificate_pre_conway),
+        cmocka_unit_test(test_sign_tx_with_a_stake_registration_path_certificate_preconway),
+        cmocka_unit_test(test_sign_tx_with_a_stake_deregistration_path_certificate_preconway),
         cmocka_unit_test(test_sign_tx_with_a_stake_delegation_path_certificate),
         cmocka_unit_test(test_sign_tx_and_filter_out_witnesses_with_duplicate_paths),
         cmocka_unit_test(test_sign_tx_with_pool_retirement_combined_with_stake_registration),

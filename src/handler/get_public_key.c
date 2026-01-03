@@ -60,6 +60,7 @@ int handler_get_public_key(buffer_t *cdata) {
     // maybe not here? TODO
     if (policy == POLICY_DENY) {
         TRACE("Security policy DENY - rejecting operation");
+        TRACE("Calling nbgl_useCaseStatus(\"Export of public key denied\", false, ui_menu_main)");
         nbgl_useCaseStatus("Export of public key denied", false, ui_menu_main);
         // TODO make sure the constants are defined properly
         return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);

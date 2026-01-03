@@ -121,19 +121,19 @@ void app_mem_dump_stats(void) {
 // Byron Era Tests
 // ======================================================================
 
-static void test_sign_tx_with_third_party_byron_mainnet_output(void **state) {
+static void test_sign_tx_with_thirdparty_byron_mainnet_output(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_BYRON_SIGN_TX_WITH_THIRD_PARTY_BYRON_MAINNET_OUTPUT);
+    run_fixture(&FIXTURE_BYRON_SIGN_TX_WITH_THIRDPARTY_BYRON_MAINNET_OUTPUT);
 }
 
-static void test_sign_tx_with_third_party_byron_daedalus_mainnet_output(void **state) {
+static void test_sign_tx_with_thirdparty_byron_daedalus_mainnet_output(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_BYRON_SIGN_TX_WITH_THIRD_PARTY_BYRON_DAEDALUS_MAINNET_OUTPUT);
+    run_fixture(&FIXTURE_BYRON_SIGN_TX_WITH_THIRDPARTY_BYRON_DAEDALUS_MAINNET_OUTPUT);
 }
 
-static void test_sign_tx_with_third_party_byron_testnet_output(void **state) {
+static void test_sign_tx_with_thirdparty_byron_testnet_output(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_BYRON_SIGN_TX_WITH_THIRD_PARTY_BYRON_TESTNET_OUTPUT);
+    run_fixture(&FIXTURE_BYRON_SIGN_TX_WITH_THIRDPARTY_BYRON_TESTNET_OUTPUT);
 }
 
 // ======================================================================
@@ -142,9 +142,9 @@ static void test_sign_tx_with_third_party_byron_testnet_output(void **state) {
 
 int main(void) {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_sign_tx_with_third_party_byron_mainnet_output),
-        cmocka_unit_test(test_sign_tx_with_third_party_byron_daedalus_mainnet_output),
-        cmocka_unit_test(test_sign_tx_with_third_party_byron_testnet_output),
+        cmocka_unit_test(test_sign_tx_with_thirdparty_byron_mainnet_output),
+        cmocka_unit_test(test_sign_tx_with_thirdparty_byron_daedalus_mainnet_output),
+        cmocka_unit_test(test_sign_tx_with_thirdparty_byron_testnet_output),
     };
     return _cmocka_run_group_tests("test_sign_tx_byron", tests, ARRAY_LEN(tests), NULL, NULL);
 }
