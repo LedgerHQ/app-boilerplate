@@ -283,7 +283,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
         } else {
             uint8_t *address_bytes = (uint8_t *) app_mem_alloc(MAX_ADDRESS_LENGTH);
             if (address_bytes == NULL) {
-                return send_error_and_reset(SWO_TX_PARSING_FAIL);
+                return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
             }
 
             size_t address_size = deriveAddress(
@@ -294,7 +294,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
 
             if (address_size == 0 || address_size > MAX_ADDRESS_LENGTH) {
                 app_mem_free(address_bytes);
-                return send_error_and_reset(SWO_TX_PARSING_FAIL);
+                return send_error_and_reset(SWO_INCORRECT_DATA);
             }
 
             output_desc.destination.type = DESTINATION_THIRD_PARTY;
@@ -1192,7 +1192,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
         } else {
             uint8_t *address_bytes = (uint8_t *) app_mem_alloc(MAX_ADDRESS_LENGTH);
             if (address_bytes == NULL) {
-                return send_error_and_reset(SWO_TX_PARSING_FAIL);
+                return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
             }
 
             size_t address_size = deriveAddress(
@@ -1203,7 +1203,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
 
             if (address_size == 0 || address_size > MAX_ADDRESS_LENGTH) {
                 app_mem_free(address_bytes);
-                return send_error_and_reset(SWO_TX_PARSING_FAIL);
+                return send_error_and_reset(SWO_INCORRECT_DATA);
             }
 
             collateral_desc.destination.type = DESTINATION_THIRD_PARTY;

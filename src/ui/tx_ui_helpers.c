@@ -68,11 +68,8 @@ int addCredentialUIPairs(const ext_credential_t *credential,
             if (path_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
-            if (!format_bip44_path(&credential->keyPath, path_tmp, MAX_BIP44_PATH_STRING_LENGTH + 1)) {
-                app_mem_free(path_tmp);
-                LEDGER_ASSERT(false, "Unable to format credential path");
-                return SWO_TX_PARSING_FAIL;
-            }
+            bool path_formatted = format_bip44_path(&credential->keyPath, path_tmp, MAX_BIP44_PATH_STRING_LENGTH + 1);
+            LEDGER_ASSERT(path_formatted, "Unable to format credential path");
             status = ui_add_pair_or_fail(keyPathLabel, path_tmp);
             if (status != SWO_SUCCESS) {
                 return status;
@@ -84,15 +81,12 @@ int addCredentialUIPairs(const ext_credential_t *credential,
             if (keyhash_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
-            if (!format_bech32(keyHashPrefix,
+            bool hash_encoded = format_bech32(keyHashPrefix,
                               credential->keyHash,
                               ADDRESS_KEY_HASH_LENGTH,
                               keyhash_tmp,
-                              MAX_BECH32_STRING_LENGTH + 1)) {
-                app_mem_free(keyhash_tmp);
-                LEDGER_ASSERT(false, "Unable to format credential key hash");
-                return SWO_TX_PARSING_FAIL;
-            }
+                              MAX_BECH32_STRING_LENGTH + 1);
+            LEDGER_ASSERT(hash_encoded, "Unable to format credential key hash");
             status = ui_add_pair_or_fail(keyHashLabel, keyhash_tmp);
             if (status != SWO_SUCCESS) {
                 return status;
@@ -228,14 +222,12 @@ int addDRepUIPairs(const ext_drep_t *drep, const char *label) {
             if (tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
-            if (!format_bech32("drep",
+            bool drep_encoded = format_bech32("drep",
                               drep->keyHash,
                               ADDRESS_KEY_HASH_LENGTH,
                               tmp,
-                              MAX_BECH32_STRING_LENGTH + 1)) {
-                app_mem_free(tmp);
-                return SWO_TX_PARSING_FAIL;
-            }
+                              MAX_BECH32_STRING_LENGTH + 1);
+            LEDGER_ASSERT(drep_encoded, "Unable to format DRep key hash");
             break;
         }
         case EXT_DREP_SCRIPT_HASH: {
@@ -243,14 +235,12 @@ int addDRepUIPairs(const ext_drep_t *drep, const char *label) {
             if (tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
-            if (!format_bech32("drep",
+            bool script_encoded = format_bech32("drep",
                               drep->scriptHash,
                               SCRIPT_HASH_LENGTH,
                               tmp,
-                              MAX_BECH32_STRING_LENGTH + 1)) {
-                app_mem_free(tmp);
-                return SWO_TX_PARSING_FAIL;
-            }
+                              MAX_BECH32_STRING_LENGTH + 1);
+            LEDGER_ASSERT(script_encoded, "Unable to format DRep script hash");
             break;
         }
         case EXT_DREP_ABSTAIN: {
@@ -358,14 +348,12 @@ int addAnchorUIPairs(const anchor_t *anchor) {
     if (anchor_hash_tmp == NULL) {
         return SWO_INSUFFICIENT_MEMORY;
     }
-    if (!format_bech32("anchor",
+    bool anchor_encoded = format_bech32("anchor",
                       anchor->hash,
                       ANCHOR_HASH_LENGTH,
                       anchor_hash_tmp,
-                      MAX_BECH32_STRING_LENGTH + 1)) {
-        app_mem_free(anchor_hash_tmp);
-        return SWO_TX_PARSING_FAIL;
-    }
+                      MAX_BECH32_STRING_LENGTH + 1);
+    LEDGER_ASSERT(anchor_encoded, "Unable to format anchor hash");
     status = ui_add_pair_or_fail("Anchor hash", anchor_hash_tmp);
     if (status != SWO_SUCCESS) {
         return status;
@@ -398,14 +386,12 @@ int addPoolKeyHashUIPairs(const uint8_t *poolKeyHash, const char *label) {
     if (pool_tmp == NULL) {
         return SWO_INSUFFICIENT_MEMORY;
     }
-    if (!format_bech32("pool",
+    bool pool_encoded = format_bech32("pool",
                       poolKeyHash,
                       POOL_KEY_HASH_LENGTH,
                       pool_tmp,
-                      MAX_BECH32_STRING_LENGTH + 1)) {
-        app_mem_free(pool_tmp);
-        return SWO_TX_PARSING_FAIL;
-    }
+                      MAX_BECH32_STRING_LENGTH + 1);
+    LEDGER_ASSERT(pool_encoded, "Unable to format pool key hash");
     return ui_add_pair_or_fail(label, pool_tmp);
 }
 
@@ -413,17 +399,15 @@ int addRewardAccountUIPairs(uint8_t networkId, const ext_credential_t *credentia
     LEDGER_ASSERT(credential != NULL, "NULL credential");
 
     char reward_addr_buf[MAX_HUMAN_ADDRESS_LENGTH + 1];
-    if (!formatRewardAddressFromCredential(networkId, credential, reward_addr_buf, sizeof(reward_addr_buf))) {
-        return SWO_TX_PARSING_FAIL;
-    }
+    bool reward_formatted = formatRewardAddressFromCredential(networkId, credential, reward_addr_buf, sizeof(reward_addr_buf));
+    LEDGER_ASSERT(reward_formatted, "Unable to format reward account");
 
     char *value_tmp = NULL;
 
     if (credential->type == EXT_CREDENTIAL_KEY_PATH) {
         char path_buf[MAX_BIP44_PATH_STRING_LENGTH + 1];
-        if (!format_bip44_path(&credential->keyPath, path_buf, sizeof(path_buf))) {
-            return SWO_TX_PARSING_FAIL;
-        }
+        bool cred_formatted = format_bip44_path(&credential->keyPath, path_buf, sizeof(path_buf));
+        LEDGER_ASSERT(cred_formatted, "Unable to format credential path");
 
         value_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 2);
         if (value_tmp == NULL) {

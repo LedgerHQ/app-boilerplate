@@ -25,6 +25,7 @@
 #include "utils/assert.h"
 #include "utils/buffer_utils.h"
 #include "utils/utils.h"
+#include "utils/textUtils.h"
 #include "tx_parse_certificates.h"
 #include "transaction/tx.h"
 
@@ -188,7 +189,8 @@ parser_status_e parse_certificate_stake_registration_deregistration_conway(
         TRACE("Failed to parse deposit");
         return CERTIFICATES_PARSING_ERROR;
     }
-    TRACE("Successfully parsed STAKE_REGISTRATION/DEREGISTRATION_CONWAY, deposit=%llu", cert_data->deposit);
+    TRACE("Successfully parsed STAKE_REGISTRATION/DEREGISTRATION_CONWAY, deposit=");
+    TRACE_UINT64(cert_data->deposit);
     return PARSING_OK;
 }
 
@@ -217,7 +219,8 @@ parser_status_e parse_certificate_stake_pool_retirement(buffer_t *buf,
         TRACE("Failed to parse retirement epoch");
         return CERTIFICATES_PARSING_ERROR;
     }
-    TRACE("Successfully parsed pool retirement, epoch=%llu", cert_data->retirementEpoch);
+    TRACE("Successfully parsed pool retirement, epoch=");
+    TRACE_UINT64(cert_data->retirementEpoch);
     return PARSING_OK;
 }
 
@@ -449,7 +452,8 @@ parser_status_e parse_certificate_drep_registration(buffer_t *buf,
         TRACE("Failed to parse deposit");
         return CERTIFICATES_PARSING_ERROR;
     }
-    TRACE("Deposit: %llu", cert_data->deposit);
+    TRACE("Deposit: ");
+    TRACE_UINT64(cert_data->deposit);
 
     status = _parse_anchor(buf, &cert_data->anchor);
     if (status != PARSING_OK) {
@@ -476,7 +480,8 @@ parser_status_e parse_certificate_drep_deregistration(buffer_t *buf,
         TRACE("Failed to parse deposit");
         return CERTIFICATES_PARSING_ERROR;
     }
-    TRACE("Deposit: %llu", cert_data->deposit);
+    TRACE("Deposit: ");
+    TRACE_UINT64(cert_data->deposit);
 
     TRACE("Successfully parsed DREP_DEREGISTRATION");
     return PARSING_OK;
@@ -748,26 +753,40 @@ parser_status_e parse_certificate_stake_pool_registration(buffer_t *buf,
         TRACE("Failed to read pledge");
         return CERTIFICATES_PARSING_ERROR;
     }
-    TRACE("Pledge: %llu", cert_data->poolRegistration.pledge);
+    TRACE("Pledge: ");
+    TRACE_UINT64(cert_data->poolRegistration.pledge);
 
     if (!buffer_read_u64(buf, &cert_data->poolRegistration.cost, BE)) {
         TRACE("Failed to read cost");
         return CERTIFICATES_PARSING_ERROR;
     }
-    TRACE("Cost: %llu", cert_data->poolRegistration.cost);
+    TRACE("Cost: ");
+    TRACE_UINT64(cert_data->poolRegistration.cost);
 
     // Parse margin (unit_interval: numerator + denominator)
     if (!buffer_read_u64(buf, &cert_data->poolRegistration.marginNumerator, BE)) {
         TRACE("Failed to read margin numerator");
         return CERTIFICATES_PARSING_ERROR;
     }
-    TRACE("Margin numerator: %llu", cert_data->poolRegistration.marginNumerator);
+    TRACE("Margin numerator: ");
+    TRACE_UINT64(cert_data->poolRegistration.marginNumerator);
 
     if (!buffer_read_u64(buf, &cert_data->poolRegistration.marginDenominator, BE)) {
         TRACE("Failed to read margin denominator");
         return CERTIFICATES_PARSING_ERROR;
     }
-    TRACE("Margin denominator: %llu", cert_data->poolRegistration.marginDenominator);
+    if (cert_data->poolRegistration.marginDenominator == 0) {
+        TRACE("Invalid margin denominator: cannot be zero");
+        return CERTIFICATES_PARSING_ERROR;
+    }
+    if (cert_data->poolRegistration.marginNumerator > cert_data->poolRegistration.marginDenominator) {
+        TRACE("Invalid margin: numerator > denominator");
+        TRACE_UINT64(cert_data->poolRegistration.marginNumerator);
+        TRACE_UINT64(cert_data->poolRegistration.marginDenominator);
+        return CERTIFICATES_PARSING_ERROR;
+    }
+    TRACE("Margin denominator: ");
+    TRACE_UINT64(cert_data->poolRegistration.marginDenominator);
 
     // Parse reward account (hash or path)
     uint8_t reward_account_type;

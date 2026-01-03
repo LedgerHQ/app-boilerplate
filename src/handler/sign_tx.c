@@ -153,7 +153,7 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         if (!buffer_read_bytes(cdata,
                                G_context.tx_info.transaction.auxDataHash,
                                AUX_DATA_HASH_LENGTH)) {
-            return send_error_and_reset(SWO_TX_PARSING_FAIL);
+            return send_error_and_reset(SWO_WRONG_TX_INIT_APDU_DATA);
         }
     } else {
         explicit_bzero(G_context.tx_info.transaction.auxDataHash,
@@ -346,7 +346,7 @@ static int handle_tx_data_chunk(buffer_t *cdata, bool more) {
                      G_context.tx_info.raw_tx + G_context.tx_info.raw_tx_len,
                      cdata->size)) {
         TRACE("Failed to copy transaction chunk");
-        return send_error_and_reset(SWO_TX_PARSING_FAIL);
+        return send_error_and_reset(SWO_WRONG_DATA_LENGTH);
     }
     G_context.tx_info.raw_tx_len += cdata->size;
     TRACE("Copied %d bytes, total: %d", cdata->size, G_context.tx_info.raw_tx_len);

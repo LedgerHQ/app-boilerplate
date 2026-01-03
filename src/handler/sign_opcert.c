@@ -28,6 +28,7 @@
 #include "cardano_swo.h"
 #include "globals.h"
 #include "utils/utils.h"
+#include "utils/textUtils.h"
 #include "utils/cardano_os_utils.h"
 #include "display.h"
 #include "opcert_types.h"
@@ -69,9 +70,10 @@ int handler_sign_opcert(buffer_t *cdata) {
 
     // Log parsed opcert details (path, KES period, issue counter)
     BIP44_PRINTF(&opcert->poolColdKeyPath);
-    TRACE("KES period = %llu, issue counter = %llu",
-          (unsigned long long) opcert->kesPeriod,
-          (unsigned long long) opcert->issueCounter);
+    TRACE("KES period = ");
+    TRACE_UINT64(opcert->kesPeriod);
+    TRACE("issue counter = ");
+    TRACE_UINT64(opcert->issueCounter);
 
     // Check security policy
     warning_bits_t warnings = 0;

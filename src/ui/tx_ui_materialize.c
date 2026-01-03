@@ -26,6 +26,7 @@
 #include "nbgl_use_case.h"
 #include "cardano_swo.h"
 #include "globals.h"
+#include "format.h"
 #include "ui/ui_constants.h"
 #include "tx_output_types.h"
 #include "transaction/tx.h"
@@ -605,7 +606,6 @@ static int ui_strings_certificates(transaction_t *tx) {
                             }
                             default:
                                 LEDGER_ASSERT(false, "Unsupported pool credential type for retirement");
-                                return SWO_TX_PARSING_FAIL;
                         }
 
                         // Display pool key hash with "pool" prefix
@@ -619,8 +619,9 @@ static int ui_strings_certificates(transaction_t *tx) {
                         if (epoch_tmp == NULL) {
                             return SWO_INSUFFICIENT_MEMORY;
                         }
-                        snprintf(epoch_tmp, MAX_UINT64_STRING_LENGTH + 1, "%llu",
-                                (unsigned long long) certificate_item->certificate_data.retirementEpoch);
+                        bool epoch_formatted = format_u64(epoch_tmp, MAX_UINT64_STRING_LENGTH + 1,
+                                                          certificate_item->certificate_data.retirementEpoch);
+                        LEDGER_ASSERT(epoch_formatted, "Failed to format retirement epoch");
                         status = ui_add_pair_or_fail("Retirement epoch", epoch_tmp);
                         if (status != SWO_SUCCESS) {
                             return status;
@@ -793,7 +794,6 @@ static int ui_strings_certificates(transaction_t *tx) {
                                 break;
                             default:
                                 LEDGER_ASSERT(false, "Unsupported pool ID type");
-                                return SWO_TX_PARSING_FAIL;
                         }
 
                         if (pool_id_policy == POLICY_SHOW) {
@@ -813,14 +813,12 @@ static int ui_strings_certificates(transaction_t *tx) {
                             if (vrf_hash_tmp == NULL) {
                                 return SWO_INSUFFICIENT_MEMORY;
                             }
-                            if (!format_bech32("vrf_vk",
+                            bool encoded = format_bech32("vrf_vk",
                                                certificate_item->certificate_data.vrfKeyHash,
                                                VRF_KEY_HASH_LENGTH,
                                                vrf_hash_tmp,
-                                               MAX_BECH32_STRING_LENGTH + 1)) {
-                                app_mem_free(vrf_hash_tmp);
-                                return SWO_TX_PARSING_FAIL;
-                            }
+                                               MAX_BECH32_STRING_LENGTH + 1);
+                            LEDGER_ASSERT(encoded, "Unable to format VRF key hash");
                             status = ui_add_pair_or_fail("VRF key hash", vrf_hash_tmp);
                             if (status != SWO_SUCCESS) {
                                 return status;
@@ -857,21 +855,17 @@ static int ui_strings_certificates(transaction_t *tx) {
                             return status;
                         }
 
-                        // Display profit margin as fraction
-                        // Margin is two uint64 values separated by '/'
-                        // Max uint64 is "18446744073709551615" (20 chars) + '/' = 41 chars
-                        char *margin_tmp = ui_alloc_temp(MAX_PROFIT_MARGIN_LENGTH + 1);
+                        // Display profit margin as percentage
+                        // Similar to old app: convert to percentage (0-10000 basis points)
+                        char *margin_tmp = ui_alloc_temp(20 + 1);
                         if (margin_tmp == NULL) {
                             return SWO_INSUFFICIENT_MEMORY;
                         }
                         uint64_t margin_num = certificate_item->certificate_data.poolRegistration.marginNumerator;
                         uint64_t margin_den = certificate_item->certificate_data.poolRegistration.marginDenominator;
-                        if (margin_den == 0) {
-                            return SWO_TX_PARSING_FAIL;
-                        }
-                        snprintf(margin_tmp, MAX_PROFIT_MARGIN_LENGTH + 1, "%llu/%llu",
-                                (unsigned long long) margin_num,
-                                (unsigned long long) margin_den);
+                        uint64_t margin_percentage = (10000 * margin_num + (margin_den / 2)) / margin_den;
+                        const unsigned int percentage = (unsigned int) margin_percentage;
+                        snprintf(margin_tmp, 20 + 1, "%u.%u %%", percentage / 100, percentage % 100);
                         status = ui_add_pair_or_fail("Profit margin", margin_tmp);
                         if (status != SWO_SUCCESS) {
                             return status;
@@ -902,7 +896,6 @@ static int ui_strings_certificates(transaction_t *tx) {
                                     break;
                                 default:
                                     LEDGER_ASSERT(false, "Invalid reward account type");
-                                    return SWO_TX_PARSING_FAIL;
                             }
                             if (status != SWO_SUCCESS) {
                                 return status;
@@ -986,7 +979,8 @@ static int ui_strings_certificates(transaction_t *tx) {
                             );
                             switch (relay_policy) {
                                 case POLICY_DENY:
-                                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                    LEDGER_ASSERT(false, "Relay security policy denied");
+                                    break;
                                 case POLICY_HIDE:
                                     break;
                                 case POLICY_SHOW: {
@@ -1088,7 +1082,7 @@ static int ui_strings_certificates(transaction_t *tx) {
                                             break;
                                         }
                                         default:
-                                            return SWO_TX_PARSING_FAIL;
+                                            LEDGER_ASSERT(false, "Unknown relay type");
                                     }
                                     break;
                                 }
@@ -1171,7 +1165,7 @@ static int ui_strings_certificates(transaction_t *tx) {
                     }
 
                     default:
-                        return SWO_TX_PARSING_FAIL;
+                        LEDGER_ASSERT(false, "Unknown certificate type");
                 }
 
                 certificate_num++;
@@ -1478,15 +1472,11 @@ static int ui_strings_required_signers(transaction_t *tx) {
                 if (value_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
 
                 if (item->required_signer_data.type == REQUIRED_SIGNER_WITH_HASH) {
-                     if (!format_bech32("vkh", item->required_signer_data.keyHash, ADDRESS_KEY_HASH_LENGTH, value_tmp, MAX_BECH32_STRING_LENGTH + 1)) {
-                         app_mem_free(value_tmp);
-                         return SWO_TX_PARSING_FAIL;
-                     }
+                     bool encoded = format_bech32("vkh", item->required_signer_data.keyHash, ADDRESS_KEY_HASH_LENGTH, value_tmp, MAX_BECH32_STRING_LENGTH + 1);
+                     LEDGER_ASSERT(encoded, "Unable to format required signer key hash");
                 } else {
-                     if (!format_bip44_path(&item->required_signer_data.keyPath, value_tmp, MAX_BIP44_PATH_STRING_LENGTH + 1)) {
-                         app_mem_free(value_tmp);
-                         return SWO_TX_PARSING_FAIL;
-                     }
+                     bool formatted = format_bip44_path(&item->required_signer_data.keyPath, value_tmp, MAX_BIP44_PATH_STRING_LENGTH + 1);
+                     LEDGER_ASSERT(formatted, "Unable to format required signer path");
                 }
 
                 int status = ui_add_pair_or_fail("Required signer", value_tmp);
@@ -1978,9 +1968,15 @@ int ui_prepare_transaction_review(void) {
     }
     LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_HASHED, "UI prep called too early");
     uint16_t pair_count = G_context.tx_info.planned_ui_pairs;
-    if (pair_count == 0 || pair_count > UINT8_MAX) {
-        return send_error_and_reset(SWO_TX_PARSING_FAIL);
+
+    // pair_count should never be 0 - at minimum we display fee
+    LEDGER_ASSERT(pair_count > 0, "UI pair count is zero - at minimum fee must be displayed");
+
+    // If pair count exceeds NBGL capability, reject the transaction
+    if (pair_count > UINT8_MAX) {
+        return send_error_and_reset(SWO_UI_PAIRS_EXCEED_CAPABILITY);
     }
+
     if (!ui_pairs_init((uint8_t) pair_count)) {
         return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
