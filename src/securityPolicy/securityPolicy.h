@@ -154,7 +154,8 @@ security_policy_t policyForSignTxMintInit(const sign_tx_signingmode_t txSigningM
 security_policy_t policyForSignTxScriptDataHash(const sign_tx_signingmode_t txSigningMode);
 
 security_policy_t policyForSignTxCollateralInput(const sign_tx_signingmode_t txSigningMode,
-                                                 bool isTotalCollateralIncluded);
+                                                 bool isTotalCollateralIncluded,
+                                                 const tx_input_t* collateralInput);
 
 security_policy_t policyForSignTxRequiredSigner(const sign_tx_signingmode_t txSigningMode,
                                                 required_signer_t* requiredSigner);
@@ -166,7 +167,8 @@ security_policy_t policyForSignTxWitness(sign_tx_signingmode_t txSigningMode,
                                          warning_bits_t* warnings);
 security_policy_t policyForSignTxTotalCollateral();
 
-security_policy_t policyForSignTxReferenceInput(const sign_tx_signingmode_t txSigningMode);
+security_policy_t policyForSignTxReferenceInput(const sign_tx_signingmode_t txSigningMode,
+                                                const tx_input_t* referenceInput);
 
 security_policy_t policyForSignTxVotingProcedure(sign_tx_signingmode_t txSigningMode,
                                                  ext_voter_t* voter);

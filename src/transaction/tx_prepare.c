@@ -1043,7 +1043,8 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
 
             security_policy_t collateral_input_policy = policyForSignTxCollateralInput(
                 G_context.tx_info.transaction.txSigningMode,
-                G_context.tx_info.transaction.includeTotalCollateral
+                G_context.tx_info.transaction.includeTotalCollateral,
+                &input_item->input_data
             );
 
             switch (collateral_input_policy) {
@@ -1259,8 +1260,8 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             tx_input_list_item_t *input_item = (tx_input_list_item_t *) reference_input_node;
 
             security_policy_t reference_input_policy = policyForSignTxReferenceInput(
-                G_context.tx_info.transaction.txSigningMode
-            );
+                G_context.tx_info.transaction.txSigningMode,
+                &input_item->input_data);
 
             switch (reference_input_policy) {
                 case POLICY_DENY:

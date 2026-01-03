@@ -145,6 +145,7 @@ static int ui_materialize_token_groups(asset_group_t* assetGroups,
 
 static int ui_strings_inputs(transaction_t *tx) {
     security_policy_t input_policy = policyForSignTxInput(tx->txSigningMode);
+    LEDGER_ASSERT(input_policy != POLICY_DENY, "Input denied during UI");
     s_flist_node *input_node = tx->inputs;
     while (input_node != NULL) {
         tx_input_list_item_t *input_item = (tx_input_list_item_t *) input_node;
@@ -208,7 +209,9 @@ static int ui_strings_outputs(transaction_t *tx) {
         LEDGER_ASSERT(policy != POLICY_DENY, "Output denied during UI");
 
         security_policy_t datum_policy = policyForSignTxOutputDatumHash(policy);
+        LEDGER_ASSERT(datum_policy != POLICY_DENY, "Output datum policy denied during UI");
         security_policy_t ref_script_policy = policyForSignTxOutputRefScript(policy);
+        LEDGER_ASSERT(ref_script_policy != POLICY_DENY, "Output ref script policy denied during UI");
 
         switch (policy) {
             case POLICY_DENY:
@@ -1428,33 +1431,32 @@ static int ui_strings_script_data_hash(transaction_t *tx) {
 }
 
 static int ui_strings_collateral_inputs(transaction_t *tx) {
-    security_policy_t collateral_input_policy = policyForSignTxCollateralInput(
-        tx->txSigningMode,
-        tx->includeTotalCollateral);
-    if (tx->num_collateral_inputs > 0 && collateral_input_policy == POLICY_SHOW) {
-        s_flist_node *collateral_input_node = tx->collateral_inputs;
-        while (collateral_input_node != NULL) {
-            tx_collateral_input_list_item_t *input_item =
-                (tx_collateral_input_list_item_t *) collateral_input_node;
-            s_flist_node *next = collateral_input_node->next;
+    if (tx->num_collateral_inputs == 0) {
+        return SWO_SUCCESS;
+    }
 
+    s_flist_node *collateral_input_node = tx->collateral_inputs;
+    while (collateral_input_node != NULL) {
+        tx_collateral_input_list_item_t *input_item =
+            (tx_collateral_input_list_item_t *) collateral_input_node;
+        s_flist_node *next = collateral_input_node->next;
+
+        security_policy_t collateral_input_policy = policyForSignTxCollateralInput(
+            tx->txSigningMode,
+            tx->includeTotalCollateral,
+            &input_item->input_data);
+        LEDGER_ASSERT(collateral_input_policy != POLICY_DENY, "Collateral input policy denied during UI");
+
+        if (collateral_input_policy == POLICY_SHOW) {
             char *input_tmp = ui_alloc_temp(MAX_INPUT_DISPLAY_STRING_LENGTH + 1);
             if (input_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
             int status = format_input_with_index(input_tmp, MAX_INPUT_DISPLAY_STRING_LENGTH + 1, &input_item->input_data);
             if (status != SWO_SUCCESS) return status;
             status = ui_add_pair_or_fail("Coll input", input_tmp);
             if (status != SWO_SUCCESS) return status;
-
-            app_mem_free(input_item);
-            collateral_input_node = next;
         }
-        tx->collateral_inputs = NULL;
-        return SWO_SUCCESS;
-    }
-    s_flist_node *collateral_input_node = tx->collateral_inputs;
-    while (collateral_input_node != NULL) {
-        s_flist_node *next = collateral_input_node->next;
-        app_mem_free(collateral_input_node);
+
+        app_mem_free(input_item);
         collateral_input_node = next;
     }
     tx->collateral_inputs = NULL;
@@ -1502,6 +1504,10 @@ static int ui_strings_collateral_output(transaction_t *tx) {
     if (!tx->includeCollateralOutput) {
         return SWO_SUCCESS;
     }
+    TRACE("ui_strings_collateral_output start includeCollateralOutput=%d includeTotalCollateral=%d numAssetGroups=%u",
+          tx->includeCollateralOutput,
+          tx->includeTotalCollateral,
+          (uint32_t) tx->collateral_output.numAssetGroups);
     tx_output_description_t collateral_desc = {
         .format = tx->collateral_output.format,
         .amount = tx->collateral_output.adaAmount,
@@ -1516,10 +1522,15 @@ static int ui_strings_collateral_output(transaction_t *tx) {
             tx->collateral_output.destination.address.buffer;
         collateral_desc.destination.address.size =
             tx->collateral_output.destination.address.size;
+        TRACE("Collateral destination: third-party addr size=%zu",
+              collateral_desc.destination.address.size);
     } else {
         collateral_desc.destination.type = DESTINATION_DEVICE_OWNED;
         collateral_desc.destination.params =
             &tx->collateral_output.destination.params;
+        TRACE("Collateral destination: device-owned type=%u network=%u",
+              collateral_desc.destination.params->type,
+              collateral_desc.destination.params->networkId);
     }
 
     security_policy_t collateral_policy =
@@ -1535,18 +1546,22 @@ static int ui_strings_collateral_output(transaction_t *tx) {
                 tx->networkId,
                 tx->protocolMagic,
                 tx->includeTotalCollateral);
-
     LEDGER_ASSERT(collateral_policy != POLICY_DENY, "Collateral output denied during UI");
 
     security_policy_t collateral_ada_policy =
         policyForSignTxCollateralOutputAdaAmount(collateral_policy, tx->includeTotalCollateral);
+    LEDGER_ASSERT(collateral_ada_policy != POLICY_DENY, "Collateral ADA policy denied during UI");
     security_policy_t collateral_tokens_policy =
         policyForSignTxCollateralOutputTokens(collateral_policy, &collateral_desc);
+    LEDGER_ASSERT(collateral_tokens_policy != POLICY_DENY, "Collateral tokens policy denied during UI");
     security_policy_t collateral_confirm_policy =
         policyForSignTxCollateralOutputConfirm(collateral_policy, collateral_desc.numAssetGroups);
+    LEDGER_ASSERT(collateral_confirm_policy != POLICY_DENY, "Collateral confirm policy denied during UI");
 
     bool show_collateral_tokens =
         (collateral_policy == POLICY_SHOW) && (collateral_tokens_policy == POLICY_SHOW);
+    TRACE("Collateral policies: main=%d ada=%d tokens=%d show_tokens=%d",
+          collateral_policy, collateral_ada_policy, collateral_tokens_policy, show_collateral_tokens);
 
     if (collateral_policy == POLICY_SHOW) {
         char *collateral_label_tmp = ui_alloc_temp(MAX_COLLATERAL_STRING_LENGTH + 1);
@@ -1565,12 +1580,15 @@ static int ui_strings_collateral_output(transaction_t *tx) {
         }
 
         bool collateral_address_formatted = false;
+        TRACE("Formatting collateral address, type=%d", collateral_desc.destination.type);
         if (collateral_desc.destination.type == DESTINATION_THIRD_PARTY) {
             collateral_address_formatted = format_address_human_readable(
                 collateral_desc.destination.address.buffer,
                 collateral_desc.destination.address.size,
                 collateral_address_tmp,
                 MAX_HUMAN_ADDRESS_LENGTH + 1);
+            TRACE("Collateral third-party address formatted len=%zu success=%d",
+                  collateral_desc.destination.address.size, collateral_address_formatted);
         } else {
             uint8_t address_bytes[MAX_ADDRESS_LENGTH];
             size_t derived_len = deriveAddress(
@@ -1583,6 +1601,8 @@ static int ui_strings_collateral_output(transaction_t *tx) {
                     derived_len,
                     collateral_address_tmp,
                     MAX_HUMAN_ADDRESS_LENGTH + 1);
+                TRACE("Collateral device-owned address formatted derived_len=%zu success=%d",
+                      derived_len, collateral_address_formatted);
             }
         }
         LEDGER_ASSERT(collateral_address_formatted, "Collateral address formatting failed");
@@ -1641,6 +1661,7 @@ static int ui_strings_total_collateral(transaction_t *tx) {
         return SWO_SUCCESS;
     }
     security_policy_t policy = policyForSignTxTotalCollateral();
+    LEDGER_ASSERT(policy != POLICY_DENY, "Total collateral denied during UI");
     if (policy == POLICY_SHOW) {
         char *amount_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH + 1);
         if (amount_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
@@ -1653,23 +1674,31 @@ static int ui_strings_total_collateral(transaction_t *tx) {
 }
 
 static int ui_strings_reference_inputs(transaction_t *tx) {
-    if (tx->num_reference_inputs > 0) {
-        security_policy_t reference_input_policy = policyForSignTxReferenceInput(tx->txSigningMode);
-        s_flist_node *reference_input_node = tx->reference_inputs;
-        while (reference_input_node != NULL) {
-            tx_input_list_item_t *input_item = (tx_input_list_item_t *) reference_input_node;
-            s_flist_node *next = reference_input_node->next;
-            if (reference_input_policy == POLICY_SHOW) {
-                char *input_tmp = ui_alloc_temp(MAX_INPUT_DISPLAY_STRING_LENGTH + 1);
-                if (input_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
-                int status = format_input_with_index(input_tmp, MAX_INPUT_DISPLAY_STRING_LENGTH + 1, &input_item->input_data);
-                if (status != SWO_SUCCESS) return status;
-                status = ui_add_pair_or_fail("Ref input", input_tmp);
-                if (status != SWO_SUCCESS) return status;
-            }
-            app_mem_free(input_item);
-            reference_input_node = next;
+    if (tx->num_reference_inputs == 0) {
+        return SWO_SUCCESS;
+    }
+
+    s_flist_node *reference_input_node = tx->reference_inputs;
+    while (reference_input_node != NULL) {
+        tx_input_list_item_t *input_item = (tx_input_list_item_t *) reference_input_node;
+        s_flist_node *next = reference_input_node->next;
+
+        security_policy_t reference_input_policy = policyForSignTxReferenceInput(
+            tx->txSigningMode,
+            &input_item->input_data);
+        LEDGER_ASSERT(reference_input_policy != POLICY_DENY, "Reference input denied during UI");
+
+        if (reference_input_policy == POLICY_SHOW) {
+            char *input_tmp = ui_alloc_temp(MAX_INPUT_DISPLAY_STRING_LENGTH + 1);
+            if (input_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
+            int status = format_input_with_index(input_tmp, MAX_INPUT_DISPLAY_STRING_LENGTH + 1, &input_item->input_data);
+            if (status != SWO_SUCCESS) return status;
+            status = ui_add_pair_or_fail("Ref input", input_tmp);
+            if (status != SWO_SUCCESS) return status;
         }
+
+        app_mem_free(input_item);
+        reference_input_node = next;
     }
     tx->reference_inputs = NULL;
     return SWO_SUCCESS;
@@ -1754,6 +1783,7 @@ static int ui_strings_voting_procedures(transaction_t *tx) {
 static int ui_strings_treasury(transaction_t *tx) {
     if (tx->includeTreasury) {
         security_policy_t policy = policyForSignTxTreasury(tx->txSigningMode, tx->treasury);
+        LEDGER_ASSERT(policy != POLICY_DENY, "Treasury denied during UI");
         if (policy == POLICY_SHOW) {
             char *tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH + 1);
             if (tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
@@ -1769,6 +1799,7 @@ static int ui_strings_treasury(transaction_t *tx) {
 static int ui_strings_donation(transaction_t *tx) {
     if (tx->includeDonation) {
         security_policy_t policy = policyForSignTxDonation(tx->txSigningMode, tx->donation);
+        LEDGER_ASSERT(policy != POLICY_DENY, "Donation denied during UI");
         if (policy == POLICY_SHOW) {
             char *tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH + 1);
             if (tmp == NULL) return SWO_INSUFFICIENT_MEMORY;

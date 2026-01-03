@@ -19,6 +19,7 @@
 #include <stdbool.h>  // bool
 #include <stddef.h>   // size_t
 #include <string.h>   // memset, explicit_bzero
+#include <stdio.h>    // snprintf
 
 #include "os.h"
 #include "buffer.h"
@@ -47,6 +48,24 @@
 #include "ui/menu.h"
 #include "transaction/tx_prepare.h"
 
+#define DENIED_WITNESS_STATUS_PREFIX "Denied witness:\n"
+#define DENIED_WITNESS_STATUS_LENGTH \
+    (sizeof(DENIED_WITNESS_STATUS_PREFIX) - 1 + MAX_BIP44_PATH_STRING_LENGTH + 1)
+
+static void display_denied_witness_status(const bip44_path_t* path) {
+    ASSERT(path != NULL);
+    char path_str[MAX_BIP44_PATH_STRING_LENGTH + 1] = {0};
+    bool formatted = format_bip44_path(path, path_str, sizeof(path_str));
+    LEDGER_ASSERT(formatted, "Unable to format witness path");
+    const char* witness_text = path_str;
+    char status_msg[DENIED_WITNESS_STATUS_LENGTH] = {0};
+    snprintf(status_msg, sizeof(status_msg), DENIED_WITNESS_STATUS_PREFIX "%s", witness_text);
+    size_t status_len = strnlen(status_msg, sizeof(status_msg));
+    ASSERT(status_len < sizeof(status_msg));
+    TRACE("Calling nbgl_useCaseStatus(\"%s\", false, ui_menu_main)", status_msg);
+    nbgl_useCaseStatus(status_msg, false, ui_menu_main);
+}
+
 /**
  * Helper: Initialize transaction from P1_TX_INIT APDU
  * Validates all transaction metadata and checks security policy
@@ -56,6 +75,7 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
     G_context.tx_info.raw_tx_len = 0;
     warning_bits_init(&G_context.tx_info.warning_bits);
     G_context.tx_info.planned_ui_pairs = 0;
+    explicit_bzero(&G_context.tx_info.single_account_data, sizeof(single_account_data_t));
 
     // Read and validate options (fixed header)
     uint64_t options;
@@ -496,8 +516,11 @@ int handler_sign_tx_witness(buffer_t *cdata) {
     // Handle DENY policy
     if (policy == POLICY_DENY) {
         TRACE("Security policy DENY - rejecting witness");
+        bip44_path_t rejected_path = G_context.tx_info.witness_path;
         tx_context_cleanup();
-        return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+        int error_sw = send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+        display_denied_witness_status(&rejected_path);
+        return error_sw;
     }
 
     // Sign the transaction hash with the witness path

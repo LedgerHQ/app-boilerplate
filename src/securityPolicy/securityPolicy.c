@@ -395,7 +395,7 @@ security_policy_t policyForSignTxInit(sign_tx_signingmode_t txSigningMode,
         warning_bits_set(warnings, WARNING_BIT_PLUTUS_MISSING_COLLATERAL);
         hasWarning = true;
     }
-    if (needsUnknownCollateralWarning(txSigningMode, numCollateralInputs)) {
+    if (needsUnknownCollateralWarning(txSigningMode, includeTotalCollateral)) {
         warning_bits_set(warnings, WARNING_BIT_PLUTUS_UNKNOWN_COLLATERAL);
         hasWarning = true;
     }
@@ -1687,7 +1687,8 @@ security_policy_t policyForSignTxScriptDataHash(const sign_tx_signingmode_t txSi
 
 // For each transaction collateral input
 security_policy_t policyForSignTxCollateralInput(const sign_tx_signingmode_t txSigningMode,
-                                                 bool isTotalCollateralPresent) {
+                                                 bool isTotalCollateralPresent,
+                                                 const tx_input_t* collateralInput MARK_UNUSED) {
     // WARNING: policies for collateral inputs, collateral return output and total collateral are
     // interdependent
 
@@ -1788,7 +1789,8 @@ security_policy_t policyForSignTxTotalCollateral() {
     SHOW();
 }
 
-security_policy_t policyForSignTxReferenceInput(const sign_tx_signingmode_t txSigningMode) {
+security_policy_t policyForSignTxReferenceInput(const sign_tx_signingmode_t txSigningMode,
+                                                const tx_input_t* referenceInput MARK_UNUSED) {
     switch (txSigningMode) {
         case SIGN_TX_SIGNINGMODE_PLUTUS_TX:
             // should be shown because the user loses all collateral if Plutus execution fails
@@ -2005,11 +2007,6 @@ static const warning_definition_t WARNING_DEFINITIONS[WARNING_BIT_COUNT] = {
         .bit = WARNING_BIT_NETWORK_NOT_VERIFIABLE,
         .title = "Network not verifiable",
         .description = "Transaction body lacks data to verify destination network",
-    },
-    [WARNING_BIT_PLUTUS_PRESENT] = {
-        .bit = WARNING_BIT_PLUTUS_PRESENT,
-        .title = "Plutus execution",
-        .description = "Plutus scripts may run while processing this transaction",
     },
     [WARNING_BIT_PLUTUS_MISSING_COLLATERAL] = {
         .bit = WARNING_BIT_PLUTUS_MISSING_COLLATERAL,

@@ -7,6 +7,7 @@
 
 #include "buffer.h"
 #include "handler/sign_tx.h"
+#include "display.h"
 #include "hexUtils.h"
 #include "transaction/tx.h"
 #include "blake2b.h"
@@ -62,6 +63,7 @@ static inline void run_tx_and_verify(const uint8_t* init_raw,
     assert_int_equal(*response_sw, SWO_SUCCESS);
     assert_int_equal(G_context.req_type, REQUEST_NONE);
 
+    tx_review_cleanup();
     tx_context_cleanup();
 }
 
