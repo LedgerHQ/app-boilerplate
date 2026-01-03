@@ -142,6 +142,13 @@ add_executable(test_tx_prepare
     mock_sources/hex_stub.c
     mock_sources/io_stub.c
 )
+add_executable(test_ui_utils
+    test_ui_utils.c
+    ../src/ui/ui_utils.c
+    ../src/memory/mem.c
+    ../src/memory/mem_utils.c
+    mock_sources/mem_alloc_stub.c
+)
 
 set(TEST_EXECUTABLES
     test_hex_utils
@@ -161,6 +168,7 @@ set(TEST_EXECUTABLES
     test_aux_data_hash_builder
     test_tx_hash_builder
     test_tx_prepare
+    test_ui_utils
 )
 # add_executable(test_tokens test_tokens.c)  # TODO: needs crypto mocks (keyDerivation.h, etc.)
 # add_executable(test_tx_parser test_tx_parser.c)  # TODO: create this file
@@ -441,6 +449,7 @@ add_executable(test_sign_tx_rejects
     mock_sources/mem_alloc_stub.c
 )
 target_link_libraries(test_sign_tx_rejects PUBLIC cmocka gcov cardano_sign_tx_core)
+target_link_libraries(test_ui_utils PUBLIC cmocka gcov)
 add_test(test_sign_tx_rejects test_sign_tx_rejects)
 # target_link_libraries(test_tokens PUBLIC cmocka gcov tokens_lib bech32_lib hex_utils)  # TODO: when tokens_lib is ready
 

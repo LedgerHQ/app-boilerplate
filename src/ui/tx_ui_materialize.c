@@ -48,6 +48,8 @@
 
 // Max display lengths
 #define MAX_DATUM_HASH_STRING_LENGTH (2 * OUTPUT_DATUM_HASH_LENGTH + 1)
+#define MAX_POOL_METADATA_HASH_STRING_LENGTH (2 * POOL_METADATA_HASH_LENGTH + 1)
+#define MAX_INPUT_DISPLAY_STRING_LENGTH (MAX_TX_HASH_DISPLAY_LENGTH + 3 + MAX_UINT64_STRING_LENGTH)
 static nbgl_warning_t *g_warning = NULL;
 
 static char *ui_alloc_temp(size_t size) {
@@ -61,8 +63,20 @@ static char *ui_alloc_temp(size_t size) {
     return tmp;
 }
 
-static int ui_add_pair_or_fail(const char *label, const char *tmp_buf) {
-    if (!ui_pairs_add(label, (char *) tmp_buf)) {
+#define ui_add_pair_or_fail(label, tmp_buf) \
+    (ui_pairs_add_static_label(UI_STATIC_LABEL(label), (tmp_buf)) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY)
+
+static int format_input_with_index(char *out, size_t out_size, const tx_input_t *input) {
+    LEDGER_ASSERT(out != NULL, "NULL output buffer");
+    LEDGER_ASSERT(input != NULL, "NULL input");
+    int hex_status = bytes_to_lowercase_hex(out, out_size, input->txHash, TX_HASH_LENGTH);
+    LEDGER_ASSERT(hex_status == 0, "Input hash hex formatting failed");
+    size_t hash_len = strlen(out);
+    if (hash_len + 1 >= out_size) {
+        return SWO_INSUFFICIENT_MEMORY;
+    }
+    int written = snprintf(out + hash_len, out_size - hash_len, " / %u", input->index);
+    if (written < 0 || (size_t)written >= out_size - hash_len) {
         return SWO_INSUFFICIENT_MEMORY;
     }
     return SWO_SUCCESS;
@@ -144,48 +158,22 @@ static int ui_materialize_strings(void) {
         tx->includeTotalCollateral);
     if (tx->num_collateral_inputs > 0 && collateral_input_policy == POLICY_SHOW) {
         s_flist_node *collateral_input_node = tx->collateral_inputs;
-        uint16_t coll_input_idx = 0;
         while (collateral_input_node != NULL) {
             tx_collateral_input_list_item_t *input_item =
                 (tx_collateral_input_list_item_t *) collateral_input_node;
-            
-            char *label_tmp = ui_alloc_temp(MAX_UI_LABEL_SIZE + 1);
-            if (label_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
-            snprintf(label_tmp, MAX_UI_LABEL_SIZE + 1, "Collateral input #%u", coll_input_idx + 1);
-            
-            // Collateral Input Tx Hash
-            char *tx_hash_label = ui_alloc_temp(MAX_UI_LABEL_SIZE + 1);
-            if (tx_hash_label == NULL) return SWO_INSUFFICIENT_MEMORY;
-            snprintf(tx_hash_label, MAX_UI_LABEL_SIZE + 1, "Coll input #%u Tx Hash", coll_input_idx + 1);
 
-            char *tx_hash_value = ui_alloc_temp(MAX_TX_HASH_DISPLAY_LENGTH + 1);
-            if (tx_hash_value == NULL) return SWO_INSUFFICIENT_MEMORY;
-            int hex_status = bytes_to_lowercase_hex(tx_hash_value, MAX_TX_HASH_DISPLAY_LENGTH + 1, input_item->input_data.txHash, TX_HASH_LENGTH);
-            LEDGER_ASSERT(hex_status == 0, "Collateral input hash hex formatting failed");
-
-            status = ui_add_pair_or_fail(tx_hash_label, tx_hash_value);
+            char *input_tmp = ui_alloc_temp(MAX_INPUT_DISPLAY_STRING_LENGTH + 1);
+            if (input_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
+            status = format_input_with_index(input_tmp, MAX_INPUT_DISPLAY_STRING_LENGTH + 1, &input_item->input_data);
             if (status != SWO_SUCCESS) return status;
-
-            // Collateral Input Index
-            char *index_label = ui_alloc_temp(MAX_UI_LABEL_SIZE + 1);
-            if (index_label == NULL) return SWO_INSUFFICIENT_MEMORY;
-            snprintf(index_label, MAX_UI_LABEL_SIZE + 1, "Coll input #%u Index", coll_input_idx + 1);
-
-            char *index_value = ui_alloc_temp(MAX_UINT64_STRING_LENGTH + 1);
-            if (index_value == NULL) return SWO_INSUFFICIENT_MEMORY;
-            int written = snprintf(index_value, MAX_UINT64_STRING_LENGTH + 1, "%u", input_item->input_data.index);
-            LEDGER_ASSERT(written > 0 && (size_t)written < MAX_UINT64_STRING_LENGTH + 1, "Collateral input index truncated");
-
-            status = ui_add_pair_or_fail(index_label, index_value);
+            status = ui_add_pair_or_fail("Coll input", input_tmp);
             if (status != SWO_SUCCESS) return status;
 
             collateral_input_node = collateral_input_node->next;
-            coll_input_idx++;
         }
     }
     if (tx->num_required_signers > 0) {
         s_flist_node *req_signer_node = tx->required_signers;
-        uint16_t req_signer_idx = 0;
         while (req_signer_node != NULL) {
             tx_required_signer_list_item_t *item = (tx_required_signer_list_item_t *) req_signer_node;
 
@@ -193,61 +181,41 @@ static int ui_materialize_strings(void) {
             LEDGER_ASSERT(policy != POLICY_DENY, "Required signer denied during UI");
 
             if (policy == POLICY_SHOW) {
-                char *label = ui_alloc_temp(MAX_UI_LABEL_SIZE + 1);
-                if (label == NULL) return SWO_INSUFFICIENT_MEMORY;
-                snprintf(label, MAX_UI_LABEL_SIZE + 1, "Required signer #%u", req_signer_idx + 1);
-
                 char *value_tmp = ui_alloc_temp(MAX_BECH32_STRING_LENGTH + 1);
                 if (value_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
 
                 if (item->required_signer_data.type == REQUIRED_SIGNER_WITH_HASH) {
-                     if (!format_bech32("vkh", item->required_signer_data.keyHash, ADDRESS_KEY_HASH_LENGTH, value_tmp, MAX_BECH32_STRING_LENGTH + 1)) return SWO_TX_PARSING_FAIL;
+                     if (!format_bech32("vkh", item->required_signer_data.keyHash, ADDRESS_KEY_HASH_LENGTH, value_tmp, MAX_BECH32_STRING_LENGTH + 1)) {
+                         app_mem_free(value_tmp);
+                         return SWO_TX_PARSING_FAIL;
+                     }
                 } else {
-                     if (!format_bip44_path(&item->required_signer_data.keyPath, value_tmp, MAX_BIP44_PATH_STRING_LENGTH + 1)) return SWO_TX_PARSING_FAIL;
+                     if (!format_bip44_path(&item->required_signer_data.keyPath, value_tmp, MAX_BIP44_PATH_STRING_LENGTH + 1)) {
+                         app_mem_free(value_tmp);
+                         return SWO_TX_PARSING_FAIL;
+                     }
                 }
 
-                status = ui_add_pair_or_fail(label, value_tmp);
+                status = ui_add_pair_or_fail("Required signer", value_tmp);
                 if (status != SWO_SUCCESS) return status;
             }
             req_signer_node = req_signer_node->next;
-            req_signer_idx++;
         }
     }
     security_policy_t input_policy = policyForSignTxInput(tx->txSigningMode);
     if (input_policy == POLICY_SHOW) {
-        uint16_t input_idx = 0;
         s_flist_node *input_node = tx->inputs;
         while (input_node != NULL) {
             tx_input_list_item_t *input_item = (tx_input_list_item_t *) input_node;
 
-            // Input Tx Hash
-            char *tx_hash_label = ui_alloc_temp(MAX_UI_LABEL_SIZE + 1);
-            if (tx_hash_label == NULL) return SWO_INSUFFICIENT_MEMORY;
-            snprintf(tx_hash_label, MAX_UI_LABEL_SIZE + 1, "Input #%u Tx Hash", input_idx + 1);
-
-            char *tx_hash_value = ui_alloc_temp(MAX_TX_HASH_DISPLAY_LENGTH + 1);
-            if (tx_hash_value == NULL) return SWO_INSUFFICIENT_MEMORY;
-            int hex_status = bytes_to_lowercase_hex(tx_hash_value, MAX_TX_HASH_DISPLAY_LENGTH + 1, input_item->input_data.txHash, TX_HASH_LENGTH);
-            LEDGER_ASSERT(hex_status == 0, "Input hash hex formatting failed");
-
-            status = ui_add_pair_or_fail(tx_hash_label, tx_hash_value);
+            char *input_tmp = ui_alloc_temp(MAX_INPUT_DISPLAY_STRING_LENGTH + 1);
+            if (input_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
+            status = format_input_with_index(input_tmp, MAX_INPUT_DISPLAY_STRING_LENGTH + 1, &input_item->input_data);
             if (status != SWO_SUCCESS) return status;
-
-            // Input Index
-            char *index_label = ui_alloc_temp(MAX_UI_LABEL_SIZE + 1);
-            if (index_label == NULL) return SWO_INSUFFICIENT_MEMORY;
-            snprintf(index_label, MAX_UI_LABEL_SIZE + 1, "Input #%u Index", input_idx + 1);
-
-            char *index_value = ui_alloc_temp(MAX_UINT64_STRING_LENGTH + 1);
-            if (index_value == NULL) return SWO_INSUFFICIENT_MEMORY;
-            int written = snprintf(index_value, MAX_UINT64_STRING_LENGTH + 1, "%u", input_item->input_data.index);
-            LEDGER_ASSERT(written > 0 && (size_t)written < MAX_UINT64_STRING_LENGTH + 1, "Input index truncated");
-
-            status = ui_add_pair_or_fail(index_label, index_value);
+            status = ui_add_pair_or_fail("Input", input_tmp);
             if (status != SWO_SUCCESS) return status;
 
             input_node = input_node->next;
-            input_idx++;
         }
     }
     while (output_node != NULL) {
@@ -357,6 +325,7 @@ static int ui_materialize_strings(void) {
                     return status;
                 }
                 if (output_item->output_data.datum.hasDatum && datum_policy == POLICY_SHOW) {
+                    // TODO: Inline datum size is not bounded by protocol; handle large values more robustly.
                     char *datum_value_tmp = ui_alloc_temp(MAX_DATUM_HASH_STRING_LENGTH + 1);
                     if (datum_value_tmp == NULL) {
                         return SWO_INSUFFICIENT_MEMORY;
@@ -382,12 +351,13 @@ static int ui_materialize_strings(void) {
                 }
 
                 if (output_item->output_data.hasRefScript && ref_script_policy == POLICY_SHOW) {
-                    char *refscript_tmp = ui_alloc_temp(MAX_UI_LABEL_SIZE + 1);
+                    // TODO: Reference script size is not bounded by protocol; handle large values more robustly.
+                    char *refscript_tmp = ui_alloc_temp(MAX_REFERENCE_SCRIPT_STRING_LENGTH + 1);
                     if (refscript_tmp == NULL) {
                         return SWO_INSUFFICIENT_MEMORY;
                     }
                     snprintf(refscript_tmp,
-                             MAX_UI_LABEL_SIZE + 1,
+                             MAX_REFERENCE_SCRIPT_STRING_LENGTH + 1,
                              "Reference script (%u bytes)",
                              output_item->output_data.refScript.size);
                     status = ui_add_pair_or_fail("Reference script", refscript_tmp);
@@ -476,11 +446,11 @@ static int ui_materialize_strings(void) {
             (collateral_policy == POLICY_SHOW) && (collateral_tokens_policy == POLICY_SHOW);
 
         if (collateral_policy == POLICY_SHOW) {
-            char *collateral_label_tmp = ui_alloc_temp(MAX_UI_LABEL_SIZE + 1);
+            char *collateral_label_tmp = ui_alloc_temp(MAX_COLLATERAL_STRING_LENGTH + 1);
             if (collateral_label_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
-            strncpy(collateral_label_tmp, "return output", MAX_UI_LABEL_SIZE);
+            strncpy(collateral_label_tmp, "return output", MAX_COLLATERAL_STRING_LENGTH + 1);
             status = ui_add_pair_or_fail("Collateral", collateral_label_tmp);
             if (status != SWO_SUCCESS) {
                 return status;
@@ -568,38 +538,16 @@ static int ui_materialize_strings(void) {
         security_policy_t reference_input_policy = policyForSignTxReferenceInput(tx->txSigningMode);
         if (reference_input_policy == POLICY_SHOW) {
             s_flist_node *reference_input_node = tx->reference_inputs;
-            uint16_t ref_input_idx = 0;
             while (reference_input_node != NULL) {
                 tx_input_list_item_t *input_item = (tx_input_list_item_t *) reference_input_node;
-                
-                // Ref input Tx Hash
-                char *tx_hash_label = ui_alloc_temp(MAX_UI_LABEL_SIZE + 1);
-                if (tx_hash_label == NULL) return SWO_INSUFFICIENT_MEMORY;
-                snprintf(tx_hash_label, MAX_UI_LABEL_SIZE + 1, "Ref input #%u Tx Hash", ref_input_idx + 1);
-
-                char *tx_hash_value = ui_alloc_temp(MAX_TX_HASH_DISPLAY_LENGTH + 1);
-                if (tx_hash_value == NULL) return SWO_INSUFFICIENT_MEMORY;
-                int hex_status = bytes_to_lowercase_hex(tx_hash_value, MAX_TX_HASH_DISPLAY_LENGTH + 1, input_item->input_data.txHash, TX_HASH_LENGTH);
-                LEDGER_ASSERT(hex_status == 0, "Ref input hash hex formatting failed");
-
-                status = ui_add_pair_or_fail(tx_hash_label, tx_hash_value);
+                char *input_tmp = ui_alloc_temp(MAX_INPUT_DISPLAY_STRING_LENGTH + 1);
+                if (input_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
+                status = format_input_with_index(input_tmp, MAX_INPUT_DISPLAY_STRING_LENGTH + 1, &input_item->input_data);
                 if (status != SWO_SUCCESS) return status;
-
-                // Ref input Index
-                char *index_label = ui_alloc_temp(MAX_UI_LABEL_SIZE + 1);
-                if (index_label == NULL) return SWO_INSUFFICIENT_MEMORY;
-                snprintf(index_label, MAX_UI_LABEL_SIZE + 1, "Ref input #%u Index", ref_input_idx + 1);
-
-                char *index_value = ui_alloc_temp(MAX_UINT64_STRING_LENGTH + 1);
-                if (index_value == NULL) return SWO_INSUFFICIENT_MEMORY;
-                int written = snprintf(index_value, MAX_UINT64_STRING_LENGTH + 1, "%u", input_item->input_data.index);
-                LEDGER_ASSERT(written > 0 && (size_t)written < MAX_UINT64_STRING_LENGTH + 1, "Ref input index truncated");
-
-                status = ui_add_pair_or_fail(index_label, index_value);
+                status = ui_add_pair_or_fail("Ref input", input_tmp);
                 if (status != SWO_SUCCESS) return status;
 
                 reference_input_node = reference_input_node->next;
-                ref_input_idx++;
             }
         }
     }
@@ -883,11 +831,11 @@ static int ui_materialize_strings(void) {
                         // Display stake credential
                         status = addCredentialUIPairs(
                             &certificate_item->certificate_data.stakeCredential,
-                            "Stake key",           // KEY_PATH label
-                            "Stake key hash",      // KEY_HASH label
-                            "stake_vkh",           // KEY_HASH bech32 prefix
-                            "Stake script hash",   // SCRIPT_HASH label
-                            "script"               // SCRIPT_HASH bech32 prefix
+                            UI_STATIC_LABEL("Stake key"),           // KEY_PATH label
+                            UI_STATIC_LABEL("Stake key hash"),      // KEY_HASH label
+                            UI_STATIC_LABEL("stake_vkh"),           // KEY_HASH bech32 prefix
+                            UI_STATIC_LABEL("Stake script hash"),   // SCRIPT_HASH label
+                            UI_STATIC_LABEL("script")               // SCRIPT_HASH bech32 prefix
                         );
                         if (status != SWO_SUCCESS) {
                             return status;
@@ -899,11 +847,11 @@ static int ui_materialize_strings(void) {
                         // Display stake credential
                         status = addCredentialUIPairs(
                             &certificate_item->certificate_data.stakeCredential,
-                            "Stake key",           // KEY_PATH label
-                            "Stake key hash",      // KEY_HASH label
-                            "stake_vkh",           // KEY_HASH bech32 prefix
-                            "Stake script hash",   // SCRIPT_HASH label
-                            "script"               // SCRIPT_HASH bech32 prefix
+                            UI_STATIC_LABEL("Stake key"),           // KEY_PATH label
+                            UI_STATIC_LABEL("Stake key hash"),      // KEY_HASH label
+                            UI_STATIC_LABEL("stake_vkh"),           // KEY_HASH bech32 prefix
+                            UI_STATIC_LABEL("Stake script hash"),   // SCRIPT_HASH label
+                            UI_STATIC_LABEL("script")               // SCRIPT_HASH bech32 prefix
                         );
                         if (status != SWO_SUCCESS) {
                             return status;
@@ -912,7 +860,7 @@ static int ui_materialize_strings(void) {
                         // Display pool key hash
                         status = addPoolKeyHashUIPairs(
                             certificate_item->certificate_data.poolKeyHash,
-                            "Pool"
+                            UI_STATIC_LABEL("Pool")
                         );
                         if (status != SWO_SUCCESS) {
                             return status;
@@ -925,18 +873,18 @@ static int ui_materialize_strings(void) {
                         // Display stake credential
                         status = addCredentialUIPairs(
                             &certificate_item->certificate_data.stakeCredential,
-                            "Stake key",           // KEY_PATH label
-                            "Stake key hash",      // KEY_HASH label
-                            "stake_vkh",           // KEY_HASH bech32 prefix
-                            "Stake script hash",   // SCRIPT_HASH label
-                            "script"               // SCRIPT_HASH bech32 prefix
+                            UI_STATIC_LABEL("Stake key"),           // KEY_PATH label
+                            UI_STATIC_LABEL("Stake key hash"),      // KEY_HASH label
+                            UI_STATIC_LABEL("stake_vkh"),           // KEY_HASH bech32 prefix
+                            UI_STATIC_LABEL("Stake script hash"),   // SCRIPT_HASH label
+                            UI_STATIC_LABEL("script")               // SCRIPT_HASH bech32 prefix
                         );
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
 
                         // Display deposit
-                        status = addDepositUIPairs(certificate_item->certificate_data.deposit, "Deposit");
+                        status = addDepositUIPairs(certificate_item->certificate_data.deposit, UI_STATIC_LABEL("Deposit"));
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -964,7 +912,7 @@ static int ui_materialize_strings(void) {
                         }
 
                         // Display pool key hash with "pool" prefix
-                        status = addPoolKeyHashUIPairs(poolKeyHash, "Pool ID");
+                        status = addPoolKeyHashUIPairs(poolKeyHash, UI_STATIC_LABEL("Pool ID"));
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -987,11 +935,11 @@ static int ui_materialize_strings(void) {
                         // Display stake credential
                         status = addCredentialUIPairs(
                             &certificate_item->certificate_data.stakeCredential,
-                            "Stake key",           // KEY_PATH label
-                            "Stake key hash",      // KEY_HASH label
-                            "stake_vkh",           // KEY_HASH bech32 prefix
-                            "Stake script hash",   // SCRIPT_HASH label
-                            "script"               // SCRIPT_HASH bech32 prefix
+                            UI_STATIC_LABEL("Stake key"),           // KEY_PATH label
+                            UI_STATIC_LABEL("Stake key hash"),      // KEY_HASH label
+                            UI_STATIC_LABEL("stake_vkh"),           // KEY_HASH bech32 prefix
+                            UI_STATIC_LABEL("Stake script hash"),   // SCRIPT_HASH label
+                            UI_STATIC_LABEL("script")               // SCRIPT_HASH bech32 prefix
                         );
                         if (status != SWO_SUCCESS) {
                             return status;
@@ -999,7 +947,7 @@ static int ui_materialize_strings(void) {
 
                         // Display DRep
                         const ext_drep_t* drep = &certificate_item->certificate_data.drep;
-                        status = addDRepUIPairs(drep, "DRep");
+                        status = addDRepUIPairs(drep, UI_STATIC_LABEL("DRep"));
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -1010,11 +958,11 @@ static int ui_materialize_strings(void) {
                         // Display cold credential
                         const ext_credential_t* coldCred = &certificate_item->certificate_data.coldCredential;
                         status = addCredentialUIPairs(coldCred,
-                                                  "Committee cold key",
-                                                  "Committee cold key hash",
-                                                  "cc_cold",
-                                                  "Committee cold script hash",
-                                                  "cc_cold_script");
+                                                  UI_STATIC_LABEL("Committee cold key"),
+                                                  UI_STATIC_LABEL("Committee cold key hash"),
+                                                  UI_STATIC_LABEL("cc_cold"),
+                                                  UI_STATIC_LABEL("Committee cold script hash"),
+                                                  UI_STATIC_LABEL("cc_cold_script"));
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -1022,11 +970,11 @@ static int ui_materialize_strings(void) {
                         // Display hot credential
                         const ext_credential_t* hotCred = &certificate_item->certificate_data.hotCredential;
                         status = addCredentialUIPairs(hotCred,
-                                                  "Committee hot key",
-                                                  "Committee hot key hash",
-                                                  "cc_hot",
-                                                  "Committee hot script hash",
-                                                  "cc_hot_script");
+                                                  UI_STATIC_LABEL("Committee hot key"),
+                                                  UI_STATIC_LABEL("Committee hot key hash"),
+                                                  UI_STATIC_LABEL("cc_hot"),
+                                                  UI_STATIC_LABEL("Committee hot script hash"),
+                                                  UI_STATIC_LABEL("cc_hot_script"));
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -1037,11 +985,11 @@ static int ui_materialize_strings(void) {
                         // Display cold credential
                         const ext_credential_t* coldCred = &certificate_item->certificate_data.coldCredential;
                         status = addCredentialUIPairs(coldCred,
-                                                  "Committee cold key",
-                                                  "Committee cold key hash",
-                                                  "cc_cold",
-                                                  "Committee cold script hash",
-                                                  "cc_cold");
+                                                  UI_STATIC_LABEL("Committee cold key"),
+                                                  UI_STATIC_LABEL("Committee cold key hash"),
+                                                  UI_STATIC_LABEL("cc_cold"),
+                                                  UI_STATIC_LABEL("Committee cold script hash"),
+                                                  UI_STATIC_LABEL("cc_cold"));
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -1058,17 +1006,17 @@ static int ui_materialize_strings(void) {
                         // Display DRep credential
                         const ext_credential_t* drepCred = &certificate_item->certificate_data.dRepCredential;
                         status = addCredentialUIPairs(drepCred,
-                                                  "DRep key",
-                                                  "DRep key hash",
-                                                  "drep",
-                                                  "DRep script hash",
-                                                  "drep");
+                                                  UI_STATIC_LABEL("DRep key"),
+                                                  UI_STATIC_LABEL("DRep key hash"),
+                                                  UI_STATIC_LABEL("drep"),
+                                                  UI_STATIC_LABEL("DRep script hash"),
+                                                  UI_STATIC_LABEL("drep"));
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
 
                         // Display deposit
-                        status = addDepositUIPairs(certificate_item->certificate_data.deposit, "Deposit");
+                        status = addDepositUIPairs(certificate_item->certificate_data.deposit, UI_STATIC_LABEL("Deposit"));
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -1085,17 +1033,17 @@ static int ui_materialize_strings(void) {
                         // Display DRep credential
                         const ext_credential_t* drepCred = &certificate_item->certificate_data.dRepCredential;
                         status = addCredentialUIPairs(drepCred,
-                                                  "DRep key",
-                                                  "DRep key hash",
-                                                  "drep",
-                                                  "DRep script hash",
-                                                  "drep");
+                                                  UI_STATIC_LABEL("DRep key"),
+                                                  UI_STATIC_LABEL("DRep key hash"),
+                                                  UI_STATIC_LABEL("drep"),
+                                                  UI_STATIC_LABEL("DRep script hash"),
+                                                  UI_STATIC_LABEL("drep"));
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
 
                         // Display deposit
-                        status = addDepositUIPairs(certificate_item->certificate_data.deposit, "Deposit");
+                        status = addDepositUIPairs(certificate_item->certificate_data.deposit, UI_STATIC_LABEL("Deposit"));
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -1106,11 +1054,11 @@ static int ui_materialize_strings(void) {
                         // Display DRep credential
                         const ext_credential_t* drepCred = &certificate_item->certificate_data.dRepCredential;
                         status = addCredentialUIPairs(drepCred,
-                                                  "DRep key",
-                                                  "DRep key hash",
-                                                  "drep",
-                                                  "DRep script hash",
-                                                  "drep");
+                                                  UI_STATIC_LABEL("DRep key"),
+                                                  UI_STATIC_LABEL("DRep key hash"),
+                                                  UI_STATIC_LABEL("drep"),
+                                                  UI_STATIC_LABEL("DRep script hash"),
+                                                  UI_STATIC_LABEL("drep"));
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -1152,7 +1100,7 @@ static int ui_materialize_strings(void) {
                         }
 
                         if (pool_id_policy == POLICY_SHOW) {
-                            status = addPoolKeyHashUIPairs(poolKeyHash, "Pool ID");
+                            status = addPoolKeyHashUIPairs(poolKeyHash, UI_STATIC_LABEL("Pool ID"));
                             if (status != SWO_SUCCESS) {
                                 return status;
                             }
@@ -1164,7 +1112,19 @@ static int ui_materialize_strings(void) {
 
                         // Display VRF key hash
                         if (vrf_policy == POLICY_SHOW) {
-                            status = ui_add_pair_or_fail("VRF key hash", "[present]");
+                            char *vrf_hash_tmp = ui_alloc_temp(MAX_BECH32_STRING_LENGTH + 1);
+                            if (vrf_hash_tmp == NULL) {
+                                return SWO_INSUFFICIENT_MEMORY;
+                            }
+                            if (!format_bech32("vrf_vk",
+                                               certificate_item->certificate_data.vrfKeyHash,
+                                               VRF_KEY_HASH_LENGTH,
+                                               vrf_hash_tmp,
+                                               MAX_BECH32_STRING_LENGTH + 1)) {
+                                app_mem_free(vrf_hash_tmp);
+                                return SWO_TX_PARSING_FAIL;
+                            }
+                            status = ui_add_pair_or_fail("VRF key hash", vrf_hash_tmp);
                             if (status != SWO_SUCCESS) {
                                 return status;
                             }
@@ -1229,12 +1189,19 @@ static int ui_materialize_strings(void) {
 
                         // Display reward account
                         if (reward_policy == POLICY_SHOW) {
+                            char *reward_account = NULL;
                             switch (certificate_item->certificate_data.poolRegistration.rewardAccount.keyReferenceType) {
                                 case KEY_REFERENCE_PATH:
-                                    status = ui_add_pair_or_fail("Reward account", "key path");
+                                    reward_account = ui_alloc_temp(strlen("key path") + 1);
+                                    if (reward_account == NULL) return SWO_INSUFFICIENT_MEMORY;
+                                    memcpy(reward_account, "key path", strlen("key path") + 1);
+                                    status = ui_add_pair_or_fail("Reward account", reward_account);
                                     break;
                                 case KEY_REFERENCE_HASH:
-                                    status = ui_add_pair_or_fail("Reward account", "key hash");
+                                    reward_account = ui_alloc_temp(strlen("key hash") + 1);
+                                    if (reward_account == NULL) return SWO_INSUFFICIENT_MEMORY;
+                                    memcpy(reward_account, "key hash", strlen("key hash") + 1);
+                                    status = ui_add_pair_or_fail("Reward account", reward_account);
                                     break;
                                 default:
                                     LEDGER_ASSERT(false, "Invalid reward account type");
@@ -1272,16 +1239,12 @@ static int ui_materialize_strings(void) {
                             LEDGER_ASSERT(owner_policy != POLICY_DENY, "Pool owner security policy denied");
 
                             if (owner_policy == POLICY_SHOW) {
-                                char *owner_label = ui_alloc_temp(MAX_UI_LABEL_SIZE + 1);
-                                if (owner_label == NULL) return SWO_INSUFFICIENT_MEMORY;
-                                snprintf(owner_label, MAX_UI_LABEL_SIZE + 1, "Owner #%u", owner_idx + 1);
-
                                 status = addCredentialUIPairs(
                                     owner_cred,
-                                    owner_label,                    // KEY_PATH label
-                                    owner_label,                    // KEY_HASH label
+                                    "Owner",                        // KEY_PATH label
+                                    "Owner",                        // KEY_HASH label
                                     "stake_vkh",                    // KEY_HASH bech32 prefix
-                                    owner_label,                    // SCRIPT_HASH label
+                                    "Owner",                        // SCRIPT_HASH label
                                     "script"                        // SCRIPT_HASH bech32 prefix
                                 );
                                 if (status != SWO_SUCCESS) {
@@ -1330,11 +1293,11 @@ static int ui_materialize_strings(void) {
                                 case POLICY_HIDE:
                                     break;
                                 case POLICY_SHOW: {
-                                    char *relay_label = ui_alloc_temp(MAX_UI_LABEL_SIZE + 1);
-                                    if (relay_label == NULL) return SWO_INSUFFICIENT_MEMORY;
-                                    snprintf(relay_label, MAX_UI_LABEL_SIZE + 1, "Relay #%u", relay_idx + 1);
+                                    char *relay_value = ui_alloc_temp(1);
+                                    if (relay_value == NULL) return SWO_INSUFFICIENT_MEMORY;
+                                    relay_value[0] = '\0';
 
-                                    status = ui_add_pair_or_fail(relay_label, "");
+                                    status = ui_add_pair_or_fail("Relay", relay_value);
                                     if (status != SWO_SUCCESS) {
                                         return status;
                                     }
@@ -1391,7 +1354,8 @@ static int ui_materialize_strings(void) {
                                         case RELAY_SINGLE_HOST_NAME: {
                                             // Display DNS name
                                             if (relay->dnsNameSize > 0) {
-                                                char dns_str[MAX_DNS_NAME_LENGTH + 1] = {0};
+                                                char *dns_str = ui_alloc_temp(relay->dnsNameSize + 1);
+                                                if (dns_str == NULL) return SWO_INSUFFICIENT_MEMORY;
                                                 memcpy(dns_str, relay->dnsName, relay->dnsNameSize);
                                                 dns_str[relay->dnsNameSize] = '\0';
                                                 status = ui_add_pair_or_fail("  DNS name", dns_str);
@@ -1415,7 +1379,8 @@ static int ui_materialize_strings(void) {
                                         case RELAY_MULTIPLE_HOST_NAME: {
                                             // Display DNS name (SRV record)
                                             if (relay->dnsNameSize > 0) {
-                                                char dns_str[MAX_DNS_NAME_LENGTH + 1] = {0};
+                                                char *dns_str = ui_alloc_temp(relay->dnsNameSize + 1);
+                                                if (dns_str == NULL) return SWO_INSUFFICIENT_MEMORY;
                                                 memcpy(dns_str, relay->dnsName, relay->dnsNameSize);
                                                 dns_str[relay->dnsNameSize] = '\0';
                                                 status = ui_add_pair_or_fail("  SRV DNS", dns_str);
@@ -1463,7 +1428,11 @@ static int ui_materialize_strings(void) {
                             LEDGER_ASSERT(no_metadata_policy != POLICY_DENY, "No metadata security policy denied");
 
                             if (no_metadata_policy == POLICY_SHOW) {
-                                status = ui_add_pair_or_fail("Metadata", "none (anonymous pool)");
+                                const char *none_str = "none (anonymous pool)";
+                                char *metadata_none = ui_alloc_temp(strlen(none_str) + 1);
+                                if (metadata_none == NULL) return SWO_INSUFFICIENT_MEMORY;
+                                memcpy(metadata_none, none_str, strlen(none_str) + 1);
+                                status = ui_add_pair_or_fail("Metadata", metadata_none);
                                 if (status != SWO_SUCCESS) {
                                     return status;
                                 }
@@ -1473,14 +1442,28 @@ static int ui_materialize_strings(void) {
                             LEDGER_ASSERT(metadata_policy != POLICY_DENY, "Metadata security policy denied");
 
                             if (metadata_policy == POLICY_SHOW) {
-                                status = ui_add_pair_or_fail("Pool metadata url",
-                                                            (const char*)certificate_item->certificate_data.poolRegistration.poolMetadata.url);
+                                char *metadata_url = ui_alloc_temp(
+                                    certificate_item->certificate_data.poolRegistration.poolMetadata.urlSize + 1
+                                );
+                                if (metadata_url == NULL) return SWO_INSUFFICIENT_MEMORY;
+                                memcpy(metadata_url,
+                                       certificate_item->certificate_data.poolRegistration.poolMetadata.url,
+                                       certificate_item->certificate_data.poolRegistration.poolMetadata.urlSize);
+                                metadata_url[certificate_item->certificate_data.poolRegistration.poolMetadata.urlSize] = '\0';
+                                status = ui_add_pair_or_fail("Pool metadata url", metadata_url);
                                 if (status != SWO_SUCCESS) {
                                     return status;
                                 }
 
-                                // Display metadata hash present
-                                status = ui_add_pair_or_fail("Pool metadata hash", "[present]");
+                                char *metadata_hash_tmp = ui_alloc_temp(MAX_POOL_METADATA_HASH_STRING_LENGTH + 1);
+                                if (metadata_hash_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
+                                int hex_status = bytes_to_lowercase_hex(
+                                    metadata_hash_tmp,
+                                    MAX_POOL_METADATA_HASH_STRING_LENGTH + 1,
+                                    certificate_item->certificate_data.poolRegistration.poolMetadata.hash,
+                                    POOL_METADATA_HASH_LENGTH);
+                                LEDGER_ASSERT(hex_status == 0, "Pool metadata hash formatting failed");
+                                status = ui_add_pair_or_fail("Pool metadata hash", metadata_hash_tmp);
                                 if (status != SWO_SUCCESS) {
                                     return status;
                                 }

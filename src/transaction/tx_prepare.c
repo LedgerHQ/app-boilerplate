@@ -101,7 +101,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
     plan->pair_count = 2;  // fee + tx hash
     security_policy_t input_policy = policyForSignTxInput(G_context.tx_info.transaction.txSigningMode);
     if (input_policy == POLICY_SHOW) {
-        plan->pair_count += 2 * G_context.tx_info.transaction.num_inputs;
+        plan->pair_count += G_context.tx_info.transaction.num_inputs;
     }
     if (G_context.tx_info.transaction.includeTtl) {
         security_policy_t ttl_policy = policyForSignTxTtl(G_context.tx_info.transaction.ttl);

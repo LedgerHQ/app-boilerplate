@@ -41,6 +41,14 @@ typedef enum {
     REWARD_SCRIPT = 0xF,                      // 0b1111
 } address_type_t;
 
+// For Shelley, address is at most 1 + 28 + 28 = 57 bytes,
+// encoded in bech32 as 10 (prefix) + 8/5 * 57 + 6 (checksum) = 108 chars.
+// Reward accounts are just 1 + 28 = 29 bytes,
+// so 10 + 8/5 * 29 + 6 = 65 chars at most.
+// For Byron, the address can contain 64B of data (according to Duncan),
+// plus 46B with empty data; 100B in base58 has length at most 139.
+// (Previously, we used 128 bytes.)
+// https://stackoverflow.com/questions/48333136/size-of-buffer-to-hold-base58-encoded-data
 #define MAX_ADDRESS_LENGTH              128
 #define MAX_HUMAN_ADDRESS_LENGTH        150
 #define MAX_HUMAN_REWARD_ACCOUNT_LENGTH 65

@@ -736,6 +736,7 @@ parser_status_e parse_certificate_stake_pool_registration(buffer_t *buf,
     }
 
     // Parse VRF key hash (32 bytes)
+    STATIC_ASSERT(SIZEOF(cert_data->vrfKeyHash) == VRF_KEY_HASH_LENGTH, "wrong vrfKeyHash size");
     if (!buffer_read_bytes(buf, cert_data->vrfKeyHash, VRF_KEY_HASH_LENGTH)) {
         TRACE("Failed to read VRF key hash");
         return CERTIFICATES_PARSING_ERROR;

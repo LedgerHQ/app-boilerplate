@@ -2,13 +2,20 @@
 
 #include <stdbool.h>
 #include "nbgl_use_case.h"
+#include "utils/assert.h"
 
 extern nbgl_contentTagValue_t *g_pairs;
 extern nbgl_contentTagValueList_t *g_pairsList;
 
 bool ui_pairs_init(uint8_t nbPairs);
 void ui_pairs_cleanup(void);
-bool ui_pairs_add(const char* label, char* tmp_buf);
+#ifdef __GNUC__
+#define UI_STATIC_LABEL(label) ((void)sizeof(char[__builtin_constant_p(label) ? 1 : -1]), (label))
+#else
+#define UI_STATIC_LABEL(label) (label)
+#endif
+
+bool ui_pairs_add_static_label(const char* label, char* tmp_buf);
 
 /**
  * Track an allocated buffer for later cleanup

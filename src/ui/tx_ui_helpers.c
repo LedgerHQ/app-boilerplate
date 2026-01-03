@@ -41,7 +41,7 @@ static char *ui_alloc_temp(size_t size) {
 }
 
 static int ui_add_pair_or_fail(const char *label, char *tmp_buf) {
-    if (!ui_pairs_add(label, tmp_buf)) {
+    if (!ui_pairs_add_static_label(label, tmp_buf)) {
         return SWO_INSUFFICIENT_MEMORY;
     }
     return SWO_SUCCESS;
@@ -69,6 +69,7 @@ int addCredentialUIPairs(const ext_credential_t *credential,
                 return SWO_INSUFFICIENT_MEMORY;
             }
             if (!format_bip44_path(&credential->keyPath, path_tmp, MAX_BIP44_PATH_STRING_LENGTH + 1)) {
+                app_mem_free(path_tmp);
                 LEDGER_ASSERT(false, "Unable to format credential path");
                 return SWO_TX_PARSING_FAIL;
             }
@@ -88,6 +89,7 @@ int addCredentialUIPairs(const ext_credential_t *credential,
                               ADDRESS_KEY_HASH_LENGTH,
                               keyhash_tmp,
                               MAX_BECH32_STRING_LENGTH + 1)) {
+                app_mem_free(keyhash_tmp);
                 LEDGER_ASSERT(false, "Unable to format credential key hash");
                 return SWO_TX_PARSING_FAIL;
             }
@@ -107,6 +109,7 @@ int addCredentialUIPairs(const ext_credential_t *credential,
                               SCRIPT_HASH_LENGTH,
                               scripthash_tmp,
                               MAX_BECH32_STRING_LENGTH + 1)) {
+                app_mem_free(scripthash_tmp);
                 LEDGER_ASSERT(false, "Unable to format credential script hash");
                 return SWO_TX_PARSING_FAIL;
             }
@@ -126,55 +129,72 @@ int addCredentialUIPairs(const ext_credential_t *credential,
 int addVoterUIPairs(const ext_voter_t *voter) {
     LEDGER_ASSERT(voter != NULL, "NULL voter");
     int status = SWO_TX_PARSING_FAIL;
+    ext_credential_t voter_credential = {0};
 
     switch (voter->type) {
         case EXT_VOTER_COMMITTEE_HOT_KEY_PATH:
-            status = addCredentialUIPairs((const ext_credential_t*) voter,
-                                          "Committee hot key",
-                                          "", "", "", ""); // Path only needs first label
+            voter_credential.type = EXT_CREDENTIAL_KEY_PATH;
+            voter_credential.keyPath = voter->keyPath;
+            status = addCredentialUIPairs(&voter_credential,
+                                          UI_STATIC_LABEL("Committee hot key"),
+                                          UI_STATIC_LABEL(""), UI_STATIC_LABEL(""), UI_STATIC_LABEL(""), UI_STATIC_LABEL("")); // Path only needs first label
             break;
         case EXT_VOTER_COMMITTEE_HOT_KEY_HASH:
-            status = addCredentialUIPairs((const ext_credential_t*) voter,
-                                          "",
-                                          "Committee hot key hash",
-                                          "cc_hot",
-                                          "", "");
+            voter_credential.type = EXT_CREDENTIAL_KEY_HASH;
+            memcpy(voter_credential.keyHash, voter->keyHash, sizeof(voter_credential.keyHash));
+            status = addCredentialUIPairs(&voter_credential,
+                                          UI_STATIC_LABEL(""),
+                                          UI_STATIC_LABEL("Committee hot key hash"),
+                                          UI_STATIC_LABEL("cc_hot"),
+                                          UI_STATIC_LABEL(""), UI_STATIC_LABEL(""));
             break;
         case EXT_VOTER_COMMITTEE_HOT_SCRIPT_HASH:
-            status = addCredentialUIPairs((const ext_credential_t*) voter,
-                                          "", "", "",
-                                          "Committee hot script hash",
-                                          "cc_hot");
+            voter_credential.type = EXT_CREDENTIAL_SCRIPT_HASH;
+            memcpy(voter_credential.scriptHash, voter->scriptHash, sizeof(voter_credential.scriptHash));
+            status = addCredentialUIPairs(&voter_credential,
+                                          UI_STATIC_LABEL(""), UI_STATIC_LABEL(""), UI_STATIC_LABEL(""),
+                                          UI_STATIC_LABEL("Committee hot script hash"),
+                                          UI_STATIC_LABEL("cc_hot"));
             break;
         case EXT_VOTER_DREP_KEY_PATH:
-            status = addCredentialUIPairs((const ext_credential_t*) voter,
-                                          "DRep key",
-                                          "", "", "", "");
+            voter_credential.type = EXT_CREDENTIAL_KEY_PATH;
+            voter_credential.keyPath = voter->keyPath;
+            status = addCredentialUIPairs(&voter_credential,
+                                          UI_STATIC_LABEL("DRep key"),
+                                          UI_STATIC_LABEL(""), UI_STATIC_LABEL(""), UI_STATIC_LABEL(""), UI_STATIC_LABEL(""));
             break;
         case EXT_VOTER_DREP_KEY_HASH:
-            status = addCredentialUIPairs((const ext_credential_t*) voter,
-                                          "",
-                                          "DRep key hash",
-                                          "drep",
-                                          "", "");
+            voter_credential.type = EXT_CREDENTIAL_KEY_HASH;
+            memcpy(voter_credential.keyHash, voter->keyHash, sizeof(voter_credential.keyHash));
+            status = addCredentialUIPairs(&voter_credential,
+                                          UI_STATIC_LABEL(""),
+                                          UI_STATIC_LABEL("DRep key hash"),
+                                          UI_STATIC_LABEL("drep"),
+                                          UI_STATIC_LABEL(""), UI_STATIC_LABEL(""));
             break;
         case EXT_VOTER_DREP_SCRIPT_HASH:
-            status = addCredentialUIPairs((const ext_credential_t*) voter,
-                                          "", "", "",
-                                          "DRep script hash",
-                                          "drep");
+            voter_credential.type = EXT_CREDENTIAL_SCRIPT_HASH;
+            memcpy(voter_credential.scriptHash, voter->scriptHash, sizeof(voter_credential.scriptHash));
+            status = addCredentialUIPairs(&voter_credential,
+                                          UI_STATIC_LABEL(""), UI_STATIC_LABEL(""), UI_STATIC_LABEL(""),
+                                          UI_STATIC_LABEL("DRep script hash"),
+                                          UI_STATIC_LABEL("drep"));
             break;
         case EXT_VOTER_STAKE_POOL_KEY_PATH:
-            status = addCredentialUIPairs((const ext_credential_t*) voter,
-                                          "Stake pool key",
-                                          "", "", "", "");
+            voter_credential.type = EXT_CREDENTIAL_KEY_PATH;
+            voter_credential.keyPath = voter->keyPath;
+            status = addCredentialUIPairs(&voter_credential,
+                                          UI_STATIC_LABEL("Stake pool key"),
+                                          UI_STATIC_LABEL(""), UI_STATIC_LABEL(""), UI_STATIC_LABEL(""), UI_STATIC_LABEL(""));
             break;
         case EXT_VOTER_STAKE_POOL_KEY_HASH:
-            status = addCredentialUIPairs((const ext_credential_t*) voter,
-                                          "",
-                                          "Stake pool key hash",
-                                          "pool",
-                                          "", "");
+            voter_credential.type = EXT_CREDENTIAL_KEY_HASH;
+            memcpy(voter_credential.keyHash, voter->keyHash, sizeof(voter_credential.keyHash));
+            status = addCredentialUIPairs(&voter_credential,
+                                          UI_STATIC_LABEL(""),
+                                          UI_STATIC_LABEL("Stake pool key hash"),
+                                          UI_STATIC_LABEL("pool"),
+                                          UI_STATIC_LABEL(""), UI_STATIC_LABEL(""));
             break;
         default:
             status = SWO_TX_PARSING_FAIL;
@@ -198,6 +218,7 @@ int addDRepUIPairs(const ext_drep_t *drep, const char *label) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
             if (!format_bip44_path(&drep->keyPath, tmp, MAX_BIP44_PATH_STRING_LENGTH + 1)) {
+                app_mem_free(tmp);
                 return SWO_TX_PARSING_FAIL;
             }
             break;
@@ -212,6 +233,7 @@ int addDRepUIPairs(const ext_drep_t *drep, const char *label) {
                               ADDRESS_KEY_HASH_LENGTH,
                               tmp,
                               MAX_BECH32_STRING_LENGTH + 1)) {
+                app_mem_free(tmp);
                 return SWO_TX_PARSING_FAIL;
             }
             break;
@@ -226,6 +248,7 @@ int addDRepUIPairs(const ext_drep_t *drep, const char *label) {
                               SCRIPT_HASH_LENGTH,
                               tmp,
                               MAX_BECH32_STRING_LENGTH + 1)) {
+                app_mem_free(tmp);
                 return SWO_TX_PARSING_FAIL;
             }
             break;
@@ -340,6 +363,7 @@ int addAnchorUIPairs(const anchor_t *anchor) {
                       ANCHOR_HASH_LENGTH,
                       anchor_hash_tmp,
                       MAX_BECH32_STRING_LENGTH + 1)) {
+        app_mem_free(anchor_hash_tmp);
         return SWO_TX_PARSING_FAIL;
     }
     status = ui_add_pair_or_fail("Anchor hash", anchor_hash_tmp);
@@ -379,6 +403,7 @@ int addPoolKeyHashUIPairs(const uint8_t *poolKeyHash, const char *label) {
                       POOL_KEY_HASH_LENGTH,
                       pool_tmp,
                       MAX_BECH32_STRING_LENGTH + 1)) {
+        app_mem_free(pool_tmp);
         return SWO_TX_PARSING_FAIL;
     }
     return ui_add_pair_or_fail(label, pool_tmp);
@@ -409,7 +434,10 @@ int addRewardAccountUIPairs(uint8_t networkId, const ext_credential_t *credentia
                 "%s %s",
                 path_buf,
                 reward_addr_buf);
-        if (written < 0 || (size_t)written >= MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 2) return SWO_INSUFFICIENT_MEMORY;
+        if (written < 0 || (size_t)written >= MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 2) {
+            app_mem_free(value_tmp);
+            return SWO_INSUFFICIENT_MEMORY;
+        }
     } else {
         value_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH + 1);
         if (value_tmp == NULL) {
