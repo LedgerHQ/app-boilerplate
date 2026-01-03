@@ -11,7 +11,7 @@
 #define ASSET_FINGERPRINT_DATA_LENGTH 20        // blake2b-160
 #define ASSET_FINGERPRINT_BASE32_LENGTH 32      // ceil(8/5 * 20)
 #define MAX_TOKEN_FINGERPRINT_STRING_LENGTH \
-    (ASSET_FINGERPRINT_HRP_LENGTH + 1 + 6 + ASSET_FINGERPRINT_BASE32_LENGTH)
+    (ASSET_FINGERPRINT_HRP_LENGTH + 1 + 6 + ASSET_FINGERPRINT_BASE32_LENGTH + 1)
 #define MAX_TOKEN_AMOUNT_OUTPUT_STRING_LENGTH 70  // TODO: confirm length rationale vs token registry tickers
 #define MAX_MINT_AMOUNT_STRING_LENGTH 71        // 70 + 1 for leading sign; TODO: confirm length rationale
 #define MAX_WARNING_MESSAGE_LENGTH 128       // For warning/error message text

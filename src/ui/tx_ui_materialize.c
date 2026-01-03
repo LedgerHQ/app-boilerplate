@@ -143,81 +143,33 @@ static int ui_materialize_token_groups(asset_group_t* assetGroups,
     return SWO_SUCCESS;
 }
 
-static int ui_materialize_strings(void) {
-    LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_HASHED, "String materialization invoked too early");
-    transaction_t *tx = &G_context.tx_info.transaction;
-    int status;
-
-    TRACE("UI materialization starting");
-
-    uint16_t output_num = 1;
-    s_flist_node *output_node = tx->outputs;
-    TRACE("Materializing %u outputs", tx->num_outputs);
-    security_policy_t collateral_input_policy = policyForSignTxCollateralInput(
-        tx->txSigningMode,
-        tx->includeTotalCollateral);
-    if (tx->num_collateral_inputs > 0 && collateral_input_policy == POLICY_SHOW) {
-        s_flist_node *collateral_input_node = tx->collateral_inputs;
-        while (collateral_input_node != NULL) {
-            tx_collateral_input_list_item_t *input_item =
-                (tx_collateral_input_list_item_t *) collateral_input_node;
-
-            char *input_tmp = ui_alloc_temp(MAX_INPUT_DISPLAY_STRING_LENGTH + 1);
-            if (input_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
-            status = format_input_with_index(input_tmp, MAX_INPUT_DISPLAY_STRING_LENGTH + 1, &input_item->input_data);
-            if (status != SWO_SUCCESS) return status;
-            status = ui_add_pair_or_fail("Coll input", input_tmp);
-            if (status != SWO_SUCCESS) return status;
-
-            collateral_input_node = collateral_input_node->next;
-        }
-    }
-    if (tx->num_required_signers > 0) {
-        s_flist_node *req_signer_node = tx->required_signers;
-        while (req_signer_node != NULL) {
-            tx_required_signer_list_item_t *item = (tx_required_signer_list_item_t *) req_signer_node;
-
-            security_policy_t policy = policyForSignTxRequiredSigner(tx->txSigningMode, &item->required_signer_data);
-            LEDGER_ASSERT(policy != POLICY_DENY, "Required signer denied during UI");
-
-            if (policy == POLICY_SHOW) {
-                char *value_tmp = ui_alloc_temp(MAX_BECH32_STRING_LENGTH + 1);
-                if (value_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
-
-                if (item->required_signer_data.type == REQUIRED_SIGNER_WITH_HASH) {
-                     if (!format_bech32("vkh", item->required_signer_data.keyHash, ADDRESS_KEY_HASH_LENGTH, value_tmp, MAX_BECH32_STRING_LENGTH + 1)) {
-                         app_mem_free(value_tmp);
-                         return SWO_TX_PARSING_FAIL;
-                     }
-                } else {
-                     if (!format_bip44_path(&item->required_signer_data.keyPath, value_tmp, MAX_BIP44_PATH_STRING_LENGTH + 1)) {
-                         app_mem_free(value_tmp);
-                         return SWO_TX_PARSING_FAIL;
-                     }
-                }
-
-                status = ui_add_pair_or_fail("Required signer", value_tmp);
-                if (status != SWO_SUCCESS) return status;
-            }
-            req_signer_node = req_signer_node->next;
-        }
-    }
+static int ui_strings_inputs(transaction_t *tx) {
     security_policy_t input_policy = policyForSignTxInput(tx->txSigningMode);
-    if (input_policy == POLICY_SHOW) {
-        s_flist_node *input_node = tx->inputs;
-        while (input_node != NULL) {
-            tx_input_list_item_t *input_item = (tx_input_list_item_t *) input_node;
+    s_flist_node *input_node = tx->inputs;
+    while (input_node != NULL) {
+        tx_input_list_item_t *input_item = (tx_input_list_item_t *) input_node;
+        s_flist_node *next = input_node->next;
 
+        if (input_policy == POLICY_SHOW) {
             char *input_tmp = ui_alloc_temp(MAX_INPUT_DISPLAY_STRING_LENGTH + 1);
             if (input_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
-            status = format_input_with_index(input_tmp, MAX_INPUT_DISPLAY_STRING_LENGTH + 1, &input_item->input_data);
+            int status = format_input_with_index(input_tmp, MAX_INPUT_DISPLAY_STRING_LENGTH + 1, &input_item->input_data);
             if (status != SWO_SUCCESS) return status;
             status = ui_add_pair_or_fail("Input", input_tmp);
             if (status != SWO_SUCCESS) return status;
-
-            input_node = input_node->next;
         }
+
+        app_mem_free(input_item);
+        input_node = next;
     }
+    tx->inputs = NULL;
+    return SWO_SUCCESS;
+}
+
+static int ui_strings_outputs(transaction_t *tx) {
+    uint16_t output_num = 1;
+    s_flist_node *output_node = tx->outputs;
+    TRACE("Materializing %u outputs", tx->num_outputs);
     while (output_node != NULL) {
         tx_output_list_item_t *output_item = (tx_output_list_item_t *) output_node;
         s_flist_node *next = output_node->next;
@@ -269,7 +221,7 @@ static int ui_materialize_strings(void) {
                     return SWO_INSUFFICIENT_MEMORY;
                 }
                 snprintf(output_num_tmp, MAX_UINT64_STRING_LENGTH + 1, "#%d", output_num);
-                status = ui_add_pair_or_fail("Output", output_num_tmp);
+                int status = ui_add_pair_or_fail("Output", output_num_tmp);
                 if (status != SWO_SUCCESS) {
                     return status;
                 }
@@ -342,7 +294,7 @@ static int ui_materialize_strings(void) {
                         uint16_t inline_size = output_item->output_data.datum.inline_data.size;
                         int written = snprintf(datum_value_tmp, MAX_DATUM_HASH_STRING_LENGTH + 1, "Inline datum (%u bytes)", inline_size);
                         if (written < 0 || (size_t)written >= MAX_DATUM_HASH_STRING_LENGTH + 1) return SWO_INSUFFICIENT_MEMORY;
-                        
+
                         status = ui_add_pair_or_fail("Inline datum", datum_value_tmp);
                     }
                     if (status != SWO_SUCCESS) {
@@ -386,10 +338,16 @@ static int ui_materialize_strings(void) {
 
         if (output_item->output_data.assetGroups != NULL) {
             for (uint16_t ag = 0; ag < output_item->output_data.numAssetGroups; ag++) {
-                // Token nodes are already freed during UI materialization
-                // Only free the asset group array itself
+                s_flist_node *token_node = output_item->output_data.assetGroups[ag].tokens;
+                while (token_node != NULL) {
+                    s_flist_node *token_next = token_node->next;
+                    app_mem_free(token_node);
+                    token_node = token_next;
+                }
+                output_item->output_data.assetGroups[ag].tokens = NULL;
             }
             app_mem_free(output_item->output_data.assetGroups);
+            output_item->output_data.assetGroups = NULL;
         }
         // Note: inline datum and reference script data are pointers into the raw_tx buffer,
         // not separately allocated, so they do not need to be freed
@@ -398,321 +356,57 @@ static int ui_materialize_strings(void) {
     }
     tx->outputs = NULL;
 
-    if (tx->includeCollateralOutput) {
-        tx_output_description_t collateral_desc = {
-            .format = tx->collateral_output.format,
-            .amount = tx->collateral_output.adaAmount,
-            .numAssetGroups = tx->collateral_output.numAssetGroups,
-            .includeDatum = tx->collateral_output.datum.hasDatum,
-            .includeRefScript = tx->collateral_output.hasRefScript,
-        };
+    return SWO_SUCCESS;
+}
 
-        if (tx->collateral_output.destination.type == DESTINATION_THIRD_PARTY) {
-            collateral_desc.destination.type = DESTINATION_THIRD_PARTY;
-            collateral_desc.destination.address.buffer =
-                tx->collateral_output.destination.address.buffer;
-            collateral_desc.destination.address.size =
-                tx->collateral_output.destination.address.size;
-        } else {
-            collateral_desc.destination.type = DESTINATION_DEVICE_OWNED;
-            collateral_desc.destination.params =
-                &tx->collateral_output.destination.params;
-        }
-
-        security_policy_t collateral_policy =
-            (collateral_desc.destination.type == DESTINATION_THIRD_PARTY)
-                ? policyForSignTxCollateralOutputAddressBytes(
-                    &collateral_desc,
-                    tx->txSigningMode,
-                    tx->networkId,
-                    tx->protocolMagic)
-                : policyForSignTxCollateralOutputAddressParams(
-                    &collateral_desc,
-                    tx->txSigningMode,
-                    tx->networkId,
-                    tx->protocolMagic,
-                    tx->includeTotalCollateral);
-
-        LEDGER_ASSERT(collateral_policy != POLICY_DENY, "Collateral output denied during UI");
-
-        security_policy_t collateral_ada_policy =
-            policyForSignTxCollateralOutputAdaAmount(collateral_policy, tx->includeTotalCollateral);
-        security_policy_t collateral_tokens_policy =
-            policyForSignTxCollateralOutputTokens(collateral_policy, &collateral_desc);
-        security_policy_t collateral_confirm_policy =
-            policyForSignTxCollateralOutputConfirm(collateral_policy, collateral_desc.numAssetGroups);
-
-        bool show_collateral_tokens =
-            (collateral_policy == POLICY_SHOW) && (collateral_tokens_policy == POLICY_SHOW);
-
-        if (collateral_policy == POLICY_SHOW) {
-            char *collateral_label_tmp = ui_alloc_temp(MAX_COLLATERAL_STRING_LENGTH + 1);
-            if (collateral_label_tmp == NULL) {
-                return SWO_INSUFFICIENT_MEMORY;
-            }
-            strncpy(collateral_label_tmp, "return output", MAX_COLLATERAL_STRING_LENGTH + 1);
-            status = ui_add_pair_or_fail("Collateral", collateral_label_tmp);
-            if (status != SWO_SUCCESS) {
-                return status;
-            }
-
-            char *collateral_address_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH + 1);
-            if (collateral_address_tmp == NULL) {
-                return SWO_INSUFFICIENT_MEMORY;
-            }
-
-            bool collateral_address_formatted = false;
-            if (collateral_desc.destination.type == DESTINATION_THIRD_PARTY) {
-                collateral_address_formatted = format_address_human_readable(
-                    collateral_desc.destination.address.buffer,
-                    collateral_desc.destination.address.size,
-                    collateral_address_tmp,
-                    MAX_HUMAN_ADDRESS_LENGTH + 1);
-            } else {
-                uint8_t address_bytes[MAX_ADDRESS_LENGTH];
-                size_t derived_len = deriveAddress(
-                    collateral_desc.destination.params,
-                    address_bytes,
-                    sizeof(address_bytes));
-                if (derived_len > 0) {
-                    collateral_address_formatted = format_address_human_readable(
-                        address_bytes,
-                        derived_len,
-                        collateral_address_tmp,
-                        MAX_HUMAN_ADDRESS_LENGTH + 1);
-                }
-            }
-            LEDGER_ASSERT(collateral_address_formatted, "Collateral address formatting failed");
-            status = ui_add_pair_or_fail("Address", collateral_address_tmp);
-            if (status != SWO_SUCCESS) {
-                return status;
-            }
-
-            if (collateral_ada_policy == POLICY_SHOW) {
-                char *amount_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH + 1);
-                if (amount_tmp == NULL) {
-                    return SWO_INSUFFICIENT_MEMORY;
-                }
-                bool amount_formatted = str_formatAdaAmount(collateral_desc.amount,
-                                                            amount_tmp,
-                                                            MAX_ADA_AMOUNT_STRING_LENGTH + 1);
-                ASSERT(amount_formatted);
-                status = ui_add_pair_or_fail("Collateral amount", amount_tmp);
-                if (status != SWO_SUCCESS) {
-                    return status;
-                }
-            }
-
-            if (collateral_confirm_policy == POLICY_SHOW) {
-                warning_bits_set(&G_context.tx_info.warning_bits, WARNING_BIT_COLLATERAL_OUTPUT_WARNING);
-            }
-        }
-
-        status = ui_materialize_token_groups(
-            tx->collateral_output.assetGroups,
-            tx->collateral_output.numAssetGroups,
-            show_collateral_tokens);
-        if (status != SWO_SUCCESS) {
-            return status;
-        }
-
-        if (tx->collateral_output.assetGroups != NULL) {
-            app_mem_free(tx->collateral_output.assetGroups);
-            tx->collateral_output.assetGroups = NULL;
-        }
-    }
-
-    if (tx->includeTotalCollateral) {
-        security_policy_t policy = policyForSignTxTotalCollateral();
-        if (policy == POLICY_SHOW) {
-            char *amount_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH + 1);
-            if (amount_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
-            bool formatted = str_formatAdaAmount(tx->totalCollateral, amount_tmp, MAX_ADA_AMOUNT_STRING_LENGTH + 1);
-            ASSERT(formatted);
-            status = ui_add_pair_or_fail("Total collateral", amount_tmp);
-            if (status != SWO_SUCCESS) return status;
-        }
-    }
-
-    if (tx->num_reference_inputs > 0) {
-        security_policy_t reference_input_policy = policyForSignTxReferenceInput(tx->txSigningMode);
-        if (reference_input_policy == POLICY_SHOW) {
-            s_flist_node *reference_input_node = tx->reference_inputs;
-            while (reference_input_node != NULL) {
-                tx_input_list_item_t *input_item = (tx_input_list_item_t *) reference_input_node;
-                char *input_tmp = ui_alloc_temp(MAX_INPUT_DISPLAY_STRING_LENGTH + 1);
-                if (input_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
-                status = format_input_with_index(input_tmp, MAX_INPUT_DISPLAY_STRING_LENGTH + 1, &input_item->input_data);
-                if (status != SWO_SUCCESS) return status;
-                status = ui_add_pair_or_fail("Ref input", input_tmp);
-                if (status != SWO_SUCCESS) return status;
-
-                reference_input_node = reference_input_node->next;
-            }
-        }
-    }
-
-    if (tx->num_voters > 0) {
-        s_flist_node *voter_node = tx->voting_procedures;
-        uint16_t voter_idx = 0;
-        while (voter_node != NULL) {
-            voter_votes_list_item_t *voter_item = (voter_votes_list_item_t *) voter_node;
-
-            security_policy_t policy = policyForSignTxVotingProcedure(tx->txSigningMode, &voter_item->voter_votes_data.voter);
-            LEDGER_ASSERT(policy != POLICY_DENY, "Voting procedure denied during UI");
-
-            if (policy == POLICY_SHOW) {
-                // Display Voter
-                status = addVoterUIPairs(&voter_item->voter_votes_data.voter);
-                if (status != SWO_SUCCESS) return status;
-
-                // Iterate votes
-                s_flist_node *vote_node = voter_item->voter_votes_data.votes;
-                uint16_t vote_idx = 0;
-                while (vote_node != NULL) {
-                    vote_list_item_t *vote_item = (vote_list_item_t *) vote_node;
-
-                    // Gov Action Tx Hash
-                    char *gov_action_hash_tmp = ui_alloc_temp(MAX_TX_HASH_DISPLAY_LENGTH + 1);
-                    if (gov_action_hash_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
-                    
-                    int hex_status = bytes_to_lowercase_hex(gov_action_hash_tmp, MAX_TX_HASH_DISPLAY_LENGTH + 1, vote_item->vote_data.govActionId.txHash, TX_HASH_LENGTH);
-                    LEDGER_ASSERT(hex_status == 0, "Gov action hash hex formatting failed");
-                    
-                    status = ui_add_pair_or_fail("Gov action tx hash", gov_action_hash_tmp);
-                    if (status != SWO_SUCCESS) return status;
-
-                    // Gov Action Index
-                    char *gov_action_index_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH + 1);
-                    if (gov_action_index_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
-                    
-                    int index_len = snprintf(gov_action_index_tmp, MAX_UINT64_STRING_LENGTH + 1, "%u", vote_item->vote_data.govActionId.govActionIndex);
-                    LEDGER_ASSERT(index_len > 0 && (size_t)index_len < MAX_UINT64_STRING_LENGTH + 1, "Gov action index truncated");
-                    
-                    status = ui_add_pair_or_fail("Gov action index", gov_action_index_tmp);
-                    if (status != SWO_SUCCESS) return status;
-
-                    // Vote Option
-                    const char* vote_str;
-                    switch (vote_item->vote_data.voteOption) {
-                        case VOTE_NO: vote_str = "No"; break;
-                        case VOTE_YES: vote_str = "Yes"; break;
-                        case VOTE_ABSTAIN: vote_str = "Abstain"; break;
-                        default: vote_str = "Unknown"; break;
-                    }
-                    char *vote_str_tmp = ui_alloc_temp(MAX_VOTE_OPTION_LENGTH + 1);
-                    if (vote_str_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
-                    strncpy(vote_str_tmp, vote_str, MAX_VOTE_OPTION_LENGTH + 1);
-                    status = ui_add_pair_or_fail("Vote", vote_str_tmp);
-                    if (status != SWO_SUCCESS) return status;
-
-                    // Anchor
-                    status = addAnchorUIPairs(&vote_item->vote_data.anchor);
-                    if (status != SWO_SUCCESS) return status;
-
-                    vote_node = vote_node->next;
-                    vote_idx++;
-                }
-            }
-            voter_idx++;
-            voter_node = voter_node->next;
-        }
-    }
-
+static int ui_strings_fee(transaction_t *tx) {
     char *fee_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH + 1);
     if (fee_tmp == NULL) {
         return SWO_INSUFFICIENT_MEMORY;
     }
     bool fee_formatted = str_formatAdaAmount(tx->fee, fee_tmp, MAX_ADA_AMOUNT_STRING_LENGTH + 1);
     ASSERT(fee_formatted);
-    status = ui_add_pair_or_fail("Fee", fee_tmp);
+    int status = ui_add_pair_or_fail("Fee", fee_tmp);
     if (status != SWO_SUCCESS) {
         return status;
     }
+    return SWO_SUCCESS;
+}
 
-    if (tx->includeTreasury) {
-        security_policy_t policy = policyForSignTxTreasury(tx->txSigningMode, tx->treasury);
-        if (policy == POLICY_SHOW) {
-            char *tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH + 1);
-            if (tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
-            bool formatted = str_formatAdaAmount(tx->treasury, tmp, MAX_ADA_AMOUNT_STRING_LENGTH + 1);
-            ASSERT(formatted);
-            status = ui_add_pair_or_fail("Treasury", tmp);
-            if (status != SWO_SUCCESS) return status;
-        }
+static int ui_strings_ttl(transaction_t *tx) {
+    if (!tx->includeTtl) {
+        return SWO_SUCCESS;
     }
-
-    if (tx->includeDonation) {
-        security_policy_t policy = policyForSignTxDonation(tx->txSigningMode, tx->donation);
-        if (policy == POLICY_SHOW) {
-            char *tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH + 1);
-            if (tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
-            bool formatted = str_formatAdaAmount(tx->donation, tmp, MAX_ADA_AMOUNT_STRING_LENGTH + 1);
-            ASSERT(formatted);
-            status = ui_add_pair_or_fail("Donation", tmp);
-            if (status != SWO_SUCCESS) return status;
-        }
-    }
-
-    if (tx->includeTtl) {
-        security_policy_t ttl_policy = policyForSignTxTtl(tx->ttl);
-        LEDGER_ASSERT(ttl_policy != POLICY_DENY, "TTL denied during UI");
-        switch (ttl_policy) {
-            case POLICY_DENY:
-                // Already asserted above, this case should never be reached
-                break;
-            case POLICY_SHOW: {
-                char *ttl_tmp = ui_alloc_temp(MAX_VALIDITY_BOUNDARY_STRING_LENGTH + 1);
-                if (ttl_tmp == NULL) {
-                    return SWO_INSUFFICIENT_MEMORY;
-                }
-                bool ttl_formatted = str_formatValidityBoundary(tx->ttl,
-                                                                tx->networkId,
-                                                                tx->protocolMagic,
-                                                                ttl_tmp,
-                                                                MAX_VALIDITY_BOUNDARY_STRING_LENGTH + 1);
-                ASSERT(ttl_formatted);
-                status = ui_add_pair_or_fail("TTL", ttl_tmp);
-                if (status != SWO_SUCCESS) {
-                    return status;
-                }
-                break;
+    security_policy_t ttl_policy = policyForSignTxTtl(tx->ttl);
+    LEDGER_ASSERT(ttl_policy != POLICY_DENY, "TTL denied during UI");
+    switch (ttl_policy) {
+        case POLICY_DENY:
+            // Already asserted above, this case should never be reached
+            break;
+        case POLICY_SHOW: {
+            char *ttl_tmp = ui_alloc_temp(MAX_VALIDITY_BOUNDARY_STRING_LENGTH + 1);
+            if (ttl_tmp == NULL) {
+                return SWO_INSUFFICIENT_MEMORY;
             }
-            case POLICY_HIDE:
-                break;
-        }
-    }
-
-    if (tx->includeValidityIntervalStart) {
-        security_policy_t validity_interval_start_policy = policyForSignTxValidityIntervalStart();
-        LEDGER_ASSERT(validity_interval_start_policy != POLICY_DENY, "Validity interval start denied during UI");
-        switch (validity_interval_start_policy) {
-            case POLICY_DENY:
-                // Already asserted above, this case should never be reached
-                break;
-            case POLICY_SHOW: {
-                char *validity_interval_start_tmp = ui_alloc_temp(MAX_VALIDITY_BOUNDARY_STRING_LENGTH + 1);
-                if (validity_interval_start_tmp == NULL) {
-                    return SWO_INSUFFICIENT_MEMORY;
-                }
-                bool vis_formatted = str_formatValidityBoundary(tx->validityIntervalStart,
-                                                                tx->networkId,
-                                                                tx->protocolMagic,
-                                                                validity_interval_start_tmp,
-                                                                MAX_VALIDITY_BOUNDARY_STRING_LENGTH + 1);
-                ASSERT(vis_formatted);
-                status = ui_add_pair_or_fail("Validity interval start", validity_interval_start_tmp);
-                if (status != SWO_SUCCESS) {
-                    return status;
-                }
-                break;
+            bool ttl_formatted = str_formatValidityBoundary(tx->ttl,
+                                                            tx->networkId,
+                                                            tx->protocolMagic,
+                                                            ttl_tmp,
+                                                            MAX_VALIDITY_BOUNDARY_STRING_LENGTH + 1);
+            ASSERT(ttl_formatted);
+            int status = ui_add_pair_or_fail("TTL", ttl_tmp);
+            if (status != SWO_SUCCESS) {
+                return status;
             }
-            case POLICY_HIDE:
-                break;
+            break;
         }
+        case POLICY_HIDE:
+            break;
     }
+    return SWO_SUCCESS;
+}
 
-    // Display certificates
+static int ui_strings_certificates(transaction_t *tx) {
     uint16_t certificate_num = 1;
     s_flist_node *certificate_node = tx->certificates;
     TRACE("Materializing %u certificates", tx->num_certificates);
@@ -806,7 +500,7 @@ static int ui_materialize_strings(void) {
                     return SWO_INSUFFICIENT_MEMORY;
                 }
                 snprintf(cert_num_tmp, MAX_UINT64_STRING_LENGTH + 1, "#%d", certificate_num);
-                status = ui_add_pair_or_fail("Certificate", cert_num_tmp);
+                int status = ui_add_pair_or_fail("Certificate", cert_num_tmp);
                 if (status != SWO_SUCCESS) {
                     return status;
                 }
@@ -1489,6 +1183,10 @@ static int ui_materialize_strings(void) {
     }
     tx->certificates = NULL;
 
+    return SWO_SUCCESS;
+}
+
+static int ui_strings_withdrawals(transaction_t *tx) {
     uint16_t withdrawal_num = 1;
     s_flist_node *withdrawal_node = tx->withdrawals;
     TRACE("Materializing %u withdrawals", tx->num_withdrawals);
@@ -1511,36 +1209,36 @@ static int ui_materialize_strings(void) {
             case POLICY_SHOW: {
                 TRACE("Materializing withdrawal #%u", withdrawal_num);
                 char *withdrawal_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH + 1);
-            if (withdrawal_num_tmp == NULL) {
-                return SWO_INSUFFICIENT_MEMORY;
-            }
-            snprintf(withdrawal_num_tmp, MAX_UINT64_STRING_LENGTH + 1, "#%d", withdrawal_num);
-            status = ui_add_pair_or_fail("Withdrawal", withdrawal_num_tmp);
-            if (status != SWO_SUCCESS) {
-                return status;
-            }
+                if (withdrawal_num_tmp == NULL) {
+                    return SWO_INSUFFICIENT_MEMORY;
+                }
+                snprintf(withdrawal_num_tmp, MAX_UINT64_STRING_LENGTH + 1, "#%d", withdrawal_num);
+                int status = ui_add_pair_or_fail("Withdrawal", withdrawal_num_tmp);
+                if (status != SWO_SUCCESS) {
+                    return status;
+                }
 
-            char *withdrawal_amount_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH + 1);
-            if (withdrawal_amount_tmp == NULL) {
-                return SWO_INSUFFICIENT_MEMORY;
-            }
-            bool withdrawal_amount_formatted =
-                str_formatAdaAmount(withdrawal_item->withdrawal_data.amount,
-                                    withdrawal_amount_tmp,
-                                    MAX_ADA_AMOUNT_STRING_LENGTH + 1);
-            ASSERT(withdrawal_amount_formatted);
-            status = ui_add_pair_or_fail("Amount", withdrawal_amount_tmp);
-            if (status != SWO_SUCCESS) {
-                return status;
-            }
+                char *withdrawal_amount_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH + 1);
+                if (withdrawal_amount_tmp == NULL) {
+                    return SWO_INSUFFICIENT_MEMORY;
+                }
+                bool withdrawal_amount_formatted =
+                    str_formatAdaAmount(withdrawal_item->withdrawal_data.amount,
+                                        withdrawal_amount_tmp,
+                                        MAX_ADA_AMOUNT_STRING_LENGTH + 1);
+                ASSERT(withdrawal_amount_formatted);
+                status = ui_add_pair_or_fail("Amount", withdrawal_amount_tmp);
+                if (status != SWO_SUCCESS) {
+                    return status;
+                }
 
-            status = addRewardAccountUIPairs(
-                G_context.tx_info.transaction.networkId,
-                &withdrawal_item->withdrawal_data.stakeCredential
-            );
-            if (status != SWO_SUCCESS) {
-                return status;
-            }
+                status = addRewardAccountUIPairs(
+                    G_context.tx_info.transaction.networkId,
+                    &withdrawal_item->withdrawal_data.stakeCredential
+                );
+                if (status != SWO_SUCCESS) {
+                    return status;
+                }
 
                 withdrawal_num++;
             }
@@ -1554,6 +1252,10 @@ static int ui_materialize_strings(void) {
     }
     tx->withdrawals = NULL;
 
+    return SWO_SUCCESS;
+}
+
+static int ui_strings_aux_data_hash(transaction_t *tx) {
     if (tx->includeAuxDataHash) {
         security_policy_t policy = policyForSignTxAuxData(tx->auxDataType);
         LEDGER_ASSERT(policy != POLICY_DENY, "Aux data denied during UI");
@@ -1562,11 +1264,47 @@ static int ui_materialize_strings(void) {
             if (hash_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
             int hex_status = bytes_to_lowercase_hex(hash_tmp, MAX_TX_HASH_DISPLAY_LENGTH + 1, tx->auxDataHash, AUX_DATA_HASH_LENGTH);
             LEDGER_ASSERT(hex_status == 0, "Aux data hash hex formatting failed");
-            status = ui_add_pair_or_fail("Auxiliary data hash", hash_tmp);
+            int status = ui_add_pair_or_fail("Auxiliary data hash", hash_tmp);
             if (status != SWO_SUCCESS) return status;
         }
     }
+    return SWO_SUCCESS;
+}
 
+static int ui_strings_validity_interval_start(transaction_t *tx) {
+    if (!tx->includeValidityIntervalStart) {
+        return SWO_SUCCESS;
+    }
+    security_policy_t validity_interval_start_policy = policyForSignTxValidityIntervalStart();
+    LEDGER_ASSERT(validity_interval_start_policy != POLICY_DENY, "Validity interval start denied during UI");
+    switch (validity_interval_start_policy) {
+        case POLICY_DENY:
+            // Already asserted above, this case should never be reached
+            break;
+        case POLICY_SHOW: {
+            char *validity_interval_start_tmp = ui_alloc_temp(MAX_VALIDITY_BOUNDARY_STRING_LENGTH + 1);
+            if (validity_interval_start_tmp == NULL) {
+                return SWO_INSUFFICIENT_MEMORY;
+            }
+            bool vis_formatted = str_formatValidityBoundary(tx->validityIntervalStart,
+                                                            tx->networkId,
+                                                            tx->protocolMagic,
+                                                            validity_interval_start_tmp,
+                                                            MAX_VALIDITY_BOUNDARY_STRING_LENGTH + 1);
+            ASSERT(vis_formatted);
+            int status = ui_add_pair_or_fail("Validity interval start", validity_interval_start_tmp);
+            if (status != SWO_SUCCESS) {
+                return status;
+            }
+            break;
+        }
+        case POLICY_HIDE:
+            break;
+    }
+    return SWO_SUCCESS;
+}
+
+static int ui_strings_mint(transaction_t *tx) {
     if (tx->num_mint_asset_groups > 0) {
         security_policy_t mint_policy = policyForSignTxMintInit(tx->txSigningMode);
         LEDGER_ASSERT(mint_policy != POLICY_DENY, "Mint denied during UI");
@@ -1580,7 +1318,7 @@ static int ui_materialize_strings(void) {
                      "%u asset group%s",
                      tx->num_mint_asset_groups,
                      (tx->num_mint_asset_groups == 1) ? "" : "s");
-            status = ui_add_pair_or_fail("Mint", summary_tmp);
+            int status = ui_add_pair_or_fail("Mint", summary_tmp);
             if (status != SWO_SUCCESS) {
                 return status;
             }
@@ -1590,6 +1328,7 @@ static int ui_materialize_strings(void) {
             while (mint_node != NULL) {
                 mint_asset_group_list_item_t *item =
                     (mint_asset_group_list_item_t *) mint_node;
+                s_flist_node *mint_next = mint_node->next;
                 memcpy(tokenGroup.policyId,
                        item->asset_group.policyId,
                        sizeof(tokenGroup.policyId));
@@ -1645,11 +1384,34 @@ static int ui_materialize_strings(void) {
                 }
                 item->asset_group.tokens = NULL;
 
-                mint_node = mint_node->next;
+                app_mem_free(item);
+                mint_node = mint_next;
             }
+            tx->mint_asset_groups = NULL;
         }
     }
+    if (tx->num_mint_asset_groups > 0 && tx->mint_asset_groups != NULL) {
+        s_flist_node *mint_node = tx->mint_asset_groups;
+        while (mint_node != NULL) {
+            mint_asset_group_list_item_t *item =
+                (mint_asset_group_list_item_t *) mint_node;
+            s_flist_node *mint_next = mint_node->next;
+            s_flist_node *token_node = item->asset_group.tokens;
+            while (token_node != NULL) {
+                s_flist_node *token_next = token_node->next;
+                app_mem_free(token_node);
+                token_node = token_next;
+            }
+            item->asset_group.tokens = NULL;
+            app_mem_free(item);
+            mint_node = mint_next;
+        }
+        tx->mint_asset_groups = NULL;
+    }
+    return SWO_SUCCESS;
+}
 
+static int ui_strings_script_data_hash(transaction_t *tx) {
     if (tx->includeScriptDataHash) {
         security_policy_t policy = policyForSignTxScriptDataHash(tx->txSigningMode);
         LEDGER_ASSERT(policy != POLICY_DENY, "Script data hash denied during UI");
@@ -1658,11 +1420,368 @@ static int ui_materialize_strings(void) {
             if (hash_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
             int hex_status = bytes_to_lowercase_hex(hash_tmp, MAX_TX_HASH_DISPLAY_LENGTH + 1, tx->scriptDataHash, SCRIPT_DATA_HASH_LENGTH);
             LEDGER_ASSERT(hex_status == 0, "Script data hash hex formatting failed");
-            status = ui_add_pair_or_fail("Script data hash", hash_tmp);
+            int status = ui_add_pair_or_fail("Script data hash", hash_tmp);
             if (status != SWO_SUCCESS) return status;
         }
     }
+    return SWO_SUCCESS;
+}
 
+static int ui_strings_collateral_inputs(transaction_t *tx) {
+    security_policy_t collateral_input_policy = policyForSignTxCollateralInput(
+        tx->txSigningMode,
+        tx->includeTotalCollateral);
+    if (tx->num_collateral_inputs > 0 && collateral_input_policy == POLICY_SHOW) {
+        s_flist_node *collateral_input_node = tx->collateral_inputs;
+        while (collateral_input_node != NULL) {
+            tx_collateral_input_list_item_t *input_item =
+                (tx_collateral_input_list_item_t *) collateral_input_node;
+            s_flist_node *next = collateral_input_node->next;
+
+            char *input_tmp = ui_alloc_temp(MAX_INPUT_DISPLAY_STRING_LENGTH + 1);
+            if (input_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
+            int status = format_input_with_index(input_tmp, MAX_INPUT_DISPLAY_STRING_LENGTH + 1, &input_item->input_data);
+            if (status != SWO_SUCCESS) return status;
+            status = ui_add_pair_or_fail("Coll input", input_tmp);
+            if (status != SWO_SUCCESS) return status;
+
+            app_mem_free(input_item);
+            collateral_input_node = next;
+        }
+        tx->collateral_inputs = NULL;
+        return SWO_SUCCESS;
+    }
+    s_flist_node *collateral_input_node = tx->collateral_inputs;
+    while (collateral_input_node != NULL) {
+        s_flist_node *next = collateral_input_node->next;
+        app_mem_free(collateral_input_node);
+        collateral_input_node = next;
+    }
+    tx->collateral_inputs = NULL;
+    return SWO_SUCCESS;
+}
+
+static int ui_strings_required_signers(transaction_t *tx) {
+    if (tx->num_required_signers > 0) {
+        s_flist_node *req_signer_node = tx->required_signers;
+        while (req_signer_node != NULL) {
+            tx_required_signer_list_item_t *item = (tx_required_signer_list_item_t *) req_signer_node;
+            s_flist_node *next = req_signer_node->next;
+
+            security_policy_t policy = policyForSignTxRequiredSigner(tx->txSigningMode, &item->required_signer_data);
+            LEDGER_ASSERT(policy != POLICY_DENY, "Required signer denied during UI");
+
+            if (policy == POLICY_SHOW) {
+                char *value_tmp = ui_alloc_temp(MAX_BECH32_STRING_LENGTH + 1);
+                if (value_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
+
+                if (item->required_signer_data.type == REQUIRED_SIGNER_WITH_HASH) {
+                     if (!format_bech32("vkh", item->required_signer_data.keyHash, ADDRESS_KEY_HASH_LENGTH, value_tmp, MAX_BECH32_STRING_LENGTH + 1)) {
+                         app_mem_free(value_tmp);
+                         return SWO_TX_PARSING_FAIL;
+                     }
+                } else {
+                     if (!format_bip44_path(&item->required_signer_data.keyPath, value_tmp, MAX_BIP44_PATH_STRING_LENGTH + 1)) {
+                         app_mem_free(value_tmp);
+                         return SWO_TX_PARSING_FAIL;
+                     }
+                }
+
+                int status = ui_add_pair_or_fail("Required signer", value_tmp);
+                if (status != SWO_SUCCESS) return status;
+            }
+            app_mem_free(item);
+            req_signer_node = next;
+        }
+    }
+    tx->required_signers = NULL;
+    return SWO_SUCCESS;
+}
+
+static int ui_strings_collateral_output(transaction_t *tx) {
+    if (!tx->includeCollateralOutput) {
+        return SWO_SUCCESS;
+    }
+    tx_output_description_t collateral_desc = {
+        .format = tx->collateral_output.format,
+        .amount = tx->collateral_output.adaAmount,
+        .numAssetGroups = tx->collateral_output.numAssetGroups,
+        .includeDatum = tx->collateral_output.datum.hasDatum,
+        .includeRefScript = tx->collateral_output.hasRefScript,
+    };
+
+    if (tx->collateral_output.destination.type == DESTINATION_THIRD_PARTY) {
+        collateral_desc.destination.type = DESTINATION_THIRD_PARTY;
+        collateral_desc.destination.address.buffer =
+            tx->collateral_output.destination.address.buffer;
+        collateral_desc.destination.address.size =
+            tx->collateral_output.destination.address.size;
+    } else {
+        collateral_desc.destination.type = DESTINATION_DEVICE_OWNED;
+        collateral_desc.destination.params =
+            &tx->collateral_output.destination.params;
+    }
+
+    security_policy_t collateral_policy =
+        (collateral_desc.destination.type == DESTINATION_THIRD_PARTY)
+            ? policyForSignTxCollateralOutputAddressBytes(
+                &collateral_desc,
+                tx->txSigningMode,
+                tx->networkId,
+                tx->protocolMagic)
+            : policyForSignTxCollateralOutputAddressParams(
+                &collateral_desc,
+                tx->txSigningMode,
+                tx->networkId,
+                tx->protocolMagic,
+                tx->includeTotalCollateral);
+
+    LEDGER_ASSERT(collateral_policy != POLICY_DENY, "Collateral output denied during UI");
+
+    security_policy_t collateral_ada_policy =
+        policyForSignTxCollateralOutputAdaAmount(collateral_policy, tx->includeTotalCollateral);
+    security_policy_t collateral_tokens_policy =
+        policyForSignTxCollateralOutputTokens(collateral_policy, &collateral_desc);
+    security_policy_t collateral_confirm_policy =
+        policyForSignTxCollateralOutputConfirm(collateral_policy, collateral_desc.numAssetGroups);
+
+    bool show_collateral_tokens =
+        (collateral_policy == POLICY_SHOW) && (collateral_tokens_policy == POLICY_SHOW);
+
+    if (collateral_policy == POLICY_SHOW) {
+        char *collateral_label_tmp = ui_alloc_temp(MAX_COLLATERAL_STRING_LENGTH + 1);
+        if (collateral_label_tmp == NULL) {
+            return SWO_INSUFFICIENT_MEMORY;
+        }
+        strncpy(collateral_label_tmp, "return output", MAX_COLLATERAL_STRING_LENGTH + 1);
+        int status = ui_add_pair_or_fail("Collateral", collateral_label_tmp);
+        if (status != SWO_SUCCESS) {
+            return status;
+        }
+
+        char *collateral_address_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH + 1);
+        if (collateral_address_tmp == NULL) {
+            return SWO_INSUFFICIENT_MEMORY;
+        }
+
+        bool collateral_address_formatted = false;
+        if (collateral_desc.destination.type == DESTINATION_THIRD_PARTY) {
+            collateral_address_formatted = format_address_human_readable(
+                collateral_desc.destination.address.buffer,
+                collateral_desc.destination.address.size,
+                collateral_address_tmp,
+                MAX_HUMAN_ADDRESS_LENGTH + 1);
+        } else {
+            uint8_t address_bytes[MAX_ADDRESS_LENGTH];
+            size_t derived_len = deriveAddress(
+                collateral_desc.destination.params,
+                address_bytes,
+                sizeof(address_bytes));
+            if (derived_len > 0) {
+                collateral_address_formatted = format_address_human_readable(
+                    address_bytes,
+                    derived_len,
+                    collateral_address_tmp,
+                    MAX_HUMAN_ADDRESS_LENGTH + 1);
+            }
+        }
+        LEDGER_ASSERT(collateral_address_formatted, "Collateral address formatting failed");
+        status = ui_add_pair_or_fail("Address", collateral_address_tmp);
+        if (status != SWO_SUCCESS) {
+            return status;
+        }
+
+        if (collateral_ada_policy == POLICY_SHOW) {
+            char *amount_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH + 1);
+            if (amount_tmp == NULL) {
+                return SWO_INSUFFICIENT_MEMORY;
+            }
+            bool amount_formatted = str_formatAdaAmount(collateral_desc.amount,
+                                                        amount_tmp,
+                                                        MAX_ADA_AMOUNT_STRING_LENGTH + 1);
+            ASSERT(amount_formatted);
+            status = ui_add_pair_or_fail("Collateral amount", amount_tmp);
+            if (status != SWO_SUCCESS) {
+                return status;
+            }
+        }
+
+        if (collateral_confirm_policy == POLICY_SHOW) {
+            warning_bits_set(&G_context.tx_info.warning_bits, WARNING_BIT_COLLATERAL_OUTPUT_WARNING);
+        }
+    }
+
+    int status = ui_materialize_token_groups(
+        tx->collateral_output.assetGroups,
+        tx->collateral_output.numAssetGroups,
+        show_collateral_tokens);
+    if (status != SWO_SUCCESS) {
+        return status;
+    }
+
+    if (tx->collateral_output.assetGroups != NULL) {
+        for (uint16_t ag = 0; ag < tx->collateral_output.numAssetGroups; ag++) {
+            s_flist_node *token_node = tx->collateral_output.assetGroups[ag].tokens;
+            while (token_node != NULL) {
+                s_flist_node *token_next = token_node->next;
+                app_mem_free(token_node);
+                token_node = token_next;
+            }
+            tx->collateral_output.assetGroups[ag].tokens = NULL;
+        }
+        app_mem_free(tx->collateral_output.assetGroups);
+        tx->collateral_output.assetGroups = NULL;
+    }
+
+    return SWO_SUCCESS;
+}
+
+static int ui_strings_total_collateral(transaction_t *tx) {
+    if (!tx->includeTotalCollateral) {
+        return SWO_SUCCESS;
+    }
+    security_policy_t policy = policyForSignTxTotalCollateral();
+    if (policy == POLICY_SHOW) {
+        char *amount_tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH + 1);
+        if (amount_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
+        bool formatted = str_formatAdaAmount(tx->totalCollateral, amount_tmp, MAX_ADA_AMOUNT_STRING_LENGTH + 1);
+        ASSERT(formatted);
+        int status = ui_add_pair_or_fail("Total collateral", amount_tmp);
+        if (status != SWO_SUCCESS) return status;
+    }
+    return SWO_SUCCESS;
+}
+
+static int ui_strings_reference_inputs(transaction_t *tx) {
+    if (tx->num_reference_inputs > 0) {
+        security_policy_t reference_input_policy = policyForSignTxReferenceInput(tx->txSigningMode);
+        s_flist_node *reference_input_node = tx->reference_inputs;
+        while (reference_input_node != NULL) {
+            tx_input_list_item_t *input_item = (tx_input_list_item_t *) reference_input_node;
+            s_flist_node *next = reference_input_node->next;
+            if (reference_input_policy == POLICY_SHOW) {
+                char *input_tmp = ui_alloc_temp(MAX_INPUT_DISPLAY_STRING_LENGTH + 1);
+                if (input_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
+                int status = format_input_with_index(input_tmp, MAX_INPUT_DISPLAY_STRING_LENGTH + 1, &input_item->input_data);
+                if (status != SWO_SUCCESS) return status;
+                status = ui_add_pair_or_fail("Ref input", input_tmp);
+                if (status != SWO_SUCCESS) return status;
+            }
+            app_mem_free(input_item);
+            reference_input_node = next;
+        }
+    }
+    tx->reference_inputs = NULL;
+    return SWO_SUCCESS;
+}
+
+static int ui_strings_voting_procedures(transaction_t *tx) {
+    if (tx->num_voters > 0) {
+        s_flist_node *voter_node = tx->voting_procedures;
+        while (voter_node != NULL) {
+            voter_votes_list_item_t *voter_item = (voter_votes_list_item_t *) voter_node;
+            s_flist_node *voter_next = voter_node->next;
+
+            security_policy_t policy = policyForSignTxVotingProcedure(tx->txSigningMode, &voter_item->voter_votes_data.voter);
+            LEDGER_ASSERT(policy != POLICY_DENY, "Voting procedure denied during UI");
+
+            if (policy == POLICY_SHOW) {
+                // Display Voter
+                int status = addVoterUIPairs(&voter_item->voter_votes_data.voter);
+                if (status != SWO_SUCCESS) return status;
+
+                // Iterate votes
+                s_flist_node *vote_node = voter_item->voter_votes_data.votes;
+                while (vote_node != NULL) {
+                    vote_list_item_t *vote_item = (vote_list_item_t *) vote_node;
+
+                    // Gov Action Tx Hash
+                    char *gov_action_hash_tmp = ui_alloc_temp(MAX_TX_HASH_DISPLAY_LENGTH + 1);
+                    if (gov_action_hash_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
+
+                    int hex_status = bytes_to_lowercase_hex(gov_action_hash_tmp, MAX_TX_HASH_DISPLAY_LENGTH + 1, vote_item->vote_data.govActionId.txHash, TX_HASH_LENGTH);
+                    LEDGER_ASSERT(hex_status == 0, "Gov action hash hex formatting failed");
+
+                    status = ui_add_pair_or_fail("Gov action tx hash", gov_action_hash_tmp);
+                    if (status != SWO_SUCCESS) return status;
+
+                    // Gov Action Index
+                    char *gov_action_index_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH + 1);
+                    if (gov_action_index_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
+
+                    int index_len = snprintf(gov_action_index_tmp, MAX_UINT64_STRING_LENGTH + 1, "%u", vote_item->vote_data.govActionId.govActionIndex);
+                    LEDGER_ASSERT(index_len > 0 && (size_t)index_len < MAX_UINT64_STRING_LENGTH + 1, "Gov action index truncated");
+
+                    status = ui_add_pair_or_fail("Gov action index", gov_action_index_tmp);
+                    if (status != SWO_SUCCESS) return status;
+
+                    // Vote Option
+                    const char* vote_str;
+                    switch (vote_item->vote_data.voteOption) {
+                        case VOTE_NO: vote_str = "No"; break;
+                        case VOTE_YES: vote_str = "Yes"; break;
+                        case VOTE_ABSTAIN: vote_str = "Abstain"; break;
+                        default: vote_str = "Unknown"; break;
+                    }
+                    char *vote_str_tmp = ui_alloc_temp(MAX_VOTE_OPTION_LENGTH + 1);
+                    if (vote_str_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
+                    strncpy(vote_str_tmp, vote_str, MAX_VOTE_OPTION_LENGTH + 1);
+                    status = ui_add_pair_or_fail("Vote", vote_str_tmp);
+                    if (status != SWO_SUCCESS) return status;
+
+                    // Anchor
+                    status = addAnchorUIPairs(&vote_item->vote_data.anchor);
+                    if (status != SWO_SUCCESS) return status;
+
+                    vote_node = vote_node->next;
+                }
+            }
+            s_flist_node *vote_node = voter_item->voter_votes_data.votes;
+            while (vote_node != NULL) {
+                s_flist_node *vote_next = vote_node->next;
+                app_mem_free(vote_node);
+                vote_node = vote_next;
+            }
+            voter_item->voter_votes_data.votes = NULL;
+            app_mem_free(voter_item);
+            voter_node = voter_next;
+        }
+    }
+    tx->voting_procedures = NULL;
+    return SWO_SUCCESS;
+}
+
+static int ui_strings_treasury(transaction_t *tx) {
+    if (tx->includeTreasury) {
+        security_policy_t policy = policyForSignTxTreasury(tx->txSigningMode, tx->treasury);
+        if (policy == POLICY_SHOW) {
+            char *tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH + 1);
+            if (tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
+            bool formatted = str_formatAdaAmount(tx->treasury, tmp, MAX_ADA_AMOUNT_STRING_LENGTH + 1);
+            ASSERT(formatted);
+            int status = ui_add_pair_or_fail("Treasury", tmp);
+            if (status != SWO_SUCCESS) return status;
+        }
+    }
+    return SWO_SUCCESS;
+}
+
+static int ui_strings_donation(transaction_t *tx) {
+    if (tx->includeDonation) {
+        security_policy_t policy = policyForSignTxDonation(tx->txSigningMode, tx->donation);
+        if (policy == POLICY_SHOW) {
+            char *tmp = ui_alloc_temp(MAX_ADA_AMOUNT_STRING_LENGTH + 1);
+            if (tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
+            bool formatted = str_formatAdaAmount(tx->donation, tmp, MAX_ADA_AMOUNT_STRING_LENGTH + 1);
+            ASSERT(formatted);
+            int status = ui_add_pair_or_fail("Donation", tmp);
+            if (status != SWO_SUCCESS) return status;
+        }
+    }
+    return SWO_SUCCESS;
+}
+
+static int ui_strings_tx_hash(void) {
     if (G_context.tx_info.raw_tx != NULL) {
         app_mem_free(G_context.tx_info.raw_tx);
         G_context.tx_info.raw_tx = NULL;
@@ -1678,10 +1797,58 @@ static int ui_materialize_strings(void) {
                                             G_context.tx_info.tx_hash,
                                             sizeof(G_context.tx_info.tx_hash));
     LEDGER_ASSERT(hex_status == 0, "Tx hash hex formatting failed");
-    status = ui_add_pair_or_fail("Transaction hash", hash_tmp);
+    int status = ui_add_pair_or_fail("Transaction hash", hash_tmp);
     if (status != SWO_SUCCESS) {
         return status;
     }
+    return SWO_SUCCESS;
+}
+
+static int add_ui_strings_and_free_parsed_data(void) {
+    LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_HASHED, "String materialization invoked too early");
+    transaction_t *tx = &G_context.tx_info.transaction;
+    int status;
+
+    TRACE("UI materialization starting");
+
+    status = ui_strings_inputs(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_outputs(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_fee(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_ttl(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_certificates(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_withdrawals(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_aux_data_hash(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_validity_interval_start(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_mint(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_script_data_hash(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_collateral_inputs(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_required_signers(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_collateral_output(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_total_collateral(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_reference_inputs(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_voting_procedures(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_treasury(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_donation(tx);
+    if (status != SWO_SUCCESS) return status;
+    status = ui_strings_tx_hash();
+    if (status != SWO_SUCCESS) return status;
 
     TRACE("UI materialization complete");
     return SWO_SUCCESS;
@@ -1767,7 +1934,7 @@ static inline bool status_requires_streaming(int status) {
 }
 
 static int ui_build_pairs_and_warnings(void) {
-    int status = ui_materialize_strings();
+    int status = add_ui_strings_and_free_parsed_data();
     if (status != SWO_SUCCESS) {
         return status;
     }
