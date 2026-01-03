@@ -142,11 +142,8 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
         opcert_buffer_cleanup();
         return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
-    if (!format_u64(kesPeriodStr, MAX_UINT64_STRING_LENGTH, opcert->kesPeriod)) {
-        TRACE("Failed to format KES period");
-        opcert_buffer_cleanup();
-        return send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
-    }
+    bool format_ok = format_u64(kesPeriodStr, MAX_UINT64_STRING_LENGTH, opcert->kesPeriod);
+    LEDGER_ASSERT(format_ok, "Failed to format KES period");
 
     // Allocate and fill issue counter
     issueCounterStr = (char *) ui_mem_alloc(MAX_UINT64_STRING_LENGTH);
@@ -155,18 +152,14 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
         opcert_buffer_cleanup();
         return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
-    if (!format_u64(issueCounterStr, MAX_UINT64_STRING_LENGTH, opcert->issueCounter)) {
-        TRACE("Failed to format issue counter");
-        opcert_buffer_cleanup();
-        return send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
-    }
+    format_ok = format_u64(issueCounterStr, MAX_UINT64_STRING_LENGTH, opcert->issueCounter);
+    LEDGER_ASSERT(format_ok, "Failed to format issue counter");
 
     // Setup data to display
     if (!ui_pairs_init(5)) {
         TRACE("Failed to initialize pairs");
         opcert_buffer_cleanup();
-        return send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
-        // TODO not sure if this is sufficient or some other "ui_after_error" should be called
+        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
     g_pairs[0].item = "Pool cold key path";
     g_pairs[0].value = poolColdKeyPathStr;

@@ -78,7 +78,7 @@ int ui_display_witness(const bip44_path_t* witnessPath,
         TRACE("Failed to allocate witness path string");
         ui_cleanup_tracked_allocations();
         tx_context_cleanup();
-        return send_error_and_reset(SWO_DISPLAY_BIP32_PATH_FAIL);
+        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
 
     bool isUnusual = warning_bits_has(warnings, WARNING_BIT_UNUSUAL_KEY_DERIVATION_PATH);

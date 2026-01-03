@@ -1982,8 +1982,7 @@ int ui_prepare_transaction_review(void) {
         return send_error_and_reset(SWO_TX_PARSING_FAIL);
     }
     if (!ui_pairs_init((uint8_t) pair_count)) {
-        LEDGER_ASSERT(false, "Need streaming UI but not implemented (pair count %u)", (uint32_t) pair_count);
-        return SWO_DISPLAY_AMOUNT_FAIL;
+        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
 
     int status = ui_build_pairs_and_warnings();

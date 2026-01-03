@@ -25,3 +25,13 @@ typedef enum {
  *
  */
 opcert_parser_status_e parse_opcert(buffer_t *buf, parsed_opcert_t *opcert);
+
+/**
+ * Map opcert parser status to status word.
+ *
+ * @param[in] status
+ *   The opcert parser status from parse_opcert()
+ *
+ * @return SWO status word for transmission to host
+ */
+uint16_t opcert_map_parser_status_to_swo(opcert_parser_status_e status);

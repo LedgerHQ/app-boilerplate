@@ -21,6 +21,7 @@
 #include "utils/buffer_utils.h"
 #include "opcert_types.h"
 #include "assert.h"
+#include "cardano_swo.h"
 
 opcert_parser_status_e parse_opcert(buffer_t *buf, parsed_opcert_t *opcert)
 {
@@ -48,4 +49,25 @@ opcert_parser_status_e parse_opcert(buffer_t *buf, parsed_opcert_t *opcert)
     }
 
     return (buf->offset == buf->size) ? PARSING_OK : WRONG_LENGTH_ERROR;
+}
+
+uint16_t opcert_map_parser_status_to_swo(opcert_parser_status_e status)
+{
+    switch (status) {
+        case KES_PUBLIC_KEY_PARSING_ERROR:
+            return SWO_OPCERT_PARSING_FAIL_KES_KEY;
+        case KES_PERIOD_PARSING_ERROR:
+            return SWO_OPCERT_PARSING_FAIL_KES_PERIOD;
+        case ISSUE_COUNTER_PARSING_ERROR:
+            return SWO_OPCERT_PARSING_FAIL_ISSUE_COUNTER;
+        case POOL_COLD_KEY_PATH_PARSING_ERROR:
+            return SWO_OPCERT_PARSING_FAIL_POOL_KEY_PATH;
+        case WRONG_LENGTH_ERROR:
+            return SWO_INVALID_OPCERT_LENGTH;
+        case PARSING_OK:
+            return SWO_SUCCESS;
+        default:
+            TRACE("Unmapped opcert parser error: %d", status);
+            return SWO_INVALID_OPCERT_LENGTH;  // Generic fallback
+    }
 }
