@@ -251,10 +251,10 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
 
                 // Count pairs for output: output number, address, amount
                 plan->pair_count += 3;
-                if (datum_policy == POLICY_SHOW) {
+                if (datum_policy == POLICY_SHOW && output_item->output_data.datum.hasDatum) {
                     plan->pair_count++;
                 }
-                if (ref_script_policy == POLICY_SHOW) {
+                if (ref_script_policy == POLICY_SHOW && output_item->output_data.hasRefScript) {
                     plan->pair_count++;
                 }
 
