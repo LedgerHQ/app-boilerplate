@@ -9,6 +9,7 @@ extern nbgl_contentTagValueList_t *g_pairsList;
 
 bool ui_pairs_init(uint8_t nbPairs);
 void ui_pairs_cleanup(void);
+uint16_t ui_pairs_get_count(void);
 #ifdef __GNUC__
 #define UI_STATIC_LABEL(label) ((void)sizeof(char[__builtin_constant_p(label) ? 1 : -1]), (label))
 #else

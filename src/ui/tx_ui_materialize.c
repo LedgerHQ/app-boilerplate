@@ -531,9 +531,9 @@ static int ui_strings_certificates(transaction_t *tx) {
                             &certificate_item->certificate_data.stakeCredential,
                             UI_STATIC_LABEL("Stake key"),           // KEY_PATH label
                             UI_STATIC_LABEL("Stake key hash"),      // KEY_HASH label
-                            UI_STATIC_LABEL("stake_vkh"),           // KEY_HASH bech32 prefix
+                            "stake_vkh",                            // KEY_HASH bech32 prefix
                             UI_STATIC_LABEL("Stake script hash"),   // SCRIPT_HASH label
-                            UI_STATIC_LABEL("script")               // SCRIPT_HASH bech32 prefix
+                            "script"                                // SCRIPT_HASH bech32 prefix
                         );
                         if (status != SWO_SUCCESS) {
                             return status;
@@ -547,9 +547,9 @@ static int ui_strings_certificates(transaction_t *tx) {
                             &certificate_item->certificate_data.stakeCredential,
                             UI_STATIC_LABEL("Stake key"),           // KEY_PATH label
                             UI_STATIC_LABEL("Stake key hash"),      // KEY_HASH label
-                            UI_STATIC_LABEL("stake_vkh"),           // KEY_HASH bech32 prefix
+                            "stake_vkh",                            // KEY_HASH bech32 prefix
                             UI_STATIC_LABEL("Stake script hash"),   // SCRIPT_HASH label
-                            UI_STATIC_LABEL("script")               // SCRIPT_HASH bech32 prefix
+                            "script"                                // SCRIPT_HASH bech32 prefix
                         );
                         if (status != SWO_SUCCESS) {
                             return status;
@@ -573,9 +573,9 @@ static int ui_strings_certificates(transaction_t *tx) {
                             &certificate_item->certificate_data.stakeCredential,
                             UI_STATIC_LABEL("Stake key"),           // KEY_PATH label
                             UI_STATIC_LABEL("Stake key hash"),      // KEY_HASH label
-                            UI_STATIC_LABEL("stake_vkh"),           // KEY_HASH bech32 prefix
+                            "stake_vkh",                            // KEY_HASH bech32 prefix
                             UI_STATIC_LABEL("Stake script hash"),   // SCRIPT_HASH label
-                            UI_STATIC_LABEL("script")               // SCRIPT_HASH bech32 prefix
+                            "script"                                // SCRIPT_HASH bech32 prefix
                         );
                         if (status != SWO_SUCCESS) {
                             return status;
@@ -630,14 +630,14 @@ static int ui_strings_certificates(transaction_t *tx) {
                     }
 
                     case CERTIFICATE_VOTE_DELEGATION: {
-                        // Display stake credential
+                        // Display voter credential
                         status = addCredentialUIPairs(
                             &certificate_item->certificate_data.stakeCredential,
-                            UI_STATIC_LABEL("Stake key"),           // KEY_PATH label
-                            UI_STATIC_LABEL("Stake key hash"),      // KEY_HASH label
-                            UI_STATIC_LABEL("stake_vkh"),           // KEY_HASH bech32 prefix
-                            UI_STATIC_LABEL("Stake script hash"),   // SCRIPT_HASH label
-                            UI_STATIC_LABEL("script")               // SCRIPT_HASH bech32 prefix
+                            UI_STATIC_LABEL("Voter"),               // KEY_PATH label
+                            UI_STATIC_LABEL("Voter hash"),          // KEY_HASH label
+                            "stake_vkh",                            // KEY_HASH bech32 prefix
+                            UI_STATIC_LABEL("Voter script hash"),   // SCRIPT_HASH label
+                            "script"                                // SCRIPT_HASH bech32 prefix
                         );
                         if (status != SWO_SUCCESS) {
                             return status;
@@ -658,9 +658,9 @@ static int ui_strings_certificates(transaction_t *tx) {
                         status = addCredentialUIPairs(coldCred,
                                                   UI_STATIC_LABEL("Committee cold key"),
                                                   UI_STATIC_LABEL("Committee cold key hash"),
-                                                  UI_STATIC_LABEL("cc_cold"),
+                                                  "cc_cold",
                                                   UI_STATIC_LABEL("Committee cold script hash"),
-                                                  UI_STATIC_LABEL("cc_cold_script"));
+                                                  "cc_cold_script");
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -670,9 +670,9 @@ static int ui_strings_certificates(transaction_t *tx) {
                         status = addCredentialUIPairs(hotCred,
                                                   UI_STATIC_LABEL("Committee hot key"),
                                                   UI_STATIC_LABEL("Committee hot key hash"),
-                                                  UI_STATIC_LABEL("cc_hot"),
+                                                  "cc_hot",
                                                   UI_STATIC_LABEL("Committee hot script hash"),
-                                                  UI_STATIC_LABEL("cc_hot_script"));
+                                                  "cc_hot_script");
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -685,9 +685,9 @@ static int ui_strings_certificates(transaction_t *tx) {
                         status = addCredentialUIPairs(coldCred,
                                                   UI_STATIC_LABEL("Committee cold key"),
                                                   UI_STATIC_LABEL("Committee cold key hash"),
-                                                  UI_STATIC_LABEL("cc_cold"),
+                                                  "cc_cold",
                                                   UI_STATIC_LABEL("Committee cold script hash"),
-                                                  UI_STATIC_LABEL("cc_cold"));
+                                                  "cc_cold");
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -706,9 +706,9 @@ static int ui_strings_certificates(transaction_t *tx) {
                         status = addCredentialUIPairs(drepCred,
                                                   UI_STATIC_LABEL("DRep key"),
                                                   UI_STATIC_LABEL("DRep key hash"),
-                                                  UI_STATIC_LABEL("drep"),
+                                                  "drep",
                                                   UI_STATIC_LABEL("DRep script hash"),
-                                                  UI_STATIC_LABEL("drep"));
+                                                  "drep");
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -733,9 +733,9 @@ static int ui_strings_certificates(transaction_t *tx) {
                         status = addCredentialUIPairs(drepCred,
                                                   UI_STATIC_LABEL("DRep key"),
                                                   UI_STATIC_LABEL("DRep key hash"),
-                                                  UI_STATIC_LABEL("drep"),
+                                                  "drep",
                                                   UI_STATIC_LABEL("DRep script hash"),
-                                                  UI_STATIC_LABEL("drep"));
+                                                  "drep");
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -754,9 +754,9 @@ static int ui_strings_certificates(transaction_t *tx) {
                         status = addCredentialUIPairs(drepCred,
                                                   UI_STATIC_LABEL("DRep key"),
                                                   UI_STATIC_LABEL("DRep key hash"),
-                                                  UI_STATIC_LABEL("drep"),
+                                                  "drep",
                                                   UI_STATIC_LABEL("DRep script hash"),
-                                                  UI_STATIC_LABEL("drep"));
+                                                  "drep");
                         if (status != SWO_SUCCESS) {
                             return status;
                         }
@@ -1968,6 +1968,12 @@ int ui_prepare_transaction_review(void) {
         }
         return status;
     }
+
+    // Validate that the actual number of pairs materialized matches the planned count
+    LEDGER_ASSERT(ui_pairs_get_count() == pair_count,
+                  "UI pair count mismatch: planned %u but materialized %u",
+                  pair_count, ui_pairs_get_count());
+
     return SWO_SUCCESS;
 }
 

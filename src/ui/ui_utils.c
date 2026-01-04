@@ -77,6 +77,10 @@ void ui_pairs_cleanup(void) {
     g_next_pair_index = 0;
 }
 
+uint16_t ui_pairs_get_count(void) {
+    return g_next_pair_index;
+}
+
 bool ui_pairs_add_static_label(const char* label, char* tmp_buf) {
     LEDGER_ASSERT(label != NULL, "NULL label");
     LEDGER_ASSERT(tmp_buf != NULL, "NULL buffer");
