@@ -98,6 +98,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
 
     TRACE("Expert mode: %d", is_expert_mode());
 
+    G_context.tx_info.pool_owner_path_present = false;
     plan->pair_count = 2;  // fee + tx hash
     security_policy_t input_policy = policyForSignTxInput(G_context.tx_info.transaction.txSigningMode);
     if (input_policy == POLICY_SHOW) {
@@ -528,6 +529,29 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                     pool_owner_counts_t owner_counts = count_pool_owner_nodes(
                         certificate_item->certificate_data.poolRegistration.poolOwners
                     );
+                    if (G_context.tx_info.transaction.txSigningMode ==
+                        SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER) {
+                        LEDGER_ASSERT(!G_context.tx_info.pool_owner_path_present,
+                                      "Multiple pool registrations in owner mode");
+                        if (owner_counts.path_owners == 1) {
+                            s_flist_node* owner_node =
+                                certificate_item->certificate_data.poolRegistration.poolOwners;
+                            while (owner_node != NULL) {
+                                tx_certificate_list_item_t* owner_item =
+                                    (tx_certificate_list_item_t*) owner_node;
+                                const ext_credential_t* owner_cred =
+                                    &owner_item->certificate_data.stakeCredential;
+                                if (owner_cred->type == EXT_CREDENTIAL_KEY_PATH) {
+                                    G_context.tx_info.pool_owner_path = owner_cred->keyPath;
+                                    G_context.tx_info.pool_owner_path_present = true;
+                                    break;
+                                }
+                                owner_node = owner_node->next;
+                            }
+                            LEDGER_ASSERT(G_context.tx_info.pool_owner_path_present,
+                                          "Pool owner path missing");
+                        }
+                    }
                     cert_policy = policyForSignTxStakePoolRegistrationInit(
                         G_context.tx_info.transaction.txSigningMode,
                         certificate_item->certificate_data.poolRegistration.numPoolOwners,

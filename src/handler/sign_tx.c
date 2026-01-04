@@ -76,6 +76,8 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
     warning_bits_init(&G_context.tx_info.warning_bits);
     G_context.tx_info.planned_ui_pairs = 0;
     explicit_bzero(&G_context.tx_info.single_account_data, sizeof(single_account_data_t));
+    explicit_bzero(&G_context.tx_info.pool_owner_path, sizeof(bip44_path_t));
+    G_context.tx_info.pool_owner_path_present = false;
 
     // Read and validate options (fixed header)
     uint64_t options;
@@ -485,19 +487,9 @@ int handler_sign_tx_witness(buffer_t *cdata) {
     const bip44_path_t* poolOwnerPath = NULL;
     if (G_context.tx_info.transaction.txSigningMode == SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER ||
         G_context.tx_info.transaction.txSigningMode == SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR) {
-        // Extract pool owner path from pool registration certificate if available
-        // For POOL_REGISTRATION_OWNER mode, we need to validate that the witness path matches one of the pool owners
-        // The security policy will handle the validation
-        for (s_flist_node* node = G_context.tx_info.transaction.certificates; node != NULL; node = node->next) {
-            tx_certificate_list_item_t* cert_item = (tx_certificate_list_item_t*) node;
-            if (cert_item->certificate_data.type == CERTIFICATE_STAKE_POOL_REGISTRATION) {
-                // For POOL_REGISTRATION_OWNER mode, set poolOwnerPath to the witness path for validation
-                // For POOL_REGISTRATION_OPERATOR mode, we don't need pool owner path
-                if (G_context.tx_info.transaction.txSigningMode == SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER) {
-                    poolOwnerPath = &G_context.tx_info.witness_path;
-                }
-                break;
-            }
+        if (G_context.tx_info.transaction.txSigningMode == SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER &&
+            G_context.tx_info.pool_owner_path_present) {
+            poolOwnerPath = &G_context.tx_info.pool_owner_path;
         }
     }
 

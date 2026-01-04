@@ -38,6 +38,9 @@ typedef struct {
     bip44_path_t witness_path;
     uint8_t witness_signature[ED25519_SIGNATURE_LENGTH];
 
+    bool pool_owner_path_present;
+    bip44_path_t pool_owner_path;
+
     single_account_data_t single_account_data;
 
     warning_bits_t warning_bits;
