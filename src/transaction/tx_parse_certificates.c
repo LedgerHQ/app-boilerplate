@@ -106,7 +106,7 @@ static parser_status_e _parse_credential_data(buffer_t *buf,
 /// Parse a complete stake credential (type + data)
 parser_status_e parse_stake_credential(buffer_t *buf, ext_credential_t *credential) {
     TRACE("Parsing stake credential");
-    ext_credential_type_t cred_type;
+    ext_credential_type_t cred_type = {0};
     parser_status_e status = _parse_credential_type(buf, &cred_type);
     if (status != PARSING_OK) {
         TRACE("Failed to parse credential type");
@@ -200,7 +200,7 @@ parser_status_e parse_certificate_stake_pool_retirement(buffer_t *buf,
     TRACE("Parsing STAKE_POOL_RETIREMENT certificate, buf->offset=%u buf->size=%u", buf->offset, buf->size);
     cert_data->type = CERTIFICATE_STAKE_POOL_RETIREMENT;
 
-    ext_credential_type_t pool_cred_type;
+    ext_credential_type_t pool_cred_type = {0};
     TRACE("About to parse pool credential type at offset=%u", buf->offset);
     parser_status_e status = _parse_credential_type(buf, &pool_cred_type);
     if (status != PARSING_OK) {
@@ -240,7 +240,7 @@ static parser_status_e _parse_drep(buffer_t *buf, ext_drep_t *drep) {
     }
 
     TRACE("DRep type wire=0x%02x", drep_type_wire);
-    ext_drep_type_t drep_type;
+    ext_drep_type_t drep_type = {0};
     switch (drep_type_wire) {
         case 0x00:  // KEY_HASH
             drep_type = EXT_DREP_KEY_HASH;

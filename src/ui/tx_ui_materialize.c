@@ -420,7 +420,7 @@ static int ui_strings_certificates(transaction_t *tx) {
         s_flist_node *next = certificate_node->next;
 
         // Determine security policy based on certificate type
-        security_policy_t policy;
+        security_policy_t policy = POLICY_DENY;
         switch (certificate_item->certificate_data.type) {
             case CERTIFICATE_STAKE_REGISTRATION:
             case CERTIFICATE_STAKE_DEREGISTRATION:
@@ -1494,10 +1494,6 @@ static int ui_strings_collateral_output(transaction_t *tx) {
     if (!tx->includeCollateralOutput) {
         return SWO_SUCCESS;
     }
-    TRACE("ui_strings_collateral_output start includeCollateralOutput=%d includeTotalCollateral=%d numAssetGroups=%u",
-          tx->includeCollateralOutput,
-          tx->includeTotalCollateral,
-          (uint32_t) tx->collateral_output.numAssetGroups);
     tx_output_description_t collateral_desc = {
         .format = tx->collateral_output.format,
         .amount = tx->collateral_output.adaAmount,
@@ -1512,15 +1508,9 @@ static int ui_strings_collateral_output(transaction_t *tx) {
             tx->collateral_output.destination.address.buffer;
         collateral_desc.destination.address.size =
             tx->collateral_output.destination.address.size;
-        TRACE("Collateral destination: third-party addr size=%zu",
-              collateral_desc.destination.address.size);
     } else {
         collateral_desc.destination.type = DESTINATION_DEVICE_OWNED;
-        collateral_desc.destination.params =
-            &tx->collateral_output.destination.params;
-        TRACE("Collateral destination: device-owned type=%u network=%u",
-              collateral_desc.destination.params->type,
-              collateral_desc.destination.params->networkId);
+        collateral_desc.destination.params = &tx->collateral_output.destination.params;
     }
 
     security_policy_t collateral_policy =
@@ -1550,37 +1540,27 @@ static int ui_strings_collateral_output(transaction_t *tx) {
 
     bool show_collateral_tokens =
         (collateral_policy == POLICY_SHOW) && (collateral_tokens_policy == POLICY_SHOW);
-    TRACE("Collateral policies: main=%d ada=%d tokens=%d show_tokens=%d",
-          collateral_policy, collateral_ada_policy, collateral_tokens_policy, show_collateral_tokens);
+    TRACE("Collateral output: policy=%d ada=%d tokens=%d numAssets=%u",
+          collateral_policy, collateral_ada_policy, collateral_tokens_policy,
+          (unsigned int)tx->collateral_output.numAssetGroups);
+
+    int status = SWO_SUCCESS;
 
     if (collateral_policy == POLICY_SHOW) {
-        char *collateral_label_tmp = ui_alloc_temp(MAX_COLLATERAL_STRING_LENGTH + 1);
-        if (collateral_label_tmp == NULL) {
-            return SWO_INSUFFICIENT_MEMORY;
-        }
-        strncpy(collateral_label_tmp, "return output", MAX_COLLATERAL_STRING_LENGTH + 1);
-        int status = ui_add_pair_or_fail("Collateral", collateral_label_tmp);
-        if (status != SWO_SUCCESS) {
-            return status;
-        }
-
         char *collateral_address_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH + 1);
         if (collateral_address_tmp == NULL) {
             return SWO_INSUFFICIENT_MEMORY;
         }
 
         bool collateral_address_formatted = false;
-        TRACE("Formatting collateral address, type=%d", collateral_desc.destination.type);
         if (collateral_desc.destination.type == DESTINATION_THIRD_PARTY) {
             collateral_address_formatted = format_address_human_readable(
                 collateral_desc.destination.address.buffer,
                 collateral_desc.destination.address.size,
                 collateral_address_tmp,
                 MAX_HUMAN_ADDRESS_LENGTH + 1);
-            TRACE("Collateral third-party address formatted len=%zu success=%d",
-                  collateral_desc.destination.address.size, collateral_address_formatted);
         } else {
-            uint8_t address_bytes[MAX_ADDRESS_LENGTH];
+            uint8_t address_bytes[MAX_ADDRESS_LENGTH] = {0};
             size_t derived_len = deriveAddress(
                 collateral_desc.destination.params,
                 address_bytes,
@@ -1591,12 +1571,10 @@ static int ui_strings_collateral_output(transaction_t *tx) {
                     derived_len,
                     collateral_address_tmp,
                     MAX_HUMAN_ADDRESS_LENGTH + 1);
-                TRACE("Collateral device-owned address formatted derived_len=%zu success=%d",
-                      derived_len, collateral_address_formatted);
             }
         }
         LEDGER_ASSERT(collateral_address_formatted, "Collateral address formatting failed");
-        status = ui_add_pair_or_fail("Address", collateral_address_tmp);
+        status = ui_add_pair_or_fail("Collateral address", collateral_address_tmp);
         if (status != SWO_SUCCESS) {
             return status;
         }
@@ -1621,7 +1599,7 @@ static int ui_strings_collateral_output(transaction_t *tx) {
         }
     }
 
-    int status = ui_materialize_token_groups(
+    status = ui_materialize_token_groups(
         tx->collateral_output.assetGroups,
         tx->collateral_output.numAssetGroups,
         show_collateral_tokens);

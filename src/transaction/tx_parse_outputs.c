@@ -109,7 +109,7 @@ parser_status_e parse_output_datum(buffer_t* buf, output_datum_t* datum) {
     if (!buffer_read_u8(buf, &datum_wire_type)) {
         return OUTPUTS_PARSING_ERROR;
     }
-    TRACE("Datum: wire=%u, offset %zu -> %zu", datum_wire_type, offset_before, buf->offset);
+    TRACE("Datum: wire=%u, offset %u -> %u", datum_wire_type, (unsigned int)offset_before, (unsigned int)buf->offset);
 
     switch (datum_wire_type) {
         case 0:  // No datum
@@ -174,7 +174,7 @@ parser_status_e parse_output_ref_script(buffer_t* buf,
     if (!buffer_read_u8(buf, &has_ref_script_wire)) {
         return OUTPUTS_PARSING_ERROR;
     }
-    TRACE("Reference script: wire=%u, offset %zu -> %zu", has_ref_script_wire, offset_before, buf->offset);
+    TRACE("Reference script: wire=%u, offset %u -> %u", has_ref_script_wire, (unsigned int)offset_before, (unsigned int)buf->offset);
 
     switch (has_ref_script_wire) {
         case 0:  // No reference script

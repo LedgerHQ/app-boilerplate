@@ -42,7 +42,7 @@ void app_main() {
     // Length of APDU command received in G_io_apdu_buffer
     int input_len = 0;
     // Structured APDU command
-    command_t cmd;
+    command_t cmd = {0};
 
     // Initialize dynamic memory allocator
     TRACE("Initializing dynamic memory allocator");
@@ -61,7 +61,7 @@ void app_main() {
 
     // Initialize the NVM data if required
     if (N_storage.initialized != STORAGE_INITIALIZED) {
-        internal_storage_t storage;
+        internal_storage_t storage = {0};
         storage.expert_mode_enabled = SETTINGS_NO;
         storage.silent_pubkey_export_enabled = SETTINGS_YES;
         storage.initialized = STORAGE_INITIALIZED;

@@ -25,7 +25,7 @@ bool cbor_parseToken(const uint8_t* buf, size_t size, cbor_token_t* out_token) {
     }
 
     const uint8_t tag = buf[0];
-    cbor_token_t result;
+    cbor_token_t result = {0};
 
     // tag extensions first
     if (tag == CBOR_TYPE_ARRAY_INDEF || tag == CBOR_TYPE_INDEF_END) {

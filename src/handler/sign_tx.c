@@ -501,7 +501,7 @@ int handler_sign_tx_witness(buffer_t *cdata) {
         }
     }
 
-    warning_bits_t witness_warnings;
+    warning_bits_t witness_warnings = {0};
     warning_bits_init(&witness_warnings);
     security_policy_t policy = policyForSignTxWitness(
         G_context.tx_info.transaction.txSigningMode,

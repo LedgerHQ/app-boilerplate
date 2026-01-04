@@ -173,7 +173,7 @@ size_t deriveAddress_byron(const bip44_path_t* pathSpec,
 // These helpers work with CBOR data from address parsing.
 // cbor_parseToken is now safe and never throws.
 static bool parseToken(buffer_t* buf, uint8_t expectedType, uint64_t* out_value) {
-    cbor_token_t token;
+    cbor_token_t token = {0};
     size_t remaining = buf->size - buf->offset;
 
     // cbor_parseToken handles all bounds checking and returns false on error

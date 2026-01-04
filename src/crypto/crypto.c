@@ -57,8 +57,8 @@ WARN_UNUSED_RESULT cx_err_t crypto_get_pubkey(const uint32_t* path,
                                               uint8_t* chain_code) {
     cx_err_t error = CX_OK;
 
-    cx_ecfp_256_extended_private_key_t privkey;
-    cx_ecfp_256_public_key_t pubkey;
+    cx_ecfp_256_extended_private_key_t privkey = {0};
+    cx_ecfp_256_public_key_t pubkey = {0};
 
     // Derive private key according to BIP32 path
     CX_CHECK(crypto_init_privkey(path, path_len, &privkey, chain_code));
@@ -100,7 +100,7 @@ WARN_UNUSED_RESULT cx_err_t crypto_eddsa_sign(const uint32_t* path,
                                               uint8_t* sig,
                                               size_t* sig_len) {
     cx_err_t error = CX_OK;
-    cx_ecfp_256_extended_private_key_t privkey;
+    cx_ecfp_256_extended_private_key_t privkey = {0};
     size_t size;
     size_t buf_len = *sig_len;
 

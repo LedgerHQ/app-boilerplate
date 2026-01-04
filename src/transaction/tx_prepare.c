@@ -205,7 +205,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
     while (output_node != NULL) {
         tx_output_list_item_t *output_item = (tx_output_list_item_t *) output_node;
 
-        tx_output_description_t output_desc;
+        tx_output_description_t output_desc = {0};
         output_desc.format = output_item->output_data.format;
         output_desc.amount = output_item->output_data.adaAmount;
         output_desc.numAssetGroups = output_item->output_data.numAssetGroups;
@@ -1107,7 +1107,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
 
     // key 16: collateral return output
     if (G_context.tx_info.transaction.includeCollateralOutput) {
-        tx_output_description_t collateral_desc;
+        tx_output_description_t collateral_desc = {0};
         collateral_desc.format = G_context.tx_info.transaction.collateral_output.format;
         collateral_desc.amount = G_context.tx_info.transaction.collateral_output.adaAmount;
         collateral_desc.numAssetGroups = G_context.tx_info.transaction.collateral_output.numAssetGroups;
@@ -1160,9 +1160,9 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                 TRACE("Collateral output security policy denied");
                 return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
             case POLICY_SHOW: {
-                plan->pair_count += 2;  // label + address
+                plan->pair_count += 1;  // collateral address
                 if (collateral_ada_policy == POLICY_SHOW) {
-                    plan->pair_count += 1;
+                    plan->pair_count += 1;  // collateral amount
                 }
                 asset_group_t *collateral_groups = G_context.tx_info.transaction.collateral_output.assetGroups;
                 uint16_t collateral_group_count = G_context.tx_info.transaction.collateral_output.numAssetGroups;

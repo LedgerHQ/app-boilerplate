@@ -2243,7 +2243,7 @@ void txHashBuilder_finalize(tx_hash_builder_t* builder, uint8_t* outBuffer, size
 
     builder->state = TX_HASH_BUILDER_FINISHED;
 #ifdef TRACE_TX_HASH_BUILDER
-    TRACE("tx_body (%zu bytes)", tx_body_trace_size);
+    TRACE("tx_body (%u bytes)", (unsigned int)tx_body_trace_size);
     TRACE_BUFFER(tx_body_trace_buffer, tx_body_trace_size);
 #endif
 }
