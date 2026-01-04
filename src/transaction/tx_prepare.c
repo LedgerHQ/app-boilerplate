@@ -666,7 +666,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                                                 }
                                                 break;
                                             default:
-                                                return send_error_and_reset(SWO_TX_PARSING_FAIL);
+                                                LEDGER_ASSERT(false, "Unknown relay format type");
                                         }
                                         break;
                                 }
@@ -851,8 +851,8 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                     break;
                 }
                 default:
-                    // Pool registration not in scope
-                    return send_error_and_reset(SWO_TX_PARSING_FAIL);
+                    // Unsupported certificate type in validation phase
+                    LEDGER_ASSERT(false, "Unsupported certificate type in tx_prepare");
             }
 
             certificate_node = certificate_node->next;
@@ -899,9 +899,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                 temp_buf,
                 sizeof(temp_buf)
             );
-            if (!addr_constructed) {
-                return send_error_and_reset(SWO_TX_PARSING_FAIL);
-            }
+            LEDGER_ASSERT(addr_constructed, "Failed to format withdrawal reward address");
 
             // For hash builder, we need the raw reward address bytes
             // Re-construct using the direct functions (helper only gives formatted string)
@@ -936,12 +934,10 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                     );
                     break;
                 default:
-                    return send_error_and_reset(SWO_TX_PARSING_FAIL);
+                    LEDGER_ASSERT(false, "Unknown withdrawal credential type");
             }
 
-            if (reward_addr_len != REWARD_ACCOUNT_LENGTH) {
-                return send_error_and_reset(SWO_TX_PARSING_FAIL);
-            }
+            LEDGER_ASSERT(reward_addr_len == REWARD_ACCOUNT_LENGTH, "Invalid reward address length");
 
             // Validate CBOR canonical ordering of withdrawal map keys
             if (!isFirstWithdrawal) {

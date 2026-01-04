@@ -846,6 +846,7 @@ parser_status_e parse_certificate_stake_pool_registration(buffer_t *buf,
         status = parse_stake_credential(buf, &owner_item->certificate_data.stakeCredential);
         if (status != PARSING_OK) {
             TRACE("Failed to parse pool owner credential");
+            app_mem_free(owner_item);
             return status;
         }
 
@@ -879,6 +880,7 @@ parser_status_e parse_certificate_stake_pool_registration(buffer_t *buf,
         status = _parse_pool_relay(buf, relay);
         if (status != PARSING_OK) {
             TRACE("Failed to parse relay");
+            app_mem_free(relay_item);
             return status;
         }
 

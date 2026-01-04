@@ -24,6 +24,7 @@
  */
 
 #include <stdint.h>
+#include <string.h>
 #include "mem.h"
 #include "mem_alloc.h"
 #include "os_print.h"
@@ -52,6 +53,10 @@ bool app_mem_init(void) {
 void *app_mem_alloc_impl(size_t size, bool persistent, const char *file, int line) {
     void *ptr;
     ptr = mem_alloc(mem_ctx, size);
+    // Zero allocated memory for security
+    if (ptr != NULL) {
+        explicit_bzero(ptr, size);
+    }
 #ifdef HAVE_MEMORY_PROFILING
     if (persistent) {
         PRINTF(MP_LOG_PREFIX "persist;%u;0x%p;%s:%u\n", size, ptr, file, line);

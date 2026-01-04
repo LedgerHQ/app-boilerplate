@@ -96,7 +96,8 @@ static uint16_t _map_parser_status_to_swo(parser_status_e status) {
         case OUT_OF_MEMORY_ERROR:
             return SWO_INSUFFICIENT_MEMORY;
     default:
-        return SWO_TX_PARSING_FAIL;
+        LEDGER_ASSERT(false, "Unmapped parser error - all cases should be explicit");
+        return SWO_TX_PARSING_FAIL;  // fallback if assert is disabled
     }
 }
 

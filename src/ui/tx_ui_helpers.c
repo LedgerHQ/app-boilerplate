@@ -105,7 +105,6 @@ int addCredentialUIPairs(const ext_credential_t *credential,
                               MAX_BECH32_STRING_LENGTH + 1)) {
                 app_mem_free(scripthash_tmp);
                 LEDGER_ASSERT(false, "Unable to format credential script hash");
-                return SWO_TX_PARSING_FAIL;
             }
             status = ui_add_pair_or_fail(scriptHashLabel, scripthash_tmp);
             if (status != SWO_SUCCESS) {
@@ -114,7 +113,7 @@ int addCredentialUIPairs(const ext_credential_t *credential,
             break;
         }
         default:
-            return SWO_TX_PARSING_FAIL;
+            LEDGER_ASSERT(false, "Unknown credential type");
     }
 
     return SWO_SUCCESS;
@@ -122,7 +121,7 @@ int addCredentialUIPairs(const ext_credential_t *credential,
 
 int addVoterUIPairs(const ext_voter_t *voter) {
     LEDGER_ASSERT(voter != NULL, "NULL voter");
-    int status = SWO_TX_PARSING_FAIL;
+    int status = SWO_SUCCESS;  // will be overwritten by all switch cases
     ext_credential_t voter_credential = {0};
 
     switch (voter->type) {
@@ -191,7 +190,7 @@ int addVoterUIPairs(const ext_voter_t *voter) {
                                           UI_STATIC_LABEL(""), UI_STATIC_LABEL(""));
             break;
         default:
-            status = SWO_TX_PARSING_FAIL;
+            LEDGER_ASSERT(false, "Unknown voter type");
             break;
     }
 
@@ -211,10 +210,8 @@ int addDRepUIPairs(const ext_drep_t *drep, const char *label) {
             if (tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
-            if (!format_bip44_path(&drep->keyPath, tmp, MAX_BIP44_PATH_STRING_LENGTH + 1)) {
-                app_mem_free(tmp);
-                return SWO_TX_PARSING_FAIL;
-            }
+            bool path_formatted = format_bip44_path(&drep->keyPath, tmp, MAX_BIP44_PATH_STRING_LENGTH + 1);
+            LEDGER_ASSERT(path_formatted, "Failed to format DRep key path");
             break;
         }
         case EXT_DREP_KEY_HASH: {
@@ -260,7 +257,7 @@ int addDRepUIPairs(const ext_drep_t *drep, const char *label) {
             break;
         }
         default:
-            return SWO_TX_PARSING_FAIL;
+            LEDGER_ASSERT(false, "Unknown DRep type");
     }
 
     status = ui_add_pair_or_fail(label, tmp);
