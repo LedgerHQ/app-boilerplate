@@ -12,11 +12,12 @@
 #include "transaction/tx.h"
 #include "blake2b.h"
 #include "globals.h"
+#include "cardano_settings.h"
 #include "cardano_constants.h"
 #include "test_fixture_types.h"
 
 extern bool app_mem_init(void);
-
+extern bool unit_test_expert_mode_enabled;
 static inline void reset_context(void) {
     memset(&G_context, 0, sizeof(G_context));
     g_last_response_len = 0;
@@ -122,4 +123,12 @@ static inline void run_fixture(const tx_fixture_t *fixture) {
                       g_last_response,
                       &g_last_response_len,
                       &g_last_response_sw);
+}
+
+static inline void run_fixture_with_expert_mode(const tx_fixture_t *fixture, bool expert_mode) {
+    extern bool unit_test_expert_mode_enabled;
+    const bool previous_mode = unit_test_expert_mode_enabled;
+    unit_test_expert_mode_enabled = expert_mode;
+    run_fixture(fixture);
+    unit_test_expert_mode_enabled = previous_mode;
 }

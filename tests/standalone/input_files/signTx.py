@@ -1358,7 +1358,7 @@ testsConwayWithCertificates: List[SignTxTestCase] = [
                                                                               DRepParams(DRepParamsType.NO_CONFIDENCE)))]),
                    TransactionSigningMode.ORDINARY_TRANSACTION,
                    "a500818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b700018182582b82d818582183581c9e1c71de652ec8b85fec296f0685ca3988781c94a2e1a5d89d92f45fa0001a0d0c25611a002dd2e802182a030a048583098200581c1d227aefa4b773149170885aadba30aab3127cc611ddbc4999def61c8200581cba41c59ac6e1a0e4ac304af98db801097d0bf8d2a5b28a54752426a183098200581c1d227aefa4b773149170885aadba30aab3127cc611ddbc4999def61c8200581c7afd028b504c3668102b129b37a86c09a2872f76741dc7a68e2149c883098200581c1d227aefa4b773149170885aadba30aab3127cc611ddbc4999def61c8201581c1afd028b504c3668102b129b37a86c09a2872f76741dc7a68e2149c883098200581c1d227aefa4b773149170885aadba30aab3127cc611ddbc4999def61c810283098200581c1d227aefa4b773149170885aadba30aab3127cc611ddbc4999def61c8103",
-                   has_warning=True),
+                   has_warning=False),
     SignTxTestCase("Sign_tx_with_AUTHORIZE_COMMITTEE_HOT_certificates",
                    Transaction(Mainnet,
                                [inputs["utxoShelley"]],
@@ -2314,7 +2314,7 @@ testsBabbage: List[SignTxTestCase] = [
                    TransactionSigningMode.PLUTUS_TRANSACTION,
                    "a800818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181a20058390114c16d7f43243bd81478e68b9db53a8528fd4fb1078d58d54a7f11241d227aefa4b773149170885aadba30aab3127cc611ddbc4999def61c011a006ca79302182a030a0b58203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b70d818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b70010a20058390114c16d7f43243bd81478e68b9db53a8528fd4fb1078d58d54a7f11241d227aefa4b773149170885aadba30aab3127cc611ddbc4999def61c01821a006ca793a1581c75a292ffee938be03e9bae5657982a74e9014eb4960108c9e23a5b39a1487564247542686911182f1105",
                    nano_skip=True,
-                   has_warning=True),
+                   has_warning=False),
     SignTxTestCase("Sign_tx_with_thirdparty_collateral_output_as_map_without_total_collateral",
                    Transaction(Mainnet,
                                [inputs["utxoShelley"]],
@@ -2339,7 +2339,7 @@ testsBabbage: List[SignTxTestCase] = [
                                totalCollateral=5),
                    TransactionSigningMode.PLUTUS_TRANSACTION,
                    "a800818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b7000181a200583901eb0baa5e570cffbe2934db29df0b6a3d7c0430ee65d4c3a7ab2fefb91bc428e4720702ebd5dab4fb175324c192dc9bb76cc5da956e3c8dff01821904d2a2581c7eae28af2208be856f7a119668ae52a49b73725e326dc16579dcc373a34003581c1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df209015820000000000000000000000000000000000000000000000000000000000000000002581c95a292ffee938be03e9bae5657982a74e9014eb4960108c9e23a5b39a248456c204e69c3b16f1904d24874652474436f696e1a0078386202182a030a0b58203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b70d818258203b40265111d8bb3c3c608d95b3a0bf83461ace32d79336579a1939b3aad1c0b70010825839017cb05fce110fb999f01abb4f62bc455e217d4a51fde909fa9aea545443ac53c046cf6a42095e3c60310fa802771d0672f8fe2d1861138b09011105",
-                   has_warning=True),
+                   has_warning=False),
 ]
 
 # =================

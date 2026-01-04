@@ -13,9 +13,6 @@ from bip_utils.bip.bip32.bip32_path import Bip32Path, Bip32PathParser
 
 from ragger.bip import calculate_public_key_and_chaincode, CurveChoice
 from ragger.conftest.configuration import OPTIONAL
-from ragger.navigator import NavInsID, NavIns, Navigator
-
-from ledgered.devices import DeviceType, Device
 
 from application_client.app_def import AddressType
 
@@ -224,35 +221,3 @@ def verify_signature(path: str, signature: bytes, data: bytes) -> None:
     ref_pk, _ = get_device_pubkey(path)
     pk: VerifyingKey = VerifyingKey.from_string(ref_pk, curve=Ed25519)
     assert pk.verify(signature, data, hashlib.sha512)
-
-
-def get_navigation_for_toggle_silent_pubkey_export(device: Device) -> None:
-    # TODO update according to new menu for is_nano
-    if device.is_nano:
-        return [
-            NavInsID.RIGHT_CLICK,
-            NavInsID.RIGHT_CLICK,
-            NavInsID.BOTH_CLICK,
-            NavInsID.RIGHT_CLICK,
-        ]
-    elif device.type is DeviceType.STAX:
-        return [
-            NavInsID.USE_CASE_HOME_SETTINGS,
-            NavIns(NavInsID.TOUCH, (200, 261)),
-            NavInsID.USE_CASE_SETTINGS_SINGLE_PAGE_EXIT
-        ]
-    elif device.type is DeviceType.FLEX:
-        return [
-            NavInsID.USE_CASE_HOME_SETTINGS,
-            NavIns(NavInsID.TOUCH, (200, 300)),
-            NavInsID.USE_CASE_SETTINGS_SINGLE_PAGE_EXIT
-        ]
-    elif device.type is DeviceType.APEX_P:
-        return [
-            NavInsID.USE_CASE_HOME_SETTINGS,
-            NavIns(NavInsID.TOUCH, (243, 211)),
-            NavInsID.USE_CASE_SETTINGS_NEXT,
-            NavInsID.USE_CASE_SETTINGS_SINGLE_PAGE_EXIT
-        ]
-    else:
-        raise ValueError("unknown device")

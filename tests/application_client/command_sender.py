@@ -165,3 +165,43 @@ class CommandSender:
             Response APDU with signature
         """
         return self._exchange(self._cmd_builder.sign_tx_witness(path))
+
+    def set_debug_settings(self, expert_mode: bool, silent_export: bool) -> RAPDU:
+        """Set app settings via debug APDU (only works with DEBUG builds).
+
+        This is a debug-only command that allows tests to programmatically set
+        app settings without UI navigation. It only works when the app is built
+        with DEBUG=1 flag.
+
+        Args:
+            expert_mode: True to enable expert mode, False to disable
+            silent_export: True to enable silent pubkey export, False to disable
+
+        Returns:
+            Response APDU with current settings as confirmation (2 bytes)
+
+        Raises:
+            AssertionError: If the command fails or returns unexpected status
+        """
+        response = self._exchange(self._cmd_builder.debug_set_settings(expert_mode, silent_export))
+
+        if response.status != StatusWord.SWO_SUCCESS:
+            raise AssertionError(f"Debug set settings failed: {hex(response.status)}")
+
+        # Verify response contains 2 bytes (current settings)
+        if len(response.data) != 2:
+            raise AssertionError(f"Expected 2 bytes in response, got {len(response.data)}")
+
+        # Verify settings were applied correctly
+        actual_expert = response.data[0]
+        actual_silent = response.data[1]
+        expected_expert = 0x01 if expert_mode else 0x00
+        expected_silent = 0x01 if silent_export else 0x00
+
+        if actual_expert != expected_expert or actual_silent != expected_silent:
+            raise AssertionError(
+                f"Settings mismatch: expected expert={expected_expert}, silent={expected_silent}, "
+                f"got expert={actual_expert}, silent={actual_silent}"
+            )
+
+        return response

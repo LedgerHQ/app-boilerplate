@@ -127,29 +127,54 @@ enum {
 // MULTISIG Era Tests
 // ======================================================================
 
-static void test_sign_tx_without_change_address_with_shelley_scripthash_output(void **state) {
+static void test_sign_tx_without_change_address_with_shelley_scripthash_output_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_MULTISIG_SIGN_TX_WITHOUT_CHANGE_ADDRESS_WITH_SHELLEY_SCRIPTHASH_OUTPUT);
+    run_fixture_with_expert_mode(&FIXTURE_MULTISIG_SIGN_TX_WITHOUT_CHANGE_ADDRESS_WITH_SHELLEY_SCRIPTHASH_OUTPUT, false);
 }
 
-static void test_sign_tx_with_script_based_withdrawal(void **state) {
+static void test_sign_tx_without_change_address_with_shelley_scripthash_output_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_MULTISIG_SIGN_TX_WITH_SCRIPT_BASED_WITHDRAWAL);
+    run_fixture_with_expert_mode(&FIXTURE_MULTISIG_SIGN_TX_WITHOUT_CHANGE_ADDRESS_WITH_SHELLEY_SCRIPTHASH_OUTPUT, true);
 }
 
-static void test_sign_tx_with_a_stake_registration_script_certificate(void **state) {
+static void test_sign_tx_with_script_based_withdrawal_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_MULTISIG_SIGN_TX_WITH_A_STAKE_REGISTRATION_SCRIPT_CERTIFICATE);
+    run_fixture_with_expert_mode(&FIXTURE_MULTISIG_SIGN_TX_WITH_SCRIPT_BASED_WITHDRAWAL, false);
 }
 
-static void test_sign_tx_with_a_stake_delegation_script_certificate(void **state) {
+static void test_sign_tx_with_script_based_withdrawal_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_MULTISIG_SIGN_TX_WITH_A_STAKE_DELEGATION_SCRIPT_CERTIFICATE);
+    run_fixture_with_expert_mode(&FIXTURE_MULTISIG_SIGN_TX_WITH_SCRIPT_BASED_WITHDRAWAL, true);
 }
 
-static void test_sign_tx_with_a_stake_deregistration_script_certificate(void **state) {
+static void test_sign_tx_with_a_stake_registration_script_certificate_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_MULTISIG_SIGN_TX_WITH_A_STAKE_DEREGISTRATION_SCRIPT_CERTIFICATE);
+    run_fixture_with_expert_mode(&FIXTURE_MULTISIG_SIGN_TX_WITH_A_STAKE_REGISTRATION_SCRIPT_CERTIFICATE, false);
+}
+
+static void test_sign_tx_with_a_stake_registration_script_certificate_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_MULTISIG_SIGN_TX_WITH_A_STAKE_REGISTRATION_SCRIPT_CERTIFICATE, true);
+}
+
+static void test_sign_tx_with_a_stake_delegation_script_certificate_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_MULTISIG_SIGN_TX_WITH_A_STAKE_DELEGATION_SCRIPT_CERTIFICATE, false);
+}
+
+static void test_sign_tx_with_a_stake_delegation_script_certificate_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_MULTISIG_SIGN_TX_WITH_A_STAKE_DELEGATION_SCRIPT_CERTIFICATE, true);
+}
+
+static void test_sign_tx_with_a_stake_deregistration_script_certificate_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_MULTISIG_SIGN_TX_WITH_A_STAKE_DEREGISTRATION_SCRIPT_CERTIFICATE, false);
+}
+
+static void test_sign_tx_with_a_stake_deregistration_script_certificate_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_MULTISIG_SIGN_TX_WITH_A_STAKE_DEREGISTRATION_SCRIPT_CERTIFICATE, true);
 }
 
 // ======================================================================
@@ -158,11 +183,16 @@ static void test_sign_tx_with_a_stake_deregistration_script_certificate(void **s
 
 int main(void) {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_sign_tx_without_change_address_with_shelley_scripthash_output),
-        cmocka_unit_test(test_sign_tx_with_script_based_withdrawal),
-        cmocka_unit_test(test_sign_tx_with_a_stake_registration_script_certificate),
-        cmocka_unit_test(test_sign_tx_with_a_stake_delegation_script_certificate),
-        cmocka_unit_test(test_sign_tx_with_a_stake_deregistration_script_certificate),
+        cmocka_unit_test(test_sign_tx_without_change_address_with_shelley_scripthash_output_expert_off),
+        cmocka_unit_test(test_sign_tx_without_change_address_with_shelley_scripthash_output_expert_on),
+        cmocka_unit_test(test_sign_tx_with_script_based_withdrawal_expert_off),
+        cmocka_unit_test(test_sign_tx_with_script_based_withdrawal_expert_on),
+        cmocka_unit_test(test_sign_tx_with_a_stake_registration_script_certificate_expert_off),
+        cmocka_unit_test(test_sign_tx_with_a_stake_registration_script_certificate_expert_on),
+        cmocka_unit_test(test_sign_tx_with_a_stake_delegation_script_certificate_expert_off),
+        cmocka_unit_test(test_sign_tx_with_a_stake_delegation_script_certificate_expert_on),
+        cmocka_unit_test(test_sign_tx_with_a_stake_deregistration_script_certificate_expert_off),
+        cmocka_unit_test(test_sign_tx_with_a_stake_deregistration_script_certificate_expert_on),
     };
     return _cmocka_run_group_tests("test_sign_tx_multisig", tests, ARRAY_LEN(tests), NULL, NULL);
 }

@@ -11,7 +11,7 @@ from application_client.status_words import StatusWord
 
 from standalone.input_files.pubkey import PubKeyTestCase, rejectTestCases, testsByron, testsShelleyUsual, testsShelleyUnusual, testsColdKeys, testsCVoteKeysUsual, testsCVoteKeysUnusual
 
-from standalone.utils import get_navigation_for_toggle_silent_pubkey_export, idTestFunc, get_device_pubkey
+from standalone.utils import idTestFunc, get_device_pubkey
 
 @pytest.mark.parametrize(
     "testCase",
@@ -27,12 +27,12 @@ def test_pubkey_confirm(device: Device,
 
     # TODO why are snapshots missing?
 
-    # turn off silent pubkey export, confirmation will be asked for each key
-    nav_instructions = get_navigation_for_toggle_silent_pubkey_export(device)
-    navigator.navigate(nav_instructions, screen_change_before_first_instruction=False)
-
     # Use the app interface instead of raw interface
     client = CommandSender(backend)
+
+    # Turn off silent pubkey export via debug APDU, confirmation will be asked for each key
+    # This only works with DEBUG builds; keeps expert mode in its default state (off)
+    client.set_debug_settings(expert_mode=False, silent_export=False)
     with client.get_pubkey_async(testCase.path):
         if testCase.nav:
             if device.is_nano:

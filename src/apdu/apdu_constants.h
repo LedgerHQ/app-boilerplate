@@ -13,6 +13,9 @@ typedef enum {
     INS_GET_PUBLIC_KEY = 0x10,
     INS_SIGN_TX = 0x21,
     INS_SIGN_OPCERT = 0x22,
+#ifdef DEBUG
+    INS_DEBUG_SET_SETTINGS = 0xF0,  // Debug-only command for testing
+#endif
 } command_e;
 
 /**

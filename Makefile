@@ -77,7 +77,13 @@ VARIANT_PARAM = COIN
 VARIANT_VALUES = cardano_ada
 
 # Enabling DEBUG flag will enable PRINTF and disable optimizations
+# Note: The VS Code Ledger plugin's "selectedUseCase" setting should control this
 #DEBUG = 1
+
+# When DEBUG is enabled, add DEBUG as a preprocessor define so #ifdef DEBUG works in code
+ifneq ($(DEBUG), 0)
+    DEFINES += DEBUG
+endif
 
 ########################################
 #     Application custom permissions   #

@@ -95,7 +95,7 @@ bool str_formatAdaAmount(uint64_t amount, char* out, size_t outSize) {
 }
 
 
-#ifdef DEVEL
+#ifdef DEBUG
 void str_traceAdaAmount(const char* prefix, uint64_t amount) {
     char adaAmountStr[100] = {0};
     explicit_bzero(adaAmountStr, SIZEOF(adaAmountStr));
@@ -125,7 +125,7 @@ void str_traceInt64(int64_t number) {
     format_i64(numberStr, SIZEOF(numberStr), number);
     TRACE("%s", numberStr);
 }
-#endif  // DEVEL
+#endif  // DEBUG
 
 // Note: This is valid only for mainnet
 static struct {

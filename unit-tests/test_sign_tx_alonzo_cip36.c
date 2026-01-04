@@ -127,34 +127,64 @@ enum {
 // ALONZO Era Tests
 // ======================================================================
 
-static void test_sign_tx_with_cip36_registration_with_vote_key_hex(void **state) {
+static void test_sign_tx_with_cip36_registration_with_vote_key_hex_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_VOTE_KEY_HEX);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_VOTE_KEY_HEX, false);
 }
 
-static void test_sign_tx_with_cip36_registration_with_vote_key_path(void **state) {
+static void test_sign_tx_with_cip36_registration_with_vote_key_hex_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_VOTE_KEY_PATH);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_VOTE_KEY_HEX, true);
 }
 
-static void test_sign_tx_with_cip36_registration_with_unusual_vote_key_path(void **state) {
+static void test_sign_tx_with_cip36_registration_with_vote_key_path_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_UNUSUAL_VOTE_KEY_PATH);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_VOTE_KEY_PATH, false);
 }
 
-static void test_sign_tx_with_cip36_registration_with_thirdparty_payment_address(void **state) {
+static void test_sign_tx_with_cip36_registration_with_vote_key_path_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_THIRDPARTY_PAYMENT_ADDRESS);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_VOTE_KEY_PATH, true);
 }
 
-static void test_sign_tx_with_cip36_registration_with_voting_purpose(void **state) {
+static void test_sign_tx_with_cip36_registration_with_unusual_vote_key_path_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_VOTING_PURPOSE);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_UNUSUAL_VOTE_KEY_PATH, false);
 }
 
-static void test_sign_tx_with_cip36_registration_with_delegations(void **state) {
+static void test_sign_tx_with_cip36_registration_with_unusual_vote_key_path_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_DELEGATIONS);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_UNUSUAL_VOTE_KEY_PATH, true);
+}
+
+static void test_sign_tx_with_cip36_registration_with_thirdparty_payment_address_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_THIRDPARTY_PAYMENT_ADDRESS, false);
+}
+
+static void test_sign_tx_with_cip36_registration_with_thirdparty_payment_address_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_THIRDPARTY_PAYMENT_ADDRESS, true);
+}
+
+static void test_sign_tx_with_cip36_registration_with_voting_purpose_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_VOTING_PURPOSE, false);
+}
+
+static void test_sign_tx_with_cip36_registration_with_voting_purpose_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_VOTING_PURPOSE, true);
+}
+
+static void test_sign_tx_with_cip36_registration_with_delegations_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_DELEGATIONS, false);
+}
+
+static void test_sign_tx_with_cip36_registration_with_delegations_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_CIP36_SIGN_TX_WITH_CIP36_REGISTRATION_WITH_DELEGATIONS, true);
 }
 
 // ======================================================================
@@ -163,12 +193,18 @@ static void test_sign_tx_with_cip36_registration_with_delegations(void **state) 
 
 int main(void) {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_vote_key_hex),
-        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_vote_key_path),
-        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_unusual_vote_key_path),
-        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_thirdparty_payment_address),
-        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_voting_purpose),
-        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_delegations),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_vote_key_hex_expert_off),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_vote_key_hex_expert_on),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_vote_key_path_expert_off),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_vote_key_path_expert_on),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_unusual_vote_key_path_expert_off),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_unusual_vote_key_path_expert_on),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_thirdparty_payment_address_expert_off),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_thirdparty_payment_address_expert_on),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_voting_purpose_expert_off),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_voting_purpose_expert_on),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_delegations_expert_off),
+        cmocka_unit_test(test_sign_tx_with_cip36_registration_with_delegations_expert_on),
     };
     return _cmocka_run_group_tests("test_sign_tx_alonzo_cip36", tests, ARRAY_LEN(tests), NULL, NULL);
 }

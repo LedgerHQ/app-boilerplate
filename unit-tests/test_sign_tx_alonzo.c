@@ -127,64 +127,124 @@ enum {
 // ALONZO Era Tests
 // ======================================================================
 
-static void test_sign_tx_with_script_data_hash(void **state) {
+static void test_sign_tx_with_script_data_hash_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_SIGN_TX_WITH_SCRIPT_DATA_HASH);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_SCRIPT_DATA_HASH, false);
 }
 
-static void test_sign_tx_with_change_output_as_array(void **state) {
+static void test_sign_tx_with_script_data_hash_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_SIGN_TX_WITH_CHANGE_OUTPUT_AS_ARRAY);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_SCRIPT_DATA_HASH, true);
 }
 
-static void test_sign_tx_with_datum_hash_in_output_as_array(void **state) {
+static void test_sign_tx_with_change_output_as_array_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_SIGN_TX_WITH_DATUM_HASH_IN_OUTPUT_AS_ARRAY);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_CHANGE_OUTPUT_AS_ARRAY, false);
 }
 
-static void test_sign_tx_with_datum_hash_in_output_as_array_with_tokens(void **state) {
+static void test_sign_tx_with_change_output_as_array_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_SIGN_TX_WITH_DATUM_HASH_IN_OUTPUT_AS_ARRAY_WITH_TOKENS);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_CHANGE_OUTPUT_AS_ARRAY, true);
 }
 
-static void test_sign_tx_with_missing_datum_hash_in_output_with_tokens(void **state) {
+static void test_sign_tx_with_datum_hash_in_output_as_array_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_SIGN_TX_WITH_MISSING_DATUM_HASH_IN_OUTPUT_WITH_TOKENS);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_DATUM_HASH_IN_OUTPUT_AS_ARRAY, false);
 }
 
-static void test_sign_tx_with_collateral_inputs(void **state) {
+static void test_sign_tx_with_datum_hash_in_output_as_array_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_DATUM_HASH_IN_OUTPUT_AS_ARRAY, true);
 }
 
-static void test_sign_tx_with_collateral_inputs_shelley(void **state) {
+static void test_sign_tx_with_datum_hash_in_output_as_array_with_tokens_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS_SHELLEY);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_DATUM_HASH_IN_OUTPUT_AS_ARRAY_WITH_TOKENS, false);
 }
 
-static void test_sign_tx_with_required_signers_mixed(void **state) {
+static void test_sign_tx_with_datum_hash_in_output_as_array_with_tokens_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_SIGN_TX_WITH_REQUIRED_SIGNERS_MIXED);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_DATUM_HASH_IN_OUTPUT_AS_ARRAY_WITH_TOKENS, true);
 }
 
-static void test_sign_tx_with_mint_path_in_a_required_signer(void **state) {
+static void test_sign_tx_with_missing_datum_hash_in_output_with_tokens_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_SIGN_TX_WITH_MINT_PATH_IN_A_REQUIRED_SIGNER);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_MISSING_DATUM_HASH_IN_OUTPUT_WITH_TOKENS, false);
 }
 
-static void test_sign_tx_with_key_hash_in_stake_credential(void **state) {
+static void test_sign_tx_with_missing_datum_hash_in_output_with_tokens_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_SIGN_TX_WITH_KEY_HASH_IN_STAKE_CREDENTIAL);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_MISSING_DATUM_HASH_IN_OUTPUT_WITH_TOKENS, true);
 }
 
-static void test_full_test_for_trezor_feature_parity(void **state) {
+static void test_sign_tx_with_collateral_inputs_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_FULL_TEST_FOR_TREZOR_FEATURE_PARITY);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS, false);
 }
 
-static void test_sign_tx_with_multidelegation_keys_in_all_tx_elements(void **state) {
+static void test_sign_tx_with_collateral_inputs_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_SIGN_TX_WITH_MULTIDELEGATION_KEYS_IN_ALL_TX_ELEMENTS);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS, true);
+}
+
+static void test_sign_tx_with_collateral_inputs_shelley_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS_SHELLEY, false);
+}
+
+static void test_sign_tx_with_collateral_inputs_shelley_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_COLLATERAL_INPUTS_SHELLEY, true);
+}
+
+static void test_sign_tx_with_required_signers_mixed_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_REQUIRED_SIGNERS_MIXED, false);
+}
+
+static void test_sign_tx_with_required_signers_mixed_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_REQUIRED_SIGNERS_MIXED, true);
+}
+
+static void test_sign_tx_with_mint_path_in_a_required_signer_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_MINT_PATH_IN_A_REQUIRED_SIGNER, false);
+}
+
+static void test_sign_tx_with_mint_path_in_a_required_signer_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_MINT_PATH_IN_A_REQUIRED_SIGNER, true);
+}
+
+static void test_sign_tx_with_key_hash_in_stake_credential_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_KEY_HASH_IN_STAKE_CREDENTIAL, false);
+}
+
+static void test_sign_tx_with_key_hash_in_stake_credential_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_KEY_HASH_IN_STAKE_CREDENTIAL, true);
+}
+
+static void test_full_test_for_trezor_feature_parity_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_FULL_TEST_FOR_TREZOR_FEATURE_PARITY, false);
+}
+
+static void test_full_test_for_trezor_feature_parity_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_FULL_TEST_FOR_TREZOR_FEATURE_PARITY, true);
+}
+
+static void test_sign_tx_with_multidelegation_keys_in_all_tx_elements_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_MULTIDELEGATION_KEYS_IN_ALL_TX_ELEMENTS, false);
+}
+
+static void test_sign_tx_with_multidelegation_keys_in_all_tx_elements_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_SIGN_TX_WITH_MULTIDELEGATION_KEYS_IN_ALL_TX_ELEMENTS, true);
 }
 
 // ======================================================================
@@ -193,18 +253,30 @@ static void test_sign_tx_with_multidelegation_keys_in_all_tx_elements(void **sta
 
 int main(void) {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_sign_tx_with_script_data_hash),
-        cmocka_unit_test(test_sign_tx_with_change_output_as_array),
-        cmocka_unit_test(test_sign_tx_with_datum_hash_in_output_as_array),
-        cmocka_unit_test(test_sign_tx_with_datum_hash_in_output_as_array_with_tokens),
-        cmocka_unit_test(test_sign_tx_with_missing_datum_hash_in_output_with_tokens),
-        cmocka_unit_test(test_sign_tx_with_collateral_inputs),
-        cmocka_unit_test(test_sign_tx_with_collateral_inputs_shelley),
-        cmocka_unit_test(test_sign_tx_with_required_signers_mixed),
-        cmocka_unit_test(test_sign_tx_with_mint_path_in_a_required_signer),
-        cmocka_unit_test(test_sign_tx_with_key_hash_in_stake_credential),
-        cmocka_unit_test(test_full_test_for_trezor_feature_parity),
-        cmocka_unit_test(test_sign_tx_with_multidelegation_keys_in_all_tx_elements),
+        cmocka_unit_test(test_sign_tx_with_script_data_hash_expert_off),
+        cmocka_unit_test(test_sign_tx_with_script_data_hash_expert_on),
+        cmocka_unit_test(test_sign_tx_with_change_output_as_array_expert_off),
+        cmocka_unit_test(test_sign_tx_with_change_output_as_array_expert_on),
+        cmocka_unit_test(test_sign_tx_with_datum_hash_in_output_as_array_expert_off),
+        cmocka_unit_test(test_sign_tx_with_datum_hash_in_output_as_array_expert_on),
+        cmocka_unit_test(test_sign_tx_with_datum_hash_in_output_as_array_with_tokens_expert_off),
+        cmocka_unit_test(test_sign_tx_with_datum_hash_in_output_as_array_with_tokens_expert_on),
+        cmocka_unit_test(test_sign_tx_with_missing_datum_hash_in_output_with_tokens_expert_off),
+        cmocka_unit_test(test_sign_tx_with_missing_datum_hash_in_output_with_tokens_expert_on),
+        cmocka_unit_test(test_sign_tx_with_collateral_inputs_expert_off),
+        cmocka_unit_test(test_sign_tx_with_collateral_inputs_expert_on),
+        cmocka_unit_test(test_sign_tx_with_collateral_inputs_shelley_expert_off),
+        cmocka_unit_test(test_sign_tx_with_collateral_inputs_shelley_expert_on),
+        cmocka_unit_test(test_sign_tx_with_required_signers_mixed_expert_off),
+        cmocka_unit_test(test_sign_tx_with_required_signers_mixed_expert_on),
+        cmocka_unit_test(test_sign_tx_with_mint_path_in_a_required_signer_expert_off),
+        cmocka_unit_test(test_sign_tx_with_mint_path_in_a_required_signer_expert_on),
+        cmocka_unit_test(test_sign_tx_with_key_hash_in_stake_credential_expert_off),
+        cmocka_unit_test(test_sign_tx_with_key_hash_in_stake_credential_expert_on),
+        cmocka_unit_test(test_full_test_for_trezor_feature_parity_expert_off),
+        cmocka_unit_test(test_full_test_for_trezor_feature_parity_expert_on),
+        cmocka_unit_test(test_sign_tx_with_multidelegation_keys_in_all_tx_elements_expert_off),
+        cmocka_unit_test(test_sign_tx_with_multidelegation_keys_in_all_tx_elements_expert_on),
     };
     return _cmocka_run_group_tests("test_sign_tx_alonzo", tests, ARRAY_LEN(tests), NULL, NULL);
 }

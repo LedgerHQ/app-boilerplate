@@ -66,6 +66,7 @@ class InsType(IntEnum):
     INS_GET_PUBLIC_KEY = 0x10
     INS_SIGN_TX = 0x21
     INS_SIGN_OPCERT = 0x22
+    INS_DEBUG_SET_SETTINGS = 0xF0  # Debug-only command
 
 
 class P1Type(IntEnum):
@@ -278,6 +279,21 @@ class CommandBuilder:
     def sign_tx_witness(self, path: str) -> bytes:
         data = pack_derivation_path(path)
         return self._serialize(InsType.INS_SIGN_TX, P1Type.P1_TX_WITNESSES, P2Type.P2_UNUSED, data)
+
+    def debug_set_settings(self, expert_mode: bool, silent_export: bool) -> bytes:
+        """Build debug settings APDU (only works with DEBUG builds).
+
+        Args:
+            expert_mode: True to enable expert mode, False to disable
+            silent_export: True to enable silent pubkey export, False to disable
+
+        Returns:
+            Serialized APDU command
+        """
+        data = bytearray()
+        data.append(0x01 if expert_mode else 0x00)
+        data.append(0x01 if silent_export else 0x00)
+        return self._serialize(InsType.INS_DEBUG_SET_SETTINGS, P1Type.P1_UNUSED, P2Type.P2_UNUSED, bytes(data))
 
     def serialize_transaction_chunks(self, tx: Transaction) -> list[bytes]:
         if MAX_SIGN_TX_CHUNK_SIZE <= 0:

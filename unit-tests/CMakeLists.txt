@@ -34,7 +34,8 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 endif()
 
 add_compile_definitions(TEST)
-add_compile_definitions(DEVEL)
+add_compile_definitions(UNIT_TEST)
+add_compile_definitions(DEBUG)
 add_compile_definitions(FUZZING)
 
 # IMPORTANT: mock_includes MUST come first so our SDK mocks override Ledger SDK headers

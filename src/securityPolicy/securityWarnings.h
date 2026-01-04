@@ -55,7 +55,7 @@ static inline void warning_bits_init(warning_bits_t* warnings) {
     *warnings = 0;
 }
 
-#ifdef DEVEL
+#ifdef DEBUG
 static inline void _trace_warning_bit(warning_bit_e bit) {
     switch (bit) {
         case WARNING_BIT_UNUSUAL_KEY_DERIVATION_PATH:

@@ -35,6 +35,9 @@
 #include "get_public_key.h"
 #include "sign_tx.h"
 #include "sign_opcert.h"
+#ifdef DEBUG
+#include "debug_settings.h"
+#endif
 
 /**
  * Map request type to its expected instruction
@@ -181,6 +184,20 @@ int apdu_dispatcher(const command_t *cmd) {
             buf.offset = 0;
 
             return handler_sign_opcert(&buf);
+
+#ifdef DEBUG
+        case INS_DEBUG_SET_SETTINGS:
+            // Debug-only command to set app settings for testing
+            if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
+                return io_send_sw(SWO_INCORRECT_P1_P2);
+            }
+
+            buf.ptr = cmd->data;
+            buf.size = cmd->lc;
+            buf.offset = 0;
+
+            return handler_debug_set_settings(&buf);
+#endif
 
         default:
             return io_send_sw(SWO_INVALID_INS);

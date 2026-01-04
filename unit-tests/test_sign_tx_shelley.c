@@ -120,54 +120,104 @@ void app_mem_dump_stats(void) {
 // Shelley Era Tests
 // ======================================================================
 
-static void test_sign_tx_without_outputs(void **state) {
+static void test_sign_tx_without_outputs_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITHOUT_OUTPUTS);
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITHOUT_OUTPUTS, false);
 }
 
-static void test_sign_tx_with_258_tag_on_inputs(void **state) {
+static void test_sign_tx_without_outputs_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITH_258_TAG_ON_INPUTS);
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITHOUT_OUTPUTS, true);
 }
 
-static void test_sign_tx_without_change_address(void **state) {
+static void test_sign_tx_with_258_tag_on_inputs_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITHOUT_CHANGE_ADDRESS);
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITH_258_TAG_ON_INPUTS, false);
 }
 
-static void test_sign_tx_with_change_base_address_with_staking_path(void **state) {
+static void test_sign_tx_with_258_tag_on_inputs_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITH_CHANGE_BASE_ADDRESS_WITH_STAKING_PATH);
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITH_258_TAG_ON_INPUTS, true);
 }
 
-static void test_sign_tx_with_change_base_address_with_staking_key_hash(void **state) {
+static void test_sign_tx_without_change_address_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITH_CHANGE_BASE_ADDRESS_WITH_STAKING_KEY_HASH);
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITHOUT_CHANGE_ADDRESS, false);
 }
 
-static void test_sign_tx_with_enterprise_change_address(void **state) {
+static void test_sign_tx_without_change_address_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITH_ENTERPRISE_CHANGE_ADDRESS);
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITHOUT_CHANGE_ADDRESS, true);
 }
 
-static void test_sign_tx_with_pointer_change_address(void **state) {
+static void test_sign_tx_with_change_base_address_with_staking_path_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITH_POINTER_CHANGE_ADDRESS);
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITH_CHANGE_BASE_ADDRESS_WITH_STAKING_PATH, false);
 }
 
-static void test_sign_tx_with_nonreasonable_account_and_address(void **state) {
+static void test_sign_tx_with_change_base_address_with_staking_path_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITH_NONREASONABLE_ACCOUNT_AND_ADDRESS);
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITH_CHANGE_BASE_ADDRESS_WITH_STAKING_PATH, true);
 }
 
-static void test_sign_tx_with_path_based_withdrawal(void **state) {
+static void test_sign_tx_with_change_base_address_with_staking_key_hash_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITH_PATH_BASED_WITHDRAWAL);
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITH_CHANGE_BASE_ADDRESS_WITH_STAKING_KEY_HASH, false);
 }
 
-static void test_sign_tx_with_auxiliary_data_hash(void **state) {
+static void test_sign_tx_with_change_base_address_with_staking_key_hash_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_SHELLEY_SIGN_TX_WITH_AUXILIARY_DATA_HASH);
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITH_CHANGE_BASE_ADDRESS_WITH_STAKING_KEY_HASH, true);
+}
+
+static void test_sign_tx_with_enterprise_change_address_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITH_ENTERPRISE_CHANGE_ADDRESS, false);
+}
+
+static void test_sign_tx_with_enterprise_change_address_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITH_ENTERPRISE_CHANGE_ADDRESS, true);
+}
+
+static void test_sign_tx_with_pointer_change_address_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITH_POINTER_CHANGE_ADDRESS, false);
+}
+
+static void test_sign_tx_with_pointer_change_address_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITH_POINTER_CHANGE_ADDRESS, true);
+}
+
+static void test_sign_tx_with_nonreasonable_account_and_address_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITH_NONREASONABLE_ACCOUNT_AND_ADDRESS, false);
+}
+
+static void test_sign_tx_with_nonreasonable_account_and_address_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITH_NONREASONABLE_ACCOUNT_AND_ADDRESS, true);
+}
+
+static void test_sign_tx_with_path_based_withdrawal_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITH_PATH_BASED_WITHDRAWAL, false);
+}
+
+static void test_sign_tx_with_path_based_withdrawal_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITH_PATH_BASED_WITHDRAWAL, true);
+}
+
+static void test_sign_tx_with_auxiliary_data_hash_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITH_AUXILIARY_DATA_HASH, false);
+}
+
+static void test_sign_tx_with_auxiliary_data_hash_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_SHELLEY_SIGN_TX_WITH_AUXILIARY_DATA_HASH, true);
 }
 
 // ======================================================================
@@ -176,16 +226,26 @@ static void test_sign_tx_with_auxiliary_data_hash(void **state) {
 
 int main(void) {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_sign_tx_without_outputs),
-        cmocka_unit_test(test_sign_tx_with_258_tag_on_inputs),
-        cmocka_unit_test(test_sign_tx_without_change_address),
-        cmocka_unit_test(test_sign_tx_with_change_base_address_with_staking_path),
-        cmocka_unit_test(test_sign_tx_with_change_base_address_with_staking_key_hash),
-        cmocka_unit_test(test_sign_tx_with_enterprise_change_address),
-        cmocka_unit_test(test_sign_tx_with_pointer_change_address),
-        cmocka_unit_test(test_sign_tx_with_nonreasonable_account_and_address),
-        cmocka_unit_test(test_sign_tx_with_path_based_withdrawal),
-        cmocka_unit_test(test_sign_tx_with_auxiliary_data_hash),
+        cmocka_unit_test(test_sign_tx_without_outputs_expert_off),
+        cmocka_unit_test(test_sign_tx_without_outputs_expert_on),
+        cmocka_unit_test(test_sign_tx_with_258_tag_on_inputs_expert_off),
+        cmocka_unit_test(test_sign_tx_with_258_tag_on_inputs_expert_on),
+        cmocka_unit_test(test_sign_tx_without_change_address_expert_off),
+        cmocka_unit_test(test_sign_tx_without_change_address_expert_on),
+        cmocka_unit_test(test_sign_tx_with_change_base_address_with_staking_path_expert_off),
+        cmocka_unit_test(test_sign_tx_with_change_base_address_with_staking_path_expert_on),
+        cmocka_unit_test(test_sign_tx_with_change_base_address_with_staking_key_hash_expert_off),
+        cmocka_unit_test(test_sign_tx_with_change_base_address_with_staking_key_hash_expert_on),
+        cmocka_unit_test(test_sign_tx_with_enterprise_change_address_expert_off),
+        cmocka_unit_test(test_sign_tx_with_enterprise_change_address_expert_on),
+        cmocka_unit_test(test_sign_tx_with_pointer_change_address_expert_off),
+        cmocka_unit_test(test_sign_tx_with_pointer_change_address_expert_on),
+        cmocka_unit_test(test_sign_tx_with_nonreasonable_account_and_address_expert_off),
+        cmocka_unit_test(test_sign_tx_with_nonreasonable_account_and_address_expert_on),
+        cmocka_unit_test(test_sign_tx_with_path_based_withdrawal_expert_off),
+        cmocka_unit_test(test_sign_tx_with_path_based_withdrawal_expert_on),
+        cmocka_unit_test(test_sign_tx_with_auxiliary_data_hash_expert_off),
+        cmocka_unit_test(test_sign_tx_with_auxiliary_data_hash_expert_on),
     };
     return _cmocka_run_group_tests("test_sign_tx_shelley", tests, ARRAY_LEN(tests), NULL, NULL);
 }

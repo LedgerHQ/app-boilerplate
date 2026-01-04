@@ -127,14 +127,24 @@ enum {
 // ALONZO Era Tests
 // ======================================================================
 
-static void test_sign_tx_with_catalyst_registration_metadata_with_base_address(void **state) {
+static void test_sign_tx_with_catalyst_registration_metadata_with_base_address_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRATION_METADATA_WITH_BASE_ADDRESS);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRATION_METADATA_WITH_BASE_ADDRESS, false);
 }
 
-static void test_sign_tx_with_catalyst_registration_metadata_with_stake_address(void **state) {
+static void test_sign_tx_with_catalyst_registration_metadata_with_base_address_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRATION_METADATA_WITH_STAKE_ADDRESS);
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRATION_METADATA_WITH_BASE_ADDRESS, true);
+}
+
+static void test_sign_tx_with_catalyst_registration_metadata_with_stake_address_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRATION_METADATA_WITH_STAKE_ADDRESS, false);
+}
+
+static void test_sign_tx_with_catalyst_registration_metadata_with_stake_address_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRATION_METADATA_WITH_STAKE_ADDRESS, true);
 }
 
 // ======================================================================
@@ -143,8 +153,10 @@ static void test_sign_tx_with_catalyst_registration_metadata_with_stake_address(
 
 int main(void) {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_sign_tx_with_catalyst_registration_metadata_with_base_address),
-        cmocka_unit_test(test_sign_tx_with_catalyst_registration_metadata_with_stake_address),
+        cmocka_unit_test(test_sign_tx_with_catalyst_registration_metadata_with_base_address_expert_off),
+        cmocka_unit_test(test_sign_tx_with_catalyst_registration_metadata_with_base_address_expert_on),
+        cmocka_unit_test(test_sign_tx_with_catalyst_registration_metadata_with_stake_address_expert_off),
+        cmocka_unit_test(test_sign_tx_with_catalyst_registration_metadata_with_stake_address_expert_on),
     };
     return _cmocka_run_group_tests("test_sign_tx_alonzo_catalyst", tests, ARRAY_LEN(tests), NULL, NULL);
 }

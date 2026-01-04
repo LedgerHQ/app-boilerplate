@@ -127,19 +127,34 @@ enum {
 // CONWAY_WITHOUT_CERTIFICATES Era Tests
 // ======================================================================
 
-static void test_sign_tx_with_treasury(void **state) {
+static void test_sign_tx_with_treasury_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREASURY);
+    run_fixture_with_expert_mode(&FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREASURY, false);
 }
 
-static void test_sign_tx_with_donation(void **state) {
+static void test_sign_tx_with_treasury_expert_on(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_DONATION);
+    run_fixture_with_expert_mode(&FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREASURY, true);
 }
 
-static void test_sign_tx_with_treasury_and_donation(void **state) {
+static void test_sign_tx_with_donation_expert_off(void **state) {
     (void) state;
-    run_fixture(&FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREASURY_AND_DONATION);
+    run_fixture_with_expert_mode(&FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_DONATION, false);
+}
+
+static void test_sign_tx_with_donation_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_DONATION, true);
+}
+
+static void test_sign_tx_with_treasury_and_donation_expert_off(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREASURY_AND_DONATION, false);
+}
+
+static void test_sign_tx_with_treasury_and_donation_expert_on(void **state) {
+    (void) state;
+    run_fixture_with_expert_mode(&FIXTURE_CONWAY_WITHOUT_CERTIFICATES_SIGN_TX_WITH_TREASURY_AND_DONATION, true);
 }
 
 // ======================================================================
@@ -148,9 +163,12 @@ static void test_sign_tx_with_treasury_and_donation(void **state) {
 
 int main(void) {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_sign_tx_with_treasury),
-        cmocka_unit_test(test_sign_tx_with_donation),
-        cmocka_unit_test(test_sign_tx_with_treasury_and_donation),
+        cmocka_unit_test(test_sign_tx_with_treasury_expert_off),
+        cmocka_unit_test(test_sign_tx_with_treasury_expert_on),
+        cmocka_unit_test(test_sign_tx_with_donation_expert_off),
+        cmocka_unit_test(test_sign_tx_with_donation_expert_on),
+        cmocka_unit_test(test_sign_tx_with_treasury_and_donation_expert_off),
+        cmocka_unit_test(test_sign_tx_with_treasury_and_donation_expert_on),
     };
     return _cmocka_run_group_tests("test_sign_tx_conway_without_certificates", tests, ARRAY_LEN(tests), NULL, NULL);
 }

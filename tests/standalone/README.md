@@ -20,6 +20,10 @@ The standalone test suite ensures that:
 - User approval flows work under normal conditions
 - Errors are correctly reported and handled
 
+## Build Notes
+
+- `test_sign_tx.py` uses a DEBUG-only settings APDU to toggle expert mode between runs. For production builds, remove those debug APDU calls and run only the standard UI flow.
+
 ---
 
 ## Directory Structure

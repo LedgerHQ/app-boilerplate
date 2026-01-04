@@ -9,7 +9,7 @@ bool str_formatAdaAmount(uint64_t amount, char* out, size_t outSize);
 
 #include "format.h"
 
-#ifdef DEVEL
+#ifdef DEBUG
 void str_traceAdaAmount(const char* prefix, uint64_t amount);
 #define TRACE_ADA_AMOUNT(PREFIX, AMOUNT)    \
     do {                                    \
@@ -17,9 +17,9 @@ void str_traceAdaAmount(const char* prefix, uint64_t amount);
     } while (0)
 #else
 #define TRACE_ADA_AMOUNT(PREFIX, AMOUNT)
-#endif  // DEVEL
+#endif  // DEBUG
 
-#ifdef DEVEL
+#ifdef DEBUG
 void str_traceUint64(uint64_t number);
 #define TRACE_UINT64(NUMBER)     \
     do {                         \
@@ -27,9 +27,9 @@ void str_traceUint64(uint64_t number);
     } while (0)
 #else
 #define TRACE_UINT64(NUMBER)
-#endif  // DEVEL
+#endif  // DEBUG
 
-#ifdef DEVEL
+#ifdef DEBUG
 void str_traceInt64(int64_t number);
 #define TRACE_INT64(NUMBER)     \
     do {                        \
@@ -37,7 +37,7 @@ void str_traceInt64(int64_t number);
     } while (0)
 #else
 #define TRACE_INT64(NUMBER)
-#endif  // DEVEL
+#endif  // DEBUG
 
 bool str_formatValidityBoundaryMainnet(uint64_t slotNumber, char* out, size_t outSize);
 bool str_formatValidityBoundary(uint64_t slotNumber,

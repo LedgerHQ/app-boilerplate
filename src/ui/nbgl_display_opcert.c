@@ -86,6 +86,23 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
         return send_error_and_reset(SWO_BAD_STATE);
     }
 
+    // Handle security policy
+    switch (securityPolicy) {
+        case POLICY_SHOW:
+            // Continue to show UI
+            break;
+
+        case POLICY_HIDE:
+            // Silent approval - finalize without showing UI
+            TRACE("POLICY_HIDE: silently approving opcert");
+            finalize_sign_opcert(true);
+            return 0;
+
+        default:
+            ASSERT(false);
+            return send_error_and_reset(SWO_BAD_STATE);
+    }
+
     const parsed_opcert_t* opcert = &G_context.opcert_info.opcert;
 
     // Allocate and fill pool cold key path

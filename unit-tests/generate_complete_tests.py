@@ -66,13 +66,15 @@ def build_test_functions(fixtures):
         func_suffix = sanitize_test_name(display_name)
         assert func_suffix, f"unable to sanitise fixture name {display_name}"
         test_name = f"test_{func_suffix}"
-        functions.append(
-            f"static void {test_name}(void **state) {{\n"
-            f"    (void) state;\n"
-            f"    run_fixture(&{fixture_name});\n"
-            f"}}"
-        )
-        names.append(test_name)
+        for suffix, expert_flag in [("expert_off", "false"), ("expert_on", "true")]:
+            function_name = f"{test_name}_{suffix}"
+            functions.append(
+                f"static void {function_name}(void **state) {{\n"
+                f"    (void) state;\n"
+                f"    run_fixture_with_expert_mode(&{fixture_name}, {expert_flag});\n"
+                f"}}"
+            )
+            names.append(function_name)
     return functions, names
 
 
