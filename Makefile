@@ -77,7 +77,7 @@ VARIANT_PARAM = COIN
 VARIANT_VALUES = BOL
 
 # Enabling DEBUG flag will enable PRINTF for speculos
-DEBUG = 1
+#DEBUG = 1
 
 # Enabling DEBUG_OVER_USB flag will enable PRINTF over USB
 # This will force DISABLE_OS_IO_STACK_USE and add USB CDC profile
@@ -148,5 +148,7 @@ ENABLE_PKI_LIBRARY = 1
 #DISABLE_STANDARD_WEBUSB = 1
 #DISABLE_DEBUG_LEDGER_ASSERT = 1
 #DISABLE_DEBUG_THROW = 1
+
+DEFINES += DEBUG=1
 
 include $(BOLOS_SDK)/Makefile.standard_app
