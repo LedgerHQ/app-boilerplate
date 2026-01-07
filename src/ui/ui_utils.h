@@ -16,6 +16,24 @@ uint16_t ui_pairs_get_count(void);
 #define UI_STATIC_LABEL(label) (label)
 #endif
 
+/**
+ * Add a label-value pair to the UI pairs list with optional shrinking
+ *
+ * @param label static label string (should be constant, compile-time checked by UI_STATIC_LABEL macro)
+ * @param tmp_buf temporary buffer containing the value (will be freed after use)
+ * @param shrink if true, allocates exact size for the value; if false, uses buffer as-is
+ * @return true on success, false on failure
+ */
+bool ui_pairs_add_static_label_impl(const char* label, char* tmp_buf, bool shrink);
+
+/**
+ * Add a label-value pair to the UI pairs list (legacy wrapper, always shrinks)
+ * Use ui_pairs_add_static_label_impl with shrink=true for equivalent behavior
+ *
+ * @param label static label string (should be constant, compile-time checked by UI_STATIC_LABEL macro)
+ * @param tmp_buf temporary buffer containing the value (will be freed after use)
+ * @return true on success, false on failure
+ */
 bool ui_pairs_add_static_label(const char* label, char* tmp_buf);
 
 /**

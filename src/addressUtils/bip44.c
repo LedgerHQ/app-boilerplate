@@ -629,9 +629,10 @@ bool bip44_pathsEqual(const bip44_path_t* lhs, const bip44_path_t* rhs) {
 
 #ifdef HAVE_PRINTF
 void bip44_PRINTF(const bip44_path_t* pathSpec) {
-    char tmp[MAX_BIP44_PATH_STRING_LENGTH + 1] = {0};
+    char tmp[MAX_BIP44_PATH_STRING_LENGTH + 2] = {0};
     bool success = format_bip44_path(pathSpec, tmp, SIZEOF(tmp));
     ASSERT(success);
+    LEDGER_ASSERT(strlen(tmp) <= MAX_BIP44_PATH_STRING_LENGTH, "BIP44 path ui string buffer too short");
     TRACE("%s", tmp);
 }
 #endif  // HAVE_PRINTF

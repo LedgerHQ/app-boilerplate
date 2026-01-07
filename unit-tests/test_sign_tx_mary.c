@@ -98,7 +98,7 @@ void *app_mem_alloc_impl(size_t size, bool persistent, const char *file, int lin
     (void) persistent;
     (void) file;
     (void) line;
-    return malloc(size);
+    return calloc(1, size);
 }
 
 void app_mem_free_impl(void *ptr, const char *file, int line) {

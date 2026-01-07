@@ -73,16 +73,14 @@ int ui_display_pubkey(security_policy_t securityPolicy, warning_bits_t warnings)
     pubkey_ctx_t* pk = &G_context.pk_info;
 
     // Allocate display buffers
-    const size_t pubkeyPathStrSize = MAX_BIP44_PATH_STRING_LENGTH + 1;
-    pubkeyPathStr = (char *) ui_mem_alloc(pubkeyPathStrSize);
+    pubkeyPathStr = (char *) ui_mem_alloc(MAX_BIP44_PATH_STRING_LENGTH + 2);
     if (pubkeyPathStr == NULL) {
         ui_cleanup_tracked_allocations();
         return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
-    explicit_bzero(pubkeyPathStr, pubkeyPathStrSize);
-    bool pathFormatted = format_bip44_path(&pk->path, pubkeyPathStr, pubkeyPathStrSize);
-    ASSERT(pathFormatted);
-    ASSERT(strlen(pubkeyPathStr) + 1 < pubkeyPathStrSize);
+    bool pathFormatted = format_bip44_path(&pk->path, pubkeyPathStr, MAX_BIP44_PATH_STRING_LENGTH + 2);
+    LEDGER_ASSERT(pathFormatted, "Unable to format public key path");
+    LEDGER_ASSERT(strlen(pubkeyPathStr) <= MAX_BIP44_PATH_STRING_LENGTH, "Public key path ui string buffer too short");
 
     switch (securityPolicy) {
         case POLICY_SHOW:

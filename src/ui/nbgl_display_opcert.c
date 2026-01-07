@@ -106,22 +106,20 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
     const parsed_opcert_t* opcert = &G_context.opcert_info.opcert;
 
     // Allocate and fill pool cold key path
-    const size_t poolColdKeyPathStrSize = MAX_BIP44_PATH_STRING_LENGTH + 1;
-    poolColdKeyPathStr = (char *) ui_mem_alloc(poolColdKeyPathStrSize);
+    poolColdKeyPathStr = (char *) ui_mem_alloc(MAX_BIP44_PATH_STRING_LENGTH + 2);
     if (poolColdKeyPathStr == NULL) {
         TRACE("Failed to allocate poolColdKeyPathStr");
         opcert_buffer_cleanup();
         return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
-    explicit_bzero(poolColdKeyPathStr, poolColdKeyPathStrSize);
     bool poolPathFormatted = format_bip44_path(&opcert->poolColdKeyPath,
                                                poolColdKeyPathStr,
-                                               poolColdKeyPathStrSize);
+                                               MAX_BIP44_PATH_STRING_LENGTH + 2);
     ASSERT(poolPathFormatted);
-    ASSERT(strlen(poolColdKeyPathStr) + 1 < poolColdKeyPathStrSize);
+    LEDGER_ASSERT(strlen(poolColdKeyPathStr) <= MAX_BIP44_PATH_STRING_LENGTH, "Pool cold key path ui string buffer too short");
 
     // Allocate and fill pool ID (key hash)
-    poolKeyHashStr = (char *) ui_mem_alloc(MAX_BECH32_STRING_LENGTH);
+    poolKeyHashStr = (char *) ui_mem_alloc(MAX_BECH32_STRING_LENGTH + 2);
     if (poolKeyHashStr == NULL) {
         TRACE("Failed to allocate poolKeyHashStr");
         opcert_buffer_cleanup();
@@ -133,12 +131,12 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
                                             poolKeyHash,
                                             SIZEOF(poolKeyHash),
                                             poolKeyHashStr,
-                                            MAX_BECH32_STRING_LENGTH);
+                                            MAX_BECH32_STRING_LENGTH + 2);
     ASSERT(pool_key_formatted);
-    ASSERT(strlen(poolKeyHashStr) + 1 < MAX_BECH32_STRING_LENGTH);
+    LEDGER_ASSERT(strlen(poolKeyHashStr) <= MAX_BECH32_STRING_LENGTH, "Pool key hash ui string buffer too short");
 
     // Allocate and fill KES public key
-    kesKeyStr = (char *) ui_mem_alloc(MAX_BECH32_STRING_LENGTH);
+    kesKeyStr = (char *) ui_mem_alloc(MAX_BECH32_STRING_LENGTH + 2);
     if (kesKeyStr == NULL) {
         TRACE("Failed to allocate kesKeyStr");
         opcert_buffer_cleanup();
@@ -148,29 +146,31 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
                                            opcert->kesPublicKey,
                                            KES_PUBLIC_KEY_LENGTH,
                                            kesKeyStr,
-                                           MAX_BECH32_STRING_LENGTH);
+                                           MAX_BECH32_STRING_LENGTH + 2);
     ASSERT(kes_key_formatted);
-    ASSERT(strlen(kesKeyStr) + 1 < MAX_BECH32_STRING_LENGTH);
+    LEDGER_ASSERT(strlen(kesKeyStr) <= MAX_BECH32_STRING_LENGTH, "KES key ui string buffer too short");
 
     // Allocate and fill KES period
-    kesPeriodStr = (char *) ui_mem_alloc(MAX_UINT64_STRING_LENGTH);
+    kesPeriodStr = (char *) ui_mem_alloc(MAX_UINT64_STRING_LENGTH + 2);
     if (kesPeriodStr == NULL) {
         TRACE("Failed to allocate kesPeriodStr");
         opcert_buffer_cleanup();
         return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
-    bool format_ok = format_u64(kesPeriodStr, MAX_UINT64_STRING_LENGTH, opcert->kesPeriod);
+    bool format_ok = format_u64(kesPeriodStr, MAX_UINT64_STRING_LENGTH + 2, opcert->kesPeriod);
     LEDGER_ASSERT(format_ok, "Failed to format KES period");
+    LEDGER_ASSERT(strlen(kesPeriodStr) <= MAX_UINT64_STRING_LENGTH, "KES period ui string buffer too short");
 
     // Allocate and fill issue counter
-    issueCounterStr = (char *) ui_mem_alloc(MAX_UINT64_STRING_LENGTH);
+    issueCounterStr = (char *) ui_mem_alloc(MAX_UINT64_STRING_LENGTH + 2);
     if (issueCounterStr == NULL) {
         TRACE("Failed to allocate issueCounterStr");
         opcert_buffer_cleanup();
         return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
-    format_ok = format_u64(issueCounterStr, MAX_UINT64_STRING_LENGTH, opcert->issueCounter);
+    format_ok = format_u64(issueCounterStr, MAX_UINT64_STRING_LENGTH + 2, opcert->issueCounter);
     LEDGER_ASSERT(format_ok, "Failed to format issue counter");
+    LEDGER_ASSERT(strlen(issueCounterStr) <= MAX_UINT64_STRING_LENGTH, "Issue counter ui string buffer too short");
 
     // Setup data to display
     if (!ui_pairs_init(5)) {

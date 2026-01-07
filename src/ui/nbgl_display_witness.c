@@ -72,8 +72,7 @@ int ui_display_witness(const bip44_path_t* witnessPath,
 
     // Allocate display buffer for witness path using UI tracking system
     // This ensures automatic cleanup when the user responds or on error
-    const size_t witnessPathStrSize = MAX_BIP44_PATH_STRING_LENGTH + 1;
-    char *witnessPathStr = (char *) ui_mem_alloc(witnessPathStrSize);
+    char *witnessPathStr = (char *) ui_mem_alloc(MAX_BIP44_PATH_STRING_LENGTH + 2);
     if (witnessPathStr == NULL) {
         TRACE("Failed to allocate witness path string");
         ui_cleanup_tracked_allocations();
@@ -92,10 +91,9 @@ int ui_display_witness(const bip44_path_t* witnessPath,
     TRACE("isUnusual: %d", isUnusual);
 
     // Format the witness path as a string
-    explicit_bzero(witnessPathStr, witnessPathStrSize);
-    bool formatted = format_bip44_path(witnessPath, witnessPathStr, witnessPathStrSize);
-    ASSERT(formatted);
-    ASSERT(strlen(witnessPathStr) + 1 < witnessPathStrSize);
+    bool formatted = format_bip44_path(witnessPath, witnessPathStr, MAX_BIP44_PATH_STRING_LENGTH + 2);
+    LEDGER_ASSERT(formatted, "Unable to format witness path");
+    LEDGER_ASSERT(strlen(witnessPathStr) <= MAX_BIP44_PATH_STRING_LENGTH, "Witness path ui string buffer too short");
 
     if (isUnusual) {
         // A mild warning about unusual path

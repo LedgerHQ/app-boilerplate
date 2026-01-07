@@ -81,7 +81,7 @@ uint16_t ui_pairs_get_count(void) {
     return g_next_pair_index;
 }
 
-bool ui_pairs_add_static_label(const char* label, char* tmp_buf) {
+bool ui_pairs_add_static_label_impl(const char* label, char* tmp_buf, bool shrink) {
     LEDGER_ASSERT(label != NULL, "NULL label");
     LEDGER_ASSERT(tmp_buf != NULL, "NULL buffer");
 
@@ -97,21 +97,29 @@ bool ui_pairs_add_static_label(const char* label, char* tmp_buf) {
         return false;
     }
 
-    size_t len = strlen(tmp_buf);
-    char *shrinked = (char *) ui_mem_alloc(len + 1);
-    if (shrinked == NULL) {
-        TRACE("Failed to allocate shrunk string");
+    char *value_ptr = tmp_buf;
+
+    if (shrink) {
+        size_t len = strlen(tmp_buf);
+        char *shrinked = (char *) ui_mem_alloc(len + 1);
+        if (shrinked == NULL) {
+            TRACE("Failed to allocate shrunk string");
+            app_mem_free(tmp_buf);
+            return false;
+        }
+        memcpy(shrinked, tmp_buf, len + 1);
         app_mem_free(tmp_buf);
-        return false;
+        value_ptr = shrinked;
     }
 
-    memcpy(shrinked, tmp_buf, len + 1);
-    app_mem_free(tmp_buf);
-
     g_pairs[g_next_pair_index].item = label;
-    g_pairs[g_next_pair_index].value = shrinked;
+    g_pairs[g_next_pair_index].value = value_ptr;
     g_next_pair_index++;
     return true;
+}
+
+bool ui_pairs_add_static_label(const char* label, char* tmp_buf) {
+    return ui_pairs_add_static_label_impl(label, tmp_buf, true);
 }
 
 /**

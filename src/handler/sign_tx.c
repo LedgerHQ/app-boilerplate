@@ -48,20 +48,19 @@
 #include "ui/menu.h"
 #include "transaction/tx_prepare.h"
 
-#define DENIED_WITNESS_STATUS_PREFIX "Denied witness:\n"
+#define DENIED_WITNESS_STATUS_PREFIX "Denied witness: "
 #define DENIED_WITNESS_STATUS_LENGTH \
-    (sizeof(DENIED_WITNESS_STATUS_PREFIX) - 1 + MAX_BIP44_PATH_STRING_LENGTH + 1)
+    (sizeof(DENIED_WITNESS_STATUS_PREFIX) - 1 + MAX_BIP44_PATH_STRING_LENGTH)
 
 static void display_denied_witness_status(const bip44_path_t* path) {
     ASSERT(path != NULL);
-    char path_str[MAX_BIP44_PATH_STRING_LENGTH + 1] = {0};
+    char path_str[MAX_BIP44_PATH_STRING_LENGTH + 2] = {0};
     bool formatted = format_bip44_path(path, path_str, sizeof(path_str));
     LEDGER_ASSERT(formatted, "Unable to format witness path");
-    const char* witness_text = path_str;
-    char status_msg[DENIED_WITNESS_STATUS_LENGTH] = {0};
-    snprintf(status_msg, sizeof(status_msg), DENIED_WITNESS_STATUS_PREFIX "%s", witness_text);
-    size_t status_len = strnlen(status_msg, sizeof(status_msg));
-    ASSERT(status_len < sizeof(status_msg));
+    LEDGER_ASSERT(strlen(path_str) <= MAX_BIP44_PATH_STRING_LENGTH, "Witness path ui string buffer too short");
+    char status_msg[DENIED_WITNESS_STATUS_LENGTH + 2] = {0};
+    snprintf(status_msg, sizeof(status_msg), DENIED_WITNESS_STATUS_PREFIX "%s", path_str);
+    LEDGER_ASSERT(strlen(status_msg) <= DENIED_WITNESS_STATUS_LENGTH, "Denied witness status message ui string buffer too short");
     TRACE("Calling nbgl_useCaseStatus(\"%s\", false, ui_menu_main)", status_msg);
     nbgl_useCaseStatus(status_msg, false, ui_menu_main);
 }
