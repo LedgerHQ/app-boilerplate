@@ -392,30 +392,37 @@ int addRewardAccountUIPairs(uint8_t networkId, const ext_credential_t *credentia
 
     char *value_tmp = NULL;
 
-    // TODO there should be a switch statement
-    if (credential->type == EXT_CREDENTIAL_KEY_PATH) {
-        char path_buf[MAX_BIP44_PATH_STRING_LENGTH + 2];
-        bool cred_formatted = format_bip44_path(&credential->keyPath, path_buf, sizeof(path_buf));
-        LEDGER_ASSERT(cred_formatted, "Unable to format credential path");
-        LEDGER_ASSERT(strlen(path_buf) <= MAX_BIP44_PATH_STRING_LENGTH, "Credential path buffer too short");
+    switch (credential->type) {
+        case EXT_CREDENTIAL_KEY_PATH: {
+            char path_buf[MAX_BIP44_PATH_STRING_LENGTH + 2];
+            bool cred_formatted = format_bip44_path(&credential->keyPath, path_buf, sizeof(path_buf));
+            LEDGER_ASSERT(cred_formatted, "Unable to format credential path");
+            LEDGER_ASSERT(strlen(path_buf) <= MAX_BIP44_PATH_STRING_LENGTH, "Credential path buffer too short");
 
-        value_tmp = (char *) app_mem_alloc(MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 4);
-        if (value_tmp == NULL) {
-            return SWO_INSUFFICIENT_MEMORY;
+            value_tmp = (char *) app_mem_alloc(MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 4);
+            if (value_tmp == NULL) {
+                return SWO_INSUFFICIENT_MEMORY;
+            }
+            snprintf(value_tmp,
+                    MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 4,
+                    "%s %s",
+                    path_buf,
+                    reward_addr_buf);
+            LEDGER_ASSERT(strlen(value_tmp) <= MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 1, "Address path ui string buffer too short");
+            break;
         }
-        snprintf(value_tmp,
-                MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 4,
-                "%s %s",
-                path_buf,
-                reward_addr_buf);
-        LEDGER_ASSERT(strlen(value_tmp) <= MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 1, "Address path ui string buffer too short");
-    } else {
-        value_tmp = (char *) app_mem_alloc(MAX_HUMAN_ADDRESS_LENGTH + 2);
-        if (value_tmp == NULL) {
-            return SWO_INSUFFICIENT_MEMORY;
+        case EXT_CREDENTIAL_KEY_HASH:
+        case EXT_CREDENTIAL_SCRIPT_HASH: {
+            value_tmp = (char *) app_mem_alloc(MAX_HUMAN_ADDRESS_LENGTH + 2);
+            if (value_tmp == NULL) {
+                return SWO_INSUFFICIENT_MEMORY;
+            }
+            snprintf(value_tmp, MAX_HUMAN_ADDRESS_LENGTH + 2, "%s", reward_addr_buf);
+            LEDGER_ASSERT(strlen(value_tmp) <= MAX_HUMAN_ADDRESS_LENGTH, "Reward address ui string buffer too short");
+            break;
         }
-        snprintf(value_tmp, MAX_HUMAN_ADDRESS_LENGTH + 2, "%s", reward_addr_buf);
-        LEDGER_ASSERT(strlen(value_tmp) <= MAX_HUMAN_ADDRESS_LENGTH, "Reward address ui string buffer too short");
+        default:
+            LEDGER_ASSERT(false, "Unknown credential type");
     }
 
     return ui_pairs_add_static_label(UI_STATIC_LABEL("Reward account"), value_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;

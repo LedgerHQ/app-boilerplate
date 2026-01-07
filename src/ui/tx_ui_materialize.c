@@ -1541,15 +1541,21 @@ static int ui_strings_required_signers(transaction_t *tx) {
                 char *value_tmp = (char *) app_mem_alloc(MAX(MAX_BECH32_STRING_LENGTH, MAX_BIP44_PATH_STRING_LENGTH) + 2);
                 if (value_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
 
-                // TODO should be switch
-                if (item->required_signer_data.type == REQUIRED_SIGNER_WITH_HASH) {
-                     bool encoded = format_bech32("vkh", item->required_signer_data.keyHash, ADDRESS_KEY_HASH_LENGTH, value_tmp, MAX_BECH32_STRING_LENGTH + 2);
-                     LEDGER_ASSERT(encoded, "Unable to format required signer key hash");
-                     LEDGER_ASSERT(strlen(value_tmp) <= MAX_BECH32_STRING_LENGTH, "Required signer key hash ui string buffer too short");
-                } else {
-                     bool formatted = format_bip44_path(&item->required_signer_data.keyPath, value_tmp, MAX_BIP44_PATH_STRING_LENGTH + 2);
-                     LEDGER_ASSERT(formatted, "Unable to format required signer path");
-                     LEDGER_ASSERT(strlen(value_tmp) <= MAX_BIP44_PATH_STRING_LENGTH, "Required signer path ui string buffer too short");
+                switch (item->required_signer_data.type) {
+                    case REQUIRED_SIGNER_WITH_HASH: {
+                        bool encoded = format_bech32("vkh", item->required_signer_data.keyHash, ADDRESS_KEY_HASH_LENGTH, value_tmp, MAX_BECH32_STRING_LENGTH + 2);
+                        LEDGER_ASSERT(encoded, "Unable to format required signer key hash");
+                        LEDGER_ASSERT(strlen(value_tmp) <= MAX_BECH32_STRING_LENGTH, "Required signer key hash ui string buffer too short");
+                        break;
+                    }
+                    case REQUIRED_SIGNER_WITH_PATH: {
+                        bool formatted = format_bip44_path(&item->required_signer_data.keyPath, value_tmp, MAX_BIP44_PATH_STRING_LENGTH + 2);
+                        LEDGER_ASSERT(formatted, "Unable to format required signer path");
+                        LEDGER_ASSERT(strlen(value_tmp) <= MAX_BIP44_PATH_STRING_LENGTH, "Required signer path ui string buffer too short");
+                        break;
+                    }
+                    default:
+                        LEDGER_ASSERT(false, "Unknown required signer type");
                 }
 
                 int status = ui_pairs_add_static_label(UI_STATIC_LABEL("Required signer"), value_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;

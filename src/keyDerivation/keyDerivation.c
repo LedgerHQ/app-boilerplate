@@ -4,7 +4,6 @@
 #include "keyDerivation.h"
 #include "cbor.h"
 #include "hash.h"
-#include "base58.h"
 #include "utils.h"
 #include "securityPolicy.h"
 #include "crypto.h"

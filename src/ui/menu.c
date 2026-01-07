@@ -71,21 +71,25 @@ static void controls_callback(int token, uint8_t index, int page) {
     initSettingPage = page;
 
     uint8_t switch_value;
-    if (token == EXPERT_MODE_TOKEN) {
-        // toggle the switch value
-        switch_value = flip_bool_setting(N_storage.expert_mode_enabled);
-        switches[EXPERT_MODE_ID].initState = (nbgl_state_t) switch_value;
-        // store the new setting value in NVM
-        nvm_write((void*) &N_storage.expert_mode_enabled, &switch_value, 1);
-    } else if (token == SILENT_PUBKEY_EXPORT_TOKEN) {
-        // toggle the switch value
-        switch_value = flip_bool_setting(N_storage.silent_pubkey_export_enabled);
-        switches[SILENT_PUBKEY_EXPORT_ID].initState = (nbgl_state_t) switch_value;
-        // store the new setting value in NVM
-        nvm_write((void*) &N_storage.silent_pubkey_export_enabled, &switch_value, 1);
-    } else {
-        // TODO
-        ASSERT(false);
+    switch (token) {
+        case EXPERT_MODE_TOKEN:
+            // toggle the switch value
+            switch_value = flip_bool_setting(N_storage.expert_mode_enabled);
+            switches[EXPERT_MODE_ID].initState = (nbgl_state_t) switch_value;
+            // store the new setting value in NVM
+            nvm_write((void*) &N_storage.expert_mode_enabled, &switch_value, 1);
+            break;
+
+        case SILENT_PUBKEY_EXPORT_TOKEN:
+            // toggle the switch value
+            switch_value = flip_bool_setting(N_storage.silent_pubkey_export_enabled);
+            switches[SILENT_PUBKEY_EXPORT_ID].initState = (nbgl_state_t) switch_value;
+            // store the new setting value in NVM
+            nvm_write((void*) &N_storage.silent_pubkey_export_enabled, &switch_value, 1);
+            break;
+
+        default:
+            LEDGER_ASSERT(false, "Unknown menu token");
     }
 }
 
