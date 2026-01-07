@@ -336,8 +336,8 @@ static parser_status_e _parse_anchor(buffer_t *buf, anchor_t *anchor) {
     anchor->urlLength = url_len_byte;
     TRACE("Anchor URL length: %u", anchor->urlLength);
 
-    if (anchor->urlLength > ANCHOR_URL_LENGTH_MAX) {
-        TRACE("Anchor URL length exceeds maximum: %u > %u", anchor->urlLength, ANCHOR_URL_LENGTH_MAX);
+    if (anchor->urlLength > MAX_ANCHOR_URL_LENGTH) {
+        TRACE("Anchor URL length exceeds maximum: %u > %u", anchor->urlLength, MAX_ANCHOR_URL_LENGTH);
         return CERTIFICATES_PARSING_ERROR;
     }
 
@@ -703,8 +703,8 @@ static parser_status_e _parse_pool_metadata(buffer_t *buf, pool_metadata_t *meta
     }
     metadata->urlSize = url_len;
 
-    if (url_len > ANCHOR_URL_LENGTH_MAX) {
-        TRACE("Metadata URL length exceeds maximum: %u > %u", url_len, ANCHOR_URL_LENGTH_MAX);
+    if (url_len > MAX_ANCHOR_URL_LENGTH) {
+        TRACE("Metadata URL length exceeds maximum: %u > %u", url_len, MAX_ANCHOR_URL_LENGTH);
         return CERTIFICATES_PARSING_ERROR;
     }
 

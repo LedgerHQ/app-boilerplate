@@ -64,8 +64,6 @@ static char *ui_alloc_temp(size_t size) {
     return tmp;
 }
 
-#define ui_add_pair_or_fail(label, tmp_buf) \
-    (ui_pairs_add_static_label(UI_STATIC_LABEL(label), (tmp_buf)) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY)
 
 static int format_input_with_index(char *out, size_t out_size, const tx_input_t *input) {
     LEDGER_ASSERT(out != NULL, "NULL output buffer");
@@ -76,10 +74,8 @@ static int format_input_with_index(char *out, size_t out_size, const tx_input_t 
     if (hash_len + 1 >= out_size) {
         return SWO_INSUFFICIENT_MEMORY;
     }
-    int written = snprintf(out + hash_len, out_size - hash_len, " / %u", input->index);
-    if (written < 0 || (size_t)written >= out_size - hash_len) {
-        return SWO_INSUFFICIENT_MEMORY;
-    }
+    snprintf(out + hash_len, out_size - hash_len, " / %u", input->index);
+    LEDGER_ASSERT(strlen(out) < out_size, "Input display buffer overflow");
     return SWO_SUCCESS;
 }
 
@@ -111,7 +107,7 @@ static int ui_materialize_token_groups(asset_group_t* assetGroups,
                     fingerprint_tmp,
                     MAX_TOKEN_FINGERPRINT_STRING_LENGTH + 1);
                 LEDGER_ASSERT(fingerprint_len > 0, "Fingerprint derivation failed");
-                int status = ui_add_pair_or_fail("Asset fingerprint", fingerprint_tmp);
+                int status = ui_pairs_add_static_label(UI_STATIC_LABEL("Asset fingerprint"), fingerprint_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                 if (status != SWO_SUCCESS) {
                     return status;
                 }
@@ -129,7 +125,7 @@ static int ui_materialize_token_groups(asset_group_t* assetGroups,
                     token_amount_tmp,
                     MAX_TOKEN_AMOUNT_OUTPUT_STRING_LENGTH + 1);
                 ASSERT(token_amount_formatted);
-                status = ui_add_pair_or_fail("Token amount", token_amount_tmp);
+                status = ui_pairs_add_static_label(UI_STATIC_LABEL("Token amount"), token_amount_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                 if (status != SWO_SUCCESS) {
                     return status;
                 }
@@ -157,7 +153,7 @@ static int ui_strings_inputs(transaction_t *tx) {
             if (input_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
             int status = format_input_with_index(input_tmp, MAX_INPUT_DISPLAY_STRING_LENGTH + 1, &input_item->input_data);
             if (status != SWO_SUCCESS) return status;
-            status = ui_add_pair_or_fail("Input", input_tmp);
+            status = ui_pairs_add_static_label(UI_STATIC_LABEL("Input"), input_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
             if (status != SWO_SUCCESS) return status;
         }
 
@@ -220,12 +216,13 @@ static int ui_strings_outputs(transaction_t *tx) {
                 break;
             case POLICY_SHOW: {
                 TRACE("Materializing output #%u", output_num);
-                char *output_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH + 1);
+                char *output_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH + 2);
                 if (output_num_tmp == NULL) {
                     return SWO_INSUFFICIENT_MEMORY;
                 }
-                snprintf(output_num_tmp, MAX_UINT64_STRING_LENGTH + 1, "#%d", output_num);
-                int status = ui_add_pair_or_fail("Output", output_num_tmp);
+                snprintf(output_num_tmp, MAX_UINT64_STRING_LENGTH + 2, "#%d", output_num);
+                LEDGER_ASSERT(strlen(output_num_tmp) <= MAX_UINT64_STRING_LENGTH, "Output number ui string buffer too short");
+                int status = ui_pairs_add_static_label(UI_STATIC_LABEL("Output"), output_num_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                 if (status != SWO_SUCCESS) {
                     return status;
                 }
@@ -264,7 +261,7 @@ static int ui_strings_outputs(transaction_t *tx) {
                 LEDGER_ASSERT(address_len > 0, "Address length zero");
                 LEDGER_ASSERT(address_len < MAX_HUMAN_ADDRESS_LENGTH + 1, "Address truncated");
 
-                status = ui_add_pair_or_fail("Address", address_tmp);
+                status = ui_pairs_add_static_label(UI_STATIC_LABEL("Address"), address_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                 if (status != SWO_SUCCESS) {
                     return status;
                 }
@@ -276,47 +273,60 @@ static int ui_strings_outputs(transaction_t *tx) {
                                                             amount_tmp,
                                                             MAX_ADA_AMOUNT_STRING_LENGTH + 1);
                 ASSERT(amount_formatted);
-                status = ui_add_pair_or_fail("Amount", amount_tmp);
+                status = ui_pairs_add_static_label(UI_STATIC_LABEL("Amount"), amount_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                 if (status != SWO_SUCCESS) {
                     return status;
                 }
                 if (output_item->output_data.datum.hasDatum && datum_policy == POLICY_SHOW) {
                     // TODO: Inline datum size is not bounded by protocol; handle large values more robustly.
-                    char *datum_value_tmp = ui_alloc_temp(MAX_DATUM_HASH_STRING_LENGTH + 1);
-                    if (datum_value_tmp == NULL) {
-                        return SWO_INSUFFICIENT_MEMORY;
-                    }
                     if (output_item->output_data.datum.type == DATUM_HASH) {
+                        char *datum_value_tmp = ui_alloc_temp(MAX_DATUM_HASH_STRING_LENGTH + 2);
+                        if (datum_value_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
                         int hex_status = bytes_to_lowercase_hex(
                             datum_value_tmp,
-                            MAX_DATUM_HASH_STRING_LENGTH + 1,
+                            MAX_DATUM_HASH_STRING_LENGTH + 2,
                             output_item->output_data.datum.hash,
                             OUTPUT_DATUM_HASH_LENGTH);
                         LEDGER_ASSERT(hex_status == 0, "Datum hash formatting failed");
-                        status = ui_add_pair_or_fail("Datum hash", datum_value_tmp);
+                        LEDGER_ASSERT(strlen(datum_value_tmp) <= MAX_DATUM_HASH_STRING_LENGTH, "Datum ui string buffer too short");
+                        status = ui_pairs_add_static_label(UI_STATIC_LABEL("Datum hash"), datum_value_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
                     } else {
+                        // TODO not enough space for inline datum, how big a buffer to use here?
+                        // TODO these unlimited items in UI should perhaps be detected upfront, we can go over the whole tx and check if some individual field
+                        // TODO is too big for UI and run it via some streaming UI
+                        const int max_len = 100;
+                        char *datum_value_tmp = ui_alloc_temp(max_len + 2);
+                        if (datum_value_tmp == NULL) {
+                            return SWO_INSUFFICIENT_MEMORY;
+                        }
                         uint16_t inline_size = output_item->output_data.datum.inline_data.size;
-                        int written = snprintf(datum_value_tmp, MAX_DATUM_HASH_STRING_LENGTH + 1, "Inline datum (%u bytes)", inline_size);
-                        if (written < 0 || (size_t)written >= MAX_DATUM_HASH_STRING_LENGTH + 1) return SWO_INSUFFICIENT_MEMORY;
+                        snprintf(datum_value_tmp, max_len + 2, "Inline datum (%u bytes)", inline_size);
+                        LEDGER_ASSERT(strlen(datum_value_tmp) <= MAX_DATUM_HASH_STRING_LENGTH, "Datum ui string buffer too short");
 
-                        status = ui_add_pair_or_fail("Inline datum", datum_value_tmp);
-                    }
-                    if (status != SWO_SUCCESS) {
-                        return status;
+                        status = ui_pairs_add_static_label(UI_STATIC_LABEL("Inline datum"), datum_value_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
+                        if (status != SWO_SUCCESS) {
+                            return status;
+                        }
                     }
                 }
 
                 if (output_item->output_data.hasRefScript && ref_script_policy == POLICY_SHOW) {
                     // TODO: Reference script size is not bounded by protocol; handle large values more robustly.
-                    char *refscript_tmp = ui_alloc_temp(MAX_REFERENCE_SCRIPT_STRING_LENGTH + 1);
+                    char *refscript_tmp = ui_alloc_temp(MAX_REFERENCE_SCRIPT_STRING_LENGTH + 2);
                     if (refscript_tmp == NULL) {
                         return SWO_INSUFFICIENT_MEMORY;
                     }
                     snprintf(refscript_tmp,
-                             MAX_REFERENCE_SCRIPT_STRING_LENGTH + 1,
+                             MAX_REFERENCE_SCRIPT_STRING_LENGTH + 2,
                              "Reference script (%u bytes)",
                              output_item->output_data.refScript.size);
-                    status = ui_add_pair_or_fail("Reference script", refscript_tmp);
+                    LEDGER_ASSERT(strlen(refscript_tmp) <= MAX_REFERENCE_SCRIPT_STRING_LENGTH, "Reference script ui string buffer too short");
+                    status = ui_pairs_add_static_label(UI_STATIC_LABEL("Reference script"), refscript_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                     if (status != SWO_SUCCESS) {
                         return status;
                     }
@@ -370,7 +380,7 @@ static int ui_strings_fee(transaction_t *tx) {
     }
     bool fee_formatted = str_formatAdaAmount(tx->fee, fee_tmp, MAX_ADA_AMOUNT_STRING_LENGTH + 1);
     ASSERT(fee_formatted);
-    int status = ui_add_pair_or_fail("Fee", fee_tmp);
+    int status = ui_pairs_add_static_label(UI_STATIC_LABEL("Fee"), fee_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
     if (status != SWO_SUCCESS) {
         return status;
     }
@@ -398,7 +408,7 @@ static int ui_strings_ttl(transaction_t *tx) {
                                                             ttl_tmp,
                                                             MAX_VALIDITY_BOUNDARY_STRING_LENGTH + 1);
             ASSERT(ttl_formatted);
-            int status = ui_add_pair_or_fail("TTL", ttl_tmp);
+            int status = ui_pairs_add_static_label(UI_STATIC_LABEL("TTL"), ttl_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
             if (status != SWO_SUCCESS) {
                 return status;
             }
@@ -536,7 +546,7 @@ static int ui_strings_certificate_pool_retirement(const certificate_data_t* cert
     bool epoch_formatted = format_u64(epoch_tmp, MAX_UINT64_STRING_LENGTH + 1,
                                         certificate_data->retirementEpoch);
     LEDGER_ASSERT(epoch_formatted, "Failed to format retirement epoch");
-    status = ui_add_pair_or_fail("Retirement epoch", epoch_tmp);
+    status = ui_pairs_add_static_label(UI_STATIC_LABEL("Retirement epoch"), epoch_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
     if (status != SWO_SUCCESS) {
         return status;
     }
@@ -692,7 +702,7 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
                             vrf_hash_tmp,
                             MAX_BECH32_STRING_LENGTH + 1);
         LEDGER_ASSERT(encoded, "Unable to format VRF key hash");
-        status = ui_add_pair_or_fail("VRF key hash", vrf_hash_tmp);
+        status = ui_pairs_add_static_label(UI_STATIC_LABEL("VRF key hash"), vrf_hash_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
         if (status != SWO_SUCCESS) {
             return status;
         }
@@ -708,7 +718,7 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
         pledge_tmp,
         MAX_ADA_AMOUNT_STRING_LENGTH + 1);
     ASSERT(pledge_formatted);
-    status = ui_add_pair_or_fail("Pledge", pledge_tmp);
+    status = ui_pairs_add_static_label(UI_STATIC_LABEL("Pledge"), pledge_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
     if (status != SWO_SUCCESS) {
         return status;
     }
@@ -723,14 +733,14 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
         cost_tmp,
         MAX_ADA_AMOUNT_STRING_LENGTH + 1);
     ASSERT(cost_formatted);
-    status = ui_add_pair_or_fail("Cost", cost_tmp);
+    status = ui_pairs_add_static_label(UI_STATIC_LABEL("Cost"), cost_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
     if (status != SWO_SUCCESS) {
         return status;
     }
 
     // Display profit margin as percentage
     // Similar to old app: convert to percentage (0-10000 basis points)
-    char *margin_tmp = ui_alloc_temp(20 + 1);
+    char *margin_tmp = ui_alloc_temp(MAX_PROFIT_MARGIN_STRING_LENGTH + 2);
     if (margin_tmp == NULL) {
         return SWO_INSUFFICIENT_MEMORY;
     }
@@ -738,8 +748,9 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
     uint64_t margin_den = certificate_data->poolRegistration.marginDenominator;
     uint64_t margin_percentage = (10000 * margin_num + (margin_den / 2)) / margin_den;
     const unsigned int percentage = (unsigned int) margin_percentage;
-    snprintf(margin_tmp, 20 + 1, "%u.%u %%", percentage / 100, percentage % 100);
-    status = ui_add_pair_or_fail("Profit margin", margin_tmp);
+    snprintf(margin_tmp, MAX_PROFIT_MARGIN_STRING_LENGTH + 2, "%u.%u %%", percentage / 100, percentage % 100);
+    LEDGER_ASSERT(strlen(margin_tmp) <= MAX_PROFIT_MARGIN_STRING_LENGTH, "Profit margin ui string buffer too short");
+    status = ui_pairs_add_static_label(UI_STATIC_LABEL("Profit margin"), margin_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
     if (status != SWO_SUCCESS) {
         return status;
     }
@@ -759,13 +770,13 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
                 reward_account = ui_alloc_temp(strlen("key path") + 1);
                 if (reward_account == NULL) return SWO_INSUFFICIENT_MEMORY;
                 memcpy(reward_account, "key path", strlen("key path") + 1);
-                status = ui_add_pair_or_fail("Reward account", reward_account);
+                status = ui_pairs_add_static_label(UI_STATIC_LABEL("Reward account"), reward_account) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                 break;
             case KEY_REFERENCE_HASH:
                 reward_account = ui_alloc_temp(strlen("key hash") + 1);
                 if (reward_account == NULL) return SWO_INSUFFICIENT_MEMORY;
                 memcpy(reward_account, "key hash", strlen("key hash") + 1);
-                status = ui_add_pair_or_fail("Reward account", reward_account);
+                status = ui_pairs_add_static_label(UI_STATIC_LABEL("Reward account"), reward_account) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                 break;
             default:
                 LEDGER_ASSERT(false, "Invalid reward account type");
@@ -831,7 +842,7 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
             return SWO_INSUFFICIENT_MEMORY;
         }
         strncpy(owners_none, owners_value, owners_buf_size);
-        status = ui_add_pair_or_fail("Pool owners", owners_none);
+        status = ui_pairs_add_static_label(UI_STATIC_LABEL("Pool owners"), owners_none) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
         if (status != SWO_SUCCESS) {
             return status;
         }
@@ -857,11 +868,14 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
             case POLICY_HIDE:
                 break;
             case POLICY_SHOW: {
-                char *relay_value = ui_alloc_temp(1);
-                if (relay_value == NULL) return SWO_INSUFFICIENT_MEMORY;
-                relay_value[0] = '\0';
-
-                status = ui_add_pair_or_fail("Relay", relay_value);
+                // Display relay index
+                char *relay_index_str = ui_alloc_temp(MAX_RELAY_INDEX_STRING_LENGTH + 2);
+                if (relay_index_str == NULL) {
+                    return SWO_INSUFFICIENT_MEMORY;
+                }
+                snprintf(relay_index_str, MAX_RELAY_INDEX_STRING_LENGTH + 2, "#%u", relay_idx + 1);
+                LEDGER_ASSERT(strlen(relay_index_str) <= MAX_RELAY_INDEX_STRING_LENGTH, "Relay index ui string buffer too short");
+                status = ui_pairs_add_static_label(UI_STATIC_LABEL("Relay"), relay_index_str) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                 if (status != SWO_SUCCESS) {
                     return status;
                 }
@@ -871,12 +885,11 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
                     case RELAY_SINGLE_HOST_IP: {
                         // Display IPv4 if present
                         if (!relay->ipv4.isNull) {
-                            char *ipv4_str = ui_alloc_temp(IPV4_STR_SIZE_MAX + 1);
+                            char *ipv4_str = ui_alloc_temp(MAX_IPV4_STR_LENGTH + 2);
                             if (ipv4_str == NULL) return SWO_INSUFFICIENT_MEMORY;
-                            snprintf(ipv4_str, IPV4_STR_SIZE_MAX + 1, "%u.%u.%u.%u",
-                                    relay->ipv4.ip[0], relay->ipv4.ip[1],
-                                    relay->ipv4.ip[2], relay->ipv4.ip[3]);
-                            status = ui_add_pair_or_fail("  IPv4", ipv4_str);
+                            inet_ntop4(relay->ipv4.ip, ipv4_str, MAX_IPV4_STR_LENGTH + 2);
+                            LEDGER_ASSERT(strlen(ipv4_str) <= MAX_IPV4_STR_LENGTH, "IPv4 buffer overflow");
+                            status = ui_pairs_add_static_label(UI_STATIC_LABEL("IPv4"), ipv4_str) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                             if (status != SWO_SUCCESS) {
                                 return status;
                             }
@@ -884,20 +897,11 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
 
                         // Display IPv6 if present
                         if (!relay->ipv6.isNull) {
-                            // Format IPv6 address
-                            char *ipv6_str = ui_alloc_temp(IPV6_STR_SIZE_MAX + 1);
+                            char *ipv6_str = ui_alloc_temp(MAX_IPV6_STR_LENGTH + 2);
                             if (ipv6_str == NULL) return SWO_INSUFFICIENT_MEMORY;
-                            snprintf(ipv6_str, IPV6_STR_SIZE_MAX + 1,
-                                    "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
-                                    relay->ipv6.ip[0], relay->ipv6.ip[1],
-                                    relay->ipv6.ip[2], relay->ipv6.ip[3],
-                                    relay->ipv6.ip[4], relay->ipv6.ip[5],
-                                    relay->ipv6.ip[6], relay->ipv6.ip[7],
-                                    relay->ipv6.ip[8], relay->ipv6.ip[9],
-                                    relay->ipv6.ip[10], relay->ipv6.ip[11],
-                                    relay->ipv6.ip[12], relay->ipv6.ip[13],
-                                    relay->ipv6.ip[14], relay->ipv6.ip[15]);
-                            status = ui_add_pair_or_fail("  IPv6", ipv6_str);
+                            inet_ntop6(relay->ipv6.ip, ipv6_str, MAX_IPV6_STR_LENGTH + 2);
+                            LEDGER_ASSERT(strlen(ipv6_str) <= MAX_IPV6_STR_LENGTH, "IPv6 buffer overflow");
+                            status = ui_pairs_add_static_label(UI_STATIC_LABEL("IPv6"), ipv6_str) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                             if (status != SWO_SUCCESS) {
                                 return status;
                             }
@@ -905,10 +909,11 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
 
                         // Display port if present
                         if (!relay->port.isNull) {
-                            char *port_str = ui_alloc_temp(10 + 1);
+                            char *port_str = ui_alloc_temp(MAX_UINT64_STRING_LENGTH + 2);
                             if (port_str == NULL) return SWO_INSUFFICIENT_MEMORY;
-                            snprintf(port_str, 10 + 1, "%u", relay->port.number);
-                            status = ui_add_pair_or_fail("  Port", port_str);
+                            snprintf(port_str, MAX_UINT64_STRING_LENGTH + 2, "%u", relay->port.number);
+                            LEDGER_ASSERT(strlen(port_str) <= MAX_UINT64_STRING_LENGTH, "Port ui string buffer too short");
+                            status = ui_pairs_add_static_label(UI_STATIC_LABEL("Port"), port_str) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                             if (status != SWO_SUCCESS) {
                                 return status;
                             }
@@ -918,11 +923,12 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
                     case RELAY_SINGLE_HOST_NAME: {
                         // Display DNS name
                         if (relay->dnsNameSize > 0) {
-                            char *dns_str = ui_alloc_temp(relay->dnsNameSize + 1);
+                            char *dns_str = ui_alloc_temp(relay->dnsNameSize + 2);
                             if (dns_str == NULL) return SWO_INSUFFICIENT_MEMORY;
                             memcpy(dns_str, relay->dnsName, relay->dnsNameSize);
                             dns_str[relay->dnsNameSize] = '\0';
-                            status = ui_add_pair_or_fail("  DNS name", dns_str);
+                            LEDGER_ASSERT(strlen(dns_str) == relay->dnsNameSize, "DNS name length mismatch");
+                            status = ui_pairs_add_static_label(UI_STATIC_LABEL("DNS name"), dns_str) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                             if (status != SWO_SUCCESS) {
                                 return status;
                             }
@@ -930,10 +936,11 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
 
                         // Display port if present
                         if (!relay->port.isNull) {
-                            char *port_str = ui_alloc_temp(10 + 1);
+                            char *port_str = ui_alloc_temp(MAX_UINT64_STRING_LENGTH + 2);
                             if (port_str == NULL) return SWO_INSUFFICIENT_MEMORY;
-                            snprintf(port_str, 10 + 1, "%u", relay->port.number);
-                            status = ui_add_pair_or_fail("  Port", port_str);
+                            snprintf(port_str, MAX_UINT64_STRING_LENGTH + 2, "%u", relay->port.number);
+                            LEDGER_ASSERT(strlen(port_str) <= MAX_UINT64_STRING_LENGTH, "Port ui string buffer too short");
+                            status = ui_pairs_add_static_label(UI_STATIC_LABEL("Port"), port_str) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                             if (status != SWO_SUCCESS) {
                                 return status;
                             }
@@ -943,11 +950,12 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
                     case RELAY_MULTIPLE_HOST_NAME: {
                         // Display DNS name (SRV record)
                         if (relay->dnsNameSize > 0) {
-                            char *dns_str = ui_alloc_temp(relay->dnsNameSize + 1);
+                            char *dns_str = ui_alloc_temp(relay->dnsNameSize + 2);
                             if (dns_str == NULL) return SWO_INSUFFICIENT_MEMORY;
                             memcpy(dns_str, relay->dnsName, relay->dnsNameSize);
                             dns_str[relay->dnsNameSize] = '\0';
-                            status = ui_add_pair_or_fail("  SRV DNS", dns_str);
+                            LEDGER_ASSERT(strlen(dns_str) == relay->dnsNameSize, "SRV DNS name length mismatch");
+                            status = ui_pairs_add_static_label(UI_STATIC_LABEL("SRV DNS"), dns_str) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                             if (status != SWO_SUCCESS) {
                                 return status;
                             }
@@ -980,7 +988,7 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
             return SWO_INSUFFICIENT_MEMORY;
         }
         strncpy(relays_none, relays_value, relays_buf_size);
-        status = ui_add_pair_or_fail("Pool relays", relays_none);
+        status = ui_pairs_add_static_label(UI_STATIC_LABEL("Pool relays"), relays_none) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
         if (status != SWO_SUCCESS) {
             return status;
         }
@@ -996,7 +1004,7 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
             char *metadata_none = ui_alloc_temp(strlen(none_str) + 1);
             if (metadata_none == NULL) return SWO_INSUFFICIENT_MEMORY;
             memcpy(metadata_none, none_str, strlen(none_str) + 1);
-            status = ui_add_pair_or_fail("Metadata", metadata_none);
+            status = ui_pairs_add_static_label(UI_STATIC_LABEL("Metadata"), metadata_none) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
             if (status != SWO_SUCCESS) {
                 return status;
             }
@@ -1014,7 +1022,7 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
                     certificate_data->poolRegistration.poolMetadata.url,
                     certificate_data->poolRegistration.poolMetadata.urlSize);
             metadata_url[certificate_data->poolRegistration.poolMetadata.urlSize] = '\0';
-            status = ui_add_pair_or_fail("Pool metadata url", metadata_url);
+            status = ui_pairs_add_static_label(UI_STATIC_LABEL("Pool metadata url"), metadata_url) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
             if (status != SWO_SUCCESS) {
                 return status;
             }
@@ -1027,7 +1035,7 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
                 certificate_data->poolRegistration.poolMetadata.hash,
                 POOL_METADATA_HASH_LENGTH);
             LEDGER_ASSERT(hex_status == 0, "Pool metadata hash formatting failed");
-            status = ui_add_pair_or_fail("Pool metadata hash", metadata_hash_tmp);
+            status = ui_pairs_add_static_label(UI_STATIC_LABEL("Pool metadata hash"), metadata_hash_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
             if (status != SWO_SUCCESS) {
                 return status;
             }
@@ -1125,12 +1133,13 @@ static int ui_strings_certificates(transaction_t *tx) {
                 break;
             case POLICY_SHOW: {
                 TRACE("Materializing certificate #%u type=%u", certificate_num, certificate_item->certificate_data.type);
-                char *cert_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH + 1);
+                char *cert_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH + 2);
                 if (cert_num_tmp == NULL) {
                     return SWO_INSUFFICIENT_MEMORY;
                 }
-                snprintf(cert_num_tmp, MAX_UINT64_STRING_LENGTH + 1, "#%d", certificate_num);
-                int status = ui_add_pair_or_fail("Certificate", cert_num_tmp);
+                snprintf(cert_num_tmp, MAX_UINT64_STRING_LENGTH + 2, "#%d", certificate_num);
+                LEDGER_ASSERT(strlen(cert_num_tmp) <= MAX_UINT64_STRING_LENGTH, "Certificate number ui string buffer too short");
+                int status = ui_pairs_add_static_label(UI_STATIC_LABEL("Certificate"), cert_num_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                 if (status != SWO_SUCCESS) {
                     return status;
                 }
@@ -1143,7 +1152,7 @@ static int ui_strings_certificates(transaction_t *tx) {
                     return SWO_INSUFFICIENT_MEMORY;
                 }
                 memcpy(cert_type_tmp, cert_type_name, cert_type_len + 1);
-                status = ui_add_pair_or_fail("Type", cert_type_tmp);
+                status = ui_pairs_add_static_label(UI_STATIC_LABEL("Type"), cert_type_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                 if (status != SWO_SUCCESS) {
                     return status;
                 }
@@ -1281,12 +1290,13 @@ static int ui_strings_withdrawals(transaction_t *tx) {
                 break;
             case POLICY_SHOW: {
                 TRACE("Materializing withdrawal #%u", withdrawal_num);
-                char *withdrawal_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH + 1);
+                char *withdrawal_num_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH + 2);
                 if (withdrawal_num_tmp == NULL) {
                     return SWO_INSUFFICIENT_MEMORY;
                 }
-                snprintf(withdrawal_num_tmp, MAX_UINT64_STRING_LENGTH + 1, "#%d", withdrawal_num);
-                int status = ui_add_pair_or_fail("Withdrawal", withdrawal_num_tmp);
+                snprintf(withdrawal_num_tmp, MAX_UINT64_STRING_LENGTH + 2, "#%d", withdrawal_num);
+                LEDGER_ASSERT(strlen(withdrawal_num_tmp) <= MAX_UINT64_STRING_LENGTH, "Withdrawal number ui string buffer too short");
+                int status = ui_pairs_add_static_label(UI_STATIC_LABEL("Withdrawal"), withdrawal_num_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                 if (status != SWO_SUCCESS) {
                     return status;
                 }
@@ -1300,7 +1310,7 @@ static int ui_strings_withdrawals(transaction_t *tx) {
                                         withdrawal_amount_tmp,
                                         MAX_ADA_AMOUNT_STRING_LENGTH + 1);
                 ASSERT(withdrawal_amount_formatted);
-                status = ui_add_pair_or_fail("Amount", withdrawal_amount_tmp);
+                status = ui_pairs_add_static_label(UI_STATIC_LABEL("Amount"), withdrawal_amount_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                 if (status != SWO_SUCCESS) {
                     return status;
                 }
@@ -1337,7 +1347,7 @@ static int ui_strings_aux_data_hash(transaction_t *tx) {
             if (hash_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
             int hex_status = bytes_to_lowercase_hex(hash_tmp, MAX_TX_HASH_DISPLAY_LENGTH + 1, tx->auxDataHash, AUX_DATA_HASH_LENGTH);
             LEDGER_ASSERT(hex_status == 0, "Aux data hash hex formatting failed");
-            int status = ui_add_pair_or_fail("Auxiliary data hash", hash_tmp);
+            int status = ui_pairs_add_static_label(UI_STATIC_LABEL("Auxiliary data hash"), hash_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
             if (status != SWO_SUCCESS) return status;
         }
     }
@@ -1365,7 +1375,7 @@ static int ui_strings_validity_interval_start(transaction_t *tx) {
                                                             validity_interval_start_tmp,
                                                             MAX_VALIDITY_BOUNDARY_STRING_LENGTH + 1);
             ASSERT(vis_formatted);
-            int status = ui_add_pair_or_fail("Validity interval start", validity_interval_start_tmp);
+            int status = ui_pairs_add_static_label(UI_STATIC_LABEL("Validity interval start"), validity_interval_start_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
             if (status != SWO_SUCCESS) {
                 return status;
             }
@@ -1382,16 +1392,17 @@ static int ui_strings_mint(transaction_t *tx) {
         security_policy_t mint_policy = policyForSignTxMintInit(tx->txSigningMode);
         LEDGER_ASSERT(mint_policy != POLICY_DENY, "Mint denied during UI");
         if (mint_policy == POLICY_SHOW) {
-            char *summary_tmp = ui_alloc_temp(MAX_MINT_SUMMARY_STRING_LENGTH + 1);
+            char *summary_tmp = ui_alloc_temp(MAX_MINT_SUMMARY_STRING_LENGTH + 2);
             if (summary_tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
             snprintf(summary_tmp,
-                     MAX_MINT_SUMMARY_STRING_LENGTH + 1,
+                     MAX_MINT_SUMMARY_STRING_LENGTH + 2,
                      "%u asset group%s",
                      tx->num_mint_asset_groups,
                      (tx->num_mint_asset_groups == 1) ? "" : "s");
-            int status = ui_add_pair_or_fail("Mint", summary_tmp);
+            LEDGER_ASSERT(strlen(summary_tmp) <= MAX_MINT_SUMMARY_STRING_LENGTH, "Mint summary ui string buffer too short");
+            int status = ui_pairs_add_static_label(UI_STATIC_LABEL("Mint"), summary_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
             if (status != SWO_SUCCESS) {
                 return status;
             }
@@ -1430,7 +1441,7 @@ static int ui_strings_mint(transaction_t *tx) {
                         fingerprint_tmp,
                         MAX_TOKEN_FINGERPRINT_STRING_LENGTH + 1);
                     LEDGER_ASSERT(fingerprint_len > 0, "Fingerprint derivation failed");
-                    status = ui_add_pair_or_fail("Mint fingerprint", fingerprint_tmp);
+                    status = ui_pairs_add_static_label(UI_STATIC_LABEL("Mint fingerprint"), fingerprint_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                     if (status != SWO_SUCCESS) {
                         return status;
                     }
@@ -1446,7 +1457,7 @@ static int ui_strings_mint(transaction_t *tx) {
                                                                            amount_tmp,
                                                                            MAX_MINT_AMOUNT_STRING_LENGTH + 1);
                     ASSERT(mint_amount_formatted);
-                    status = ui_add_pair_or_fail("Mint amount", amount_tmp);
+                    status = ui_pairs_add_static_label(UI_STATIC_LABEL("Mint amount"), amount_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                     if (status != SWO_SUCCESS) {
                         return status;
                     }
@@ -1493,7 +1504,7 @@ static int ui_strings_script_data_hash(transaction_t *tx) {
             if (hash_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
             int hex_status = bytes_to_lowercase_hex(hash_tmp, MAX_TX_HASH_DISPLAY_LENGTH + 1, tx->scriptDataHash, SCRIPT_DATA_HASH_LENGTH);
             LEDGER_ASSERT(hex_status == 0, "Script data hash hex formatting failed");
-            int status = ui_add_pair_or_fail("Script data hash", hash_tmp);
+            int status = ui_pairs_add_static_label(UI_STATIC_LABEL("Script data hash"), hash_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
             if (status != SWO_SUCCESS) return status;
         }
     }
@@ -1522,7 +1533,7 @@ static int ui_strings_collateral_inputs(transaction_t *tx) {
             if (input_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
             int status = format_input_with_index(input_tmp, MAX_INPUT_DISPLAY_STRING_LENGTH + 1, &input_item->input_data);
             if (status != SWO_SUCCESS) return status;
-            status = ui_add_pair_or_fail("Coll input", input_tmp);
+            status = ui_pairs_add_static_label(UI_STATIC_LABEL("Coll input"), input_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
             if (status != SWO_SUCCESS) return status;
         }
 
@@ -1555,7 +1566,7 @@ static int ui_strings_required_signers(transaction_t *tx) {
                      LEDGER_ASSERT(formatted, "Unable to format required signer path");
                 }
 
-                int status = ui_add_pair_or_fail("Required signer", value_tmp);
+                int status = ui_pairs_add_static_label(UI_STATIC_LABEL("Required signer"), value_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                 if (status != SWO_SUCCESS) return status;
             }
             app_mem_free(item);
@@ -1650,7 +1661,7 @@ static int ui_strings_collateral_output(transaction_t *tx) {
             }
         }
         LEDGER_ASSERT(collateral_address_formatted, "Collateral address formatting failed");
-        status = ui_add_pair_or_fail("Collateral address", collateral_address_tmp);
+        status = ui_pairs_add_static_label(UI_STATIC_LABEL("Collateral address"), collateral_address_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
         if (status != SWO_SUCCESS) {
             return status;
         }
@@ -1664,7 +1675,7 @@ static int ui_strings_collateral_output(transaction_t *tx) {
                                                         amount_tmp,
                                                         MAX_ADA_AMOUNT_STRING_LENGTH + 1);
             ASSERT(amount_formatted);
-            status = ui_add_pair_or_fail("Collateral amount", amount_tmp);
+            status = ui_pairs_add_static_label(UI_STATIC_LABEL("Collateral amount"), amount_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
             if (status != SWO_SUCCESS) {
                 return status;
             }
@@ -1711,7 +1722,7 @@ static int ui_strings_total_collateral(transaction_t *tx) {
         if (amount_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
         bool formatted = str_formatAdaAmount(tx->totalCollateral, amount_tmp, MAX_ADA_AMOUNT_STRING_LENGTH + 1);
         ASSERT(formatted);
-        int status = ui_add_pair_or_fail("Total collateral", amount_tmp);
+        int status = ui_pairs_add_static_label(UI_STATIC_LABEL("Total collateral"), amount_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
         if (status != SWO_SUCCESS) return status;
     }
     return SWO_SUCCESS;
@@ -1737,7 +1748,7 @@ static int ui_strings_reference_inputs(transaction_t *tx) {
             if (input_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
             int status = format_input_with_index(input_tmp, MAX_INPUT_DISPLAY_STRING_LENGTH + 1, &input_item->input_data);
             if (status != SWO_SUCCESS) return status;
-            status = ui_add_pair_or_fail("Ref input", input_tmp);
+            status = ui_pairs_add_static_label(UI_STATIC_LABEL("Ref input"), input_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
             if (status != SWO_SUCCESS) return status;
         }
 
@@ -1775,17 +1786,17 @@ static int ui_strings_voting_procedures(transaction_t *tx) {
                     int hex_status = bytes_to_lowercase_hex(gov_action_hash_tmp, MAX_TX_HASH_DISPLAY_LENGTH + 1, vote_item->vote_data.govActionId.txHash, TX_HASH_LENGTH);
                     LEDGER_ASSERT(hex_status == 0, "Gov action hash hex formatting failed");
 
-                    status = ui_add_pair_or_fail("Gov action tx hash", gov_action_hash_tmp);
+                    status = ui_pairs_add_static_label(UI_STATIC_LABEL("Gov action tx hash"), gov_action_hash_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                     if (status != SWO_SUCCESS) return status;
 
                     // Gov Action Index
-                    char *gov_action_index_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH + 1);
+                    char *gov_action_index_tmp = ui_alloc_temp(MAX_UINT64_STRING_LENGTH + 2);
                     if (gov_action_index_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
 
-                    int index_len = snprintf(gov_action_index_tmp, MAX_UINT64_STRING_LENGTH + 1, "%u", vote_item->vote_data.govActionId.govActionIndex);
-                    LEDGER_ASSERT(index_len > 0 && (size_t)index_len < MAX_UINT64_STRING_LENGTH + 1, "Gov action index truncated");
+                    snprintf(gov_action_index_tmp, MAX_UINT64_STRING_LENGTH + 2, "%u", vote_item->vote_data.govActionId.govActionIndex);
+                    LEDGER_ASSERT(strlen(gov_action_index_tmp) <= MAX_UINT64_STRING_LENGTH, "Gov action index ui string buffer too short");
 
-                    status = ui_add_pair_or_fail("Gov action index", gov_action_index_tmp);
+                    status = ui_pairs_add_static_label(UI_STATIC_LABEL("Gov action index"), gov_action_index_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                     if (status != SWO_SUCCESS) return status;
 
                     // Vote Option
@@ -1799,7 +1810,7 @@ static int ui_strings_voting_procedures(transaction_t *tx) {
                     char *vote_str_tmp = ui_alloc_temp(MAX_VOTE_OPTION_LENGTH + 1);
                     if (vote_str_tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
                     strncpy(vote_str_tmp, vote_str, MAX_VOTE_OPTION_LENGTH + 1);
-                    status = ui_add_pair_or_fail("Vote", vote_str_tmp);
+                    status = ui_pairs_add_static_label(UI_STATIC_LABEL("Vote"), vote_str_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
                     if (status != SWO_SUCCESS) return status;
 
                     // Anchor
@@ -1833,7 +1844,7 @@ static int ui_strings_treasury(transaction_t *tx) {
             if (tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
             bool formatted = str_formatAdaAmount(tx->treasury, tmp, MAX_ADA_AMOUNT_STRING_LENGTH + 1);
             ASSERT(formatted);
-            int status = ui_add_pair_or_fail("Treasury", tmp);
+            int status = ui_pairs_add_static_label(UI_STATIC_LABEL("Treasury"), tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
             if (status != SWO_SUCCESS) return status;
         }
     }
@@ -1849,7 +1860,7 @@ static int ui_strings_donation(transaction_t *tx) {
             if (tmp == NULL) return SWO_INSUFFICIENT_MEMORY;
             bool formatted = str_formatAdaAmount(tx->donation, tmp, MAX_ADA_AMOUNT_STRING_LENGTH + 1);
             ASSERT(formatted);
-            int status = ui_add_pair_or_fail("Donation", tmp);
+            int status = ui_pairs_add_static_label(UI_STATIC_LABEL("Donation"), tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
             if (status != SWO_SUCCESS) return status;
         }
     }
@@ -1872,7 +1883,7 @@ static int ui_strings_tx_hash(void) {
                                             G_context.tx_info.tx_hash,
                                             sizeof(G_context.tx_info.tx_hash));
     LEDGER_ASSERT(hex_status == 0, "Tx hash hex formatting failed");
-    int status = ui_add_pair_or_fail("Transaction hash", hash_tmp);
+    int status = ui_pairs_add_static_label(UI_STATIC_LABEL("Transaction hash"), hash_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
     if (status != SWO_SUCCESS) {
         return status;
     }

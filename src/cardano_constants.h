@@ -51,9 +51,9 @@
 /**
  * Relay metadata lengths.
  */
-#define ANCHOR_URL_LENGTH_MAX       128
-#define POOL_METADATA_URL_LENGTH_MAX 128
-#define MAX_DNS_NAME_LENGTH         128
+#define MAX_ANCHOR_URL_LENGTH        128
+#define MAX_POOL_METADATA_URL_LENGTH 128
+#define MAX_DNS_NAME_LENGTH          128
 
 /**
  * IP address storage lengths.

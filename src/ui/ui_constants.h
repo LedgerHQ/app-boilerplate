@@ -3,6 +3,7 @@
 /**
  * UI buffer size constants.
  */
+#define MAX_UINT16_STRING_LENGTH 6   // uint16 max (65535) = 5 digits + null
 #define MAX_UINT64_STRING_LENGTH 21
 #define MAX_VALIDITY_BOUNDARY_STRING_LENGTH 35  // "epoch %u / slot %u" up to 10 digits each
 #define MAX_ADA_AMOUNT_STRING_LENGTH 32         // 20 digits + "." + 6 decimals + " ADA"
@@ -18,6 +19,7 @@
 #define MAX_TX_HASH_DISPLAY_LENGTH 65        // For transaction hash hex display (32 bytes + null)
 #define MAX_REFERENCE_SCRIPT_STRING_LENGTH 30  // "Reference script (65535 bytes)"
 #define MAX_COLLATERAL_STRING_LENGTH 13        // "return output"
-#define MAX_PROFIT_MARGIN_LENGTH 50          // For pool margin "num/den"
+#define MAX_RELAY_INDEX_STRING_LENGTH 20     // For relay index "#4294967295"
+#define MAX_PROFIT_MARGIN_STRING_LENGTH 50   // For pool margin percentage "100.99 %"
 #define MAX_VOTE_OPTION_LENGTH 16            // For vote option strings ("Abstain", "Yes", "No")
 #define MAX_DREP_OPTION_LENGTH 32            // For DRep option strings ("No Confidence")

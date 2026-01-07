@@ -286,7 +286,7 @@ static void test_is_unambiguous_ascii(void **state) {
 static void test_format_ipv4(void **state) {
     (void) state;
 
-    char tmp[IPV4_STR_SIZE_MAX + 1] = {0};
+    char tmp[MAX_IPV4_STR_LENGTH + 2] = {0};  // +2 to check we don't exceed buffer
 
     // IPv4 null case
     ipv4_t ipv4_null = {.isNull = true, .ip = {0, 0, 0, 0}};
@@ -328,7 +328,7 @@ static void test_format_ipv4(void **state) {
 static void test_format_ipv6(void **state) {
     (void) state;
 
-    char tmp[IPV6_STR_SIZE_MAX + 1] = {0};
+    char tmp[MAX_IPV6_STR_LENGTH + 2] = {0};  // +2 to check we don't exceed buffer
 
     // IPv6 null case
     ipv6_t ipv6_null = {.isNull = true, .ip = {0}};

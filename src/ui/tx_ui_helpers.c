@@ -40,12 +40,6 @@ static char *ui_alloc_temp(size_t size) {
     return tmp;
 }
 
-static int ui_add_pair_or_fail(const char *label, char *tmp_buf) {
-    if (!ui_pairs_add_static_label(label, tmp_buf)) {
-        return SWO_INSUFFICIENT_MEMORY;
-    }
-    return SWO_SUCCESS;
-}
 
 int addCredentialUIPairs(const ext_credential_t *credential,
                         const char *keyPathLabel,
@@ -60,8 +54,6 @@ int addCredentialUIPairs(const ext_credential_t *credential,
     LEDGER_ASSERT(scriptHashLabel != NULL, "NULL scriptHashLabel");
     LEDGER_ASSERT(scriptHashPrefix != NULL, "NULL scriptHashPrefix");
 
-    int status;
-
     switch (credential->type) {
         case EXT_CREDENTIAL_KEY_PATH: {
             char *path_tmp = ui_alloc_temp(MAX_BIP44_PATH_STRING_LENGTH + 1);
@@ -70,9 +62,8 @@ int addCredentialUIPairs(const ext_credential_t *credential,
             }
             bool path_formatted = format_bip44_path(&credential->keyPath, path_tmp, MAX_BIP44_PATH_STRING_LENGTH + 1);
             LEDGER_ASSERT(path_formatted, "Unable to format credential path");
-            status = ui_add_pair_or_fail(keyPathLabel, path_tmp);
-            if (status != SWO_SUCCESS) {
-                return status;
+            if (!ui_pairs_add_static_label(keyPathLabel, path_tmp)) {
+                return SWO_INSUFFICIENT_MEMORY;
             }
             break;
         }
@@ -87,9 +78,8 @@ int addCredentialUIPairs(const ext_credential_t *credential,
                               keyhash_tmp,
                               MAX_BECH32_STRING_LENGTH + 1);
             LEDGER_ASSERT(hash_encoded, "Unable to format credential key hash");
-            status = ui_add_pair_or_fail(keyHashLabel, keyhash_tmp);
-            if (status != SWO_SUCCESS) {
-                return status;
+            if (!ui_pairs_add_static_label(keyHashLabel, keyhash_tmp)) {
+                return SWO_INSUFFICIENT_MEMORY;
             }
             break;
         }
@@ -106,9 +96,8 @@ int addCredentialUIPairs(const ext_credential_t *credential,
                 app_mem_free(scripthash_tmp);
                 LEDGER_ASSERT(false, "Unable to format credential script hash");
             }
-            status = ui_add_pair_or_fail(scriptHashLabel, scripthash_tmp);
-            if (status != SWO_SUCCESS) {
-                return status;
+            if (!ui_pairs_add_static_label(scriptHashLabel, scripthash_tmp)) {
+                return SWO_INSUFFICIENT_MEMORY;
             }
             break;
         }
@@ -202,7 +191,6 @@ int addDRepUIPairs(const ext_drep_t *drep, const char *label) {
     LEDGER_ASSERT(label != NULL, "NULL label");
 
     char *tmp = NULL;
-    int status;
 
     switch (drep->type) {
         case EXT_DREP_KEY_PATH: {
@@ -241,27 +229,31 @@ int addDRepUIPairs(const ext_drep_t *drep, const char *label) {
             break;
         }
         case EXT_DREP_ABSTAIN: {
-            tmp = ui_alloc_temp(MAX_VOTE_OPTION_LENGTH + 1);
+            tmp = ui_alloc_temp(MAX_VOTE_OPTION_LENGTH + 2);
             if (tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
-            snprintf(tmp, MAX_VOTE_OPTION_LENGTH + 1, "Abstain");
+            snprintf(tmp, MAX_VOTE_OPTION_LENGTH + 2, "Abstain");
+            LEDGER_ASSERT(strlen(tmp) <= MAX_VOTE_OPTION_LENGTH, "Vote option ui string buffer too short");
             break;
         }
         case EXT_DREP_NO_CONFIDENCE: {
-            tmp = ui_alloc_temp(MAX_DREP_OPTION_LENGTH + 1);
+            tmp = ui_alloc_temp(MAX_DREP_OPTION_LENGTH + 2);
             if (tmp == NULL) {
                 return SWO_INSUFFICIENT_MEMORY;
             }
-            snprintf(tmp, MAX_DREP_OPTION_LENGTH + 1, "No Confidence");
+            snprintf(tmp, MAX_DREP_OPTION_LENGTH + 2, "No Confidence");
+            LEDGER_ASSERT(strlen(tmp) <= MAX_DREP_OPTION_LENGTH, "DRep option ui string buffer too short");
             break;
         }
         default:
             LEDGER_ASSERT(false, "Unknown DRep type");
     }
 
-    status = ui_add_pair_or_fail(label, tmp);
-    return status;
+    if (!ui_pairs_add_static_label(label, tmp)) {
+        return SWO_INSUFFICIENT_MEMORY;
+    }
+    return SWO_SUCCESS;
 }
 
 bool formatRewardAddressFromCredential(uint8_t networkId,
@@ -328,7 +320,7 @@ int addAnchorUIPairs(const anchor_t *anchor) {
 
     int status;
 
-    char *anchor_url_tmp = ui_alloc_temp(ANCHOR_URL_LENGTH_MAX + 1);
+    char *anchor_url_tmp = ui_alloc_temp(MAX_ANCHOR_URL_LENGTH + 2);
     if (anchor_url_tmp == NULL) {
         return SWO_INSUFFICIENT_MEMORY;
     }
@@ -336,7 +328,8 @@ int addAnchorUIPairs(const anchor_t *anchor) {
            anchor->url,
            anchor->urlLength);
     anchor_url_tmp[anchor->urlLength] = '\0';
-    status = ui_add_pair_or_fail("Anchor URL", anchor_url_tmp);
+    LEDGER_ASSERT(strlen(anchor_url_tmp) <= MAX_ANCHOR_URL_LENGTH, "Anchor URL length exceeds buffer");
+    status = ui_pairs_add_static_label(UI_STATIC_LABEL("Anchor URL"), anchor_url_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
     if (status != SWO_SUCCESS) {
         return status;
     }
@@ -351,7 +344,7 @@ int addAnchorUIPairs(const anchor_t *anchor) {
                       anchor_hash_tmp,
                       MAX_BECH32_STRING_LENGTH + 1);
     LEDGER_ASSERT(anchor_encoded, "Unable to format anchor hash");
-    status = ui_add_pair_or_fail("Anchor hash", anchor_hash_tmp);
+    status = ui_pairs_add_static_label(UI_STATIC_LABEL("Anchor hash"), anchor_hash_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
     if (status != SWO_SUCCESS) {
         return status;
     }
@@ -372,7 +365,7 @@ int addDepositUIPairs(uint64_t deposit, const char *label) {
         MAX_ADA_AMOUNT_STRING_LENGTH + 1
     );
     ASSERT(deposit_formatted);
-    return ui_add_pair_or_fail(label, deposit_tmp);
+    return ui_pairs_add_static_label(label, deposit_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
 }
 
 int addPoolKeyHashUIPairs(const uint8_t *poolKeyHash, const char *label) {
@@ -389,7 +382,7 @@ int addPoolKeyHashUIPairs(const uint8_t *poolKeyHash, const char *label) {
                       pool_tmp,
                       MAX_BECH32_STRING_LENGTH + 1);
     LEDGER_ASSERT(pool_encoded, "Unable to format pool key hash");
-    return ui_add_pair_or_fail(label, pool_tmp);
+    return ui_pairs_add_static_label(label, pool_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
 }
 
 int addRewardAccountUIPairs(uint8_t networkId, const ext_credential_t *credential) {
@@ -401,33 +394,32 @@ int addRewardAccountUIPairs(uint8_t networkId, const ext_credential_t *credentia
 
     char *value_tmp = NULL;
 
+    // TODO there should be a switch statement
     if (credential->type == EXT_CREDENTIAL_KEY_PATH) {
         char path_buf[MAX_BIP44_PATH_STRING_LENGTH + 1];
         bool cred_formatted = format_bip44_path(&credential->keyPath, path_buf, sizeof(path_buf));
         LEDGER_ASSERT(cred_formatted, "Unable to format credential path");
 
-        value_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 2);
+        value_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 3);
         if (value_tmp == NULL) {
             return SWO_INSUFFICIENT_MEMORY;
         }
-        int written = snprintf(value_tmp,
-                MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 2,
+        snprintf(value_tmp,
+                MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 3,
                 "%s %s",
                 path_buf,
                 reward_addr_buf);
-        if (written < 0 || (size_t)written >= MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 2) {
-            app_mem_free(value_tmp);
-            return SWO_INSUFFICIENT_MEMORY;
-        }
+        LEDGER_ASSERT(strlen(value_tmp) <= MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 1, "Address path ui string buffer too short");
     } else {
-        value_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH + 1);
+        value_tmp = ui_alloc_temp(MAX_HUMAN_ADDRESS_LENGTH + 2);
         if (value_tmp == NULL) {
             return SWO_INSUFFICIENT_MEMORY;
         }
-        snprintf(value_tmp, MAX_HUMAN_ADDRESS_LENGTH + 1, "%s", reward_addr_buf);
+        snprintf(value_tmp, MAX_HUMAN_ADDRESS_LENGTH + 2, "%s", reward_addr_buf);
+        LEDGER_ASSERT(strlen(value_tmp) <= MAX_HUMAN_ADDRESS_LENGTH, "Reward address ui string buffer too short");
     }
 
-    return ui_add_pair_or_fail("Reward account", value_tmp);
+    return ui_pairs_add_static_label(UI_STATIC_LABEL("Reward account"), value_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
 }
 
 const char *getCertificateTypeName(certificate_type_t type) {

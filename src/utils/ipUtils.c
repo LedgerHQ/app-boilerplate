@@ -48,7 +48,7 @@
  *	Paul Vixie, 1996.
  */
 void inet_ntop4(const uint8_t* src, char* dst, size_t dstSize) {
-    ASSERT(dstSize >= IPV4_STR_SIZE_MAX);
+    ASSERT(dstSize >= MAX_IPV4_STR_LENGTH);
 
     static const char fmt[] = "%u.%u.%u.%u";
 
@@ -73,7 +73,7 @@ void inet_ntop6(const uint8_t* src, char* dst, size_t dstSize) {
      * Keep this in mind if you think this function should have been coded
      * to use pointer overlays.  All the world's not a VAX.
      */
-    char tmp[IPV6_STR_SIZE_MAX] = {0};
+    char tmp[MAX_IPV6_STR_LENGTH] = {0};
     struct {
         int base, len;
     } best, cur;

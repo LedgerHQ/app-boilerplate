@@ -16,7 +16,7 @@ static void test_ipv4_basic(void **state) {
 
     // Test basic IPv4 address: 192.168.1.1
     uint8_t ipv4_data[] = {192, 168, 1, 1};
-    char buffer[IPV4_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV4_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop4(ipv4_data, buffer, sizeof(buffer));
 
@@ -28,7 +28,7 @@ static void test_ipv4_zeros(void **state) {
 
     // Test IPv4 with zeros: 0.0.0.0
     uint8_t ipv4_data[] = {0, 0, 0, 0};
-    char buffer[IPV4_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV4_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop4(ipv4_data, buffer, sizeof(buffer));
 
@@ -40,7 +40,7 @@ static void test_ipv4_max(void **state) {
 
     // Test IPv4 with max values: 255.255.255.255
     uint8_t ipv4_data[] = {255, 255, 255, 255};
-    char buffer[IPV4_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV4_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop4(ipv4_data, buffer, sizeof(buffer));
 
@@ -52,7 +52,7 @@ static void test_ipv4_loopback(void **state) {
 
     // Test IPv4 loopback: 127.0.0.1
     uint8_t ipv4_data[] = {127, 0, 0, 1};
-    char buffer[IPV4_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV4_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop4(ipv4_data, buffer, sizeof(buffer));
 
@@ -64,7 +64,7 @@ static void test_ipv4_broadcast(void **state) {
 
     // Test IPv4 broadcast: 255.255.255.255 (already tested above, but for completeness)
     uint8_t ipv4_data[] = {255, 255, 255, 255};
-    char buffer[IPV4_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV4_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop4(ipv4_data, buffer, sizeof(buffer));
 
@@ -76,7 +76,7 @@ static void test_ipv4_mixed_values(void **state) {
 
     // Test IPv4 with mixed values: 10.20.30.40
     uint8_t ipv4_data[] = {10, 20, 30, 40};
-    char buffer[IPV4_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV4_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop4(ipv4_data, buffer, sizeof(buffer));
 
@@ -93,7 +93,7 @@ static void test_ipv6_link_local(void **state) {
     // out: fe80::a299:9bff:fe18:50d1
     uint8_t ipv6_data[] = {0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                            0xa2, 0x99, 0x9b, 0xff, 0xfe, 0x18, 0x50, 0xd1};
-    char buffer[IPV6_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV6_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop6(ipv6_data, buffer, sizeof(buffer));
 
@@ -108,7 +108,7 @@ static void test_ipv6_documentation_prefix(void **state) {
     // out: 2001:db8:1111:a:b0::200
     uint8_t ipv6_data[] = {0x20, 0x01, 0x0d, 0xb8, 0x11, 0x11, 0x00, 0x0a,
                            0x00, 0xb0, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00};
-    char buffer[IPV6_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV6_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop6(ipv6_data, buffer, sizeof(buffer));
 
@@ -123,7 +123,7 @@ static void test_ipv6_ipv4_mapped(void **state) {
     // out: ::ffff:192.0.2.128
     uint8_t ipv6_data[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                            0x00, 0x00, 0xff, 0xff, 0xc0, 0x00, 0x02, 0x80};
-    char buffer[IPV6_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV6_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop6(ipv6_data, buffer, sizeof(buffer));
 
@@ -136,7 +136,7 @@ static void test_ipv6_all_zeros(void **state) {
     // Test IPv6 all zeros: ::
     uint8_t ipv6_data[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    char buffer[IPV6_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV6_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop6(ipv6_data, buffer, sizeof(buffer));
 
@@ -149,7 +149,7 @@ static void test_ipv6_loopback(void **state) {
     // Test IPv6 loopback: ::1
     uint8_t ipv6_data[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01};
-    char buffer[IPV6_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV6_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop6(ipv6_data, buffer, sizeof(buffer));
 
@@ -163,7 +163,7 @@ static void test_ipv6_no_compression(void **state) {
     // 2001:db8:85a3:8d3:1319:8a2e:370:7348
     uint8_t ipv6_data[] = {0x20, 0x01, 0x0d, 0xb8, 0x85, 0xa3, 0x08, 0xd3,
                            0x13, 0x19, 0x8a, 0x2e, 0x03, 0x70, 0x73, 0x48};
-    char buffer[IPV6_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV6_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop6(ipv6_data, buffer, sizeof(buffer));
 
@@ -177,7 +177,7 @@ static void test_ipv6_trailing_zeros(void **state) {
     // 2001:db8:85a3::
     uint8_t ipv6_data[] = {0x20, 0x01, 0x0d, 0xb8, 0x85, 0xa3, 0x00, 0x00,
                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    char buffer[IPV6_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV6_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop6(ipv6_data, buffer, sizeof(buffer));
 
@@ -194,7 +194,7 @@ static void test_ipv6_leading_zeros(void **state) {
     // so it gets output as the equivalent IPv4 format (::18.52.86.120)
     uint8_t ipv6_data[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                            0x00, 0x00, 0x00, 0x00, 0x12, 0x34, 0x56, 0x78};
-    char buffer[IPV6_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV6_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop6(ipv6_data, buffer, sizeof(buffer));
 
@@ -208,7 +208,7 @@ static void test_ipv6_middle_zeros(void **state) {
     // 2001:db8::1
     uint8_t ipv6_data[] = {0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01};
-    char buffer[IPV6_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV6_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop6(ipv6_data, buffer, sizeof(buffer));
 
@@ -222,7 +222,7 @@ static void test_ipv6_multicast(void **state) {
     // ff02::1 (all nodes address)
     uint8_t ipv6_data[] = {0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01};
-    char buffer[IPV6_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV6_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop6(ipv6_data, buffer, sizeof(buffer));
 
@@ -237,7 +237,7 @@ static void test_ipv6_ipv4_compatible(void **state) {
     // produces IPv4 format output
     uint8_t ipv6_data[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                            0x00, 0x00, 0x00, 0x00, 0xc0, 0x00, 0x02, 0x80};
-    char buffer[IPV6_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV6_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop6(ipv6_data, buffer, sizeof(buffer));
 
@@ -251,7 +251,7 @@ static void test_ipv6_all_ones(void **state) {
     // Test IPv6 address with all f values
     uint8_t ipv6_data[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
                            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-    char buffer[IPV6_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV6_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop6(ipv6_data, buffer, sizeof(buffer));
 
@@ -265,7 +265,7 @@ static void test_ipv6_single_zero_field(void **state) {
     // 2001:db8:0:85a3:8d3:1319:8a2e:370
     uint8_t ipv6_data[] = {0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x85, 0xa3,
                            0x08, 0xd3, 0x13, 0x19, 0x8a, 0x2e, 0x03, 0x70};
-    char buffer[IPV6_STR_SIZE_MAX + 1];  // +1 to avoid assertion failure
+    char buffer[MAX_IPV6_STR_LENGTH + 2];  // +2 to check we don't exceed buffer
 
     inet_ntop6(ipv6_data, buffer, sizeof(buffer));
 
