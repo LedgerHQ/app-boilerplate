@@ -50,6 +50,15 @@ bool app_mem_init(void) {
     return mem_ctx != NULL;
 }
 
+bool app_mem_reset(void) {
+    void *buf = mem_buffer;
+    size_t buf_size = sizeof(mem_buffer);
+
+    explicit_bzero(buf, buf_size);
+    mem_ctx = mem_init(buf, buf_size);
+    return mem_ctx != NULL;
+}
+
 void *app_mem_alloc_impl(size_t size, bool persistent, const char *file, int line) {
     void *ptr;
     ptr = mem_alloc(mem_ctx, size);

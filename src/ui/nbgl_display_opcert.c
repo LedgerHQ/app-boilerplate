@@ -30,7 +30,7 @@
 #include "ui/ui_constants.h"
 #include "globals.h"
 #include "utils/utils.h"
-#include "utils/cardano_os_utils.h"
+#include "app_context.h"
 #include "cardano_swo.h"
 #include "opcert_types.h"
 #include "menu.h"
@@ -83,7 +83,7 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
 
     if (G_context.req_type != REQUEST_SIGN_OPCERT || G_context.state.opcert_state != OPCERT_STATE_PARSED) {
         TRACE("Bad state detected - returning error");
-        return send_error_and_reset(SWO_BAD_STATE);
+        return send_swo_and_reset(SWO_BAD_STATE);
     }
 
     // Handle security policy
@@ -100,7 +100,7 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
 
         default:
             ASSERT(false);
-            return send_error_and_reset(SWO_BAD_STATE);
+            return send_swo_and_reset(SWO_BAD_STATE);
     }
 
     const parsed_opcert_t* opcert = &G_context.opcert_info.opcert;
@@ -110,7 +110,7 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
     if (poolColdKeyPathStr == NULL) {
         TRACE("Failed to allocate poolColdKeyPathStr");
         opcert_buffer_cleanup();
-        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+        return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
     bool poolPathFormatted = format_bip44_path(&opcert->poolColdKeyPath,
                                                poolColdKeyPathStr,
@@ -123,7 +123,7 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
     if (poolKeyHashStr == NULL) {
         TRACE("Failed to allocate poolKeyHashStr");
         opcert_buffer_cleanup();
-        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+        return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
     uint8_t poolKeyHash[POOL_KEY_HASH_LENGTH] = {0};
     bip44_pathToKeyHash(&opcert->poolColdKeyPath, poolKeyHash, SIZEOF(poolKeyHash));
@@ -140,7 +140,7 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
     if (kesKeyStr == NULL) {
         TRACE("Failed to allocate kesKeyStr");
         opcert_buffer_cleanup();
-        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+        return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
     bool kes_key_formatted = format_bech32("kes_vk",
                                            opcert->kesPublicKey,
@@ -155,7 +155,7 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
     if (kesPeriodStr == NULL) {
         TRACE("Failed to allocate kesPeriodStr");
         opcert_buffer_cleanup();
-        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+        return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
     bool format_ok = format_u64(kesPeriodStr, MAX_UINT64_STRING_LENGTH + 2, opcert->kesPeriod);
     LEDGER_ASSERT(format_ok, "Failed to format KES period");
@@ -166,7 +166,7 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
     if (issueCounterStr == NULL) {
         TRACE("Failed to allocate issueCounterStr");
         opcert_buffer_cleanup();
-        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+        return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
     format_ok = format_u64(issueCounterStr, MAX_UINT64_STRING_LENGTH + 2, opcert->issueCounter);
     LEDGER_ASSERT(format_ok, "Failed to format issue counter");
@@ -176,7 +176,7 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
     if (!ui_pairs_init(5)) {
         TRACE("Failed to initialize pairs");
         opcert_buffer_cleanup();
-        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+        return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
     g_pairs[0].item = "Pool cold key path";
     g_pairs[0].value = poolColdKeyPathStr;
@@ -226,20 +226,20 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
         if (info == NULL) {
             TRACE("Failed to allocate warning info");
             opcert_buffer_cleanup();
-            return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+            return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
         }
         nbgl_warningDetails_t* details =
             (nbgl_warningDetails_t *) ui_mem_alloc(sizeof(nbgl_warningDetails_t));
         if (details == NULL) {
             TRACE("Failed to allocate warning details");
             opcert_buffer_cleanup();
-            return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+            return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
         }
         g_warning = (nbgl_warning_t *) ui_mem_alloc(sizeof(nbgl_warning_t));
         if (g_warning == NULL) {
             TRACE("Failed to allocate warning structure");
             opcert_buffer_cleanup();
-            return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+            return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
         }
 
         info->icon = &WARNING_ICON;

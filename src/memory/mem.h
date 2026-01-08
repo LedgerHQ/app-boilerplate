@@ -32,6 +32,7 @@
 #define app_mem_free(ptr)   app_mem_free_impl(ptr, MP_FILE, MP_LINE)
 
 bool app_mem_init(void);
+bool app_mem_reset(void);
 void *app_mem_alloc_impl(size_t size, bool persistent, const char *file, int line);
 void app_mem_free_impl(void *ptr, const char *file, int line);
 void app_mem_dump_stats(void);

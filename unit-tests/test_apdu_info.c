@@ -15,11 +15,11 @@ static uint8_t g_response_buffer[64];
 static size_t g_response_length;
 static uint16_t g_response_sw;
 
-int io_send_response_pointer(const uint8_t* buffer, size_t bufferLength, uint16_t sw) {
+int io_send_response_pointer(const uint8_t* buffer, size_t bufferLength, uint16_t swo) {
     assert_true(bufferLength <= sizeof(g_response_buffer));
     memcpy(g_response_buffer, buffer, bufferLength);
     g_response_length = bufferLength;
-    g_response_sw = sw;
+    g_response_sw = swo;
     return 0;
 }
 

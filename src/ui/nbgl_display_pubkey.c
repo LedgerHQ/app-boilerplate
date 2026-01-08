@@ -28,7 +28,7 @@
 #include "display.h"
 #include "globals.h"
 #include "utils/utils.h"
-#include "utils/cardano_os_utils.h"
+#include "app_context.h"
 #include "cardano_swo.h"
 #include "opcert_types.h"
 #include "menu.h"
@@ -67,7 +67,7 @@ int ui_display_pubkey(security_policy_t securityPolicy, warning_bits_t warnings)
 
     if (G_context.req_type != REQUEST_EXPORT_PUBKEY) {
         TRACE("Bad request type detected - returning error");
-        return send_error_and_reset(SWO_BAD_STATE);
+        return send_swo_and_reset(SWO_BAD_STATE);
     }
 
     pubkey_ctx_t* pk = &G_context.pk_info;
@@ -76,7 +76,7 @@ int ui_display_pubkey(security_policy_t securityPolicy, warning_bits_t warnings)
     pubkeyPathStr = (char *) ui_mem_alloc(MAX_BIP44_PATH_STRING_LENGTH + 2);
     if (pubkeyPathStr == NULL) {
         ui_cleanup_tracked_allocations();
-        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+        return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
     bool pathFormatted = format_bip44_path(&pk->path, pubkeyPathStr, MAX_BIP44_PATH_STRING_LENGTH + 2);
     LEDGER_ASSERT(pathFormatted, "Unable to format public key path");

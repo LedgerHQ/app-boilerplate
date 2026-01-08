@@ -42,7 +42,7 @@
 #include "ui/ui_utils.h"
 #include "ui/tx_ui_helpers.h"
 #include "io.h"
-#include "utils/cardano_os_utils.h"
+#include "app_context.h"
 #include "app_tokens/app_tokens.h"
 #include "transaction/tx_voting_procedure_types.h"
 #include "addressUtils/bech32.h"
@@ -2008,7 +2008,7 @@ static int ui_build_pairs_and_warnings(void) {
 
 int ui_prepare_transaction_review(void) {
     if (G_context.req_type != REQUEST_SIGN_TRANSACTION) {
-        return send_error_and_reset(SWO_BAD_STATE);
+        return send_swo_and_reset(SWO_BAD_STATE);
     }
     LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_HASHED, "UI prep called too early");
     uint16_t pair_count = G_context.tx_info.planned_ui_pairs;
@@ -2018,11 +2018,11 @@ int ui_prepare_transaction_review(void) {
 
     // If pair count exceeds NBGL capability, reject the transaction
     if (pair_count > UINT8_MAX) {
-        return send_error_and_reset(SWO_UI_PAIRS_EXCEED_CAPABILITY);
+        return send_swo_and_reset(SWO_UI_PAIRS_EXCEED_CAPABILITY);
     }
 
     if (!ui_pairs_init((uint8_t) pair_count)) {
-        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+        return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
 
     int status = ui_build_pairs_and_warnings();

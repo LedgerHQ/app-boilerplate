@@ -18,7 +18,7 @@
 #include "memory/mem.h"
 
 #include "cardano_swo.h"
-#include "utils/cardano_os_utils.h"
+#include "app_context.h"
 #include "utils/buffer_utils.h"
 #include "utils/cbor.h"
 #include "tx_parse.h"
@@ -320,10 +320,9 @@ parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
 
 int tx_handle_parse_error(parser_status_e status) {
     LEDGER_ASSERT(status != PARSING_OK, "tx_handle_parse_error received PARSING_OK");
-    tx_context_cleanup();
     uint16_t swo = _map_parser_status_to_swo(status);
     TRACE("tx_handle_parse_error status=%d swo=0x%04x", status, swo);
-    return send_error_and_reset(swo);
+    return send_swo_and_reset(swo);
 }
 
 // Helper function to parse a single input (reused for inputs, collateral inputs, reference inputs)

@@ -122,6 +122,9 @@ add_executable(test_tx_prepare
     test_tx_prepare.c
     mock_globals.c
     ../src/transaction/tx_prepare.c
+    ../src/transaction/tx_parse.c
+    ../src/transaction/tx_parse_certificates.c
+    ../src/transaction/tx_parse_outputs.c
     ../src/transaction/tx_utils.c
     ../src/transaction/tx_hash_builder.c
     ../src/addressUtils/addressUtilsShelley.c
@@ -132,11 +135,12 @@ add_executable(test_tx_prepare
     ../src/keyDerivation/keyDerivation.c
     ../src/memory/mem.c
     ../src/memory/mem_utils.c
+    ../src/memory/flist.c
     ../src/app_tokens/app_tokens.c
     ../src/ui/ui_utils.c
     ../src/ui/tx_ui_materialize.c
     ../src/ui/tx_ui_helpers.c
-    ../src/utils/cardano_os_utils.c
+    ../src/app_context.c
     mock_sources/mem_alloc_stub.c
     mock_sources/glyphs_mock.c
     mock_sources/display_stub.c
@@ -236,8 +240,9 @@ set(SIGN_TX_COMMON_SOURCES
     ../src/ui/tx_ui_materialize.c
     ../src/ui/tx_ui_helpers.c
     ../src/ui/ui_utils.c
-    ../src/utils/cardano_os_utils.c
+    ../src/app_context.c
     ../src/memory/mem_utils.c
+    mock_sources/mem_alloc_stub.c
     mock_sources/glyphs_mock.c
     mock_sources/display_stub.c
     mock_sources/hex_stub.c

@@ -21,7 +21,7 @@
 #include "securityPolicy/securityWarnings.h"
 #include "utils/assert.h"
 #include "io.h"
-#include "utils/cardano_os_utils.h"
+#include "app_context.h"
 #include "utils/cbor.h"
 #include "ui/tx_ui_helpers.h"
 
@@ -108,7 +108,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
         security_policy_t ttl_policy = policyForSignTxTtl(G_context.tx_info.transaction.ttl);
         switch (ttl_policy) {
             case POLICY_DENY:
-                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
             case POLICY_SHOW:
                 plan->pair_count++;
                 break;
@@ -120,7 +120,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
         security_policy_t validity_interval_start_policy = policyForSignTxValidityIntervalStart();
         switch (validity_interval_start_policy) {
             case POLICY_DENY:
-                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
             case POLICY_SHOW:
                 plan->pair_count++;
                 break;
@@ -134,7 +134,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             policyForSignTxAuxData(G_context.tx_info.transaction.auxDataType);
         switch (aux_policy) {
             case POLICY_DENY:
-                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
             case POLICY_SHOW:
                 plan->pair_count++;
                 break;
@@ -148,7 +148,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             policyForSignTxMintInit(G_context.tx_info.transaction.txSigningMode);
         switch (mint_policy) {
             case POLICY_DENY:
-                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
             case POLICY_SHOW: {
                 // summary entry
                 plan->pair_count++;
@@ -245,7 +245,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
         switch (output_policy) {
             case POLICY_DENY:
                 TRACE("Output security policy denied");
-                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
             case POLICY_SHOW: {
                 datum_policy = policyForSignTxOutputDatumHash(output_policy);
                 ref_script_policy = policyForSignTxOutputRefScript(output_policy);
@@ -284,7 +284,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
         } else {
             uint8_t *address_bytes = (uint8_t *) app_mem_alloc(MAX_ADDRESS_LENGTH);
             if (address_bytes == NULL) {
-                return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+                return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
             }
 
             size_t address_size = deriveAddress(
@@ -295,7 +295,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
 
             if (address_size == 0 || address_size > MAX_ADDRESS_LENGTH) {
                 app_mem_free(address_bytes);
-                return send_error_and_reset(SWO_INCORRECT_DATA);
+                return send_swo_and_reset(SWO_INCORRECT_DATA);
             }
 
             output_desc.destination.type = DESTINATION_THIRD_PARTY;
@@ -361,7 +361,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                                                       &G_context.tx_info.warning_bits);
     switch (fee_policy) {
         case POLICY_DENY:
-            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
         case POLICY_SHOW:
         case POLICY_HIDE:
             break;
@@ -386,7 +386,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             );
             switch (generic_policy) {
                 case POLICY_DENY:
-                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                    return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                 case POLICY_SHOW:
                 case POLICY_HIDE:
                     break;  // Continue to type-specific policy check
@@ -407,7 +407,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                     );
                     switch (cert_policy) {
                         case POLICY_DENY:
-                            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
                             if (certificate_item->certificate_data.type == CERTIFICATE_STAKE_REGISTRATION ||
                                 certificate_item->certificate_data.type == CERTIFICATE_STAKE_DEREGISTRATION) {
@@ -429,7 +429,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                     );
                     switch (cert_policy) {
                         case POLICY_DENY:
-                            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
                             plan->pair_count += 4;  // cert# + type + stake credential + pool keyhash
                             break;
@@ -446,7 +446,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                     );
                     switch (cert_policy) {
                         case POLICY_DENY:
-                            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
                             plan->pair_count += 4;  // cert# + type + stake credential + DRep
                             break;
@@ -463,7 +463,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                     );
                     switch (cert_policy) {
                         case POLICY_DENY:
-                            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
                             plan->pair_count += 4;  // cert# + type + cold credential + hot credential
                             break;
@@ -479,7 +479,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                     );
                     switch (cert_policy) {
                         case POLICY_DENY:
-                            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
                             // cert# + type + cold credential + anchor (URL + hash if present)
                             plan->pair_count += 3;
@@ -501,7 +501,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                     );
                     switch (cert_policy) {
                         case POLICY_DENY:
-                            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
                             if (certificate_item->certificate_data.type == CERTIFICATE_DREP_REGISTRATION) {
                                 // cert# + type + DRep credential + deposit + anchor (URL + hash if present)
@@ -559,7 +559,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                     );
                     switch (cert_policy) {
                         case POLICY_DENY:
-                            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_HIDE:
                             break;
                         case POLICY_SHOW: {
@@ -571,7 +571,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                             );
                             switch (pool_id_policy) {
                                 case POLICY_DENY:
-                                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                    return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                                 case POLICY_SHOW:
                                     pool_pairs += 1;
                                     break;
@@ -584,7 +584,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                             );
                             switch (vrf_policy) {
                                 case POLICY_DENY:
-                                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                    return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                                 case POLICY_SHOW:
                                     pool_pairs += 1;
                                     break;
@@ -601,7 +601,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                             );
                             switch (reward_policy) {
                                 case POLICY_DENY:
-                                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                    return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                                 case POLICY_SHOW:
                                     pool_pairs += 1;
                                     break;
@@ -621,7 +621,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                                 );
                                 switch (owner_policy) {
                                     case POLICY_DENY:
-                                        return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                                     case POLICY_SHOW:
                                         pool_pairs += 1;
                                         break;
@@ -650,7 +650,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                                 );
                                 switch (relay_policy) {
                                     case POLICY_DENY:
-                                        return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                                     case POLICY_HIDE:
                                         break;
                                     case POLICY_SHOW:
@@ -699,7 +699,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                                 security_policy_t no_metadata_policy = policyForSignTxStakePoolRegistrationNoMetadata();
                                 switch (no_metadata_policy) {
                                     case POLICY_DENY:
-                                        return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                                     case POLICY_SHOW:
                                         pool_pairs += 1;
                                         break;
@@ -710,7 +710,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                                 security_policy_t metadata_policy = policyForSignTxStakePoolRegistrationMetadata();
                                 switch (metadata_policy) {
                                     case POLICY_DENY:
-                                        return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                                     case POLICY_SHOW:
                                         pool_pairs += 2;  // metadata url + hash
                                         break;
@@ -733,7 +733,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                     );
                     switch (cert_policy) {
                         case POLICY_DENY:
-                            return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
                             plan->pair_count += 4;  // cert# + type + pool ID + retirement epoch
                             break;
@@ -993,7 +993,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             switch (withdrawal_policy) {
                 case POLICY_DENY:
                     TRACE("Withdrawal security policy denied");
-                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                    return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                 case POLICY_SHOW:
                     plan->pair_count += 3;
                     break;
@@ -1059,7 +1059,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                         reward_address,
                         reward_addr_len)) {
                     TRACE("Withdrawals not in canonical order");
-                    return send_error_and_reset(SWO_TX_PARSING_FAIL_WITHDRAWALS);
+                    return send_swo_and_reset(SWO_TX_PARSING_FAIL_WITHDRAWALS);
                 }
             }
 
@@ -1127,7 +1127,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
         switch (policy) {
             case POLICY_DENY:
                 TRACE("Script data hash security policy denied");
-                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
             case POLICY_SHOW:
                 plan->pair_count += 1;  // Display script data hash
                 break;
@@ -1158,7 +1158,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             switch (collateral_input_policy) {
                 case POLICY_DENY:
                     TRACE("Collateral input security policy denied");
-                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                    return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                 case POLICY_SHOW:
                     plan->pair_count += 1;  // Display collateral input
                     break;
@@ -1188,7 +1188,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             switch (signer_policy) {
                 case POLICY_DENY:
                     TRACE("Required signer security policy denied");
-                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                    return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                 case POLICY_SHOW:
                     plan->pair_count += 1;  // Display required signer
                     break;
@@ -1270,7 +1270,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
         switch (collateral_policy) {
             case POLICY_DENY:
                 TRACE("Collateral output security policy denied");
-                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
             case POLICY_SHOW: {
                 plan->pair_count += 1;  // collateral address
                 if (collateral_ada_policy == POLICY_SHOW) {
@@ -1300,7 +1300,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
         } else {
             uint8_t *address_bytes = (uint8_t *) app_mem_alloc(MAX_ADDRESS_LENGTH);
             if (address_bytes == NULL) {
-                return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+                return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
             }
 
             size_t address_size = deriveAddress(
@@ -1311,7 +1311,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
 
             if (address_size == 0 || address_size > MAX_ADDRESS_LENGTH) {
                 app_mem_free(address_bytes);
-                return send_error_and_reset(SWO_INCORRECT_DATA);
+                return send_swo_and_reset(SWO_INCORRECT_DATA);
             }
 
             collateral_desc.destination.type = DESTINATION_THIRD_PARTY;
@@ -1348,7 +1348,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
         switch (policy) {
             case POLICY_DENY:
                 TRACE("Total collateral security policy denied");
-                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
             case POLICY_SHOW:
                 plan->pair_count += 1;  // Display total collateral amount
                 break;
@@ -1374,7 +1374,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
             switch (reference_input_policy) {
                 case POLICY_DENY:
                     TRACE("Reference input security policy denied");
-                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                    return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                 case POLICY_SHOW:
                     plan->pair_count += 1;  // Display reference input
                     break;
@@ -1407,7 +1407,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
 
             switch (voter_policy) {
                 case POLICY_DENY:
-                    return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                    return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                 case POLICY_SHOW:
                     plan->pair_count++;  // Display voter once
                     // Count UI pairs for all votes
@@ -1436,7 +1436,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                     sizeof(voter_key),
                     &voter_key_len)) {
                 TRACE("Failed to serialize voter key");
-                return send_error_and_reset(SWO_TX_PARSING_FAIL_VOTING_PROCEDURES);
+                return send_swo_and_reset(SWO_TX_PARSING_FAIL_VOTING_PROCEDURES);
             }
 
             if (has_previous_voter_key &&
@@ -1446,7 +1446,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                     voter_key,
                     voter_key_len)) {
                 TRACE("Voting procedures not in canonical order");
-                return send_error_and_reset(SWO_TX_PARSING_FAIL_VOTING_PROCEDURES);
+                return send_swo_and_reset(SWO_TX_PARSING_FAIL_VOTING_PROCEDURES);
             }
 
             memcpy(previous_voter_key, voter_key, voter_key_len);
@@ -1474,7 +1474,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                         sizeof(gov_action_key),
                         &gov_action_key_len)) {
                     TRACE("Failed to serialize gov action key");
-                    return send_error_and_reset(SWO_TX_PARSING_FAIL_VOTING_PROCEDURES);
+                    return send_swo_and_reset(SWO_TX_PARSING_FAIL_VOTING_PROCEDURES);
                 }
 
                 if (has_previous_vote_key &&
@@ -1484,7 +1484,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                         gov_action_key,
                         gov_action_key_len)) {
                     TRACE("Votes not in canonical order");
-                    return send_error_and_reset(SWO_TX_PARSING_FAIL_VOTING_PROCEDURES);
+                    return send_swo_and_reset(SWO_TX_PARSING_FAIL_VOTING_PROCEDURES);
                 }
 
                 memcpy(previous_vote_key, gov_action_key, gov_action_key_len);
@@ -1515,7 +1515,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
         );
         switch (treasury_policy) {
             case POLICY_DENY:
-                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
             case POLICY_SHOW:
                 plan->pair_count++;
                 break;
@@ -1533,7 +1533,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
         );
         switch (donation_policy) {
             case POLICY_DENY:
-                return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
             case POLICY_SHOW:
                 plan->pair_count++;
                 break;

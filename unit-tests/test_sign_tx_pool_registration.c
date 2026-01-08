@@ -37,11 +37,11 @@ static uint16_t g_last_response_sw = 0;
 
 #include "test_sign_tx_common.h"
 
-int io_send_response_pointer(const uint8_t *buffer, size_t bufferLength, uint16_t sw) {
+int io_send_response_pointer(const uint8_t *buffer, size_t bufferLength, uint16_t swo) {
     assert_true(bufferLength <= sizeof(g_last_response));
     memcpy(g_last_response, buffer, bufferLength);
     g_last_response_len = bufferLength;
-    g_last_response_sw = sw;
+    g_last_response_sw = swo;
     return 0;
 }
 

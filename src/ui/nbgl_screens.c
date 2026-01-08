@@ -1,6 +1,6 @@
 #include "nbgl_screens.h"
 #include "addressUtils/bech32.h"
-#include "utils/cardano_os_utils.h"
+#include "app_context.h"
 #include "utils/ipUtils.h"
 #include "textUtils.h"
 // #include "signTx.h"

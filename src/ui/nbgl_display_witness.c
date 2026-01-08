@@ -28,7 +28,7 @@
 #include "display.h"
 #include "globals.h"
 #include "utils/utils.h"
-#include "utils/cardano_os_utils.h"
+#include "app_context.h"
 #include "cardano_swo.h"
 #include "securityPolicy.h"
 #include "nbgl_screens.h"
@@ -48,9 +48,7 @@ static void witness_review_choice(bool confirm) {
 
     if (!confirm) {
         // User rejected the witness - abort further witness processing
-        tx_context_cleanup();
-
-        send_error_and_reset(SWO_CONDITIONS_NOT_SATISFIED);
+        send_swo_and_reset(SWO_CONDITIONS_NOT_SATISFIED);
         TRACE("Calling nbgl_useCaseStatus(\"Witness\\ndenied\", true, ui_menu_main)");
         nbgl_useCaseStatus("Witness\ndenied", true, ui_menu_main);
     } else {
@@ -66,8 +64,7 @@ int ui_display_witness(const bip44_path_t* witnessPath,
 
     if (G_context.state.tx_state != TX_STATE_APPROVED || G_context.req_type != REQUEST_SIGN_TRANSACTION) {
         TRACE("Bad state detected - returning error");
-        tx_context_cleanup();
-        return send_error_and_reset(SWO_BAD_STATE);
+        return send_swo_and_reset(SWO_BAD_STATE);
     }
 
     // Allocate display buffer for witness path using UI tracking system
@@ -76,8 +73,7 @@ int ui_display_witness(const bip44_path_t* witnessPath,
     if (witnessPathStr == NULL) {
         TRACE("Failed to allocate witness path string");
         ui_cleanup_tracked_allocations();
-        tx_context_cleanup();
-        return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+        return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
 
     bool isUnusual = warning_bits_has(warnings, WARNING_BIT_UNUSUAL_KEY_DERIVATION_PATH);
@@ -85,7 +81,7 @@ int ui_display_witness(const bip44_path_t* witnessPath,
     if (securityPolicy != POLICY_SHOW) {
         ASSERT(false);
         ui_cleanup_tracked_allocations();
-        return send_error_and_reset(SWO_BAD_STATE);
+        return send_swo_and_reset(SWO_BAD_STATE);
     }
 
     TRACE("isUnusual: %d", isUnusual);

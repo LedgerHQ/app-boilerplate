@@ -13,12 +13,12 @@
 
 typedef struct nbgl_warning_s nbgl_warning_t;
 
-int io_send_sw(uint16_t sw) {
+int io_send_sw(uint16_t swo) {
     (void) sw;
     return 0;
 }
 
-int io_send_response_pointer(const uint8_t *buffer, size_t bufferLength, uint16_t sw) {
+int io_send_response_pointer(const uint8_t *buffer, size_t bufferLength, uint16_t swo) {
     (void) buffer;
     (void) bufferLength;
     (void) sw;
@@ -39,7 +39,7 @@ bool G_called_from_swap;
 bool G_swap_response_ready;
 bool G_swap_signing_return_value_address;
 
-int io_send_response_buffers(const buffer_t *buffer_list, size_t buffer_count, uint16_t sw) {
+int io_send_response_buffers(const buffer_t *buffer_list, size_t buffer_count, uint16_t swo) {
     (void) buffer_list;
     (void) buffer_count;
     (void) sw;

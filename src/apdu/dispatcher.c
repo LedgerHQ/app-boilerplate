@@ -29,6 +29,7 @@
 #include "cardano_swo.h"
 #include "utils/assert.h"
 #include "utils/utils.h"
+#include "app_context.h"
 #include "get_serial.h"
 #include "get_version.h"
 #include "get_app_name.h"
@@ -83,69 +84,71 @@ int apdu_dispatcher(const command_t *cmd) {
         if (cmd->ins != expected_ins) {
             TRACE("Instruction interleaving detected: current=%d (req_type=%d), attempted=%d",
                   expected_ins, G_context.req_type, cmd->ins);
-            // Reset to idle state (Option B: reset on rejection)
-            G_context.req_type = REQUEST_NONE;
-            return io_send_sw(SWO_COMMAND_NOT_ALLOWED);
+            return send_swo_and_reset(SWO_COMMAND_NOT_ALLOWED);
         }
         TRACE("Same instruction continuing: ins=%d", cmd->ins);
+    } else {
+        // This is a new request, ensure we start with a clean context
+        reset_app_context();
     }
 
     if (cmd->cla != CLA) {
-        return io_send_sw(SWO_INVALID_CLA);
+        return send_swo_and_reset(SWO_INVALID_CLA);
     }
-
-    buffer_t buf = {0};
 
     switch (cmd->ins) {
         case INS_GET_SERIAL:
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
-                return io_send_sw(SWO_INCORRECT_P1_P2);
+                return send_swo_and_reset(SWO_INCORRECT_P1_P2);
             }
 
             return handler_get_serial();
 
         case INS_GET_VERSION:
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
-                return io_send_sw(SWO_INCORRECT_P1_P2);
+                return send_swo_and_reset(SWO_INCORRECT_P1_P2);
             }
 
             return handler_get_version();
 
         case INS_GET_APP_NAME:
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
-                return io_send_sw(SWO_INCORRECT_P1_P2);
+                return send_swo_and_reset(SWO_INCORRECT_P1_P2);
             }
 
             return handler_get_app_name();
 
-        case INS_GET_PUBLIC_KEY:
+        case INS_GET_PUBLIC_KEY: {
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
-                return io_send_sw(SWO_INCORRECT_P1_P2);
+                return send_swo_and_reset(SWO_INCORRECT_P1_P2);
             }
 
-            buf.ptr = cmd->data;
-            buf.size = cmd->lc;
-            buf.offset = 0;
+            buffer_t pubkey_buf = {0};
+            pubkey_buf.ptr = cmd->data;
+            pubkey_buf.size = cmd->lc;
+            pubkey_buf.offset = 0;
 
-            return handler_get_public_key(&buf);
+            return handler_get_public_key(&pubkey_buf);
+        }
 
         case INS_SIGN_TX:
             // Check if this is a witness APDU (P1 = 0x0f)
             if (cmd->p1 == 0x0f) {
                 // Witness signing - P2 must be unused
                 if (cmd->p2 != P2_UNUSED) {
-                    return io_send_sw(SWO_INCORRECT_P1_P2);
+                    return send_swo_and_reset(SWO_INCORRECT_P1_P2);
                 }
 
                 if (!cmd->data) {
-                    return io_send_sw(SWO_WRONG_DATA_LENGTH);
+                    return send_swo_and_reset(SWO_WRONG_DATA_LENGTH);
                 }
 
-                buf.ptr = cmd->data;
-                buf.size = cmd->lc;
-                buf.offset = 0;
+                buffer_t witness_buf = {0};
+                witness_buf.ptr = cmd->data;
+                witness_buf.size = cmd->lc;
+                witness_buf.offset = 0;
 
-                return handler_sign_tx_witness(&buf);
+                return handler_sign_tx_witness(&witness_buf);
             }
 
             // Transaction signing with redesigned protocol:
@@ -154,52 +157,57 @@ int apdu_dispatcher(const command_t *cmd) {
 
             // P2 must be unused for all transaction APDU types
             if (cmd->p2 != P2_UNUSED) {
-                return io_send_sw(SWO_INCORRECT_P1_P2);
+                return send_swo_and_reset(SWO_INCORRECT_P1_P2);
             }
 
             // Validate P1 value
             if (cmd->p1 != P1_TX_INIT && cmd->p1 != P1_TX_DATA_CHUNK && cmd->p1 != P1_TX_CHUNK_LAST) {
-                return io_send_sw(SWO_INCORRECT_P1_P2);
+                return send_swo_and_reset(SWO_INCORRECT_P1_P2);
             }
 
             if (!cmd->data) {
-                return io_send_sw(SWO_WRONG_DATA_LENGTH);
+                return send_swo_and_reset(SWO_WRONG_DATA_LENGTH);
             }
 
-            buf.ptr = cmd->data;
-            buf.size = cmd->lc;
-            buf.offset = 0;
+            buffer_t tx_buf = {0};
+            tx_buf.ptr = cmd->data;
+            tx_buf.size = cmd->lc;
+            tx_buf.offset = 0;
 
             // Determine if more data follows based on P1
             // P1_TX_CHUNK_LAST signals no more data, all others signal more data to come
             bool more = (cmd->p1 != P1_TX_CHUNK_LAST);
-            return handler_sign_tx(&buf, cmd->p1, more);
+            return handler_sign_tx(&tx_buf, cmd->p1, more);
 
-        case INS_SIGN_OPCERT:
+        case INS_SIGN_OPCERT: {
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
-                return io_send_sw(SWO_INCORRECT_P1_P2);
+                return send_swo_and_reset(SWO_INCORRECT_P1_P2);
             }
-            buf.ptr = cmd->data;
-            buf.size = cmd->lc;
-            buf.offset = 0;
+            buffer_t opcert_buf = {0};
+            opcert_buf.ptr = cmd->data;
+            opcert_buf.size = cmd->lc;
+            opcert_buf.offset = 0;
 
-            return handler_sign_opcert(&buf);
+            return handler_sign_opcert(&opcert_buf);
+        }
 
 #ifdef DEBUG
-        case INS_DEBUG_SET_SETTINGS:
+        case INS_DEBUG_SET_SETTINGS: {
             // Debug-only command to set app settings for testing
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
-                return io_send_sw(SWO_INCORRECT_P1_P2);
+                return send_swo_and_reset(SWO_INCORRECT_P1_P2);
             }
 
-            buf.ptr = cmd->data;
-            buf.size = cmd->lc;
-            buf.offset = 0;
+            buffer_t debug_buf = {0};
+            debug_buf.ptr = cmd->data;
+            debug_buf.size = cmd->lc;
+            debug_buf.offset = 0;
 
-            return handler_debug_set_settings(&buf);
+            return handler_debug_set_settings(&debug_buf);
+        }
 #endif
 
         default:
-            return io_send_sw(SWO_INVALID_INS);
+            return send_swo_and_reset(SWO_INVALID_INS);
     }
 }

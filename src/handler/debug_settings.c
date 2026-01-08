@@ -26,6 +26,7 @@
 
 #include "debug_settings.h"
 #include "globals.h"
+#include "app_context.h"
 #include "cardano_swo.h"
 #include "cardano_settings.h"
 
@@ -35,7 +36,7 @@ int handler_debug_set_settings(const buffer_t *buf) {
     // Expect exactly 2 bytes of data
     if ((buf->size - buf->offset) != 2) {
         TRACE("DEBUG: Invalid data length: %d (expected 2)", buf->size - buf->offset);
-        return io_send_sw(SWO_WRONG_DATA_LENGTH);
+        return send_swo_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
     // Parse settings from buffer to respect offset
@@ -46,14 +47,14 @@ int handler_debug_set_settings(const buffer_t *buf) {
         !buffer_read_u8(&read_buf, &silent_export) ||
         read_buf.offset != read_buf.size) {
         TRACE("DEBUG: Invalid data length while reading settings");
-        return io_send_sw(SWO_WRONG_DATA_LENGTH);
+        return send_swo_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
     // Validate values (only 0x00 or 0x01 allowed)
     if ((expert_mode != SETTINGS_NO && expert_mode != SETTINGS_YES) ||
         (silent_export != SETTINGS_NO && silent_export != SETTINGS_YES)) {
         TRACE("DEBUG: Invalid setting values: expert=%d, silent=%d", expert_mode, silent_export);
-        return io_send_sw(SWO_WRONG_DATA_LENGTH);
+        return send_swo_and_reset(SWO_WRONG_DATA_LENGTH);
     }
 
     TRACE("DEBUG: Setting expert_mode=%d, silent_export=%d", expert_mode, silent_export);

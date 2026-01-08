@@ -31,7 +31,7 @@
 #include "globals.h"
 #include "keyDerivation.h"
 #include "utils/utils.h"
-#include "utils/cardano_os_utils.h"
+#include "app_context.h"
 #include "cardano_swo.h"
 #include "display.h"
 #include "dispatcher.h"
@@ -41,12 +41,11 @@
 
 int handler_get_public_key(buffer_t *cdata) {
     TRACE();
-    explicit_bzero(&G_context, sizeof(G_context));
     G_context.req_type = REQUEST_EXPORT_PUBKEY;
 
     if (!buffer_read_bip44_path(cdata, &G_context.pk_info.path)) {
         TRACE();
-        return send_error_and_reset(SWO_BIP44_PATH_PARSING_FAIL);
+        return send_swo_and_reset(SWO_BIP44_PATH_PARSING_FAIL);
     }
 
     // Log the requested path for easier debugging.
@@ -62,13 +61,13 @@ int handler_get_public_key(buffer_t *cdata) {
         TRACE("Security policy DENY - rejecting operation");
         TRACE("Calling nbgl_useCaseStatus(\"Export of public key denied\", false, ui_menu_main)");
         nbgl_useCaseStatus("Export of public key denied", false, ui_menu_main);
-        return send_error_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
     }
 
     {
         cx_err_t error = deriveExtendedPublicKey(&G_context.pk_info.path, &G_context.pk_info.extPubKey);
         if (error != CX_OK) {
-            return send_error_and_reset(error);
+            return send_swo_and_reset(error);
         }
     }
 
@@ -79,8 +78,7 @@ void finalize_pubkey_export(bool confirmed) {
     TRACE("confirmed = %d", confirmed);
 
     if (!confirmed) {
-        G_context.req_type = REQUEST_NONE;  // Reset to idle
-        io_send_sw(SWO_CONDITIONS_NOT_SATISFIED);
+        send_swo_and_reset(SWO_CONDITIONS_NOT_SATISFIED);
         return;
     }
 
@@ -88,5 +86,5 @@ void finalize_pubkey_export(bool confirmed) {
 
     // Send the extended public key back to the client
     io_send_response_pointer((uint8_t*) &G_context.pk_info.extPubKey, SIZEOF(G_context.pk_info.extPubKey), SWO_SUCCESS);
-    G_context.req_type = REQUEST_NONE;  // Reset to idle after sending
+    reset_app_context();
 }

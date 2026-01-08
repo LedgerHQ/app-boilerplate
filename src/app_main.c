@@ -30,6 +30,7 @@
 #include "cardano_settings.h"
 #include "memory/mem.h"
 #include "utils/utils.h"
+#include "app_context.h"
 
 global_ctx_t G_context;
 
@@ -57,7 +58,7 @@ void app_main() {
     ui_menu_main();
 
     // Reset context
-    explicit_bzero(&G_context, sizeof(G_context));
+    reset_app_context();
 
     // Initialize the NVM data if required
     if (N_storage.initialized != STORAGE_INITIALIZED) {
@@ -78,7 +79,7 @@ void app_main() {
         // Parse APDU command from G_io_apdu_buffer
         if (!apdu_parser(&cmd, G_io_apdu_buffer, input_len)) {
             TRACE("BAD LENGTH: %.*H", input_len, G_io_apdu_buffer);
-            io_send_sw(SWO_WRONG_DATA_LENGTH);
+            send_swo_and_reset(SWO_WRONG_DATA_LENGTH);
             continue;
         }
 

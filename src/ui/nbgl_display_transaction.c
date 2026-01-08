@@ -12,7 +12,7 @@
 #include "menu.h"
 #include "transaction/tx_parse.h"
 #include "ui_utils.h"
-#include "utils/cardano_os_utils.h"
+#include "app_context.h"
 
 void tx_review_cleanup(void) {
     ui_cleanup_tracked_allocations();
@@ -32,18 +32,13 @@ static void tx_review_choice(bool confirm) {
             nbgl_useCaseSpinner("Processing");
         } else {
             tx_review_cleanup();
-            tx_context_cleanup();
-            G_context.state.tx_state = TX_STATE_NONE;
-            G_context.req_type = REQUEST_NONE;
+            reset_app_context();
             TRACE("Calling nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main)");
             nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main);
         }
     } else {
         tx_review_cleanup();
-        tx_context_cleanup();
-        G_context.state.tx_state = TX_STATE_NONE;
-        G_context.req_type = REQUEST_NONE;
-        io_send_sw(SWO_CONDITIONS_NOT_SATISFIED);
+        send_swo_and_reset(SWO_CONDITIONS_NOT_SATISFIED);
         TRACE("Calling nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_REJECTED, ui_menu_main)");
         nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_REJECTED, ui_menu_main);
     }
@@ -52,7 +47,7 @@ static void tx_review_choice(bool confirm) {
 int ui_display_transaction(void) {
     if (G_context.req_type != REQUEST_SIGN_TRANSACTION || G_context.state.tx_state != TX_STATE_UI_PREPARED) {
         G_context.state.tx_state = TX_STATE_NONE;
-        return send_error_and_reset(SWO_BAD_STATE);
+        return send_swo_and_reset(SWO_BAD_STATE);
     }
 
     const char *review_subtitle = NULL;

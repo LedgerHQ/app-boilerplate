@@ -36,15 +36,15 @@ typedef enum {
 
 static uint16_t g_last_sw = 0;
 
-int io_send_response_pointer(const uint8_t *buffer, size_t bufferLength, uint16_t sw) {
+int io_send_response_pointer(const uint8_t *buffer, size_t bufferLength, uint16_t swo) {
     (void) buffer;
     (void) bufferLength;
-    g_last_sw = sw;
+    g_last_sw = swo;
     return 0;
 }
 
-int io_send_sw(uint16_t sw) {
-    g_last_sw = sw;
+int io_send_sw(uint16_t swo) {
+    g_last_sw = swo;
     return 0;
 }
 

@@ -38,13 +38,12 @@ typedef enum {
  *
  * Allocates memory for transaction elements (inputs, outputs, withdrawals, etc.) and their
  * nested structures (asset groups, tokens, inline datums, reference scripts). On parsing
- * failure, some allocations may be partially completed. The caller MUST call
- * tx_context_cleanup() on both success and failure to ensure all allocated memory is freed.
+ * failure, some allocations may be partially completed. If the caller continues without
+ * a full reset, it must call tx_context_cleanup() to free allocated memory.
  *
  * OWNERSHIP MODEL:
  * - This function allocates memory for parsed structures
- * - Caller owns the responsibility for cleanup via tx_context_cleanup()
- * - Must be called on every code path: both on success and all error returns
+ * - Caller owns the responsibility for cleanup via tx_context_cleanup() if no reset occurs
  *
  * @param[in, out] buf
  *   Pointer to buffer with serialized transaction.
@@ -69,7 +68,7 @@ int tx_handle_parse_error(parser_status_e status);
  * transactions.
  *
  * USAGE CONTRACT:
- * - Call this after parse_tx() on ALL code paths (success and error)
- * - Call this in any error path that returns early from transaction processing
+ * - Call this when abandoning a parsed transaction without a full app reset
+ * - Not needed if reset_app_context() is used to tear down the call
  */
 void tx_context_cleanup(void);
