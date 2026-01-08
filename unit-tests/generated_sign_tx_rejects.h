@@ -961,6 +961,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_ORDINARY_ACCOUNT_PAT
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "038000073C8000071780000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -972,6 +978,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_ACCOUNT_PAT
     "3988781C94A2E1A5D89D92F45FA0001A0D0C256100000000002DD2E800000000"
     "00000000000000002A000000000000000A",
         .p1 = 0x02,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "038000073E8000071780000000",
+        .p1 = 0x0F,
         .more = false,
     },
 };
@@ -987,6 +999,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_SPENDING_PA
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "058000073E80000717800000000000000000000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -998,6 +1016,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_STAKING_PAT
     "3988781C94A2E1A5D89D92F45FA0001A0D0C256100000000002DD2E800000000"
     "00000000000000002A000000000000000A",
         .p1 = 0x02,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "058000073E80000717800000000000000200000000",
+        .p1 = 0x0F,
         .more = false,
     },
 };
@@ -1013,6 +1037,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_MINT_PATH_IN_ORDINAR
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "038000073F8000071780000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -1024,6 +1054,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_ORDINARY_ACCOUNT_PAT
     "3988781C94A2E1A5D89D92F45FA0001A0D0C256100000000002DD2E800000000"
     "00000000000000002A000000000000000A",
         .p1 = 0x02,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "038000073C8000071780000000",
+        .p1 = 0x0F,
         .more = false,
     },
 };
@@ -1039,6 +1075,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_ACCOUNT_PAT
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "038000073E8000071780000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -1050,6 +1092,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_ORDINARY_SPENDING_PA
     "3988781C94A2E1A5D89D92F45FA0001A0D0C256100000000002DD2E800000000"
     "00000000000000002A000000000000000A",
         .p1 = 0x02,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "058000073C80000717800000000000000000000000",
+        .p1 = 0x0F,
         .more = false,
     },
 };
@@ -1065,6 +1113,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_ORDINARY_STAKING_PAT
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "058000073C80000717800000000000000200000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -1076,6 +1130,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_MINT_PATH_IN_MULTISI
     "3988781C94A2E1A5D89D92F45FA0001A0D0C256100000000002DD2E800000000"
     "00000000000000002A000000000000000A",
         .p1 = 0x02,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "038000073F8000071780000000",
+        .p1 = 0x0F,
         .more = false,
     },
 };
@@ -1091,6 +1151,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_POOL_COLD_PATH_IN_MU
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "048000073D800007178000000080000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -1104,6 +1170,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_ORDINARY_ACCOUNT_PAT
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "038000073C8000071780000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -1115,6 +1187,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_ACCOUNT_PAT
     "3988781C94A2E1A5D89D92F45FA0001A0D0C256100000000002DD2E800000000"
     "00000000000000002A000000000000000A",
         .p1 = 0x02,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "038000073E8000071780000000",
+        .p1 = 0x0F,
         .more = false,
     },
 };
@@ -1140,6 +1218,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_ACCOUNT_PAT
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "038000073E8000071780000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -1161,6 +1245,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_ORDINARY_SPENDING_PA
         .hex_payload =
     "8000073C800007178000000000000002000000000000",
         .p1 = 0x02,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "058000073C80000717800000000000000000000000",
+        .p1 = 0x0F,
         .more = false,
     },
 };
@@ -1186,6 +1276,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_SPENDING_PA
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "058000073E80000717800000000000000000000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -1207,6 +1303,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_STAKING_PAT
         .hex_payload =
     "8000073C800007178000000000000002000000000000",
         .p1 = 0x02,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "058000073E80000717800000000000000200000000",
+        .p1 = 0x0F,
         .more = false,
     },
 };
@@ -1232,6 +1334,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_MINT_PATH_IN_POOL_RE
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "038000073F8000071780000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -1255,6 +1363,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_POOL_COLD_PATH_IN_PO
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "048000073D800007178000000080000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -1270,6 +1384,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_ACCOUNT_PAT
     "000000000000000100F123456789012345678901234567890123456789012345"
     "678901234567000000",
         .p1 = 0x02,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "038000073E8000071780000000",
+        .p1 = 0x0F,
         .more = false,
     },
 };
@@ -1289,6 +1409,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_SPENDING_PA
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "058000073E80000717800000000000000000000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -1304,6 +1430,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_ORDINARY_STAKING_PAT
     "000000000000000100F123456789012345678901234567890123456789012345"
     "678901234567000000",
         .p1 = 0x02,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "058000073C80000717800000000000000200000000",
+        .p1 = 0x0F,
         .more = false,
     },
 };
@@ -1323,6 +1455,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_STAKING_PAT
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "058000073E80000717800000000000000200000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -1338,6 +1476,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_WITNESS_MINT_PATH_IN_POOL_RE
     "000000000000000100F123456789012345678901234567890123456789012345"
     "678901234567000000",
         .p1 = 0x02,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "038000073F8000071780000000",
+        .p1 = 0x0F,
         .more = false,
     },
 };
@@ -1356,6 +1500,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_INPUT_AND_CHA
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "058000073C80000717800000000000000000000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -1370,6 +1520,18 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_INPUT_AND_STA
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "058000073C80000717800000000000000000000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "058000073C80000717800000010000000200000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -1382,6 +1544,18 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_INPUT_AND_WIT
     "8DFF00000000000000010000000000000000000000002A000000000000000A00"
     "000000000003E802058000073C80000717800000010000000200000000",
         .p1 = 0x02,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "058000073C80000717800000000000000000000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "058000073C80000717800000010000000200000000",
+        .p1 = 0x0F,
         .more = false,
     },
 };
@@ -1400,6 +1574,18 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_CHANGE_OUTPUT
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "058000073C80000717800000000000000000000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "058000073C80000717800000010000000200000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -1414,6 +1600,18 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_CHANGE_OUTPUT
     "000000006CA7930000000000000000000000002A000000000000000A00000000"
     "000003E802058000073C80000717800000010000000200000000",
         .p1 = 0x02,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "058000073C80000717800000000000000000000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "058000073C80000717800000010000000200000000",
+        .p1 = 0x0F,
         .more = false,
     },
 };
@@ -1431,6 +1629,24 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_STAKE_DEREGIS
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "058000073C80000717800000000000000000000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "058000073C80000717800000000000000200000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "058000073C80000717800000010000000200000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -1446,6 +1662,18 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_BYRON_TO_SHEL
         .p1 = 0x02,
         .more = false,
     },
+    {
+        .hex_payload =
+    "058000002C80000717800000010000000000000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "058000073C80000717800000010000000000000000",
+        .p1 = 0x0F,
+        .more = false,
+    },
 };
 
 // InvalidDataReason.LEDGER_POLICY
@@ -1457,6 +1685,12 @@ static const apdu_segment_t SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_BYRON_TO_SHEL
     "8000073C8000071780000001000000020000000000000000006CA79300000000"
     "00000000000000002A000000000000000A",
         .p1 = 0x02,
+        .more = false,
+    },
+    {
+        .hex_payload =
+    "058000002C80000717800000010000000000000000",
+        .p1 = 0x0F,
         .more = false,
     },
 };
@@ -2071,7 +2305,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_ORDINARY_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_ORDINARY_TX),
-        .expected_sw = SWO_TX_PARSING_FAIL_CERTIFICATES,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         .skip_reason = NULL,
     },
@@ -2083,7 +2317,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010000",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_MULTISIG_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_MULTISIG_TX),
-        .expected_sw = SWO_TX_PARSING_FAIL_CERTIFICATES,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         .skip_reason = NULL,
     },
@@ -2095,7 +2329,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_PLUTUS_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_CERT_POOL_REGISTRATION_IN_PLUTUS_TX),
-        .expected_sw = SWO_TX_PARSING_FAIL_CERTIFICATES,
+        .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
         .expect_init_failure = false,
         .skip_reason = NULL,
     },
@@ -2320,7 +2554,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .name = "[REJECT_WITNESS] Ordinary_account_path_in_Ordinary_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
-        "0101010000000001010002",
+        "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_WITNESS_ORDINARY_ACCOUNT_PATH_IN_ORDINARY_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_WITNESS_ORDINARY_ACCOUNT_PATH_IN_ORDINARY_TX),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
@@ -2332,7 +2566,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .name = "[REJECT_WITNESS] Multisig_account_path_in_Ordinary_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
-        "0101010000000001010002",
+        "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_ACCOUNT_PATH_IN_ORDINARY_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_ACCOUNT_PATH_IN_ORDINARY_TX),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
@@ -2344,7 +2578,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .name = "[REJECT_WITNESS] Multisig_spending_path_in_Ordinary_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
-        "0101010000000001010002",
+        "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_SPENDING_PATH_IN_ORDINARY_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_SPENDING_PATH_IN_ORDINARY_TX),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
@@ -2356,7 +2590,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .name = "[REJECT_WITNESS] Multisig_staking_path_in_Ordinary_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
-        "0101010000000001010002",
+        "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_STAKING_PATH_IN_ORDINARY_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_STAKING_PATH_IN_ORDINARY_TX),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
@@ -2368,7 +2602,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .name = "[REJECT_WITNESS] Mint_path_in_Ordinary_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0903000100010200000000010100000100000000"
-        "0101010000000001010002",
+        "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_WITNESS_MINT_PATH_IN_ORDINARY_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_WITNESS_MINT_PATH_IN_ORDINARY_TX),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
@@ -2452,7 +2686,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .name = "[REJECT_WITNESS] Ordinary_account_path_in_Plutus_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0907000100010200000000010100000100000000"
-        "0101010000000001010002",
+        "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_WITNESS_ORDINARY_ACCOUNT_PATH_IN_PLUTUS_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_WITNESS_ORDINARY_ACCOUNT_PATH_IN_PLUTUS_TX),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
@@ -2464,7 +2698,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .name = "[REJECT_WITNESS] Multisig_account_path_in_Plutus_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0907000100010200000000010100000100000000"
-        "0101010000000001010002",
+        "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_ACCOUNT_PATH_IN_PLUTUS_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_ACCOUNT_PATH_IN_PLUTUS_TX),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
@@ -2548,7 +2782,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .name = "[REJECT_WITNESS] Multisig_account_path_in_Pool_Registration_(Operator)_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000000"
-        "0101010000000001010002",
+        "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_ACCOUNT_PATH_IN_POOL_REGISTRATION_OPERATOR_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_ACCOUNT_PATH_IN_POOL_REGISTRATION_OPERATOR_TX),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
@@ -2560,7 +2794,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .name = "[REJECT_WITNESS] Multisig_spending_path_in_Pool_Registration_(Operator)_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000000"
-        "0101010000000001010002",
+        "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_SPENDING_PATH_IN_POOL_REGISTRATION_OPERATOR_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_SPENDING_PATH_IN_POOL_REGISTRATION_OPERATOR_TX),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
@@ -2572,7 +2806,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .name = "[REJECT_WITNESS] Ordinary_staking_path_in_Pool_Registration_(Operator)_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000000"
-        "0101010000000001010002",
+        "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_WITNESS_ORDINARY_STAKING_PATH_IN_POOL_REGISTRATION_OPERATOR_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_WITNESS_ORDINARY_STAKING_PATH_IN_POOL_REGISTRATION_OPERATOR_TX),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
@@ -2584,7 +2818,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .name = "[REJECT_WITNESS] Multisig_staking_path_in_Pool_Registration_(Operator)_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000000"
-        "0101010000000001010002",
+        "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_STAKING_PATH_IN_POOL_REGISTRATION_OPERATOR_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_WITNESS_MULTISIG_STAKING_PATH_IN_POOL_REGISTRATION_OPERATOR_TX),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
@@ -2596,7 +2830,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .name = "[REJECT_WITNESS] Mint_path_in_Pool_Registration_(Operator)_Tx_LEDGER_POLICY",
         .init_hex =
         "0000000000000000012D964A0905000100010200010000010100000100000000"
-        "0101010000000001010002",
+        "0101010000000001010001",
         .chunks = SIGN_TX_SEGMENTS_REJECT_WITNESS_MINT_PATH_IN_POOL_REGISTRATION_OPERATOR_TX,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_WITNESS_MINT_PATH_IN_POOL_REGISTRATION_OPERATOR_TX),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
@@ -2612,7 +2846,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .chunks = SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_INPUT_AND_CHANGE_OUTPUT_ACCOUNT_MISMATCH,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_INPUT_AND_CHANGE_OUTPUT_ACCOUNT_MISMATCH),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
-        .expect_init_failure = true,
+        .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.LEDGER_POLICY
@@ -2624,7 +2858,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .chunks = SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_INPUT_AND_STAKE_DEREGISTRATION_CERTIFICATE_ACCOUNT_MISMATCH,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_INPUT_AND_STAKE_DEREGISTRATION_CERTIFICATE_ACCOUNT_MISMATCH),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
-        .expect_init_failure = true,
+        .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.LEDGER_POLICY
@@ -2636,7 +2870,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .chunks = SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_INPUT_AND_WITHDRAWAL_ACCOUNT_MISMATCH,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_INPUT_AND_WITHDRAWAL_ACCOUNT_MISMATCH),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
-        .expect_init_failure = true,
+        .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.LEDGER_POLICY
@@ -2648,7 +2882,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .chunks = SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_CHANGE_OUTPUT_AND_STAKE_DEREGISTRATION_ACCOUNT_MISMATCH,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_CHANGE_OUTPUT_AND_STAKE_DEREGISTRATION_ACCOUNT_MISMATCH),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
-        .expect_init_failure = true,
+        .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.LEDGER_POLICY
@@ -2660,7 +2894,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .chunks = SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_CHANGE_OUTPUT_AND_WITHDRAWAL_ACCOUNT_MISMATCH,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_CHANGE_OUTPUT_AND_WITHDRAWAL_ACCOUNT_MISMATCH),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
-        .expect_init_failure = true,
+        .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.LEDGER_POLICY
@@ -2672,7 +2906,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .chunks = SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_STAKE_DEREGISTRATION_CERTIFICATE_AND_WITHDRAWAL_ACCOUNT_MISMATCH,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_STAKE_DEREGISTRATION_CERTIFICATE_AND_WITHDRAWAL_ACCOUNT_MISMATCH),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
-        .expect_init_failure = true,
+        .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.LEDGER_POLICY
@@ -2684,7 +2918,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .chunks = SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_BYRON_TO_SHELLEY_TRANSFER_INPUT_ACCOUNT_MISMATCH,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_BYRON_TO_SHELLEY_TRANSFER_INPUT_ACCOUNT_MISMATCH),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
-        .expect_init_failure = true,
+        .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.LEDGER_POLICY
@@ -2696,7 +2930,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .chunks = SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_BYRON_TO_SHELLEY_TRANSFER_OUTPUT_ACCOUNT_MISMATCH,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_SINGLE_ACCOUNT_BYRON_TO_SHELLEY_TRANSFER_OUTPUT_ACCOUNT_MISMATCH),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
-        .expect_init_failure = true,
+        .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.COLLATERAL_INPUT_CONTAINS_DATUM
@@ -2720,7 +2954,7 @@ static const sign_tx_reject_fixture_t SIGN_TX_REJECT_FIXTURES[] = {
         .chunks = SIGN_TX_SEGMENTS_REJECT_COLLATERAL_OUTPUT_COLLATERAL_OUTPUT_WITH_INLINE_DATUM,
         .chunk_count = ARRAY_LEN(SIGN_TX_SEGMENTS_REJECT_COLLATERAL_OUTPUT_COLLATERAL_OUTPUT_WITH_INLINE_DATUM),
         .expected_sw = SWO_SECURITY_CONDITION_NOT_SATISFIED,
-        .expect_init_failure = true,
+        .expect_init_failure = false,
         .skip_reason = NULL,
     },
     // InvalidDataReason.COLLATERAL_INPUT_CONTAINS_REFERENCE_SCRIPT

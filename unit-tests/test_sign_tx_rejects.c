@@ -28,6 +28,7 @@ typedef enum {
 #define P1_TX_INIT 0x00
 #define P1_TX_DATA_CHUNK 0x01
 #define P1_TX_CHUNK_LAST 0x02
+#define P1_TX_WITNESSES 0x0F
 
 // ----------------------------------------------------------------------
 // Simple mocks for IO and UI plumbing so we can drive the handler
@@ -71,8 +72,16 @@ void ui_menu_main(void) {
 }
 
 int ui_display_transaction(void) {
-    // reject tests never reach UI confirmation
+    // auto-approve to allow witness policies to be exercised
+    io_send_response_pointer(G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash), SWO_SUCCESS);
+    G_context.state.tx_state = TX_STATE_APPROVED;
+    G_context.tx_info.current_witness = 0;
     tx_review_cleanup();
+    if (G_context.tx_info.num_witnesses == 0) {
+        tx_context_cleanup();
+        G_context.state.tx_state = TX_STATE_NONE;
+        G_context.req_type = REQUEST_NONE;
+    }
     return 0;
 }
 
@@ -181,7 +190,12 @@ static void run_sign_tx_reject_fixture(const sign_tx_reject_fixture_t *fixture) 
             .offset = 0,
         };
         g_last_sw = 0;
-        int chunk_rc = handler_sign_tx(&chunk_buf, segment->p1, segment->more);
+        int chunk_rc = 0;
+        if (segment->p1 == P1_TX_WITNESSES) {
+            chunk_rc = handler_sign_tx_witness(&chunk_buf);
+        } else {
+            chunk_rc = handler_sign_tx(&chunk_buf, segment->p1, segment->more);
+        }
         if (g_last_sw != 0) {
             if (g_last_sw == SWO_SUCCESS) {
                 assert_int_equal(chunk_rc, 0);

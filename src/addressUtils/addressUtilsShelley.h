@@ -15,6 +15,8 @@ typedef struct {
         bip44_path_t path;
         uint8_t hashBuffer[REWARD_ACCOUNT_LENGTH];
     };
+// TODO maybe we do not need this type and it could be replaced by credential
+// TODO since network id is stored globally for tx, but it might affect public API in ledgerjs
 } reward_account_t;
 
 typedef enum {

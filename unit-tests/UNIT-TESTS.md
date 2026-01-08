@@ -48,6 +48,42 @@ it will output `coverage.total` and `coverage/` folder with HTML details (in `co
 - `libs/` contains mock implementations (crypto, etc.)
 - Each test file tests a specific module from `../src/`
 
+## Test Fixture Generation
+
+Some unit tests consume generated C headers. Do not hand-edit these generated files; update the generator scripts and re-run them.
+
+### Transaction Signing Fixtures
+
+Fixtures for sign-tx tests are generated from LedgerJS fixtures and serialized through the shared Python command builder.
+
+Generators (run from repo root with the standalone venv):
+
+```bash
+source tests/standalone/venv/bin/activate
+python3 unit-tests/generate_all_fixtures.py
+python3 unit-tests/generate_complete_tests.py
+python3 unit-tests/generate_reject_fixtures.py
+```
+
+Notes:
+- `unit-tests/generate_all_fixtures.py` produces `unit-tests/test_sign_tx_fixtures_*.h`.
+- `unit-tests/generate_complete_tests.py` emits `unit-tests/generated_complete_tests.h`.
+- `unit-tests/generate_reject_fixtures.py` emits `unit-tests/generated_sign_tx_rejects.h`.
+- The reject generator runs a Node export in `../ledgerjs-cardano-shelley` and then serializes APDUs via `tests/application_client/command_builder.py`. Keep logic in the generators, not in the generated headers.
+- APDU fixtures use the app’s binary schema (presence flags + length-prefixed ASCII for relays/metadata); they are not CBOR byte dumps from LedgerJS. CBOR fixtures remain the source of truth for tx body/hash validation.
+
+### Mock Crypto Fixtures
+
+Mock key material lives in `unit-tests/mocks/crypto_mock_data.h` and is regenerated with:
+
+```bash
+source tests/standalone/venv/bin/activate
+python3 unit-tests/regenerate_mock_data.py
+mv unit-tests/mocks/crypto_mock_data_regenerated.h unit-tests/mocks/crypto_mock_data.h
+```
+
+This updates public keys, chain codes, and key hashes while preserving signature vectors.
+
 ## Regenerating Mock Data
 
 To regenerate all mock cryptographic data in `mocks/crypto_mock_data.h`:
@@ -216,4 +252,3 @@ These tests should be run:
 - [CIP-1852: HD Wallets for Plutus](https://cips.cardano.org/cips/cip1852/)
 - Ragger Library: `calculate_public_key_and_chaincode` with Ed25519Kholaw curve
 - Cardano Address Standards: Blake2b-224 key hashing
-

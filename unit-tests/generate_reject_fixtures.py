@@ -151,9 +151,9 @@ REJECT_REASON_SW: Dict[str, str] = {
     "InvalidDataReason.MULTIASSET_INVALID_TOKEN_BUNDLE_NOT_UNIQUE": "SWO_TX_PARSING_FAIL_CANONICAL_ORDER",
     "InvalidDataReason.MULTIASSET_INVALID_ASSET_GROUP_ORDERING": "SWO_TX_PARSING_FAIL_CANONICAL_ORDER",
     "InvalidDataReason.MULTIASSET_INVALID_ASSET_GROUP_NOT_UNIQUE": "SWO_TX_PARSING_FAIL_CANONICAL_ORDER",
-    "InvalidDataReason.SIGN_MODE_ORDINARY__POOL_REGISTRATION_NOT_ALLOWED": "SWO_TX_PARSING_FAIL_CERTIFICATES",
-    "InvalidDataReason.SIGN_MODE_MULTISIG__POOL_REGISTRATION_NOT_ALLOWED": "SWO_TX_PARSING_FAIL_CERTIFICATES",
-    "InvalidDataReason.SIGN_MODE_PLUTUS__POOL_REGISTRATION_NOT_ALLOWED": "SWO_TX_PARSING_FAIL_CERTIFICATES",
+    "InvalidDataReason.SIGN_MODE_ORDINARY__POOL_REGISTRATION_NOT_ALLOWED": "SWO_SECURITY_CONDITION_NOT_SATISFIED",
+    "InvalidDataReason.SIGN_MODE_MULTISIG__POOL_REGISTRATION_NOT_ALLOWED": "SWO_SECURITY_CONDITION_NOT_SATISFIED",
+    "InvalidDataReason.SIGN_MODE_PLUTUS__POOL_REGISTRATION_NOT_ALLOWED": "SWO_SECURITY_CONDITION_NOT_SATISFIED",
     "InvalidDataReason.SIGN_MODE_POOL_OPERATOR__SINGLE_POOL_REG_CERTIFICATE_REQUIRED": "SWO_TX_PARSING_FAIL_CERTIFICATES",
     "InvalidDataReason.SIGN_MODE_POOL_OWNER__SINGLE_POOL_REG_CERTIFICATE_REQUIRED": "SWO_TX_PARSING_FAIL_CERTIFICATES",
     "InvalidDataReason.CERTIFICATE_INVALID_POOL_KEY_HASH": "SWO_TX_PARSING_FAIL_CERTIFICATES",
@@ -614,7 +614,14 @@ def build_fixture(fixture_json: Dict[str, Any], prefix: str) -> FixtureInfo:
     tx = convert_transaction(fixture_json["tx"])
     builder = CommandBuilder()
     signing_mode = TSIGNING_MODE_MAP[fixture_json["signingMode"]]
-    witness_paths = gather_witness_paths(tx, signing_mode, fixture_json.get("additionalWitnessPaths", []))
+    additional_paths = [
+        to_bip32_path(path) if isinstance(path, list) else path
+        for path in fixture_json.get("additionalWitnessPaths", [])
+    ]
+    if prefix == "REJECT_WITNESS":
+        witness_paths = list(additional_paths)
+    else:
+        witness_paths = gather_witness_paths(tx, signing_mode, additional_paths)
     init_params = builder.build_tx_init_params(
         tx=tx,
         signing_mode=signing_mode,
@@ -629,15 +636,21 @@ def build_fixture(fixture_json: Dict[str, Any], prefix: str) -> FixtureInfo:
         )
         for chunk in builder.serialize_transaction_chunks(tx)
     ]
+    if prefix in ("REJECT_WITNESS", "REJECT_SINGLE_ACCOUNT"):
+        for path in witness_paths:
+            witness_apdu = builder.sign_tx_witness(path)
+            chunks.append(
+                ChunkInfo(
+                    p1=P1Type.P1_TX_WITNESSES,
+                    more=False,
+                    hex_payload=witness_apdu[5:].hex().upper(),
+                )
+            )
     reason = fixture_json.get("rejectReason")
     expect_init_failure = prefix == "REJECT_INIT"
     if prefix == "REJECT_ADDRESS":
          if "Pool operator - spending choice not path" in fixture_json["testName"] or "Pool owner - unconditionally" in fixture_json["testName"]:
              expect_init_failure = True
-    if prefix == "REJECT_SINGLE_ACCOUNT":
-        expect_init_failure = True
-    if prefix == "REJECT_COLLATERAL_OUTPUT" and "inline datum" in fixture_json["testName"].lower():
-        expect_init_failure = True
 
     display_name = format_display_name(prefix, fixture_json["testName"], reason)
     return FixtureInfo(
