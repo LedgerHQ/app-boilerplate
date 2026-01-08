@@ -41,6 +41,19 @@
 int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more);
 
 /**
+ * Handler for SIGN_TX AUX_DATA (CVote) APDUs.
+ *
+ * @param[in,out] cdata
+ *   Command data for the CVote aux data APDU.
+ * @param[in]     p2
+ *   CVote aux data sub-instruction.
+ *
+ * @return zero or positive integer if success, negative integer otherwise.
+ *
+ */
+int handler_sign_tx_aux_data(buffer_t *cdata, uint8_t p2);
+
+/**
  * Handler for SIGN_TX_WITNESS command. Signs transaction hash with witness key.
  * Must be called after transaction is approved (TX_STATE_APPROVED).
  *

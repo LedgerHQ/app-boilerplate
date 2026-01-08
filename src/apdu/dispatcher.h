@@ -22,6 +22,17 @@ enum { P1_UNUSED = 0, P2_UNUSED = 0 };
  */
 #define P1_TX_CHUNK_LAST 0x02
 
+/**
+ * Parameter 1 for CVote auxiliary data APDUs.
+ */
+#define P1_TX_AUX_DATA 0x03
+
+/**
+ * Parameter 2 values for CVote auxiliary data APDUs.
+ */
+#define P2_AUX_DATA_INIT 0x36
+#define P2_AUX_DATA_DELEGATION 0x37
+
 
 /**
  * Dispatch APDU command received to the right handler.

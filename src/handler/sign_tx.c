@@ -21,6 +21,7 @@
 #include <string.h>   // memset, explicit_bzero
 #include <stdio.h>    // snprintf
 
+#include "cardano_constants.h"
 #include "os.h"
 #include "buffer.h"
 #include "nbgl_use_case.h"
@@ -33,18 +34,22 @@
 #include "ui/ui_display_tx.h"
 #include "transaction/tx.h"
 #include "transaction/tx_aux_data_types.h"
+#include "transaction/tx_credential_types.h"
 #include "tx_output_types.h"
 #include "tx_parse.h"
 #include "memory/mem.h"
 #include "utils/utils.h"
+#include "utils/textUtils.h"
 #include "app_context.h"
 #include "utils/cbor.h"
 #include "transaction/tx_hash_builder.h"
 #include "messageSigning.h"
 #include "securityPolicy/securityPolicy.h"
 #include "dispatcher.h"
+#include "cvote/cvote_parser.h"
 #include "addressUtils/bip44.h"
-#include "addressUtils/addressUtilsShelley.h"
+#include "keyDerivation/keyDerivation.h"
+#include "cvote/aux_data_hash_builder.h"
 #include "transaction/tx_utils.h"
 #include "ui/menu.h"
 #include "transaction/tx_validate.h"
@@ -64,6 +69,249 @@ static void display_denied_witness_status(const bip44_path_t* path) {
     LEDGER_ASSERT(strlen(status_msg) <= DENIED_WITNESS_STATUS_LENGTH, "Denied witness status message ui string buffer too short");
     TRACE("Calling nbgl_useCaseStatus(\"%s\", false, ui_menu_main)", status_msg);
     nbgl_useCaseStatus(status_msg, false, ui_menu_main);
+}
+
+static bool cvote_aux_data_is_done(void) {
+    return G_context.tx_info.cvote_aux_data_expected &&
+           G_context.tx_info.cvote_aux_data_initialized &&
+           G_context.tx_info.cvote_registrations_remaining == 0;
+}
+
+static bool cvote_extract_pubkey(const ext_credential_t *credential, uint8_t *out_pubkey) {
+    ASSERT(credential != NULL);
+    ASSERT(out_pubkey != NULL);
+
+    switch (credential->type) {
+        case EXT_CREDENTIAL_KEY_HASH:
+            memmove(out_pubkey, credential->publicKey, PUBLIC_KEY_SIZE);
+            return true;
+        case EXT_CREDENTIAL_KEY_PATH: {
+            extendedPublicKey_t derived_key = {0};
+            cx_err_t err = deriveExtendedPublicKey(&credential->keyPath, &derived_key);
+            if (err != CX_OK) {
+                TRACE("Failed to derive CVote key path: 0x%x", err);
+                return false;
+            }
+            memmove(out_pubkey, derived_key.pubKey, PUBLIC_KEY_SIZE);
+            return true;
+        }
+        default:
+            TRACE("Unsupported CVote credential type %u", credential->type);
+            return false;
+    }
+}
+
+static bool cvote_extract_destination_address(const cvote_destination_t *destination,
+                                              uint8_t *address_buffer,
+                                              size_t *out_len) {
+    ASSERT(destination != NULL);
+    ASSERT(address_buffer != NULL);
+    ASSERT(out_len != NULL);
+
+    if (destination->is_third_party) {
+        if (destination->third_party.length == 0 || destination->third_party.buffer == NULL) {
+            TRACE("CVote third-party destination empty");
+            return false;
+        }
+        memmove(address_buffer, destination->third_party.buffer, destination->third_party.length);
+        *out_len = destination->third_party.length;
+        return true;
+    }
+
+    size_t address_size = deriveAddress(&destination->params, address_buffer, MAX_ADDRESS_LENGTH);
+    if (address_size == 0 || address_size > MAX_ADDRESS_LENGTH) {
+        TRACE("CVote destination address derivation failed (%u)", (unsigned) address_size);
+        return false;
+    }
+    *out_len = address_size;
+    return true;
+}
+
+static void cvote_hash_builder_setup(cvote_aux_data_t *aux_data) {
+    ASSERT(aux_data != NULL);
+
+    auxDataHashBuilder_init(&aux_data->hash_builder);
+    auxDataHashBuilder_cVoteRegistration_enter(&aux_data->hash_builder, aux_data->format);
+    auxDataHashBuilder_cVoteRegistration_enterPayload(&aux_data->hash_builder);
+    if (aux_data->format == CIP36 && aux_data->delegation_count > 0) {
+        auxDataHashBuilder_cVoteRegistration_enterDelegations(&aux_data->hash_builder,
+                                                              aux_data->delegation_count);
+    }
+}
+
+static bool cvote_hash_builder_add_vote_key(cvote_aux_data_t *aux_data) {
+    ASSERT(aux_data != NULL);
+
+    if (aux_data->format == CIP36 && aux_data->delegation_count > 0) {
+        return true;
+    }
+    if (aux_data->format != CIP15 && aux_data->format != CIP36) {
+        return true;
+    }
+
+    if (!aux_data->has_vote_credential) {
+        TRACE("CVote vote key missing");
+        return false;
+    }
+    uint8_t pubkey[PUBLIC_KEY_SIZE] = {0};
+    if (!cvote_extract_pubkey(&aux_data->vote_credential, pubkey)) {
+        return false;
+    }
+    auxDataHashBuilder_cVoteRegistration_addVoteKey(&aux_data->hash_builder, pubkey, sizeof(pubkey));
+    return true;
+}
+
+static bool cvote_hash_builder_add_staking_key(cvote_aux_data_t *aux_data) {
+    ASSERT(aux_data != NULL);
+
+    uint8_t pubkey[PUBLIC_KEY_SIZE] = {0};
+    if (!cvote_extract_pubkey(&aux_data->staking_credential, pubkey)) {
+        return false;
+    }
+    auxDataHashBuilder_cVoteRegistration_addStakingKey(&aux_data->hash_builder, pubkey, sizeof(pubkey));
+    return true;
+}
+
+static bool cvote_hash_builder_add_payment_address(cvote_aux_data_t *aux_data) {
+    ASSERT(aux_data != NULL);
+
+    uint8_t address_buffer[MAX_ADDRESS_LENGTH] = {0};
+    size_t address_len = 0;
+    if (!cvote_extract_destination_address(&aux_data->destination, address_buffer, &address_len)) {
+        return false;
+    }
+    auxDataHashBuilder_cVoteRegistration_addPaymentAddress(&aux_data->hash_builder,
+                                                          address_buffer,
+                                                          address_len);
+    return true;
+}
+
+static bool cvote_hash_builder_add_nonce(cvote_aux_data_t *aux_data) {
+    ASSERT(aux_data != NULL);
+
+    auxDataHashBuilder_cVoteRegistration_addNonce(&aux_data->hash_builder, aux_data->nonce);
+    return true;
+}
+
+static bool cvote_hash_builder_add_voting_purpose(cvote_aux_data_t *aux_data) {
+    ASSERT(aux_data != NULL);
+
+    if (!aux_data->has_voting_purpose) {
+        return true;
+    }
+    auxDataHashBuilder_cVoteRegistration_addVotingPurpose(&aux_data->hash_builder, aux_data->voting_purpose);
+    return true;
+}
+
+static bool cvote_hash_builder_add_common_fields(cvote_aux_data_t *aux_data) {
+    ASSERT(aux_data != NULL);
+
+    if (aux_data->final_fields_processed) {
+        return true;
+    }
+
+    if (!cvote_hash_builder_add_vote_key(aux_data)) {
+        return false;
+    }
+    if (!cvote_hash_builder_add_staking_key(aux_data)) {
+        return false;
+    }
+    if (!cvote_hash_builder_add_payment_address(aux_data)) {
+        return false;
+    }
+    if (!cvote_hash_builder_add_nonce(aux_data)) {
+        return false;
+    }
+    if (aux_data->format == CIP36) {
+        if (!cvote_hash_builder_add_voting_purpose(aux_data)) {
+            return false;
+        }
+    }
+    aux_data->final_fields_processed = true;
+    return true;
+}
+
+static bool cvote_append_registration_signature(cvote_aux_data_t *aux_data) {
+    ASSERT(aux_data != NULL);
+
+    if (aux_data->staking_credential.type != EXT_CREDENTIAL_KEY_PATH) {
+        TRACE("CVote staking credential is not a key path");
+        return false;
+    }
+
+    security_policy_t policy =
+        policyForCVoteRegistrationStakingKey(&aux_data->staking_credential.keyPath);
+    if (policy == POLICY_DENY) {
+        TRACE("CVote staking key policy denied");
+        return false;
+    }
+
+    uint8_t payload_hash[CVOTE_REGISTRATION_PAYLOAD_HASH_LENGTH] = {0};
+    auxDataHashBuilder_cVoteRegistration_finalizePayload(
+        &aux_data->hash_builder,
+        payload_hash,
+        sizeof(payload_hash));
+    TRACE("CVote registration payload hash");
+    TRACE_BUFFER(payload_hash, sizeof(payload_hash));
+
+    getCVoteRegistrationSignature(&aux_data->staking_credential.keyPath,
+                                  payload_hash,
+                                  sizeof(payload_hash),
+                                  aux_data->registration_signature,
+                                  sizeof(aux_data->registration_signature));
+    TRACE("CVote registration signature");
+    TRACE_BUFFER(aux_data->registration_signature, sizeof(aux_data->registration_signature));
+
+    auxDataHashBuilder_cVoteRegistration_addSignature(
+        &aux_data->hash_builder,
+        aux_data->registration_signature,
+        sizeof(aux_data->registration_signature));
+    auxDataHashBuilder_cVoteRegistration_addAuxiliaryScripts(&aux_data->hash_builder);
+    return true;
+}
+
+static bool cvote_hash_builder_add_delegation(cvote_aux_data_t *aux_data,
+                                             const ext_credential_t *credential,
+                                             uint32_t weight) {
+    ASSERT(aux_data != NULL);
+    ASSERT(credential != NULL);
+
+    uint8_t pubkey[PUBLIC_KEY_SIZE] = {0};
+    if (!cvote_extract_pubkey(credential, pubkey)) {
+        return false;
+    }
+    auxDataHashBuilder_cVoteRegistration_addDelegation(&aux_data->hash_builder,
+                                                      pubkey,
+                                                      sizeof(pubkey),
+                                                      weight);
+    return true;
+}
+static int cvote_send_aux_data_hash(void) {
+    TRACE("Sending CVote auxiliary data hash");
+    return io_send_response_pointer(G_context.tx_info.transaction.auxDataHash,
+                                    AUX_DATA_HASH_LENGTH,
+                                    SWO_SUCCESS);
+}
+
+static int cvote_finalize_aux_data(void) {
+    cvote_aux_data_t *aux_data = G_context.tx_info.cvote_aux_data;
+    ASSERT(aux_data != NULL);
+
+    if (!cvote_hash_builder_add_common_fields(aux_data)) {
+        return send_swo_and_reset(SWO_WRONG_TX_INIT_APDU_DATA);
+    }
+
+    if (!cvote_append_registration_signature(aux_data)) {
+        return send_swo_and_reset(SWO_WRONG_TX_INIT_APDU_DATA);
+    }
+
+    auxDataHashBuilder_finalize(&aux_data->hash_builder,
+                                G_context.tx_info.transaction.auxDataHash,
+                                AUX_DATA_HASH_LENGTH);
+
+    G_context.state.tx_state = TX_STATE_CHUNKS;
+    TRACE("CVote AUX_DATA complete, ready for transaction chunks");
+    return cvote_send_aux_data_hash();
 }
 
 /**
@@ -150,14 +398,28 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
         return send_swo_and_reset(SWO_TX_PARSING_FAIL_INCLUSION_FLAG);
     }
     G_context.tx_info.transaction.includeAuxDataHash = includeAuxDataHash;
-    G_context.tx_info.transaction.auxDataType = AUX_DATA_TYPE_ARBITRARY_HASH;
     if (includeAuxDataHash) {
-        if (!buffer_read_bytes(cdata,
-                               G_context.tx_info.transaction.auxDataHash,
-                               AUX_DATA_HASH_LENGTH)) {
+        uint8_t auxDataTypeByte = 0;
+        if (!buffer_read_u8(cdata, &auxDataTypeByte)) {
+            return send_swo_and_reset(SWO_WRONG_TX_INIT_APDU_DATA);
+        }
+
+        if (auxDataTypeByte == AUX_DATA_TYPE_ARBITRARY_HASH) {
+            G_context.tx_info.transaction.auxDataType = AUX_DATA_TYPE_ARBITRARY_HASH;
+            if (!buffer_read_bytes(cdata,
+                                   G_context.tx_info.transaction.auxDataHash,
+                                   AUX_DATA_HASH_LENGTH)) {
+                return send_swo_and_reset(SWO_WRONG_TX_INIT_APDU_DATA);
+            }
+        } else if (auxDataTypeByte == AUX_DATA_TYPE_CVOTE_REGISTRATION) {
+            G_context.tx_info.transaction.auxDataType = AUX_DATA_TYPE_CVOTE_REGISTRATION;
+            explicit_bzero(G_context.tx_info.transaction.auxDataHash,
+                           AUX_DATA_HASH_LENGTH);
+        } else {
             return send_swo_and_reset(SWO_WRONG_TX_INIT_APDU_DATA);
         }
     } else {
+        G_context.tx_info.transaction.auxDataType = AUX_DATA_TYPE_ARBITRARY_HASH;
         explicit_bzero(G_context.tx_info.transaction.auxDataHash,
                        AUX_DATA_HASH_LENGTH);
     }
@@ -304,9 +566,20 @@ static int handle_tx_init_apdu(buffer_t *cdata) {
     TRACE("Calling nbgl_useCaseSpinner(\"Processing\")");
     nbgl_useCaseSpinner("Processing");
 
-    // Transition to CHUNKS state - now ready to receive transaction data chunks
-    G_context.state.tx_state = TX_STATE_CHUNKS;
-    TRACE("Transaction initialized, waiting for data chunks");
+    G_context.tx_info.cvote_aux_data_expected = includeAuxDataHash &&
+                                                (G_context.tx_info.transaction.auxDataType ==
+                                                 AUX_DATA_TYPE_CVOTE_REGISTRATION);
+    G_context.tx_info.cvote_aux_data_initialized = false;
+    G_context.tx_info.cvote_registrations_remaining = 0;
+
+    if (G_context.tx_info.cvote_aux_data_expected) {
+        G_context.state.tx_state = TX_STATE_AUX_DATA;
+        TRACE("Transaction initialized, waiting for CVote AUX_DATA");
+    } else {
+        // Transition to CHUNKS state - now ready to receive transaction data chunks
+        G_context.state.tx_state = TX_STATE_CHUNKS;
+        TRACE("Transaction initialized, waiting for data chunks");
+    }
 
     return io_send_sw(SWO_SUCCESS);
 }
@@ -419,6 +692,90 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
         return ui_result;
     }
 }
+
+
+int handler_sign_tx_aux_data(buffer_t *cdata, uint8_t p2) {
+    if (G_context.req_type != REQUEST_SIGN_TRANSACTION) {
+        return send_swo_and_reset(SWO_BAD_STATE);
+    }
+
+    if (G_context.state.tx_state != TX_STATE_AUX_DATA) {
+        TRACE("Bad state for AUX_DATA: expected TX_STATE_AUX_DATA, got %d", G_context.state.tx_state);
+        return send_swo_and_reset(SWO_BAD_STATE);
+    }
+
+    if (!G_context.tx_info.cvote_aux_data_expected) {
+        TRACE("Unexpected CVote AUX_DATA APDU");
+        return send_swo_and_reset(SWO_BAD_STATE);
+    }
+
+    if (p2 == P2_AUX_DATA_INIT) {
+        if (G_context.tx_info.cvote_aux_data_initialized) {
+            return send_swo_and_reset(SWO_BAD_STATE);
+        }
+
+        cvote_aux_data_t *parsed = NULL;
+        cvote_parser_status_t status = cvote_parse_aux_data_init(cdata, &parsed);
+        if (status != CVOTE_PARSER_OK) {
+            return send_swo_and_reset(status == CVOTE_PARSER_OUT_OF_MEMORY
+                                          ? SWO_INSUFFICIENT_MEMORY
+                                          : SWO_WRONG_TX_INIT_APDU_DATA);
+        }
+
+        cvote_hash_builder_setup(parsed);
+
+        G_context.tx_info.cvote_aux_data_initialized = true;
+        G_context.tx_info.cvote_aux_data = parsed;
+        G_context.tx_info.cvote_registrations_remaining = parsed->delegation_count;
+        TRACE("CVote AUX_DATA init: format=%u, delegations=%u", parsed->format, parsed->delegation_count);
+
+        if (cvote_aux_data_is_done()) {
+            return cvote_finalize_aux_data();
+        }
+
+        return io_send_sw(SWO_SUCCESS);
+    }
+
+    if (p2 == P2_AUX_DATA_DELEGATION) {
+        if (!G_context.tx_info.cvote_aux_data_initialized) {
+            return send_swo_and_reset(SWO_BAD_STATE);
+        }
+        if (G_context.tx_info.cvote_registrations_remaining == 0) {
+            return send_swo_and_reset(SWO_BAD_STATE);
+        }
+
+        TRACE("CVote AUX_DATA delegation received, remaining=%u, payload_len=%u",
+              G_context.tx_info.cvote_registrations_remaining - 1,
+              cdata->size);
+
+        cvote_aux_data_t *aux_data = G_context.tx_info.cvote_aux_data;
+        ext_credential_t delegation_credential = {0};
+        if (cvote_parse_credential(cdata, &delegation_credential, "Delegation credential") !=
+            CVOTE_PARSER_OK) {
+            return send_swo_and_reset(SWO_WRONG_TX_INIT_APDU_DATA);
+        }
+
+        uint32_t weight = 0;
+        if (!buffer_read_u32(cdata, &weight, BE) || cdata->offset != cdata->size) {
+            return send_swo_and_reset(SWO_WRONG_TX_INIT_APDU_DATA);
+        }
+
+        if (!cvote_hash_builder_add_delegation(aux_data, &delegation_credential, weight)) {
+            return send_swo_and_reset(SWO_WRONG_TX_INIT_APDU_DATA);
+        }
+
+        G_context.tx_info.cvote_registrations_remaining--;
+
+        if (cvote_aux_data_is_done()) {
+            return cvote_finalize_aux_data();
+        }
+
+        return io_send_sw(SWO_SUCCESS);
+    }
+
+    return send_swo_and_reset(SWO_INCORRECT_P1_P2);
+}
+
 
 // All witnesses processed
 void finalize_witness()

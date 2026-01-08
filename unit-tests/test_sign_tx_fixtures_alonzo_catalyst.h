@@ -34,6 +34,17 @@ static const uint8_t FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRATION_
     0x0A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07,
 };
 
+static const uint8_t FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRATION_METADATA_WITH_BASE_ADDRESS_AUX_DATA_INIT_PAYLOAD[] = {
+    0x01, 0x00, 0x00, 0x02, 0x05, 0x80, 0x00, 0x07, 0x3C, 0x80, 0x00, 0x07, 0x17, 0x80, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01, 0x05, 0x80, 0x00, 0x07,
+    0x3C, 0x80, 0x00, 0x07, 0x17, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x22, 0x05, 0x80, 0x00, 0x07, 0x3C, 0x80, 0x00, 0x07, 0x17, 0x80, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x31, 0x70, 0x00,
+    0x4B, 0x19, 0xE2, 0x7F, 0xFC, 0x00, 0x6A, 0xCE, 0x16, 0x59, 0x23, 0x11, 0xC4, 0xD2, 0xF0, 0xCA,
+    0xFC, 0x25, 0x5E, 0xAA, 0x47, 0xA6, 0x17, 0x8F, 0xF5, 0x40, 0xC0, 0xA4, 0x6D, 0x07, 0x02, 0x7C,
+};
+
+
 static const tx_fixture_t FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRATION_METADATA_WITH_BASE_ADDRESS = {
     .name = "Sign_tx_with_Catalyst_registration_metadata_with_base_address",
     .raw_tx = FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRATION_METADATA_WITH_BASE_ADDRESS_RAW_TX,
@@ -51,7 +62,12 @@ static const tx_fixture_t FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRA
     .num_mint_asset_groups = 0,
     .include_ttl = true,
     .include_validity_interval_start = true,
-    .include_aux_data_hash = false,
+    .include_aux_data_hash = true,
+    .aux_data_type = 1,
+    .aux_data_init_payload = FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRATION_METADATA_WITH_BASE_ADDRESS_AUX_DATA_INIT_PAYLOAD,
+    .aux_data_init_payload_len = sizeof(FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRATION_METADATA_WITH_BASE_ADDRESS_AUX_DATA_INIT_PAYLOAD),
+    .aux_data_delegations = NULL,
+    .aux_data_delegation_count = 0,
     .include_script_data_hash = false,
     .num_collateral_inputs = 0,
     .num_required_signers = 0,
@@ -64,7 +80,7 @@ static const tx_fixture_t FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRA
     .treasury = 0,
     .include_donation = false,
     .donation = 0,
-    .aux_data_hash_hex = NULL,
+    .aux_data_hash_hex = "e9141b460aea0abb69ce113c7302c7c03690267736d6a382ee62d2a53c2ec926",
     .options = 0,
 };
 
@@ -80,6 +96,16 @@ static const uint8_t FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRATION_
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x0A,
 };
+
+static const uint8_t FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRATION_METADATA_WITH_STAKE_ADDRESS_AUX_DATA_INIT_PAYLOAD[] = {
+    0x01, 0x00, 0x00, 0x02, 0x05, 0x80, 0x00, 0x07, 0x3C, 0x80, 0x00, 0x07, 0x17, 0x80, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x02, 0x0E, 0x01, 0x22, 0x05, 0x80, 0x00,
+    0x07, 0x3C, 0x80, 0x00, 0x07, 0x17, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x31, 0x70, 0x00, 0x4B, 0x19, 0xE2, 0x7F, 0xFC,
+    0x00, 0x6A, 0xCE, 0x16, 0x59, 0x23, 0x11, 0xC4, 0xD2, 0xF0, 0xCA, 0xFC, 0x25, 0x5E, 0xAA, 0x47,
+    0xA6, 0x17, 0x8F, 0xF5, 0x40, 0xC0, 0xA4, 0x6D, 0x07, 0x02, 0x7C,
+};
+
 
 static const tx_fixture_t FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRATION_METADATA_WITH_STAKE_ADDRESS = {
     .name = "Sign_tx_with_Catalyst_registration_metadata_with_stake_address",
@@ -98,7 +124,12 @@ static const tx_fixture_t FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRA
     .num_mint_asset_groups = 0,
     .include_ttl = true,
     .include_validity_interval_start = false,
-    .include_aux_data_hash = false,
+    .include_aux_data_hash = true,
+    .aux_data_type = 1,
+    .aux_data_init_payload = FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRATION_METADATA_WITH_STAKE_ADDRESS_AUX_DATA_INIT_PAYLOAD,
+    .aux_data_init_payload_len = sizeof(FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRATION_METADATA_WITH_STAKE_ADDRESS_AUX_DATA_INIT_PAYLOAD),
+    .aux_data_delegations = NULL,
+    .aux_data_delegation_count = 0,
     .include_script_data_hash = false,
     .num_collateral_inputs = 0,
     .num_required_signers = 0,
@@ -111,7 +142,7 @@ static const tx_fixture_t FIXTURE_ALONZO_CATALYST_SIGN_TX_WITH_CATALYST_REGISTRA
     .treasury = 0,
     .include_donation = false,
     .donation = 0,
-    .aux_data_hash_hex = NULL,
+    .aux_data_hash_hex = "d19f7cb4d48a6ae8d370c64d2a42fca1f61d6b2cf3d0c0c02801541811338deb",
     .options = 0,
 };
 

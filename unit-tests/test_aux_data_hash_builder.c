@@ -7,7 +7,7 @@
 #include <cmocka.h>
 
 #include "cardano_constants.h"
-#include "auxDataHashBuilder/auxDataHashBuilder.h"
+#include "cvote/aux_data_hash_builder.h"
 #include "hexUtils.h"
 
 static void decode_hex_bytes(const char* hex, uint8_t* outBuffer, size_t outSize) {

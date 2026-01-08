@@ -9,6 +9,7 @@
 #include "cardano_constants.h"
 #include "bip32.h"
 #include "securityPolicy/securityWarnings.h"
+#include "cvote/cvote_parser.h"
 #include "transaction/tx.h"
 #include "transaction/tx_state.h"
 #include "opcert/opcert_types.h"
@@ -37,6 +38,11 @@ typedef struct {
     uint16_t current_witness;
     bip44_path_t witness_path;
     uint8_t witness_signature[ED25519_SIGNATURE_LENGTH];
+
+    bool cvote_aux_data_expected;
+    bool cvote_aux_data_initialized;
+    uint16_t cvote_registrations_remaining;
+    cvote_aux_data_t* cvote_aux_data;
 
     bool pool_owner_path_present;
     bip44_path_t pool_owner_path;

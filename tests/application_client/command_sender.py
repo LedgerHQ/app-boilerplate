@@ -6,7 +6,7 @@ from ragger.backend.interface import BackendInterface, RAPDU
 from standalone.input_files.signOpCert import OpCertTestCase
 from application_client.command_builder import CommandBuilder, gather_witness_paths
 from application_client.status_words import StatusWord
-from standalone.input_files.signTx import Transaction
+from standalone.input_files.signTx import Transaction, TxAuxiliaryDataCIP36, TxAuxiliaryDataType
 
 
 class CommandSender:
@@ -118,6 +118,8 @@ class CommandSender:
         if response.status != StatusWord.SWO_SUCCESS:
             raise AssertionError(f"Init failed: {hex(response.status)}")
 
+        self._send_tx_aux_data_if_present(tx)
+
         with self.sign_tx_send_chunks(tx):
             if on_review is not None:
                 on_review()
@@ -129,6 +131,25 @@ class CommandSender:
             raise AssertionError(f"Transaction failed: {hex(response.status)}")
 
         return response.data, witness_paths
+
+    def _send_tx_aux_data_if_present(self, tx: Transaction) -> None:
+        if tx.auxiliaryData is None:
+            return
+        if tx.auxiliaryData.type != TxAuxiliaryDataType.CIP36_REGISTRATION:
+            return
+
+        aux_params = tx.auxiliaryData.params
+        if not isinstance(aux_params, TxAuxiliaryDataCIP36):
+            raise AssertionError("Unexpected auxiliary data params type")
+
+        response = self._exchange(self._cmd_builder.sign_tx_aux_data_init(tx, aux_params))
+        if response.status != StatusWord.SWO_SUCCESS:
+            raise AssertionError(f"AUX_DATA init failed: {hex(response.status)}")
+
+        for delegation in aux_params.delegations:
+            response = self._exchange(self._cmd_builder.sign_tx_aux_data_delegation(delegation))
+            if response.status != StatusWord.SWO_SUCCESS:
+                raise AssertionError(f"AUX_DATA registration failed: {hex(response.status)}")
 
     @contextmanager
     def sign_tx_send_chunks(self, tx) -> Generator[None, None, None]:

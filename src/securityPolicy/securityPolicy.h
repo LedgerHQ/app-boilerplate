@@ -6,7 +6,7 @@
 
 #include "addressUtils/addressUtilsShelley.h"
 #include "addressUtils/bip44.h"
-#include "auxDataHashBuilder/auxDataHashBuilder.h"
+#include "cvote/aux_data_hash_builder.h"
 #include "messageSigning/cip8_types.h"
 #include "securityPolicyType.h"
 #include "transaction/tx_aux_data_types.h"

@@ -197,7 +197,7 @@ pytest -xvs --device stax test_opcert.py::test_opCert
 
 The `MOCK_SIGNATURES` array in `mocks/crypto_mock_data.h` contains pre-computed Ed25519 signatures for testing. These signatures are used by unit tests that call the mock `crypto_eddsa_sign` function.
 
-**Note**: These signatures are test vectors for internal C functions only. They are not validated against the standard mnemonic and serve purely as fixtures for unit testing the signing logic.
+**Note**: These signatures are derived from the standard test mnemonic and the message buffers stored in `mocks/crypto_mock_data.h`. If you update a message buffer (for example, CVote payload hashes), rerun the regeneration script to keep signatures consistent.
 
 ## Regenerating Mock Data
 
@@ -215,7 +215,7 @@ mv mocks/crypto_mock_data_regenerated.h mocks/crypto_mock_data.h
 This script:
 - Derives all public keys and chain codes from the standard test mnemonic
 - Calculates Blake2b-224 key hashes
-- Preserves signature test vectors unchanged
+- Regenerates Ed25519 signatures using the standard mnemonic and the message buffers
 - Updates `mocks/crypto_mock_data.h` with correct key material
 
 ## Key Governance Paths

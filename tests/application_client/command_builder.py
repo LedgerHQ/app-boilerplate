@@ -26,6 +26,8 @@ from standalone.input_files.signTx import (
     CertificateType,
     CredentialParams,
     CredentialParamsType,
+    CIP36VoteDelegation,
+    CIP36VoteRegistrationFormat,
     DRepParams,
     DRepRegistrationParams,
     DRepUpdateParams,
@@ -44,10 +46,12 @@ from standalone.input_files.signTx import (
     StakeRegistrationConwayParams,
     StakeRegistrationParams,
     Transaction,
+    TxAuxiliaryDataCIP36,
     TxAuxiliaryDataHash,
     TxAuxiliaryDataType,
     TxOutput,
     TxOutputBabbage,
+    TxOutputDestination,
     TxOutputDestinationType,
     TxRequiredSignerType,
     TransactionSigningMode,
@@ -80,6 +84,7 @@ class P1Type(IntEnum):
     P1_TX_INIT = 0x00
     P1_TX_DATA_CHUNK = 0x01
     P1_TX_CHUNK_LAST = 0x02
+    P1_TX_AUX_DATA = 0x03
     P1_TX_WITNESSES = 0x0F
 
 
@@ -87,6 +92,8 @@ class P2Type(IntEnum):
     P2_UNUSED = 0x00
     P2_MORE = 0x01
     P2_LAST = 0x02
+    P2_AUX_DATA_INIT = 0x36
+    P2_AUX_DATA_DELEGATION = 0x37
 
 
 def _credential_path_from_credential(credential: CredentialParams) -> Optional[str]:
@@ -224,6 +231,7 @@ class TxInitParams:
     num_certificates: int
     num_withdrawals: int
     include_aux_data_hash: bool
+    aux_data_type: Optional[int]
     aux_data_hash_hex: Optional[str]
     include_validity_interval_start: bool
     num_mint_asset_groups: int
@@ -285,9 +293,14 @@ class CommandBuilder:
         data.extend(params.num_withdrawals.to_bytes(2, "big"))
         data.append(0x02 if params.include_aux_data_hash else 0x01)
         if params.include_aux_data_hash:
+            if params.aux_data_type is None:
+                raise ValueError("Auxiliary data type is required when include_aux_data_hash is set")
+            data.append(params.aux_data_type)
             if params.aux_data_hash_hex is None:
-                raise ValueError("Auxiliary data hash is required when include_aux_data_hash is set")
-            data.extend(bytes.fromhex(params.aux_data_hash_hex))
+                if params.aux_data_type == TxAuxiliaryDataType.ARBITRARY_HASH:
+                    raise ValueError("Auxiliary data hash is required for arbitrary-hash aux data")
+            else:
+                data.extend(bytes.fromhex(params.aux_data_hash_hex))
         data.append(0x02 if params.include_validity_interval_start else 0x01)
         data.extend(params.num_mint_asset_groups.to_bytes(2, "big"))
         data.append(0x02 if params.include_script_data_hash else 0x01)
@@ -308,17 +321,17 @@ class CommandBuilder:
                              signing_mode: int,
                              witness_paths: List[str],
                              options: int = 0) -> TxInitParams:
-        include_aux_data_hash = (
-            tx.auxiliaryData is not None and
-            tx.auxiliaryData.type == TxAuxiliaryDataType.ARBITRARY_HASH
-        )
+        include_aux_data_hash = tx.auxiliaryData is not None
+        aux_data_type = None
         aux_data_hash_hex = None
         if include_aux_data_hash:
-            aux_params = tx.auxiliaryData.params
-            if isinstance(aux_params, TxAuxiliaryDataHash):
-                aux_data_hash_hex = aux_params.hashHex
-            else:
-                include_aux_data_hash = False
+            if tx.auxiliaryData.type == TxAuxiliaryDataType.ARBITRARY_HASH:
+                aux_data_type = TxAuxiliaryDataType.ARBITRARY_HASH
+                aux_params = tx.auxiliaryData.params
+                if isinstance(aux_params, TxAuxiliaryDataHash):
+                    aux_data_hash_hex = aux_params.hashHex
+            elif tx.auxiliaryData.type == TxAuxiliaryDataType.CIP36_REGISTRATION:
+                aux_data_type = TxAuxiliaryDataType.CIP36_REGISTRATION
 
         return TxInitParams(
             options=options,
@@ -331,6 +344,7 @@ class CommandBuilder:
             num_certificates=len(tx.certificates),
             num_withdrawals=len(tx.withdrawals),
             include_aux_data_hash=include_aux_data_hash,
+            aux_data_type=aux_data_type,
             aux_data_hash_hex=aux_data_hash_hex,
             include_validity_interval_start=tx.validityIntervalStart is not None,
             num_mint_asset_groups=len(tx.mint),
@@ -346,6 +360,40 @@ class CommandBuilder:
             include_donation=getattr(tx, "donation", None) is not None,
             num_witnesses=len(witness_paths),
         )
+
+    def sign_tx_aux_data_init(self, tx: Transaction, aux_params: TxAuxiliaryDataCIP36) -> bytes:
+        data = bytearray()
+        data.append(aux_params.format)
+        data.extend(len(aux_params.delegations).to_bytes(2, "big"))
+        data.extend(self._serialize_cvote_key_or_path(aux_params.stakingPath))
+        data.extend(self._serialize_output_destination(aux_params.paymentDestination, tx))
+        data.extend(aux_params.nonce.to_bytes(8, "big"))
+
+        if aux_params.format == CIP36VoteRegistrationFormat.CIP_36:
+            voting_purpose = aux_params.votingPurpose if aux_params.votingPurpose is not None else 0
+            data.extend(voting_purpose.to_bytes(8, "big"))
+            if len(aux_params.delegations) == 0:
+                if aux_params.voteKey is None:
+                    raise ValueError("CIP-36 vote key is required when delegations are empty")
+                data.extend(self._serialize_cvote_key_or_path(aux_params.voteKey))
+        else:
+            if aux_params.voteKey is None:
+                raise ValueError("CIP-15 vote key is required")
+            data.extend(self._serialize_cvote_key_or_path(aux_params.voteKey))
+
+        return self._serialize(InsType.INS_SIGN_TX,
+                               P1Type.P1_TX_AUX_DATA,
+                               P2Type.P2_AUX_DATA_INIT,
+                               bytes(data))
+
+    def sign_tx_aux_data_delegation(self, delegation: CIP36VoteDelegation) -> bytes:
+        data = bytearray()
+        data.extend(self._serialize_cvote_key_or_path(delegation.votingKeyPath))
+        data.extend(delegation.weight.to_bytes(4, "big"))
+        return self._serialize(InsType.INS_SIGN_TX,
+                               P1Type.P1_TX_AUX_DATA,
+                               P2Type.P2_AUX_DATA_DELEGATION,
+                               bytes(data))
 
     def sign_tx_witness(self, path: str) -> bytes:
         data = pack_derivation_path(path)
@@ -502,43 +550,7 @@ class CommandBuilder:
 
     def _serialize_output(self, tx_output: TxOutput, tx: Transaction) -> bytearray:
         output_data = bytearray()
-        output_data.append(tx_output.destination.type)
-
-        if tx_output.destination.type == TxOutputDestinationType.THIRD_PARTY:
-            addr_bytes = bytes.fromhex(tx_output.destination.params.addressHex)
-            output_data.extend(len(addr_bytes).to_bytes(2, "big"))
-            output_data.extend(addr_bytes)
-        else:
-            addr_params = tx_output.destination.params
-            output_data.append(addr_params.addrType)
-            if addr_params.addrType == AddressType.BYRON:
-                output_data.extend(addr_params.netDesc.protocol.to_bytes(4, "big"))
-            else:
-                output_data.append(tx.network.networkId)
-            if addr_params.spendingValue.startswith("m/"):
-                output_data.extend(pack_derivation_path(addr_params.spendingValue))
-            else:
-                output_data.extend(bytes.fromhex(addr_params.spendingValue))
-            if addr_params.addrType in (AddressType.BYRON, AddressType.ENTERPRISE_KEY,
-                                        AddressType.ENTERPRISE_SCRIPT):
-                staking_choice = StakingDataSourceType.NONE
-            elif addr_params.addrType in (AddressType.BASE_PAYMENT_KEY_STAKE_SCRIPT,
-                                          AddressType.BASE_PAYMENT_SCRIPT_STAKE_SCRIPT,
-                                          AddressType.REWARD_SCRIPT):
-                staking_choice = StakingDataSourceType.SCRIPT_HASH
-            elif addr_params.addrType in (AddressType.POINTER_KEY, AddressType.POINTER_SCRIPT):
-                staking_choice = StakingDataSourceType.BLOCKCHAIN_POINTER
-            elif addr_params.stakingValue.startswith("m/"):
-                staking_choice = StakingDataSourceType.KEY_PATH
-            else:
-                staking_choice = StakingDataSourceType.KEY_HASH
-            output_data.append(staking_choice)
-            if staking_choice == StakingDataSourceType.KEY_PATH:
-                output_data.extend(pack_derivation_path(addr_params.stakingValue))
-            elif staking_choice in (StakingDataSourceType.KEY_HASH, StakingDataSourceType.SCRIPT_HASH):
-                output_data.extend(bytes.fromhex(addr_params.stakingValue))
-            elif staking_choice == StakingDataSourceType.BLOCKCHAIN_POINTER:
-                output_data.extend(bytes.fromhex(addr_params.stakingValue))
+        output_data.extend(self._serialize_output_destination(tx_output.destination, tx))
 
         output_data.extend(tx_output.amount.to_bytes(8, "big"))
         output_data.append(tx_output.format if hasattr(tx_output, "format") else 0)
@@ -577,6 +589,61 @@ class CommandBuilder:
             output_data.append(0x00)
 
         return output_data
+
+    def _serialize_output_destination(self, tx_output_destination: TxOutputDestination, tx: Transaction) -> bytes:
+        destination_data = bytearray()
+        destination_data.append(tx_output_destination.type)
+
+        if tx_output_destination.type == TxOutputDestinationType.THIRD_PARTY:
+            address_bytes = bytes.fromhex(tx_output_destination.params.addressHex)
+            destination_data.extend(len(address_bytes).to_bytes(2, "big"))
+            destination_data.extend(address_bytes)
+            return bytes(destination_data)
+
+        address_params = tx_output_destination.params
+        destination_data.append(address_params.addrType)
+        if address_params.addrType == AddressType.BYRON:
+            destination_data.extend(address_params.netDesc.protocol.to_bytes(4, "big"))
+        else:
+            destination_data.append(tx.network.networkId)
+        if address_params.spendingValue.startswith("m/"):
+            destination_data.extend(pack_derivation_path(address_params.spendingValue))
+        else:
+            destination_data.extend(bytes.fromhex(address_params.spendingValue))
+
+        if address_params.addrType in (AddressType.BYRON, AddressType.ENTERPRISE_KEY,
+                                       AddressType.ENTERPRISE_SCRIPT):
+            staking_choice = StakingDataSourceType.NONE
+        elif address_params.addrType in (AddressType.BASE_PAYMENT_KEY_STAKE_SCRIPT,
+                                         AddressType.BASE_PAYMENT_SCRIPT_STAKE_SCRIPT,
+                                         AddressType.REWARD_SCRIPT):
+            staking_choice = StakingDataSourceType.SCRIPT_HASH
+        elif address_params.addrType in (AddressType.POINTER_KEY, AddressType.POINTER_SCRIPT):
+            staking_choice = StakingDataSourceType.BLOCKCHAIN_POINTER
+        elif address_params.stakingValue.startswith("m/"):
+            staking_choice = StakingDataSourceType.KEY_PATH
+        else:
+            staking_choice = StakingDataSourceType.KEY_HASH
+
+        destination_data.append(staking_choice)
+        if staking_choice == StakingDataSourceType.KEY_PATH:
+            destination_data.extend(pack_derivation_path(address_params.stakingValue))
+        elif staking_choice in (StakingDataSourceType.KEY_HASH, StakingDataSourceType.SCRIPT_HASH):
+            destination_data.extend(bytes.fromhex(address_params.stakingValue))
+        elif staking_choice == StakingDataSourceType.BLOCKCHAIN_POINTER:
+            destination_data.extend(bytes.fromhex(address_params.stakingValue))
+
+        return bytes(destination_data)
+
+    def _serialize_cvote_key_or_path(self, key_or_path: str) -> bytes:
+        data = bytearray()
+        if key_or_path.startswith("m/"):
+            data.append(CredentialParamsType.KEY_PATH)
+            data.extend(pack_derivation_path(key_or_path))
+        else:
+            data.append(CredentialParamsType.KEY_HASH)
+            data.extend(bytes.fromhex(key_or_path))
+        return bytes(data)
 
     def _serialize_credential_inline(self, credential: CredentialParams) -> bytes:
         data = bytearray()

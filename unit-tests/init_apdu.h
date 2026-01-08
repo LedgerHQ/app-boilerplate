@@ -19,6 +19,7 @@ typedef struct {
     uint16_t numCertificates;
     uint16_t numWithdrawals;
     bool includeAuxData;
+    aux_data_type_t auxDataType;
     const uint8_t* auxDataHash;
     size_t auxDataHashLen;
     bool includeValidityIntervalStart;
@@ -81,12 +82,15 @@ static inline size_t build_init_apdu(const init_apdu_params_t* params,
 
     _append_u8(out, &pos, _item_flag(params->includeAuxData));
     if (params->includeAuxData) {
-        if (params->auxDataHash == NULL ||
-            params->auxDataHashLen != AUX_DATA_HASH_LENGTH) {
-            return 0;
+        _append_u8(out, &pos, params->auxDataType);
+        if (params->auxDataType == AUX_DATA_TYPE_ARBITRARY_HASH) {
+            if (params->auxDataHash == NULL ||
+                params->auxDataHashLen != AUX_DATA_HASH_LENGTH) {
+                return 0;
+            }
+            memcpy(out + pos, params->auxDataHash, params->auxDataHashLen);
+            pos += params->auxDataHashLen;
         }
-        memcpy(out + pos, params->auxDataHash, params->auxDataHashLen);
-        pos += params->auxDataHashLen;
     }
 
     _append_u8(out, &pos, _item_flag(params->includeValidityIntervalStart));

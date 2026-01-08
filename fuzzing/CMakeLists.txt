@@ -36,7 +36,7 @@ set(CARDANO_SOURCE
     ${CARDANO_PATH}/src/addressUtils/bip44.c
     ${CARDANO_PATH}/src/apdu/dispatcher.c
     ${CARDANO_PATH}/src/app_tokens/app_tokens.c
-    ${CARDANO_PATH}/src/auxDataHashBuilder/auxDataHashBuilder.c
+    ${CARDANO_PATH}/src/cvote/aux_data_hash_builder.c
     ${CARDANO_PATH}/src/crypto/crypto.c
     ${CARDANO_PATH}/src/handler/get_app_name.c
     ${CARDANO_PATH}/src/handler/get_public_key.c
@@ -98,7 +98,7 @@ include_directories(
     ${CARDANO_PATH}/src/addressUtils
     ${CARDANO_PATH}/src/apdu
     ${CARDANO_PATH}/src/app_tokens
-    ${CARDANO_PATH}/src/auxDataHashBuilder
+    ${CARDANO_PATH}/src/cvote
     ${CARDANO_PATH}/src/crypto
     ${CARDANO_PATH}/src/handler
     ${CARDANO_PATH}/src/keyDerivation

@@ -37,6 +37,7 @@ add_compile_definitions(TEST)
 add_compile_definitions(UNIT_TEST)
 add_compile_definitions(DEBUG)
 add_compile_definitions(FUZZING)
+add_compile_definitions(TRACE_AUX_DATA_HASH_BUILDER)
 
 # IMPORTANT: mock_includes MUST come first so our SDK mocks override Ledger SDK headers
 # (We use real headers from ../src for app-specific code like utils.h, assert.h, etc.)
@@ -112,7 +113,7 @@ add_executable(test_message_signing
 )
 add_executable(test_aux_data_hash_builder
     test_aux_data_hash_builder.c
-    ../src/auxDataHashBuilder/auxDataHashBuilder.c
+    ../src/cvote/aux_data_hash_builder.c
 )
 add_executable(test_tx_hash_builder
     test_tx_hash_builder.c
@@ -225,6 +226,8 @@ set(SIGN_TX_COMMON_SOURCES
     mock_globals.c
     ../src/memory/flist.c
     ../src/handler/sign_tx.c
+    ../src/cvote/cvote_parser.c
+    ../src/cvote/aux_data_hash_builder.c
     ../src/transaction/tx_parse.c
     ../src/transaction/tx_parse_certificates.c
     ../src/transaction/tx_parse_outputs.c

@@ -5,6 +5,11 @@
 #include <stdint.h>
 
 typedef struct {
+    const uint8_t *payload;
+    size_t payload_len;
+} aux_data_payload_t;
+
+typedef struct {
     const char *name;
     const uint8_t *raw_tx;
     size_t raw_tx_len;
@@ -19,6 +24,11 @@ typedef struct {
     bool include_ttl;
     bool include_validity_interval_start;
     bool include_aux_data_hash;
+    uint8_t aux_data_type;
+    const uint8_t *aux_data_init_payload;
+    size_t aux_data_init_payload_len;
+    const aux_data_payload_t *aux_data_delegations;
+    size_t aux_data_delegation_count;
     bool include_script_data_hash;
     uint16_t num_collateral_inputs;
     uint16_t num_required_signers;

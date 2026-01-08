@@ -2,6 +2,7 @@
 
 #include "cardano_constants.h"
 #include "addressUtils/bip44.h"
+#include "keyDerivation/keyDerivation.h"
 
 typedef enum {
     EXT_CREDENTIAL_KEY_HASH = 0,      // Wire: 0x02, CBOR: 0
@@ -16,6 +17,7 @@ typedef struct {
         bip44_path_t keyPath;
         uint8_t keyHash[ADDRESS_KEY_HASH_LENGTH];
         uint8_t scriptHash[SCRIPT_HASH_LENGTH];
+        uint8_t publicKey[PUBLIC_KEY_SIZE];
     };
 } ext_credential_t;
 

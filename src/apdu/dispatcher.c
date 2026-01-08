@@ -152,16 +152,24 @@ int apdu_dispatcher(const command_t *cmd) {
             }
 
             // Transaction signing with redesigned protocol:
-            // P1 controls flow: P1_TX_INIT (0x00), P1_TX_DATA_CHUNK (0x01), P1_TX_CHUNK_LAST (0x02)
-            // P2 must always be P2_UNUSED (0x00)
-
-            // P2 must be unused for all transaction APDU types
-            if (cmd->p2 != P2_UNUSED) {
-                return send_swo_and_reset(SWO_INCORRECT_P1_P2);
+            // P1 controls flow: P1_TX_INIT (0x00), P1_TX_DATA_CHUNK (0x01),
+            // P1_TX_CHUNK_LAST (0x02), P1_TX_AUX_DATA (0x03)
+            if (cmd->p1 == P1_TX_AUX_DATA) {
+                if (cmd->p2 != P2_AUX_DATA_INIT && cmd->p2 != P2_AUX_DATA_DELEGATION) {
+                    return send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                }
+            } else {
+                // P2 must be unused for non-AUX_DATA APDUs
+                if (cmd->p2 != P2_UNUSED) {
+                    return send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                }
             }
 
             // Validate P1 value
-            if (cmd->p1 != P1_TX_INIT && cmd->p1 != P1_TX_DATA_CHUNK && cmd->p1 != P1_TX_CHUNK_LAST) {
+            if (cmd->p1 != P1_TX_INIT &&
+                cmd->p1 != P1_TX_DATA_CHUNK &&
+                cmd->p1 != P1_TX_CHUNK_LAST &&
+                cmd->p1 != P1_TX_AUX_DATA) {
                 return send_swo_and_reset(SWO_INCORRECT_P1_P2);
             }
 
@@ -173,6 +181,10 @@ int apdu_dispatcher(const command_t *cmd) {
             tx_buf.ptr = cmd->data;
             tx_buf.size = cmd->lc;
             tx_buf.offset = 0;
+
+            if (cmd->p1 == P1_TX_AUX_DATA) {
+                return handler_sign_tx_aux_data(&tx_buf, cmd->p2);
+            }
 
             // Determine if more data follows based on P1
             // P1_TX_CHUNK_LAST signals no more data, all others signal more data to come

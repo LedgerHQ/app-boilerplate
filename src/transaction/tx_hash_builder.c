@@ -5,13 +5,13 @@
 #include "utils/assert.h"
 #include <string.h>
 
-// this tracing is rarely needed
-// so we want to keep it turned off to avoid polluting the trace log
-// with the current big buffer it only works in unit-tests
-
+/*
+ * Optional tracing for debugging tx hash serialization.
+ * Enabled via -DTRACE_TX_HASH_BUILDER to capture the exact CBOR bytes
+ * being hashed.
+ */
 #ifdef TRACE_TX_HASH_BUILDER
-/* keep a sizable buffer for test tracing but never enable in production */
-static uint8_t tx_body_trace_buffer[100 * 1024];
+static uint8_t tx_body_trace_buffer[4 * 1024];
 static size_t tx_body_trace_size = 0;
 
 static void trace_record_bytes(const uint8_t* buffer, size_t size) {
@@ -22,11 +22,9 @@ static void trace_record_bytes(const uint8_t* buffer, size_t size) {
     tx_body_trace_size += size;
 }
 #define TRACE_BODY(buffer, size) trace_record_bytes(buffer, size)
-
 #define _TRACE(...) TRACE(__VA_ARGS__)
 #else
 #define TRACE_BODY(buffer, size) (void)0
-
 #define _TRACE(...)
 #endif  // TRACE_TX_HASH_BUILDER
 
