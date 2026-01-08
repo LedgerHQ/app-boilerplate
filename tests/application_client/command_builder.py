@@ -58,6 +58,9 @@ from standalone.input_files.signTx import (
 
 CLA: int = 0xd7
 
+ITEM_INCLUDED_NO: int = 0x01
+ITEM_INCLUDED_YES: int = 0x02
+
 
 class InsType(IntEnum):
     INS_GET_VERSION = 0x03
@@ -409,7 +412,7 @@ class CommandBuilder:
 
                     # anchor inclusion flag
                     if vote.votingProcedure.anchor is not None:
-                        data.append(0x02)  # ITEM_INCLUDED_YES
+                        data.append(ITEM_INCLUDED_YES)
 
                         # anchor URL
                         anchor_url_bytes = vote.votingProcedure.anchor.url.encode('utf-8')
@@ -419,7 +422,7 @@ class CommandBuilder:
                         # anchor hash
                         data.extend(bytes.fromhex(vote.votingProcedure.anchor.hashHex))
                     else:
-                        data.append(0x01)  # ITEM_INCLUDED_NO
+                        data.append(ITEM_INCLUDED_NO)
 
         if getattr(tx, "treasury", None) is not None:
             data.extend(tx.treasury.to_bytes(8, "big"))
@@ -578,27 +581,27 @@ class CommandBuilder:
             params = relay.params
             assert isinstance(params, SingleHostIpAddrRelayParams)
             if params.portNumber is None:
-                data.append(0x00)
+                data.append(ITEM_INCLUDED_NO)
             else:
-                data.append(0x02)
+                data.append(ITEM_INCLUDED_YES)
                 data.extend(params.portNumber.to_bytes(2, "big"))
             if not params.ipv4:
-                data.append(0x00)
+                data.append(ITEM_INCLUDED_NO)
             else:
-                data.append(0x02)
+                data.append(ITEM_INCLUDED_YES)
                 data.extend(ipaddress.IPv4Address(params.ipv4).packed)
             if not params.ipv6:
-                data.append(0x00)
+                data.append(ITEM_INCLUDED_NO)
             else:
-                data.append(0x02)
+                data.append(ITEM_INCLUDED_YES)
                 data.extend(ipaddress.IPv6Address(params.ipv6).packed)
         elif relay.type == RelayType.SINGLE_HOST_HOSTNAME:
             params = relay.params
             assert isinstance(params, SingleHostHostnameRelayParams)
             if params.portNumber is None:
-                data.append(0x00)
+                data.append(ITEM_INCLUDED_NO)
             else:
-                data.append(0x02)
+                data.append(ITEM_INCLUDED_YES)
                 data.extend(params.portNumber.to_bytes(2, "big"))
             dns_bytes = (params.dnsName or "").encode("utf-8")
             if len(dns_bytes) > 0xFF:

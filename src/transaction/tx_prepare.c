@@ -596,6 +596,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
 
                             security_policy_t reward_policy = policyForSignTxStakePoolRegistrationRewardAccount(
                                 G_context.tx_info.transaction.txSigningMode,
+                                G_context.tx_info.transaction.networkId,
                                 &certificate_item->certificate_data.poolRegistration.rewardAccount
                             );
                             switch (reward_policy) {
@@ -614,19 +615,9 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                                     (tx_certificate_list_item_t*) owner_node;
                                 ext_credential_t* owner_cred = &owner_item->certificate_data.stakeCredential;
 
-                                pool_owner_t pool_owner = {
-                                    .keyReferenceType = (owner_cred->type == EXT_CREDENTIAL_KEY_PATH) ?
-                                                       KEY_REFERENCE_PATH : KEY_REFERENCE_HASH
-                                };
-                                if (owner_cred->type == EXT_CREDENTIAL_KEY_PATH) {
-                                    pool_owner.path = owner_cred->keyPath;
-                                } else {
-                                    memcpy(pool_owner.keyHash, owner_cred->keyHash, ADDRESS_KEY_HASH_LENGTH);
-                                }
-
                                 security_policy_t owner_policy = policyForSignTxStakePoolRegistrationOwner(
                                     G_context.tx_info.transaction.txSigningMode,
-                                    &pool_owner
+                                    owner_cred
                                 );
                                 switch (owner_policy) {
                                     case POLICY_DENY:
@@ -700,9 +691,7 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                             }
                             ASSERT(relay_count ==
                                    certificate_item->certificate_data.poolRegistration.numRelays);
-                            if (relay_count == 0 &&
-                                G_context.tx_info.transaction.txSigningMode ==
-                                    SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR) {
+                            if (relay_count == 0) {
                                 pool_pairs += 1;  // "Pool relays" "None"
                             }
 
@@ -815,6 +804,105 @@ int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
                         POOL_KEY_HASH_LENGTH,
                         certificate_item->certificate_data.retirementEpoch
                     );
+                    break;
+                }
+                case CERTIFICATE_STAKE_POOL_REGISTRATION: {
+                    const certificate_data_t* certData = &certificate_item->certificate_data;
+                    const pool_registration_data_t* poolReg = &certData->poolRegistration;
+
+                    txHashBuilder_poolRegistrationCertificate_enter(
+                        &txHashBuilder,
+                        poolReg->numPoolOwners,
+                        poolReg->numRelays
+                    );
+
+                    // Pool Key Hash (from poolId)
+                    uint8_t poolKeyHash[POOL_KEY_HASH_LENGTH];
+                    if (certData->poolId.keyReferenceType == KEY_REFERENCE_PATH) {
+                        bip44_pathToKeyHash(&certData->poolId.path, poolKeyHash, sizeof(poolKeyHash));
+                    } else {
+                        memcpy(poolKeyHash, certData->poolId.hash, POOL_KEY_HASH_LENGTH);
+                    }
+                    txHashBuilder_poolRegistrationCertificate_poolKeyHash(
+                        &txHashBuilder,
+                        poolKeyHash,
+                        sizeof(poolKeyHash)
+                    );
+
+                    // VRF Key Hash
+                    txHashBuilder_poolRegistrationCertificate_vrfKeyHash(
+                        &txHashBuilder,
+                        certData->vrfKeyHash,
+                        sizeof(certData->vrfKeyHash)
+                    );
+
+                    // Financials
+                    txHashBuilder_poolRegistrationCertificate_financials(
+                        &txHashBuilder,
+                        poolReg->pledge,
+                        poolReg->cost,
+                        poolReg->marginNumerator,
+                        poolReg->marginDenominator
+                    );
+
+                    // Reward Account
+                    uint8_t rewardAccountBuf[REWARD_ACCOUNT_LENGTH];
+                    rewardAccountToBuffer(
+                        &poolReg->rewardAccount,
+                        G_context.tx_info.transaction.networkId,
+                        rewardAccountBuf
+                    );
+                    txHashBuilder_poolRegistrationCertificate_rewardAccount(
+                        &txHashBuilder,
+                        rewardAccountBuf,
+                        sizeof(rewardAccountBuf)
+                    );
+
+                    // Owners
+                    txHashBuilder_addPoolRegistrationCertificate_enterOwners(&txHashBuilder);
+                    s_flist_node* owner_node = poolReg->poolOwners;
+                    while (owner_node) {
+                        tx_certificate_list_item_t* owner_item = (tx_certificate_list_item_t*) owner_node;
+                        ext_credential_t* cred = &owner_item->certificate_data.stakeCredential;
+                        
+                        ext_credential_t ownerCredForHash = _credentialForTxHash(cred);
+                        
+                        txHashBuilder_addPoolRegistrationCertificate_addOwner(
+                            &txHashBuilder,
+                            ownerCredForHash.keyHash,
+                            sizeof(ownerCredForHash.keyHash)
+                        );
+                        
+                        owner_node = owner_node->next;
+                    }
+
+                    // Relays
+                    txHashBuilder_addPoolRegistrationCertificate_enterRelays(&txHashBuilder);
+                    s_flist_node* relay_node = poolReg->relays;
+                    while (relay_node) {
+                        tx_certificate_list_item_t* relay_item_node = (tx_certificate_list_item_t*) relay_node;
+                        pool_relay_t* relay = (pool_relay_t*) &relay_item_node->certificate_data;
+                        
+                        txHashBuilder_addPoolRegistrationCertificate_addRelay(
+                            &txHashBuilder,
+                            relay
+                        );
+                        
+                        relay_node = relay_node->next;
+                    }
+
+                    // Metadata
+                    if (poolReg->poolMetadataIsNull) {
+                        txHashBuilder_addPoolRegistrationCertificate_addPoolMetadata_null(&txHashBuilder);
+                    } else {
+                        txHashBuilder_addPoolRegistrationCertificate_addPoolMetadata(
+                            &txHashBuilder,
+                            poolReg->poolMetadata.url,
+                            poolReg->poolMetadata.urlSize,
+                            poolReg->poolMetadata.hash,
+                            POOL_METADATA_HASH_LENGTH
+                        );
+                    }
                     break;
                 }
                 case CERTIFICATE_VOTE_DELEGATION: {

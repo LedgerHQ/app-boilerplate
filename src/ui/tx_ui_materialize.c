@@ -757,24 +757,18 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
     // Check reward account security policy
     security_policy_t reward_policy = policyForSignTxStakePoolRegistrationRewardAccount(
         txSigningMode,
+        G_context.tx_info.transaction.networkId,
         &certificate_data->poolRegistration.rewardAccount
     );
     LEDGER_ASSERT(reward_policy != POLICY_DENY, "Reward account security policy denied");
 
     // Display reward account
     if (reward_policy == POLICY_SHOW) {
-        switch (certificate_data->poolRegistration.rewardAccount.keyReferenceType) {
-            case KEY_REFERENCE_PATH: {
-                status = ui_pairs_add_static_label_impl(UI_STATIC_LABEL("Reward account"), (char *) UI_STATIC_LABEL("key path"), false) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
-                break;
-            }
-            case KEY_REFERENCE_HASH: {
-                status = ui_pairs_add_static_label_impl(UI_STATIC_LABEL("Reward account"), (char *) UI_STATIC_LABEL("key hash"), false) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
-                break;
-            }
-            default:
-                LEDGER_ASSERT(false, "Invalid reward account type");
-        }
+        status = addRewardAccountUIPairs(
+            G_context.tx_info.transaction.networkId,
+            &certificate_data->poolRegistration.rewardAccount,
+            UI_STATIC_LABEL("Pool reward address")
+        );
         if (status != SWO_SUCCESS) {
             return status;
         }
@@ -788,32 +782,18 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
             (tx_certificate_list_item_t*) owner_node;
         ext_credential_t* owner_cred = &owner_item->certificate_data.stakeCredential;
 
-        // Convert ext_credential to pool_owner for policy check
-        pool_owner_t pool_owner = {
-            .keyReferenceType = (owner_cred->type == EXT_CREDENTIAL_KEY_PATH) ?
-                                KEY_REFERENCE_PATH : KEY_REFERENCE_HASH
-        };
-        if (owner_cred->type == EXT_CREDENTIAL_KEY_PATH) {
-            pool_owner.path = owner_cred->keyPath;
-        } else {
-            memcpy(pool_owner.keyHash, owner_cred->keyHash, ADDRESS_KEY_HASH_LENGTH);
-        }
-
         // Check owner security policy
         security_policy_t owner_policy = policyForSignTxStakePoolRegistrationOwner(
             G_context.tx_info.transaction.txSigningMode,
-            &pool_owner
+            owner_cred
         );
         LEDGER_ASSERT(owner_policy != POLICY_DENY, "Pool owner security policy denied");
 
         if (owner_policy == POLICY_SHOW) {
-            status = addCredentialUIPairs(
+            status = addRewardAddressFromCredentialUIPairs(
+                G_context.tx_info.transaction.networkId,
                 owner_cred,
-                "Owner",                        // KEY_PATH label
-                "Owner",                        // KEY_HASH label
-                "stake_vkh",                    // KEY_HASH bech32 prefix
-                "Owner",                        // SCRIPT_HASH label
-                "script"                        // SCRIPT_HASH bech32 prefix
+                UI_STATIC_LABEL("Owner reward address")
             );
             if (status != SWO_SUCCESS) {
                 return status;
@@ -961,9 +941,7 @@ static int ui_strings_certificate_pool_registration(const certificate_data_t* ce
 
     ASSERT(relay_idx ==
             certificate_data->poolRegistration.numRelays);
-    if (relay_idx == 0 &&
-        G_context.tx_info.transaction.txSigningMode ==
-            SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR) {
+    if (relay_idx == 0) {
         warning_bits_set(&G_context.tx_info.warning_bits,
                             WARNING_BIT_POOL_REGISTRATION_NO_RELAYS);
         status = ui_pairs_add_static_label_impl(UI_STATIC_LABEL("Pool relays"), (char *) UI_STATIC_LABEL("None"), false) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
@@ -1291,7 +1269,7 @@ static int ui_strings_withdrawals(transaction_t *tx) {
                     return status;
                 }
 
-                status = addRewardAccountUIPairs(
+                status = addRewardAccountFromCredentialUIPairs(
                     G_context.tx_info.transaction.networkId,
                     &withdrawal_item->withdrawal_data.stakeCredential
                 );

@@ -21,6 +21,10 @@ const {
   stakePoolRegistrationOwnerRejectTestCases,
   stakePoolRegistrationPoolIdRejectTestCases,
   outputRejectTestCases,
+  invalidCertificates,
+  testsCVoteRegistrationRejects,
+  invalidPoolMetadataTestCases,
+  invalidRelayTestCases,
 } = require(
   path.resolve(__dirname, "../../ledgerjs-cardano-shelley/test/integration/__fixtures__/signTxRejects.ts"),
 )
@@ -56,6 +60,10 @@ const fixtures = {
   stakePoolRegistrationOwnerRejectTestCases,
   stakePoolRegistrationPoolIdRejectTestCases,
   outputRejectTestCases,
+  invalidCertificates,
+  testsCVoteRegistrationRejects,
+  invalidPoolMetadataTestCases,
+  invalidRelayTestCases,
 }
 
 const normalizedFixtures = {}

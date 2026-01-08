@@ -116,7 +116,33 @@ int addPoolKeyHashUIPairs(const uint8_t *poolKeyHash, const char *label);
  *
  * @return SWO_SUCCESS on success, or error code on failure
  */
-int addRewardAccountUIPairs(uint8_t networkId, const ext_credential_t *credential);
+int addRewardAccountFromCredentialUIPairs(uint8_t networkId, const ext_credential_t *credential);
+
+/**
+ * Add reward address derived from a credential to UI pairs
+ *
+ * @param[in]  networkId     Network ID for reward address construction
+ * @param[in]  credential    Credential to display (type + data)
+ * @param[in]  label         Label for the UI pair
+ *
+ * @return SWO_SUCCESS on success, or error code on failure
+ */
+int addRewardAddressFromCredentialUIPairs(uint8_t networkId,
+                                          const ext_credential_t *credential,
+                                          const char *label);
+
+/**
+ * Add reward account address to UI pairs (pool reward account)
+ *
+ * @param[in]  networkId      Network ID for reward address construction
+ * @param[in]  rewardAccount  Reward account to display (type + data)
+ * @param[in]  label          Label for the UI pair
+ *
+ * @return SWO_SUCCESS on success, or error code on failure
+ */
+int addRewardAccountUIPairs(uint8_t networkId,
+                            const reward_account_t *rewardAccount,
+                            const char *label);
 
 /**
  * Get human-readable name for a certificate type

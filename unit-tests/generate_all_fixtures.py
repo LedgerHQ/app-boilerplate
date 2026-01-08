@@ -90,6 +90,8 @@ from standalone.input_files.signTx import (
     testsCatalystRegistration,
     testsCVoteRegistrationCIP36,
     testsMultisig,
+    poolRegistrationOwnerTestCases,
+    poolRegistrationOperatorTestCases,
     TxAuxiliaryDataType,
     TxAuxiliaryDataHash,
 )
@@ -110,6 +112,7 @@ ERA_TESTS = {
     'multisig': testsMultisig,
     'alonzo_catalyst': testsCatalystRegistration,
     'alonzo_cip36': testsCVoteRegistrationCIP36,
+    'pool_registration': poolRegistrationOwnerTestCases + poolRegistrationOperatorTestCases,
 }
 
 def format_bytes_as_c_array(data: bytes, name: str, bytes_per_line: int = 16) -> str:
@@ -260,7 +263,7 @@ def main():
         header_lines.append(f"    .protocol_magic = {protocol_magic_value},")
         header_lines.append(f"    .num_inputs = {len(tx.inputs)},")
         header_lines.append(f"    .num_outputs = {len(tx.outputs)},")
-        witness_paths = gather_witness_paths(tx, getattr(test_case, "additionalWitnessPaths", []))
+        witness_paths = gather_witness_paths(tx, test_case.signingMode, getattr(test_case, "additionalWitnessPaths", []))
         header_lines.append(f"    .num_witnesses = {len(witness_paths)},")
         header_lines.append(f"    .num_certificates = {len(tx.certificates) if tx.certificates else 0},")
         header_lines.append(f"    .num_withdrawals = {len(tx.withdrawals) if tx.withdrawals else 0},")

@@ -126,21 +126,7 @@ typedef struct {
     // Extended data for pool registration
     union {
         anchor_t anchor;  // For committee resign, DRep registration/update
-        struct {
-            // Pool registration specific fields
-            uint64_t pledge;
-            uint64_t cost;
-            uint64_t marginNumerator;
-            uint64_t marginDenominator;
-            reward_account_t rewardAccount;
-            uint16_t numPoolOwners;
-            uint16_t numRelays;
-            pool_metadata_t poolMetadata;
-            bool poolMetadataIsNull;
-            // Arrays are stored separately during parsing
-            s_flist_node* poolOwners;
-            s_flist_node* relays;
-        } poolRegistration;
+        pool_registration_data_t poolRegistration;
     };
 } certificate_data_t;
 

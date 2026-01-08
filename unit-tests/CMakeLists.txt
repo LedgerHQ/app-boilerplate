@@ -447,6 +447,11 @@ add_executable(test_sign_tx_multisig test_sign_tx_multisig.c)
 target_link_libraries(test_sign_tx_multisig PUBLIC cmocka gcov cardano_sign_tx_core)
 add_test(test_sign_tx_multisig test_sign_tx_multisig)
 
+# Pool registration tests
+add_executable(test_sign_tx_pool_registration test_sign_tx_pool_registration.c)
+target_link_libraries(test_sign_tx_pool_registration PUBLIC cmocka gcov cardano_sign_tx_core)
+add_test(test_sign_tx_pool_registration test_sign_tx_pool_registration)
+
 foreach(target IN LISTS TEST_EXECUTABLES)
     target_link_libraries(${target} PUBLIC mock_printf)
 endforeach()

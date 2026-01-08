@@ -1225,7 +1225,26 @@ security_policy_t policyForSignTxStakePoolRegistrationVrfKey(sign_tx_signingmode
 
 security_policy_t policyForSignTxStakePoolRegistrationRewardAccount(
     sign_tx_signingmode_t txSigningMode,
-    const reward_account_t* poolRewardAccount MARK_UNUSED) {
+    uint8_t networkId,
+    const reward_account_t* poolRewardAccount) {
+    LEDGER_ASSERT(poolRewardAccount != NULL, "NULL pool reward account");
+    switch (poolRewardAccount->keyReferenceType) {
+        case KEY_REFERENCE_HASH: {
+            const uint8_t header = getAddressHeader(poolRewardAccount->hashBuffer,
+                                                    REWARD_ACCOUNT_LENGTH);
+            const address_type_t address_type = getAddressType(header);
+            DENY_UNLESS(address_type == REWARD_KEY || address_type == REWARD_SCRIPT);
+            DENY_UNLESS(getNetworkId(header) == networkId);
+            break;
+        }
+        case KEY_REFERENCE_PATH:
+            DENY_UNLESS(bip44_isOrdinaryStakingKeyPath(&poolRewardAccount->path));
+            DENY_IF(violatesSingleAccountOrStoreIt(&poolRewardAccount->path));
+            break;
+        default:
+            DENY();
+    }
+
     switch (txSigningMode) {
         case SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OWNER:
         case SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR:
@@ -1241,11 +1260,21 @@ security_policy_t policyForSignTxStakePoolRegistrationRewardAccount(
 
 security_policy_t policyForSignTxStakePoolRegistrationOwner(
     const sign_tx_signingmode_t txSigningMode,
-    const pool_owner_t* owner) {
-    if (owner->keyReferenceType == KEY_REFERENCE_PATH) {
-        // when path is present, it should be a valid staking path
-        DENY_UNLESS(bip44_isOrdinaryStakingKeyPath(&owner->path));
-        DENY_IF(violatesSingleAccountOrStoreIt(&owner->path));
+    const ext_credential_t* ownerCredential) {
+    LEDGER_ASSERT(ownerCredential != NULL, "NULL pool owner credential");
+    switch (ownerCredential->type) {
+        case EXT_CREDENTIAL_KEY_PATH:
+            // when path is present, it should be a valid staking path
+            DENY_UNLESS(bip44_isOrdinaryStakingKeyPath(&ownerCredential->keyPath));
+            DENY_IF(violatesSingleAccountOrStoreIt(&ownerCredential->keyPath));
+            break;
+        case EXT_CREDENTIAL_KEY_HASH:
+            break;
+        case EXT_CREDENTIAL_SCRIPT_HASH:
+            DENY();
+            break;
+        default:
+            DENY();
     }
 
     switch (txSigningMode) {
@@ -1255,7 +1284,7 @@ security_policy_t policyForSignTxStakePoolRegistrationOwner(
 
         case SIGN_TX_SIGNINGMODE_POOL_REGISTRATION_OPERATOR:
             // operator should receive owners given by hash
-            DENY_UNLESS(owner->keyReferenceType == KEY_REFERENCE_HASH);
+            DENY_UNLESS(ownerCredential->type == EXT_CREDENTIAL_KEY_HASH);
             SHOW();
             break;
 

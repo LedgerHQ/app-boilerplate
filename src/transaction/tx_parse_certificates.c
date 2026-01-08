@@ -559,27 +559,41 @@ static parser_status_e _parse_pool_relay(buffer_t *buf, pool_relay_t *relay) {
 
             // Port (2 bytes) - null or value
             uint8_t port_present;
+            bool port_included = false;
             if (!buffer_read_u8(buf, &port_present)) {
                 TRACE("Failed to read port present flag");
                 return CERTIFICATES_PARSING_ERROR;
             }
-            relay->port.isNull = (port_present == 0);
-            if (!relay->port.isNull) {
+            if (!parseIncluded(port_present, &port_included)) {
+                TRACE("Invalid port present flag: %u", port_present);
+                return CERTIFICATES_PARSING_ERROR;
+            }
+            relay->port.isNull = !port_included;
+            if (port_included) {
                 if (!buffer_read_u16(buf, &relay->port.number, BE)) {
                     TRACE("Failed to read port number");
                     return CERTIFICATES_PARSING_ERROR;
                 }
                 TRACE("Relay port: %u", relay->port.number);
             }
+            if (relay->port.isNull) {
+                TRACE("Relay port missing");
+                return CERTIFICATES_PARSING_ERROR;
+            }
 
             // IPv4 (optional)
             uint8_t ipv4_present;
+            bool ipv4_included = false;
             if (!buffer_read_u8(buf, &ipv4_present)) {
                 TRACE("Failed to read IPv4 present flag");
                 return CERTIFICATES_PARSING_ERROR;
             }
-            relay->ipv4.isNull = (ipv4_present == 0);
-            if (!relay->ipv4.isNull) {
+            if (!parseIncluded(ipv4_present, &ipv4_included)) {
+                TRACE("Invalid IPv4 present flag: %u", ipv4_present);
+                return CERTIFICATES_PARSING_ERROR;
+            }
+            relay->ipv4.isNull = !ipv4_included;
+            if (ipv4_included) {
                 if (!buffer_read_bytes(buf, relay->ipv4.ip, IPV4_LENGTH)) {
                     TRACE("Failed to read IPv4 address");
                     return CERTIFICATES_PARSING_ERROR;
@@ -589,17 +603,26 @@ static parser_status_e _parse_pool_relay(buffer_t *buf, pool_relay_t *relay) {
 
             // IPv6 (optional)
             uint8_t ipv6_present;
+            bool ipv6_included = false;
             if (!buffer_read_u8(buf, &ipv6_present)) {
                 TRACE("Failed to read IPv6 present flag");
                 return CERTIFICATES_PARSING_ERROR;
             }
-            relay->ipv6.isNull = (ipv6_present == 0);
-            if (!relay->ipv6.isNull) {
+            if (!parseIncluded(ipv6_present, &ipv6_included)) {
+                TRACE("Invalid IPv6 present flag: %u", ipv6_present);
+                return CERTIFICATES_PARSING_ERROR;
+            }
+            relay->ipv6.isNull = !ipv6_included;
+            if (ipv6_included) {
                 if (!buffer_read_bytes(buf, relay->ipv6.ip, IPV6_LENGTH)) {
                     TRACE("Failed to read IPv6 address");
                     return CERTIFICATES_PARSING_ERROR;
                 }
                 TRACE("Relay IPv6 present");
+            }
+            if (relay->ipv4.isNull && relay->ipv6.isNull) {
+                TRACE("Relay missing IPv4/IPv6 address");
+                return CERTIFICATES_PARSING_ERROR;
             }
             break;
         }
@@ -609,17 +632,26 @@ static parser_status_e _parse_pool_relay(buffer_t *buf, pool_relay_t *relay) {
 
             // Port (2 bytes) - null or value
             uint8_t port_present;
+            bool port_included = false;
             if (!buffer_read_u8(buf, &port_present)) {
                 TRACE("Failed to read port present flag");
                 return CERTIFICATES_PARSING_ERROR;
             }
-            relay->port.isNull = (port_present == 0);
-            if (!relay->port.isNull) {
+            if (!parseIncluded(port_present, &port_included)) {
+                TRACE("Invalid port present flag: %u", port_present);
+                return CERTIFICATES_PARSING_ERROR;
+            }
+            relay->port.isNull = !port_included;
+            if (port_included) {
                 if (!buffer_read_u16(buf, &relay->port.number, BE)) {
                     TRACE("Failed to read port number");
                     return CERTIFICATES_PARSING_ERROR;
                 }
                 TRACE("Relay port: %u", relay->port.number);
+            }
+            if (relay->port.isNull) {
+                TRACE("Relay port missing");
+                return CERTIFICATES_PARSING_ERROR;
             }
 
             // DNS name (length + data)
@@ -631,6 +663,10 @@ static parser_status_e _parse_pool_relay(buffer_t *buf, pool_relay_t *relay) {
             relay->dnsNameSize = dns_len;
 
             if (dns_len > 0) {
+                if (dns_len > MAX_DNS_NAME_LENGTH) {
+                    TRACE("DNS name length exceeds maximum: %u > %u", dns_len, MAX_DNS_NAME_LENGTH);
+                    return CERTIFICATES_PARSING_ERROR;
+                }
                 uint8_t *dns_ptr = NULL;
                 if (!buffer_read_bytes_ptr(buf, &dns_ptr, dns_len)) {
                     TRACE("Failed to read DNS name");
@@ -639,6 +675,14 @@ static parser_status_e _parse_pool_relay(buffer_t *buf, pool_relay_t *relay) {
                 relay->dnsName = dns_ptr;
             } else {
                 relay->dnsName = NULL;
+            }
+            if (relay->dnsNameSize == 0) {
+                TRACE("Relay DNS name missing");
+                return CERTIFICATES_PARSING_ERROR;
+            }
+            if (!str_isUnambiguousAscii(relay->dnsName, relay->dnsNameSize)) {
+                TRACE("Relay DNS name contains non-ASCII characters");
+                return CERTIFICATES_PARSING_ERROR;
             }
             TRACE("Relay DNS name length: %u", dns_len);
             break;
@@ -659,6 +703,10 @@ static parser_status_e _parse_pool_relay(buffer_t *buf, pool_relay_t *relay) {
             relay->dnsNameSize = dns_len;
 
             if (dns_len > 0) {
+                if (dns_len > MAX_DNS_NAME_LENGTH) {
+                    TRACE("DNS name length exceeds maximum: %u > %u", dns_len, MAX_DNS_NAME_LENGTH);
+                    return CERTIFICATES_PARSING_ERROR;
+                }
                 uint8_t *dns_ptr = NULL;
                 if (!buffer_read_bytes_ptr(buf, &dns_ptr, dns_len)) {
                     TRACE("Failed to read DNS name");
@@ -667,6 +715,14 @@ static parser_status_e _parse_pool_relay(buffer_t *buf, pool_relay_t *relay) {
                 relay->dnsName = dns_ptr;
             } else {
                 relay->dnsName = NULL;
+            }
+            if (relay->dnsNameSize == 0) {
+                TRACE("Relay DNS name missing");
+                return CERTIFICATES_PARSING_ERROR;
+            }
+            if (!str_isUnambiguousAscii(relay->dnsName, relay->dnsNameSize)) {
+                TRACE("Relay DNS name contains non-ASCII characters");
+                return CERTIFICATES_PARSING_ERROR;
             }
             TRACE("Relay multi-host DNS name length: %u", dns_len);
             break;
@@ -715,6 +771,10 @@ static parser_status_e _parse_pool_metadata(buffer_t *buf, pool_metadata_t *meta
     }
     metadata->url = url_ptr;
     TRACE("Metadata URL length: %u", url_len);
+    if (!str_isPrintableAsciiWithoutSpaces(metadata->url, metadata->urlSize)) {
+        TRACE("Metadata URL contains non-printable ASCII or spaces");
+        return CERTIFICATES_PARSING_ERROR;
+    }
 
     // Hash (32 bytes for blake2b-256)
     uint8_t *hash_ptr = NULL;
@@ -827,11 +887,6 @@ parser_status_e parse_certificate_stake_pool_registration(buffer_t *buf,
     }
     cert_data->poolRegistration.numPoolOwners = num_owners;
     TRACE("Number of pool owners: %u", num_owners);
-
-    if (num_owners == 0) {
-        TRACE("Pool must have at least one owner");
-        return CERTIFICATES_PARSING_ERROR;
-    }
 
     // Parse each pool owner
     cert_data->poolRegistration.poolOwners = NULL;

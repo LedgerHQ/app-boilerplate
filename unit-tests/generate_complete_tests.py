@@ -25,6 +25,7 @@ ERAS = {
                                     'CONWAY_WITHOUT_CERTIFICATES'),
     'shelley_certificates': ('test_sign_tx_fixtures_shelley_certificates.h', 'test_sign_tx_shelley_certificates.c', 'SHELLEY_CERTIFICATES'),
     'multisig': ('test_sign_tx_fixtures_multisig.h', 'test_sign_tx_multisig.c', 'MULTISIG'),
+    'pool_registration': ('test_sign_tx_fixtures_pool_registration.h', 'test_sign_tx_pool_registration.c', 'POOL_REGISTRATION'),
 }
 
 ERA_COMMENT_OVERRIDES = {

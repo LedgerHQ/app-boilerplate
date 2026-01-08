@@ -10,5 +10,7 @@ int send_error_and_reset(uint16_t sw) {
     G_context.req_type = REQUEST_NONE;
     explicit_bzero(&G_context.state, sizeof(G_context.state));
     io_send_sw(sw);
-    return sw;
+    // Return 0 to indicate that the command was processed (responded with error)
+    // and the main loop should continue.
+    return 0;
 }

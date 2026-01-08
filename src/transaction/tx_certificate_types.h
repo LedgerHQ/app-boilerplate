@@ -6,6 +6,7 @@
 
 #include "cardano_constants.h"
 #include "addressUtils/addressUtilsShelley.h"
+#include "memory/flist.h"
 
 // Certificate body types (matches CDDL)
 typedef enum {
@@ -64,18 +65,25 @@ typedef struct {
 } pool_id_t;
 
 typedef struct {
-    key_reference_type_t keyReferenceType;
-    union {
-        bip44_path_t path;
-        uint8_t keyHash[ADDRESS_KEY_HASH_LENGTH];
-    };
-} pool_owner_t;
-
-typedef struct {
     const uint8_t* url;
     size_t urlSize;
     const uint8_t* hash;
 } pool_metadata_t;
+
+typedef struct {
+    uint64_t pledge;
+    uint64_t cost;
+    uint64_t marginNumerator;
+    uint64_t marginDenominator;
+    reward_account_t rewardAccount;
+    uint16_t numPoolOwners;
+    uint16_t numRelays;
+    pool_metadata_t poolMetadata;
+    bool poolMetadataIsNull;
+    // Arrays are stored separately during parsing
+    s_flist_node* poolOwners;
+    s_flist_node* relays;
+} pool_registration_data_t;
 
 typedef struct {
     bool isIncluded;

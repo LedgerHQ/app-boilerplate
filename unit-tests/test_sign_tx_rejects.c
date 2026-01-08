@@ -183,12 +183,16 @@ static void run_sign_tx_reject_fixture(const sign_tx_reject_fixture_t *fixture) 
         g_last_sw = 0;
         int chunk_rc = handler_sign_tx(&chunk_buf, segment->p1, segment->more);
         if (g_last_sw != 0) {
+            if (g_last_sw == SWO_SUCCESS) {
+                assert_int_equal(chunk_rc, 0);
+                continue;
+            }
             assert_int_equal(g_last_sw, fixture->expected_sw);
             assert_int_equal(chunk_rc, 0);
             failure_seen = true;
             break;
         }
-        assert_int_equal(chunk_rc, SWO_SUCCESS);
+        assert_int_equal(chunk_rc, 0);
     }
 
     assert_true(failure_seen);

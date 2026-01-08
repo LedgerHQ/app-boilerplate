@@ -382,7 +382,7 @@ int addPoolKeyHashUIPairs(const uint8_t *poolKeyHash, const char *label) {
     return ui_pairs_add_static_label(label, pool_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
 }
 
-int addRewardAccountUIPairs(uint8_t networkId, const ext_credential_t *credential) {
+int addRewardAccountFromCredentialUIPairs(uint8_t networkId, const ext_credential_t *credential) {
     LEDGER_ASSERT(credential != NULL, "NULL credential");
 
     char reward_addr_buf[MAX_HUMAN_ADDRESS_LENGTH + 2];
@@ -426,6 +426,53 @@ int addRewardAccountUIPairs(uint8_t networkId, const ext_credential_t *credentia
     }
 
     return ui_pairs_add_static_label(UI_STATIC_LABEL("Reward account"), value_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
+}
+
+int addRewardAddressFromCredentialUIPairs(uint8_t networkId,
+                                          const ext_credential_t *credential,
+                                          const char *label) {
+    LEDGER_ASSERT(credential != NULL, "NULL credential");
+    LEDGER_ASSERT(label != NULL, "NULL label");
+
+    char *reward_tmp = (char *) app_mem_alloc(MAX_HUMAN_ADDRESS_LENGTH + 2);
+    if (reward_tmp == NULL) {
+        return SWO_INSUFFICIENT_MEMORY;
+    }
+
+    bool reward_formatted = formatRewardAddressFromCredential(networkId,
+                                                              credential,
+                                                              reward_tmp,
+                                                              MAX_HUMAN_ADDRESS_LENGTH + 2);
+    LEDGER_ASSERT(reward_formatted, "Unable to format reward address");
+    LEDGER_ASSERT(strlen(reward_tmp) <= MAX_HUMAN_ADDRESS_LENGTH, "Reward address ui string buffer too short");
+
+    return ui_pairs_add_static_label(label, reward_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
+}
+
+int addRewardAccountUIPairs(uint8_t networkId,
+                            const reward_account_t *rewardAccount,
+                            const char *label) {
+    LEDGER_ASSERT(rewardAccount != NULL, "NULL reward account");
+    LEDGER_ASSERT(label != NULL, "NULL label");
+
+    uint8_t reward_account_buf[REWARD_ACCOUNT_LENGTH] = {0};
+    rewardAccountToBuffer(rewardAccount,
+                          networkId,
+                          reward_account_buf);
+
+    char *reward_tmp = (char *) app_mem_alloc(MAX_HUMAN_ADDRESS_LENGTH + 2);
+    if (reward_tmp == NULL) {
+        return SWO_INSUFFICIENT_MEMORY;
+    }
+
+    bool reward_formatted = format_address_human_readable(reward_account_buf,
+                                                          REWARD_ACCOUNT_LENGTH,
+                                                          reward_tmp,
+                                                          MAX_HUMAN_ADDRESS_LENGTH + 2);
+    LEDGER_ASSERT(reward_formatted, "Unable to format reward account address");
+    LEDGER_ASSERT(strlen(reward_tmp) <= MAX_HUMAN_ADDRESS_LENGTH, "Reward address ui string buffer too short");
+
+    return ui_pairs_add_static_label(label, reward_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
 }
 
 const char *getCertificateTypeName(certificate_type_t type) {

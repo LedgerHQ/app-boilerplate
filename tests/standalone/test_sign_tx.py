@@ -29,6 +29,8 @@ from standalone.input_files.signTx import (
     testsCatalystRegistration,
     testsCVoteRegistrationCIP36,
     testsMultisig,
+    poolRegistrationOwnerTestCases,
+    poolRegistrationOperatorTestCases,
     SignTxTestCase,
     TxAuxiliaryDataType,
     ThirdPartyAddressParams,
@@ -165,7 +167,7 @@ def _run_sign_tx_test(device: Device,
     testsAlonzo + testsBabbage + testsConwayWithCertificates +
     testsConwayWithoutCertificates + testsConwayVotingProcedures +
     testsMultidelegation + testsCatalystRegistration + testsCVoteRegistrationCIP36 +
-    testsMultisig,
+    testsMultisig + poolRegistrationOwnerTestCases + poolRegistrationOperatorTestCases,
     ids=idTestFunc
 )
 def test_sign_tx(device: Device,
