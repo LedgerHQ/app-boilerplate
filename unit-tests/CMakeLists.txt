@@ -121,7 +121,7 @@ add_executable(test_tx_hash_builder
 add_executable(test_tx_prepare
     test_tx_prepare.c
     mock_globals.c
-    ../src/transaction/tx_prepare.c
+    ../src/transaction/tx_validate.c
     ../src/transaction/tx_parse.c
     ../src/transaction/tx_parse_certificates.c
     ../src/transaction/tx_parse_outputs.c
@@ -138,7 +138,7 @@ add_executable(test_tx_prepare
     ../src/memory/flist.c
     ../src/app_tokens/app_tokens.c
     ../src/ui/ui_utils.c
-    ../src/ui/tx_ui_materialize.c
+    ../src/ui/tx_ui_format.c
     ../src/ui/tx_ui_helpers.c
     ../src/app_context.c
     mock_sources/mem_alloc_stub.c
@@ -236,8 +236,8 @@ set(SIGN_TX_COMMON_SOURCES
     ../src/addressUtils/addressUtilsShelley.c
     ../src/addressUtils/addressUtilsByron.c
     ../src/transaction/tx_hash_builder.c
-    ../src/transaction/tx_prepare.c
-    ../src/ui/tx_ui_materialize.c
+    ../src/transaction/tx_validate.c
+    ../src/ui/tx_ui_format.c
     ../src/ui/tx_ui_helpers.c
     ../src/ui/ui_utils.c
     ../src/app_context.c

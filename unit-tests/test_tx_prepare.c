@@ -9,7 +9,7 @@
 
 #include "globals.h"
 #include "cardano_swo.h"
-#include "transaction/tx_prepare.h"
+#include "transaction/tx_validate.h"
 
 static void reset_context(void) {
     explicit_bzero(&G_context, sizeof(G_context));
@@ -24,7 +24,7 @@ static void test_compute_tx_hash_and_plan_ui_counts_ttl(void **state) {
     G_context.tx_info.transaction.ttl = 123;
 
     tx_ui_plan_t plan = {0};
-    int rc = compute_tx_hash_and_plan_ui(&plan);
+    int rc = tx_validate_and_compute_hash(&plan);
     assert_int_equal(rc, SWO_SUCCESS);
     assert_int_equal(plan.pair_count, 3);
 }

@@ -69,7 +69,7 @@ static bool format_input_with_index(char *out, size_t out_size, const tx_input_t
     return true;
 }
 
-static int ui_materialize_token_groups(asset_group_t* assetGroups,
+static int ui_format_token_groups(asset_group_t* assetGroups,
                                        uint16_t numGroups,
                                        bool show_tokens) {
     if (assetGroups == NULL) {
@@ -326,7 +326,7 @@ static int ui_strings_outputs(transaction_t *tx) {
                 }
 
                 if (output_item->output_data.assetGroups != NULL) {
-                    status = ui_materialize_token_groups(
+                    status = ui_format_token_groups(
                         output_item->output_data.assetGroups,
                         output_item->output_data.numAssetGroups,
                         true
@@ -1420,7 +1420,7 @@ static int ui_strings_mint(transaction_t *tx) {
                         return status;
                     }
 
-                    // Free token node immediately after UI strings are materialized
+                    // Free token node immediately after UI strings are formatted
                     app_mem_free(token_node);
                     token_node = token_next;
                 }
@@ -1658,7 +1658,7 @@ static int ui_strings_collateral_output(transaction_t *tx) {
         }
     }
 
-    status = ui_materialize_token_groups(
+    status = ui_format_token_groups(
         tx->collateral_output.assetGroups,
         tx->collateral_output.numAssetGroups,
         show_collateral_tokens);
@@ -1870,11 +1870,11 @@ static int ui_strings_tx_hash(void) {
 }
 
 static int add_ui_strings_and_free_parsed_data(void) {
-    LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_HASHED, "String materialization invoked too early");
+    LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_HASHED, "String formatting invoked too early");
     transaction_t *tx = &G_context.tx_info.transaction;
     int status;
 
-    TRACE("UI materialization starting");
+    TRACE("UI formatting starting");
 
     status = ui_strings_inputs(tx);
     if (status != SWO_SUCCESS) return status;
@@ -1915,7 +1915,7 @@ static int add_ui_strings_and_free_parsed_data(void) {
     status = ui_strings_tx_hash();
     if (status != SWO_SUCCESS) return status;
 
-    TRACE("UI materialization complete");
+    TRACE("UI formatting complete");
     return SWO_SUCCESS;
 }
 
@@ -2035,9 +2035,9 @@ int ui_prepare_transaction_review(void) {
         return status;
     }
 
-    // Validate that the actual number of pairs materialized matches the planned count
+    // Validate that the actual number of pairs formatted matches the planned count
     LEDGER_ASSERT(ui_pairs_get_count() == pair_count,
-                  "UI pair count mismatch: planned %u but materialized %u",
+                  "UI pair count mismatch: planned %u but formatted %u",
                   pair_count, ui_pairs_get_count());
 
     return SWO_SUCCESS;

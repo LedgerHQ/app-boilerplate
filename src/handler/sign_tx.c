@@ -47,7 +47,7 @@
 #include "addressUtils/addressUtilsShelley.h"
 #include "transaction/tx_utils.h"
 #include "ui/menu.h"
-#include "transaction/tx_prepare.h"
+#include "transaction/tx_validate.h"
 
 #define DENIED_WITNESS_STATUS_PREFIX "Denied witness: "
 #define DENIED_WITNESS_STATUS_LENGTH \
@@ -397,7 +397,7 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
         }
         G_context.state.tx_state = TX_STATE_PARSED;
         tx_ui_plan_t ui_plan = {0};
-        int plan_result = compute_tx_hash_and_plan_ui(&ui_plan);
+        int plan_result = tx_validate_and_compute_hash(&ui_plan);
         if (plan_result != SWO_SUCCESS) {
             return plan_result;
         }

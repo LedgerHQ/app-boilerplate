@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "tx_prepare.h"
+#include "tx_validate.h"
 
 #include "os.h"
 #include "app_tokens/app_tokens.h"
@@ -91,8 +91,8 @@ static ext_voter_t _voterForTxHash(const ext_voter_t* voter) {
     return result;
 }
 
-int compute_tx_hash_and_plan_ui(tx_ui_plan_t* plan) {
-    LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_PARSED, "Hash planning invoked at wrong state");
+int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
+    LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_PARSED, "Validation invoked at wrong state");
     LEDGER_ASSERT(plan != NULL, "NULL plan");
 
     TRACE("Expert mode: %d", is_expert_mode());

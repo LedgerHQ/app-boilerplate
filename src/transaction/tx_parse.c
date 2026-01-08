@@ -1256,7 +1256,7 @@ static parser_status_e parse_tx_voting_procedures(buffer_t *buf, transaction_t *
     // depends on the credential type (paths would need to be hashed/derived),
     // and those derived bytes are not exposed before security policies execute.
     // Validating the canonical order therefore happens later (see
-    // compute_tx_hash_and_plan_ui) after policy checks have already materialized
+    // tx_validate_and_compute_hash) after policy checks have already derived
     // the voter keys.
     // For each voter in the outer map
     for (uint16_t voter_idx = 0; voter_idx < tx->num_voters; voter_idx++) {
