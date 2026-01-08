@@ -5,12 +5,15 @@
 #include "utils/utils.h"
 #include "memory/mem.h"
 #include "ui/ui_utils.h"
+#include "ui/ui_warnings.h"
 #include "io.h"
 
 void reset_app_context(void) {
     TRACE("reset_app_context");
     // Clean up UI allocations and review state
-    ui_reset_state();
+    ui_cleanup_tracked_allocations();
+    ui_pairs_cleanup();
+    ui_clear_warnings();
 
     // Reset the allocator to wipe all transient memory
     LEDGER_ASSERT(app_mem_reset(), "Failed to reset memory allocator");

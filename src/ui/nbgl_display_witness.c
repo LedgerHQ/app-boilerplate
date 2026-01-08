@@ -25,7 +25,7 @@
 #include "addressUtils/bip44.h"
 #include "format.h"
 
-#include "display.h"
+#include "ui/ui_icons.h"
 #include "globals.h"
 #include "utils/utils.h"
 #include "app_context.h"

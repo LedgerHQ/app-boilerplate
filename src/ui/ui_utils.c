@@ -9,10 +9,6 @@
 #include "utils/utils.h"
 #include "utils/assert.h"
 
-__attribute__((weak)) void ui_clear_prepared_warning(void) {
-    // Default no-op for unit tests that do not link tx_ui_format.c
-}
-
 nbgl_contentTagValue_t *g_pairs = NULL;
 nbgl_contentTagValueList_t *g_pairsList = NULL;
 
@@ -54,12 +50,6 @@ void ui_cleanup_tracked_allocations(void) {
         mem_buffer_cleanup(&g_allocation_tracker.ptrs[i]);
     }
     g_allocation_tracker.count = 0;
-}
-
-void ui_reset_state(void) {
-    ui_cleanup_tracked_allocations();
-    ui_pairs_cleanup();
-    ui_clear_prepared_warning();
 }
 
 /**

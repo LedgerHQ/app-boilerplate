@@ -10,8 +10,10 @@ We are converting an old version of the Ledger Cardano app into a new modernized
 
 ## Architectural Overview
 For detailed analysis, see:
-- [doc/OVERVIEW.md](doc/OVERVIEW.md): High-level architecture and data flow.
+- [doc/OVERVIEW.md](doc/OVERVIEW.md): High-level architecture, directory structure, and data flow.
 - [doc/TX.md](doc/TX.md): Detailed transaction body processing and hashing.
+
+**Note:** When exploring the codebase or answering questions about code organization, consult `doc/OVERVIEW.md` first for directory structure and conventions.
 
 ## Instructions for Coding Agent
 

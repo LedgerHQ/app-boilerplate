@@ -31,7 +31,7 @@
 #include "utils/utils.h"
 #include "utils/textUtils.h"
 #include "app_context.h"
-#include "display.h"
+#include "ui/ui_display_opcert.h"
 #include "opcert_types.h"
 #include "opcert_parse.h"
 #include "securityPolicy.h"

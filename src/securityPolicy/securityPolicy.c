@@ -2024,13 +2024,13 @@ security_policy_t policyForSignOpCert(const bip44_path_t* poolColdKeyPath,
 static const warning_definition_t WARNING_DEFINITIONS[WARNING_BIT_COUNT] = {
     [WARNING_BIT_UNUSUAL_KEY_DERIVATION_PATH] = {
         .bit = WARNING_BIT_UNUSUAL_KEY_DERIVATION_PATH,
-        .title = "Suspicious derivation path",
-        .description = "Key derivation path looks unusual",
+        .title = "Unusual derivation path",
+        .description = "Key path outside of standard range",
     },
     [WARNING_BIT_NETWORK_UNUSUAL] = {
         .bit = WARNING_BIT_NETWORK_UNUSUAL,
         .title = "Unusual network",
-        .description = "Network id or protocol magic deviates from expected main/test nets",
+        .description = "Network id or protocol magic deviates from expected nets",
     },
     [WARNING_BIT_NETWORK_NOT_VERIFIABLE] = {
         .bit = WARNING_BIT_NETWORK_NOT_VERIFIABLE,
@@ -2045,7 +2045,7 @@ static const warning_definition_t WARNING_DEFINITIONS[WARNING_BIT_COUNT] = {
     [WARNING_BIT_PLUTUS_UNKNOWN_COLLATERAL] = {
         .bit = WARNING_BIT_PLUTUS_UNKNOWN_COLLATERAL,
         .title = "Collateral not specified",
-        .description = "Plutus transaction without total collateral information",
+        .description = "Plutus transaction without total collateral",
     },
     [WARNING_BIT_COLLATERAL_OUTPUT_WARNING] = {
         .bit = WARNING_BIT_COLLATERAL_OUTPUT_WARNING,
@@ -2085,7 +2085,7 @@ static const warning_definition_t WARNING_DEFINITIONS[WARNING_BIT_COUNT] = {
     [WARNING_BIT_HIGH_FEE] = {
         .bit = WARNING_BIT_HIGH_FEE,
         .title = "High fee",
-        .description = "Transaction fee exceeds the configured warning threshold",
+        .description = "Transaction fee exceeds typical threshold",
     },
 };
 

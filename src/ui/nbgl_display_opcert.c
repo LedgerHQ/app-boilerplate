@@ -26,8 +26,8 @@
 #include "addressUtils/bech32.h"
 #include "format.h"
 
-#include "display.h"
 #include "ui/ui_constants.h"
+#include "ui/ui_icons.h"
 #include "globals.h"
 #include "utils/utils.h"
 #include "app_context.h"
@@ -38,6 +38,8 @@
 #include "sign_opcert.h"
 #include "memory/mem_utils.h"
 #include "ui_utils.h"
+#include "ui_warnings.h"
+#include "ui_display_opcert.h"
 
 // Dynamic buffers for reduced stack pressure during signing
 static char *poolColdKeyPathStr = NULL;
@@ -45,9 +47,6 @@ static char *poolKeyHashStr = NULL;
 static char *kesKeyStr = NULL;
 static char *kesPeriodStr = NULL;
 static char *issueCounterStr = NULL;
-static nbgl_warning_t *g_warning = NULL;
-
-// Centered info for the main warning screen.
 
 /**
  * Cleanup dynamically allocated buffers
@@ -188,77 +187,14 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
     g_pairs[4].item = "Issue counter";
     g_pairs[4].value = issueCounterStr;
 
-    // set warning if needed
-    const nbgl_warning_t* warningPtr = NULL;
+    // Build warnings if needed
     TRACE("Security policy received: %d", securityPolicy);
-    const warning_definition_t* warning_defs[WARNING_BIT_COUNT];
-    size_t warning_count =
-        warning_bits_to_definitions(warnings, warning_defs, WARNING_BIT_COUNT);
-    const warning_definition_t* def = NULL;
-    const char* warning_title = NULL;
-    const char* warning_description = NULL;
-    bool warning_available = false;
-
-    if (warning_bits_has(warnings, WARNING_BIT_UNUSUAL_KEY_DERIVATION_PATH)) {
-        warning_title = (const char*) PIC("Unusual pool cold key path");
-        warning_description =
-            (const char*) PIC("Pool cold key derivation path is outside the standard account/index range.");
-        warning_available = true;
-    } else if (warning_count > 0) {
-        def = (const warning_definition_t*) PIC(warning_defs[0]);
-        if (def == NULL) {
-            TRACE("Warning definition missing");
-        } else {
-            TRACE("Setting up warning for bit %d", def->bit);
-            warning_title = (const char*) PIC(def->title);
-            warning_description = (const char*) PIC(def->description);
-            if (warning_title == NULL || warning_description == NULL) {
-                TRACE("Warning title or description missing");
-            } else {
-                warning_available = true;
-            }
-        }
+    int warning_status = ui_build_warnings(warnings);
+    if (warning_status != SWO_SUCCESS) {
+        opcert_buffer_cleanup();
+        return send_swo_and_reset(warning_status);
     }
-
-    if (warning_available) {
-        nbgl_contentCenter_t* info = (nbgl_contentCenter_t *) ui_mem_alloc(sizeof(nbgl_contentCenter_t));
-        if (info == NULL) {
-            TRACE("Failed to allocate warning info");
-            opcert_buffer_cleanup();
-            return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
-        }
-        nbgl_warningDetails_t* details =
-            (nbgl_warningDetails_t *) ui_mem_alloc(sizeof(nbgl_warningDetails_t));
-        if (details == NULL) {
-            TRACE("Failed to allocate warning details");
-            opcert_buffer_cleanup();
-            return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
-        }
-        g_warning = (nbgl_warning_t *) ui_mem_alloc(sizeof(nbgl_warning_t));
-        if (g_warning == NULL) {
-            TRACE("Failed to allocate warning structure");
-            opcert_buffer_cleanup();
-            return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
-        }
-
-        info->icon = &WARNING_ICON;
-        info->title = warning_title;
-        info->description = warning_description;
-
-        details->title = warning_title;
-        details->type = CENTERED_INFO_WARNING;
-        details->centeredInfo.icon = &WARNING_ICON;
-        details->centeredInfo.title = warning_title;
-        details->centeredInfo.description = warning_description;
-
-        g_warning->introDetails = details;
-        g_warning->reviewDetails = details;
-        g_warning->info = info;
-        g_warning->introTopRightIcon = &WARNING_ICON;
-        g_warning->reviewTopRightIcon = &WARNING_ICON;
-
-        warningPtr = g_warning;
-    }
+    const nbgl_warning_t* warningPtr = ui_get_warnings();
 
     TRACE("Calling nbgl_useCaseAdvancedReview(TYPE_OPERATION)");
     nbgl_useCaseAdvancedReview(TYPE_OPERATION,

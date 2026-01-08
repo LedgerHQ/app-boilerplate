@@ -30,7 +30,7 @@
 #include "sign_tx.h"
 #include "cardano_swo.h"
 #include "globals.h"
-#include "display.h"
+#include "ui/ui_display_tx.h"
 #include "transaction/tx.h"
 #include "transaction/tx_aux_data_types.h"
 #include "tx_output_types.h"

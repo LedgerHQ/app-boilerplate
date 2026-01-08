@@ -33,7 +33,7 @@
 #include "utils/utils.h"
 #include "app_context.h"
 #include "cardano_swo.h"
-#include "display.h"
+#include "ui/ui_display_pubkey.h"
 #include "dispatcher.h"
 #include "securityPolicy.h"
 #include "nbgl_use_case.h"

@@ -6,18 +6,20 @@
 #include "io.h"
 #include "utils/utils.h"
 
-#include "display.h"
+#include "ui/ui_icons.h"
 #include "globals.h"
 #include "cardano_swo.h"
 #include "menu.h"
 #include "transaction/tx_parse.h"
 #include "ui_utils.h"
+#include "ui_warnings.h"
+#include "ui_display_tx.h"
 #include "app_context.h"
 
 void tx_review_cleanup(void) {
     ui_cleanup_tracked_allocations();
     ui_pairs_cleanup();
-    ui_clear_prepared_warning();
+    ui_clear_warnings();
 }
 
 static void tx_review_choice(bool confirm) {
@@ -55,7 +57,7 @@ int ui_display_transaction(void) {
         review_subtitle = "Plutus execution";
     }
 
-    const nbgl_warning_t *warningPtr = ui_get_prepared_warning();
+    const nbgl_warning_t *warningPtr = ui_get_warnings();
     if (warningPtr != NULL) {
         TRACE("Calling nbgl_useCaseAdvancedReview(TYPE_TRANSACTION)");
         nbgl_useCaseAdvancedReview(TYPE_TRANSACTION,

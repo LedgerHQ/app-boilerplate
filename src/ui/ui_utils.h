@@ -49,11 +49,6 @@ void ui_track_allocation(void *ptr);
 void ui_cleanup_tracked_allocations(void);
 
 /**
- * Reset UI state and cleanup all UI allocations.
- */
-void ui_reset_state(void);
-
-/**
  * Allocate memory and automatically track it for cleanup
  * This ensures UI buffers are cleaned up even if allocated in loops
  * or on error paths where manual cleanup might be forgotten.

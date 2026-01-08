@@ -76,8 +76,9 @@
 #include "utils/assert.h"
 #include "utils/textUtils.h"
 #include "utils/ipUtils.h"
-#include "ui/display.h"
 #include "ui/ui_utils.h"
+#include "ui/ui_warnings.h"
+#include "ui/ui_display_tx.h"
 #include "ui/tx_ui_helpers.h"
 #include "io.h"
 #include "app_context.h"
@@ -89,7 +90,6 @@
 #define MAX_DATUM_HASH_STRING_LENGTH (2 * OUTPUT_DATUM_HASH_LENGTH + 1)
 #define MAX_POOL_METADATA_HASH_STRING_LENGTH (2 * POOL_METADATA_HASH_LENGTH + 1)
 #define MAX_INPUT_DISPLAY_STRING_LENGTH (MAX_TX_HASH_DISPLAY_LENGTH + 3 + MAX_UINT64_STRING_LENGTH)
-static nbgl_warning_t *g_warning = NULL;
 
 static bool format_input_with_index(char *out, size_t out_size, const tx_input_t *input) {
     LEDGER_ASSERT(out != NULL, "NULL output buffer");
@@ -1982,81 +1982,6 @@ static int add_ui_strings_and_free_parsed_data(void) {
     return SWO_SUCCESS;
 }
 
-static int ui_build_transaction_warnings(void) {
-    const warning_definition_t *warning_defs[WARNING_BIT_COUNT];
-    size_t warning_count =
-        warning_bits_to_definitions(G_context.tx_info.warning_bits, warning_defs, WARNING_BIT_COUNT);
-    if (warning_count == 0) {
-        g_warning = NULL;
-        return SWO_SUCCESS;
-    }
-
-    const nbgl_icon_details_t **icons =
-        (const nbgl_icon_details_t **) ui_mem_alloc(sizeof(nbgl_icon_details_t *) * warning_count);
-    const char **titles = (const char **) ui_mem_alloc(sizeof(const char *) * warning_count);
-    const char **subtexts = (const char **) ui_mem_alloc(sizeof(const char *) * warning_count);
-    nbgl_warningDetails_t *details =
-        (nbgl_warningDetails_t *) ui_mem_alloc(sizeof(nbgl_warningDetails_t) * warning_count);
-    nbgl_warningDetails_t *intro = (nbgl_warningDetails_t *) ui_mem_alloc(sizeof(nbgl_warningDetails_t));
-    nbgl_warningDetails_t *review = (nbgl_warningDetails_t *) ui_mem_alloc(sizeof(nbgl_warningDetails_t));
-    nbgl_contentCenter_t *info = (nbgl_contentCenter_t *) ui_mem_alloc(sizeof(nbgl_contentCenter_t));
-    g_warning = (nbgl_warning_t *) ui_mem_alloc(sizeof(nbgl_warning_t));
-
-    if (icons == NULL || titles == NULL || subtexts == NULL || details == NULL || intro == NULL ||
-        review == NULL || info == NULL || g_warning == NULL) {
-        g_warning = NULL;
-        return SWO_INSUFFICIENT_MEMORY;
-    }
-
-    for (size_t i = 0; i < warning_count; i++) {
-        const warning_definition_t *def = (const warning_definition_t *) PIC(warning_defs[i]);
-        const char *title = (const char *) PIC(def->title);
-        const char *description = (const char *) PIC(def->description);
-        titles[i] = title;
-        subtexts[i] = description;
-        icons[i] = &WARNING_ICON;
-
-        details[i].title = title;
-        details[i].type = CENTERED_INFO_WARNING;
-        details[i].centeredInfo.icon = &WARNING_ICON;
-        details[i].centeredInfo.title = title;
-        details[i].centeredInfo.description = description;
-    }
-
-    const char *const warning_intro_title = (const char *) PIC("Security report");
-    const char *const warning_review_title = (const char *) PIC("Warning details");
-    const char *const warning_info_title = (const char *) PIC("Transaction warning");
-    const char *const warning_info_desc = (const char *) PIC("Please review the security warnings before signing.");
-
-    intro->title = warning_intro_title;
-    intro->type = BAR_LIST_WARNING;
-    intro->barList.nbBars = warning_count;
-    intro->barList.icons = icons;
-    intro->barList.texts = titles;
-    intro->barList.subTexts = subtexts;
-    intro->barList.details = details;
-
-    review->title = warning_review_title;
-    review->type = BAR_LIST_WARNING;
-    review->barList.nbBars = warning_count;
-    review->barList.icons = icons;
-    review->barList.texts = titles;
-    review->barList.subTexts = subtexts;
-    review->barList.details = details;
-
-    info->icon = &WARNING_ICON;
-    info->title = warning_info_title;
-    info->description = warning_info_desc;
-
-    g_warning->introDetails = intro;
-    g_warning->reviewDetails = review;
-    g_warning->info = info;
-    g_warning->introTopRightIcon = &WARNING_ICON;
-    g_warning->reviewTopRightIcon = &WARNING_ICON;
-
-    return SWO_SUCCESS;
-}
-
 static inline bool status_requires_streaming(int status) {
     return status == SWO_INSUFFICIENT_MEMORY;
 }
@@ -2066,7 +1991,7 @@ static int ui_build_pairs_and_warnings(void) {
     if (status != SWO_SUCCESS) {
         return status;
     }
-    return ui_build_transaction_warnings();
+    return ui_build_warnings(G_context.tx_info.warning_bits);
 }
 
 int ui_prepare_transaction_review(void) {
@@ -2091,7 +2016,7 @@ int ui_prepare_transaction_review(void) {
     int status = ui_build_pairs_and_warnings();
     if (status != SWO_SUCCESS) {
         ui_pairs_cleanup();
-        ui_clear_prepared_warning();
+        ui_clear_warnings();
         if (status_requires_streaming(status)) {
             LEDGER_ASSERT(false, "Need streaming UI but not implemented (status=0x%04x)", status);
         }
@@ -2104,12 +2029,4 @@ int ui_prepare_transaction_review(void) {
                   pair_count, ui_pairs_get_count());
 
     return SWO_SUCCESS;
-}
-
-const nbgl_warning_t *ui_get_prepared_warning(void) {
-    return g_warning;
-}
-
-void ui_clear_prepared_warning(void) {
-    g_warning = NULL;
 }

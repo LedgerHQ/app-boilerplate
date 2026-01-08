@@ -24,7 +24,7 @@
 
 #include "globals.h"
 #include "menu.h"
-#include "display.h"
+#include "ui_icons.h"
 #include "cardano_settings.h"
 
 //  -----------------------------------------------------------
