@@ -68,7 +68,7 @@ set(CARDANO_SOURCE
     ${CARDANO_PATH}/src/ui/tx_ui_helpers.c
     ${CARDANO_PATH}/src/ui/ui_utils.c
     ${CARDANO_PATH}/src/utils/buffer_utils.c
-    ${CARDANO_PATH}/src/utils/cardano_os_utils.c
+    ${CARDANO_PATH}/src/app_context.c
     ${CARDANO_PATH}/src/utils/cbor.c
     ${CARDANO_PATH}/src/utils/ipUtils.c
     ${CARDANO_PATH}/src/utils/textUtils.c
