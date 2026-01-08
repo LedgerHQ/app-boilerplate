@@ -52,6 +52,7 @@ from standalone.input_files.signTx import (
     TxRequiredSignerType,
     TransactionSigningMode,
     VoteDelegationParams,
+    VoterType,
     MAX_SIGN_TX_CHUNK_SIZE,
     Withdrawal,
 )
@@ -94,20 +95,68 @@ def _credential_path_from_credential(credential: CredentialParams) -> Optional[s
     return None
 
 
-def _credential_path_from_certificate_params(params: object) -> Optional[str]:
-    stake_credential = getattr(params, "stakeCredential", None)
-    if stake_credential is not None:
-        return _credential_path_from_credential(stake_credential)
-    cold_credential = getattr(params, "coldCredential", None)
-    if cold_credential is not None:
-        return _credential_path_from_credential(cold_credential)
-    drep_credential = getattr(params, "dRepCredential", None)
-    if drep_credential is not None:
-        return _credential_path_from_credential(drep_credential)
-    pool_credential = getattr(params, "poolCredential", None)
-    if pool_credential is not None:
-        return _credential_path_from_credential(pool_credential)
+def _pool_key_path(pool_key: PoolKey) -> Optional[str]:
+    if pool_key.type == PoolKeyType.DEVICE_OWNED:
+        return pool_key.key
     return None
+
+
+def _credential_paths_from_certificate(certificate: Certificate) -> List[str]:
+    """Extract witness paths from a certificate (ledgerjs-compatible)."""
+    paths: List[str] = []
+    params = certificate.params
+
+    if certificate.type == CertificateType.STAKE_REGISTRATION:
+        return paths
+
+    if certificate.type in (
+        CertificateType.STAKE_REGISTRATION_CONWAY,
+        CertificateType.STAKE_DEREGISTRATION,
+        CertificateType.STAKE_DEREGISTRATION_CONWAY,
+        CertificateType.STAKE_DELEGATION,
+        CertificateType.VOTE_DELEGATION,
+    ):
+        path = _credential_path_from_credential(params.stakeCredential)
+        if path:
+            paths.append(path)
+        return paths
+
+    if certificate.type in (
+        CertificateType.AUTHORIZE_COMMITTEE_HOT,
+        CertificateType.RESIGN_COMMITTEE_COLD,
+    ):
+        path = _credential_path_from_credential(params.coldCredential)
+        if path:
+            paths.append(path)
+        return paths
+
+    if certificate.type in (
+        CertificateType.DREP_REGISTRATION,
+        CertificateType.DREP_DEREGISTRATION,
+        CertificateType.DREP_UPDATE,
+    ):
+        path = _credential_path_from_credential(params.dRepCredential)
+        if path:
+            paths.append(path)
+        return paths
+
+    if certificate.type == CertificateType.STAKE_POOL_REGISTRATION:
+        pool_key_path = _pool_key_path(params.poolKey)
+        if pool_key_path:
+            paths.append(pool_key_path)
+        for owner in params.poolOwners:
+            owner_path = _pool_key_path(owner)
+            if owner_path:
+                paths.append(owner_path)
+        return paths
+
+    if certificate.type == CertificateType.STAKE_POOL_RETIREMENT:
+        path = _credential_path_from_credential(params.poolCredential)
+        if path:
+            paths.append(path)
+        return paths
+
+    return paths
 
 
 def gather_witness_paths(tx: Transaction,
@@ -128,14 +177,33 @@ def gather_witness_paths(tx: Transaction,
             witness_paths.append(tx_input.path)
 
     for certificate in tx.certificates:
-        cert_path = _credential_path_from_certificate_params(certificate.params)
-        if cert_path and cert_path not in witness_paths:
-            witness_paths.append(cert_path)
+        cert_paths = _credential_paths_from_certificate(certificate)
+        for cert_path in cert_paths:
+            if cert_path not in witness_paths:
+                witness_paths.append(cert_path)
 
     for withdrawal in tx.withdrawals:
         path = _credential_path_from_credential(withdrawal.stakeCredential)
         if path and path not in witness_paths:
             witness_paths.append(path)
+
+    for required_signer in getattr(tx, "requiredSigners", []):
+        if required_signer.type == TxRequiredSignerType.PATH:
+            if required_signer.pathOrHashHex not in witness_paths:
+                witness_paths.append(required_signer.pathOrHashHex)
+
+    for collateral_input in getattr(tx, "collateralInputs", []):
+        if collateral_input.path and collateral_input.path not in witness_paths:
+            witness_paths.append(collateral_input.path)
+
+    for voter_votes in getattr(tx, "votingProcedures", []):
+        if voter_votes.voter.type in (
+            VoterType.COMMITTEE_KEY_PATH,
+            VoterType.DREP_KEY_PATH,
+            VoterType.STAKE_POOL_KEY_PATH,
+        ):
+            if voter_votes.voter.keyValue not in witness_paths:
+                witness_paths.append(voter_votes.voter.keyValue)
 
     for additional_path in additional_witness_paths:
         if additional_path not in witness_paths:
