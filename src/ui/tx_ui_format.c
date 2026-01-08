@@ -15,6 +15,44 @@
  *  limitations under the License.
  *****************************************************************************/
 
+/**
+ * @file tx_ui_format.c
+ * @brief Transaction UI formatting (Phase 2 of 2-phase architecture)
+ *
+ * This file implements Phase 2 of transaction processing: formatting the validated
+ * transaction into human-readable strings for display on the device.
+ *
+ * ## Architecture Overview
+ *
+ * **Phase 1** (tx_validate.c) has already:
+ * - Validated the transaction structure
+ * - Run security policies (rejecting unsafe transactions)
+ * - Computed the transaction hash
+ * - Counted how many UI pairs will be needed
+ *
+ * **Phase 2** (this file) now:
+ * - Formats each transaction element into display strings
+ * - Builds NBGL key-value pairs for the UI
+ * - Constructs warning structures
+ * - Frees parsed transaction data after formatting
+ *
+ * ## CRITICAL SYNCHRONIZATION REQUIREMENT
+ *
+ * The number of UI pairs added in this file MUST EXACTLY MATCH the count from Phase 1.
+ * This is verified by a runtime ASSERT (line ~2040).
+ *
+ * **When adding new displayable fields:**
+ * 1. Update tx_validate.c to count the additional pairs
+ * 2. Update this file to format and display those pairs
+ * 3. Ensure both files iterate elements in IDENTICAL order
+ *
+ * **Example:** Device-owned addresses show 2 extra pairs:
+ * - tx_validate.c: `plan->pair_count += 2`  (line 257, 1269)
+ * - tx_ui_format.c: calls `addPaymentInfoUIPair()` + `addStakingInfoUIPair()` (line 263, 1655)
+ *
+ * See tx_validate.h for complete architecture documentation.
+ */
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -257,6 +295,19 @@ static int ui_strings_outputs(transaction_t *tx) {
                 if (status != SWO_SUCCESS) {
                     return status;
                 }
+
+                // For device-owned addresses, show payment and staking details
+                if (output_item->output_data.destination.type == DESTINATION_DEVICE_OWNED) {
+                    status = addPaymentInfoUIPair(&output_item->output_data.destination.params);
+                    if (status != SWO_SUCCESS) {
+                        return status;
+                    }
+                    status = addStakingInfoUIPair(&output_item->output_data.destination.params);
+                    if (status != SWO_SUCCESS) {
+                        return status;
+                    }
+                }
+
                 char *amount_tmp = (char *) app_mem_alloc(MAX_ADA_AMOUNT_STRING_LENGTH + 2);
                 if (amount_tmp == NULL) {
                     return SWO_INSUFFICIENT_MEMORY;
@@ -1635,6 +1686,18 @@ static int ui_strings_collateral_output(transaction_t *tx) {
         status = ui_pairs_add_static_label(UI_STATIC_LABEL("Collateral address"), collateral_address_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
         if (status != SWO_SUCCESS) {
             return status;
+        }
+
+        // For device-owned collateral addresses, show payment and staking details
+        if (collateral_desc.destination.type == DESTINATION_DEVICE_OWNED) {
+            status = addPaymentInfoUIPair(collateral_desc.destination.params);
+            if (status != SWO_SUCCESS) {
+                return status;
+            }
+            status = addStakingInfoUIPair(collateral_desc.destination.params);
+            if (status != SWO_SUCCESS) {
+                return status;
+            }
         }
 
         if (collateral_ada_policy == POLICY_SHOW) {

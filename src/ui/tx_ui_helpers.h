@@ -152,3 +152,25 @@ int addRewardAccountUIPairs(uint8_t networkId,
  * @return Pointer to constant string with certificate type name
  */
 const char *getCertificateTypeName(certificate_type_t type);
+
+/**
+ * Add payment credential UI pair for device-owned address
+ *
+ * Adds one UI pair showing the payment credential (either key path or script hash)
+ *
+ * @param[in]  addressParams  Address parameters containing payment info
+ *
+ * @return SWO_SUCCESS on success, or error code on failure
+ */
+int addPaymentInfoUIPair(const addressParams_t* addressParams);
+
+/**
+ * Add staking credential UI pair for device-owned address
+ *
+ * Adds one UI pair showing the staking credential (path/hash/script/pointer/warning)
+ *
+ * @param[in]  addressParams  Address parameters containing staking info
+ *
+ * @return SWO_SUCCESS on success, or error code on failure
+ */
+int addStakingInfoUIPair(const addressParams_t* addressParams);

@@ -99,6 +99,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
 
     G_context.tx_info.pool_owner_path_present = false;
     plan->pair_count = 2;  // fee + tx hash
+    plan->has_excessive_length_element = false;  // TODO: Implement detection during validation
     security_policy_t input_policy = policyForSignTxInput(G_context.tx_info.transaction.txSigningMode);
     if (input_policy == POLICY_SHOW) {
         plan->pair_count += G_context.tx_info.transaction.num_inputs;
@@ -251,6 +252,10 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
 
                 // Count pairs for output: output number, address, amount
                 plan->pair_count += 3;
+                // For device-owned addresses, add 2 more pairs (payment info + staking info)
+                if (output_item->output_data.destination.type == DESTINATION_DEVICE_OWNED) {
+                    plan->pair_count += 2;
+                }
                 if (datum_policy == POLICY_SHOW && output_item->output_data.datum.hasDatum) {
                     plan->pair_count++;
                 }
@@ -1259,6 +1264,10 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                 return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
             case POLICY_SHOW: {
                 plan->pair_count += 1;  // collateral address
+                // For device-owned collateral addresses, add 2 more pairs (payment info + staking info)
+                if (G_context.tx_info.transaction.collateral_output.destination.type == DESTINATION_DEVICE_OWNED) {
+                    plan->pair_count += 2;
+                }
                 if (collateral_ada_policy == POLICY_SHOW) {
                     plan->pair_count += 1;  // collateral amount
                 }

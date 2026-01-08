@@ -38,6 +38,20 @@ int ui_display_transaction(void);
 /**
  * Build NBGL buffers for transaction review (pairs + warnings).
  *
+ * **Phase 2 of Transaction Processing:**
+ * This function formats the already-validated and hashed transaction into
+ * human-readable UI pairs for NBGL display.
+ *
+ * **Prerequisites:**
+ * - Transaction must be in TX_STATE_HASHED (hash already computed by tx_validate_and_compute_hash)
+ * - Security policies have already run (validation phase)
+ * - UI pair count has been planned and stored in plan.pair_count
+ *
+ * **Implementation:** Implemented in tx_ui_format.c
+ *
+ * **Critical:** Must display EXACTLY the number of pairs counted in Phase 1.
+ * See tx_validate.h for architecture documentation.
+ *
  * @return error code if memory/resources are insufficient.
  */
 int ui_prepare_transaction_review(void);

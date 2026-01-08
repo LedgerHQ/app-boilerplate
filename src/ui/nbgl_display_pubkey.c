@@ -33,7 +33,6 @@
 #include "opcert_types.h"
 #include "menu.h"
 #include "securityPolicy.h"
-#include "nbgl_screens.h"
 #include "get_public_key.h"
 #include "memory/mem_utils.h"
 #include "ui_utils.h"

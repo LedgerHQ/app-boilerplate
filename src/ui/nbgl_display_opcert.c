@@ -35,7 +35,6 @@
 #include "opcert_types.h"
 #include "menu.h"
 #include "securityPolicy.h"
-#include "nbgl_screens.h"
 #include "sign_opcert.h"
 #include "memory/mem_utils.h"
 #include "ui_utils.h"

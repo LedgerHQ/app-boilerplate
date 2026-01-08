@@ -505,3 +505,95 @@ const char *getCertificateTypeName(certificate_type_t type) {
             return "Unknown";
     }
 }
+
+int addPaymentInfoUIPair(const addressParams_t* addressParams) {
+    char* value_tmp = (char*) app_mem_alloc(MAX_BIP44_PATH_STRING_LENGTH + 2);
+    if (value_tmp == NULL) {
+        return SWO_INSUFFICIENT_MEMORY;
+    }
+
+    switch (determinePaymentChoice(addressParams->type)) {
+        case PAYMENT_PATH: {
+            bool success = format_bip44_path(&addressParams->paymentKeyPath, value_tmp, MAX_BIP44_PATH_STRING_LENGTH + 2);
+            LEDGER_ASSERT(success, "Failed to format payment key path");
+            return ui_pairs_add_static_label(UI_STATIC_LABEL("Payment key path"), value_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
+        }
+
+        case PAYMENT_SCRIPT_HASH: {
+            bool encoded = format_bech32("script",
+                                         addressParams->paymentScriptHash,
+                                         SIZEOF(addressParams->paymentScriptHash),
+                                         value_tmp,
+                                         MAX_BIP44_PATH_STRING_LENGTH + 2);
+            LEDGER_ASSERT(encoded, "Failed to encode payment script hash");
+            return ui_pairs_add_static_label(UI_STATIC_LABEL("Payment script hash"), value_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
+        }
+
+        default:
+            // includes PAYMENT_NONE
+            LEDGER_ASSERT(false, "Invalid payment choice");
+            return SWO_INCORRECT_DATA;
+    }
+}
+
+int addStakingInfoUIPair(const addressParams_t* addressParams) {
+    char* value_tmp = (char*) app_mem_alloc(MAX_BIP44_PATH_STRING_LENGTH + 2);
+    if (value_tmp == NULL) {
+        return SWO_INSUFFICIENT_MEMORY;
+    }
+
+    switch (addressParams->stakingDataSource) {
+        case NO_STAKING: {
+            switch (addressParams->type) {
+                case BYRON:
+                    strncpy(value_tmp, "Legacy Byron address\n(no staking rewards)", MAX_BIP44_PATH_STRING_LENGTH + 2);
+                    return ui_pairs_add_static_label(UI_STATIC_LABEL("WARNING:"), value_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
+
+                case ENTERPRISE_KEY:
+                case ENTERPRISE_SCRIPT:
+                    strncpy(value_tmp, "No staking rewards", MAX_BIP44_PATH_STRING_LENGTH + 2);
+                    return ui_pairs_add_static_label(UI_STATIC_LABEL("WARNING:"), value_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
+
+                default:
+                    LEDGER_ASSERT(false, "Invalid address type for NO_STAKING");
+                    return SWO_INCORRECT_DATA;
+            }
+        }
+
+        case STAKING_KEY_PATH: {
+            bool success = format_bip44_path(&addressParams->stakingKeyPath, value_tmp, MAX_BIP44_PATH_STRING_LENGTH + 2);
+            LEDGER_ASSERT(success, "Failed to format staking key path");
+            return ui_pairs_add_static_label(UI_STATIC_LABEL("Staking path"), value_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
+        }
+
+        case STAKING_KEY_HASH: {
+            bool encoded = format_bech32("stake_vkh",  // shared keys never go into address directly
+                                         addressParams->stakingKeyHash,
+                                         SIZEOF(addressParams->stakingKeyHash),
+                                         value_tmp,
+                                         MAX_BIP44_PATH_STRING_LENGTH + 2);
+            LEDGER_ASSERT(encoded, "Failed to encode stake key hash");
+            return ui_pairs_add_static_label(UI_STATIC_LABEL("Stake key hash"), value_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
+        }
+
+        case STAKING_SCRIPT_HASH: {
+            bool encoded = format_bech32("script",
+                                         addressParams->stakingScriptHash,
+                                         SIZEOF(addressParams->stakingScriptHash),
+                                         value_tmp,
+                                         MAX_BIP44_PATH_STRING_LENGTH + 2);
+            LEDGER_ASSERT(encoded, "Failed to encode staking script hash");
+            return ui_pairs_add_static_label(UI_STATIC_LABEL("Stake script hash"), value_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
+        }
+
+        case BLOCKCHAIN_POINTER: {
+            bool success = format_blockchain_pointer(addressParams->stakingKeyBlockchainPointer, value_tmp, MAX_BIP44_PATH_STRING_LENGTH + 2);
+            LEDGER_ASSERT(success, "Failed to format blockchain pointer");
+            return ui_pairs_add_static_label(UI_STATIC_LABEL("Stake key pointer"), value_tmp) ? SWO_SUCCESS : SWO_INSUFFICIENT_MEMORY;
+        }
+
+        default:
+            LEDGER_ASSERT(false, "Invalid staking data source");
+            return SWO_INCORRECT_DATA;
+    }
+}

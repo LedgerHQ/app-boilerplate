@@ -31,7 +31,6 @@
 #include "app_context.h"
 #include "cardano_swo.h"
 #include "securityPolicy.h"
-#include "nbgl_screens.h"
 #include "menu.h"
 #include "memory/mem_utils.h"
 #include "memory/mem.h"
