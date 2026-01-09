@@ -10,7 +10,7 @@ from ragger.conftest import configuration
 # Ragger tests are supposed to run without any hardcoded seed / mnemonic.
 # However, for debugging, we might want to fix the seed occasionally
 # to a value corresponding to the unit test fixtures.
-configuration.OPTIONAL.CUSTOM_SEED = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+#configuration.OPTIONAL.CUSTOM_SEED = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
 
 #########################
 ### CONFIGURATION END ###
