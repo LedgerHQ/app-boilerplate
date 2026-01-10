@@ -44,16 +44,16 @@ bool formatRewardAddressFromCredential(uint8_t networkId,
 /**
  * Add credential (key path, key hash, or script hash) to UI pairs with context-specific bech32 prefix
  *
+ * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
+ *
  * @param[in]  credential       Credential to display (type + data)
  * @param[in]  keyPathLabel     Label for KEY_PATH type (e.g., "Stake key")
  * @param[in]  keyHashLabel     Label for KEY_HASH type (e.g., "Stake key hash")
  * @param[in]  keyHashPrefix    Bech32 prefix for KEY_HASH (e.g., "stake_vkh")
  * @param[in]  scriptHashLabel  Label for SCRIPT_HASH type (e.g., "Stake script hash")
  * @param[in]  scriptHashPrefix Bech32 prefix for SCRIPT_HASH (e.g., "script")
- *
- * @return SWO_SUCCESS on success, or error code on failure
  */
-int addCredentialUIPairs(const ext_credential_t *credential,
+void addCredentialUIPairs(const ext_credential_t *credential,
                         const char *keyPathLabel,
                         const char *keyHashLabel,
                         const char *keyHashPrefix,
@@ -63,40 +63,40 @@ int addCredentialUIPairs(const ext_credential_t *credential,
 /**
  * Add voter (key path, key hash, or script hash) to UI pairs with appropriate labels and prefixes
  *
- * @param[in]  voter            Voter to display (type + data)
+ * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
  *
- * @return SWO_SUCCESS on success, or error code on failure
+ * @param[in]  voter            Voter to display (type + data)
  */
-int addVoterUIPairs(const ext_voter_t *voter);
+void addVoterUIPairs(const ext_voter_t *voter);
 
 /**
  * Add DRep (Delegated Representative) to UI pairs with appropriate formatting
  *
+ * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
+ *
  * @param[in]  drep             DRep to display (type + data)
  * @param[in]  label            Label for the UI pair (e.g., "DRep")
- *
- * @return SWO_SUCCESS on success, or error code on failure
  */
-int addDRepUIPairs(const ext_drep_t *drep, const char *label);
+void addDRepUIPairs(const ext_drep_t *drep, const char *label);
 
 /**
  * Add anchor (URL + hash) to UI pairs if present
  *
- * @param[in]  anchor        Anchor structure to display
+ * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
  *
- * @return SWO_SUCCESS on success, or error code on failure
+ * @param[in]  anchor        Anchor structure to display
  */
-int addAnchorUIPairs(const anchor_t *anchor);
+void addAnchorUIPairs(const anchor_t *anchor);
 
 /**
  * Add deposit amount to UI pair
  *
+ * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
+ *
  * @param[in]  deposit       Deposit amount in lovelace
  * @param[in]  label         Label for the UI pair (default: "Deposit")
- *
- * @return SWO_SUCCESS on success, or error code on failure
  */
-int addDepositUIPairs(uint64_t deposit, const char *label);
+void addDepositUIPairs(uint64_t deposit, const char *label);
 
 /**
  * Add pool key hash to UI pairs in bech32 format with "pool" prefix
@@ -104,9 +104,9 @@ int addDepositUIPairs(uint64_t deposit, const char *label);
  * @param[in]  poolKeyHash   28-byte pool key hash
  * @param[in]  label         Label for the UI pair (e.g., "Pool", "Pool ID")
  *
- * @return SWO_SUCCESS on success, or error code on failure
+ * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
  */
-int addPoolKeyHashUIPairs(const uint8_t *poolKeyHash, const char *label);
+void addPoolKeyHashUIPairs(const uint8_t *poolKeyHash, const char *label);
 
 /**
  * Add reward account from credential to UI pairs for withdrawals
@@ -114,9 +114,9 @@ int addPoolKeyHashUIPairs(const uint8_t *poolKeyHash, const char *label);
  * @param[in]  networkId     Network ID for reward address construction
  * @param[in]  credential    Credential to display (type + data)
  *
- * @return SWO_SUCCESS on success, or error code on failure
+ * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
  */
-int addRewardAccountFromCredentialUIPairs(uint8_t networkId, const ext_credential_t *credential);
+void addRewardAccountFromCredentialUIPairs(uint8_t networkId, const ext_credential_t *credential);
 
 /**
  * Add reward address derived from a credential to UI pairs
@@ -125,9 +125,9 @@ int addRewardAccountFromCredentialUIPairs(uint8_t networkId, const ext_credentia
  * @param[in]  credential    Credential to display (type + data)
  * @param[in]  label         Label for the UI pair
  *
- * @return SWO_SUCCESS on success, or error code on failure
+ * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
  */
-int addRewardAddressFromCredentialUIPairs(uint8_t networkId,
+void addRewardAddressFromCredentialUIPairs(uint8_t networkId,
                                           const ext_credential_t *credential,
                                           const char *label);
 
@@ -138,9 +138,9 @@ int addRewardAddressFromCredentialUIPairs(uint8_t networkId,
  * @param[in]  rewardAccount  Reward account to display (type + data)
  * @param[in]  label          Label for the UI pair
  *
- * @return SWO_SUCCESS on success, or error code on failure
+ * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
  */
-int addRewardAccountUIPairs(uint8_t networkId,
+void addRewardAccountUIPairs(uint8_t networkId,
                             const reward_account_t *rewardAccount,
                             const char *label);
 
@@ -158,19 +158,19 @@ const char *getCertificateTypeName(certificate_type_t type);
  *
  * Adds one UI pair showing the payment credential (either key path or script hash)
  *
- * @param[in]  addressParams  Address parameters containing payment info
+ * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
  *
- * @return SWO_SUCCESS on success, or error code on failure
+ * @param[in]  addressParams  Address parameters containing payment info
  */
-int addPaymentInfoUIPair(const addressParams_t* addressParams);
+void addPaymentInfoUIPair(const addressParams_t* addressParams);
 
 /**
  * Add staking credential UI pair for device-owned address
  *
  * Adds one UI pair showing the staking credential (path/hash/script/pointer/warning)
  *
- * @param[in]  addressParams  Address parameters containing staking info
+ * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
  *
- * @return SWO_SUCCESS on success, or error code on failure
+ * @param[in]  addressParams  Address parameters containing staking info
  */
-int addStakingInfoUIPair(const addressParams_t* addressParams);
+void addStakingInfoUIPair(const addressParams_t* addressParams);

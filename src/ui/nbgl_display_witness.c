@@ -26,6 +26,7 @@
 #include "format.h"
 
 #include "ui/ui_icons.h"
+#include "ui/ui_constants.h"
 #include "globals.h"
 #include "utils/utils.h"
 #include "app_context.h"
@@ -68,7 +69,7 @@ int ui_display_witness(const bip44_path_t* witnessPath,
 
     // Allocate display buffer for witness path using UI tracking system
     // This ensures automatic cleanup when the user responds or on error
-    char *witnessPathStr = (char *) ui_mem_alloc(MAX_BIP44_PATH_STRING_LENGTH + 2);
+    char *witnessPathStr = (char *) ui_mem_alloc(MAX_BIP44_PATH_STRING_LENGTH + UI_BUFFER_SAFETY_MARGIN);
     if (witnessPathStr == NULL) {
         TRACE("Failed to allocate witness path string");
         ui_cleanup_tracked_allocations();
@@ -86,7 +87,7 @@ int ui_display_witness(const bip44_path_t* witnessPath,
     TRACE("isUnusual: %d", isUnusual);
 
     // Format the witness path as a string
-    bool formatted = format_bip44_path(witnessPath, witnessPathStr, MAX_BIP44_PATH_STRING_LENGTH + 2);
+    bool formatted = format_bip44_path(witnessPath, witnessPathStr, MAX_BIP44_PATH_STRING_LENGTH + UI_BUFFER_SAFETY_MARGIN);
     LEDGER_ASSERT(formatted, "Unable to format witness path");
     LEDGER_ASSERT(strlen(witnessPathStr) <= MAX_BIP44_PATH_STRING_LENGTH, "Witness path ui string buffer too short");
 

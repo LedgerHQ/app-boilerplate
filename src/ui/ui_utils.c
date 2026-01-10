@@ -12,20 +12,52 @@
 nbgl_contentTagValue_t *g_pairs = NULL;
 nbgl_contentTagValueList_t *g_pairsList = NULL;
 
+ui_status_t g_ui_error_status = UI_STATUS_UNINITIALIZED;
+
 static uint16_t g_next_pair_index = 0;
 
 /**
  * Allocation tracker for UI buffers to prevent memory leaks
  * Tracks all dynamically allocated buffers for centralized cleanup
  */
-#define MAX_UI_ALLOCATIONS 250
-
 typedef struct {
-    void *ptrs[MAX_UI_ALLOCATIONS];  /// Array of allocated pointers
-    uint16_t count;                   /// Number of tracked allocations
+    void *ptrs[MAX_UI_PAIRS];  /// Array of allocated pointers
+    uint16_t count;             /// Number of tracked allocations
 } allocation_tracker_t;
 
 static allocation_tracker_t g_allocation_tracker = {0};
+
+/**
+ * Initialize UI error status to SUCCESS before starting UI formatting
+ */
+void ui_reset_error_status(void) {
+    g_ui_error_status = UI_STATUS_SUCCESS;
+}
+
+/**
+ * Get final UI error status
+ * Asserts if status was never initialized
+ */
+ui_status_t ui_get_error_status(void) {
+    LEDGER_ASSERT(g_ui_error_status != UI_STATUS_UNINITIALIZED,
+                  "UI error status not initialized - must call ui_reset_error_status first");
+    return g_ui_error_status;
+}
+
+/**
+ * Set UI error status
+ * Cannot change from error state back to success
+ */
+void ui_set_error_status(ui_status_t status) {
+    LEDGER_ASSERT(status != UI_STATUS_UNINITIALIZED,
+                  "Cannot set UI status to UNINITIALIZED");
+    LEDGER_ASSERT(g_ui_error_status != UI_STATUS_UNINITIALIZED,
+                  "UI error status not initialized - must call ui_reset_error_status first");
+    // Once error is set, cannot change back to success
+    LEDGER_ASSERT(g_ui_error_status == UI_STATUS_SUCCESS || status != UI_STATUS_SUCCESS,
+                  "Cannot change UI error status from error back to success");
+    g_ui_error_status = status;
+}
 
 /**
  * Track an allocated buffer for later cleanup
@@ -36,7 +68,7 @@ void ui_track_allocation(void *ptr) {
     if (ptr == NULL) {
         return;
     }
-    LEDGER_ASSERT(g_allocation_tracker.count < MAX_UI_ALLOCATIONS,
+    LEDGER_ASSERT(g_allocation_tracker.count < MAX_UI_PAIRS,
                   "UI allocation tracker overflow");
     g_allocation_tracker.ptrs[g_allocation_tracker.count++] = ptr;
 }

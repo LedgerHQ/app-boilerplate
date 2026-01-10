@@ -26,6 +26,7 @@
 #include "format.h"
 
 #include "ui/ui_icons.h"
+#include "ui/ui_constants.h"
 #include "globals.h"
 #include "utils/utils.h"
 #include "app_context.h"
@@ -72,12 +73,12 @@ int ui_display_pubkey(security_policy_t securityPolicy, warning_bits_t warnings)
     pubkey_ctx_t* pk = &G_context.pk_info;
 
     // Allocate display buffers
-    pubkeyPathStr = (char *) ui_mem_alloc(MAX_BIP44_PATH_STRING_LENGTH + 2);
+    pubkeyPathStr = (char *) ui_mem_alloc(MAX_BIP44_PATH_STRING_LENGTH + UI_BUFFER_SAFETY_MARGIN);
     if (pubkeyPathStr == NULL) {
         ui_cleanup_tracked_allocations();
         return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
-    bool pathFormatted = format_bip44_path(&pk->path, pubkeyPathStr, MAX_BIP44_PATH_STRING_LENGTH + 2);
+    bool pathFormatted = format_bip44_path(&pk->path, pubkeyPathStr, MAX_BIP44_PATH_STRING_LENGTH + UI_BUFFER_SAFETY_MARGIN);
     LEDGER_ASSERT(pathFormatted, "Unable to format public key path");
     LEDGER_ASSERT(strlen(pubkeyPathStr) <= MAX_BIP44_PATH_STRING_LENGTH, "Public key path ui string buffer too short");
 

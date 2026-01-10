@@ -8,16 +8,17 @@
 #include <cmocka.h>
 
 #include "app_tokens/app_tokens.h"
+#include "addressUtils/bech32.h"
 #include "hexUtils.h"
 
-// Test asset fingerprint derivation (CIP-14)
+// Test asset fingerprint bytes derivation (CIP-14)
 static void test_asset_fingerprint(void **state) {
     (void) state;
 
     struct {
         const char* policyIdHex;
         const char* assetNameHex;
-        const char* expected;
+        const char* expectedBech32;
     } testVectors[] = {
         // Test vectors from CIP 14 proposal
         {"7eae28af2208be856f7a119668ae52a49b73725e326dc16579dcc373",
@@ -48,13 +49,17 @@ static void test_asset_fingerprint(void **state) {
         bool success = decode_hex(testVectors[i].assetNameHex, assetName, sizeof(assetName), &assetNameSize);
         assert_true(success);
 
+        uint8_t fingerprintBytes[20] = {0};
+        deriveAssetFingerprintBytes(policyId,
+                                    sizeof(policyId),
+                                    assetName,
+                                    assetNameSize,
+                                    fingerprintBytes,
+                                    sizeof(fingerprintBytes));
+
         char fingerprint[200] = {0};
-        deriveAssetFingerprintBech32(policyId,
-                                     sizeof(policyId),
-                                     assetName,
-                                     assetNameSize,
-                                     fingerprint,
-                                     sizeof(fingerprint));
+        bool success = format_bech32("asset", fingerprintBytes, sizeof(fingerprintBytes), fingerprint, sizeof(fingerprint));
+        assert_true(success);
 
         assert_string_equal(fingerprint, testVectors[i].expected);
     }
@@ -77,7 +82,7 @@ static void test_format_token_amount_output(void **state) {
     memcpy(group1.policyId, policyId1, sizeof(policyId1));
 
     char output1[60] = {0};
-    bool success = str_formatTokenAmountOutput(&group1, assetName1, sizeof(assetName1), 234, output1, sizeof(output1));
+    bool success = format_token_amount_output(&group1, assetName1, sizeof(assetName1), 234, output1, sizeof(output1));
     assert_true(success);
     assert_string_equal(output1, "0.00000234 REVU");
 
@@ -93,7 +98,7 @@ static void test_format_token_amount_output(void **state) {
     memcpy(group2.policyId, policyId2, sizeof(policyId2));
 
     char output2[60] = {0};
-    success = str_formatTokenAmountOutput(&group2, assetName1, sizeof(assetName1), 2345, output2, sizeof(output2));
+    success = format_token_amount_output(&group2, assetName1, sizeof(assetName1), 2345, output2, sizeof(output2));
     assert_true(success);
     assert_string_equal(output2, "2,345 (unknown decimals)");
 }
@@ -116,13 +121,13 @@ static void test_format_token_amount_mint(void **state) {
 
     // Test negative amount (burning)
     char mint1[60] = {0};
-    success = str_formatTokenAmountMint(&group1, assetName1, sizeof(assetName1), -234, mint1, sizeof(mint1));
+    bool success = format_token_amount_mint(&group1, assetName1, sizeof(assetName1), -234, mint1, sizeof(mint1));
     assert_true(success);
     assert_string_equal(mint1, "-0.00000234 REVU");
 
     // Test positive amount (minting)
     char mint2[60] = {0};
-    success = str_formatTokenAmountMint(&group1, assetName1, sizeof(assetName1), 234, mint2, sizeof(mint2));
+    success = format_token_amount_mint(&group1, assetName1, sizeof(assetName1), 234, mint2, sizeof(mint2));
     assert_true(success);
     assert_string_equal(mint2, " 0.00000234 REVU");
 
@@ -138,7 +143,7 @@ static void test_format_token_amount_mint(void **state) {
     memcpy(group2.policyId, policyId2, sizeof(policyId2));
 
     char mint3[60] = {0};
-    success = str_formatTokenAmountMint(&group2, assetName1, sizeof(assetName1), 2345, mint3, sizeof(mint3));
+    success = format_token_amount_mint(&group2, assetName1, sizeof(assetName1), 2345, mint3, sizeof(mint3));
     assert_true(success);
     assert_string_equal(mint3, " 2,345 (unknown decimals)");
 }

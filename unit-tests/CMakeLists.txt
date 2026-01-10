@@ -140,6 +140,7 @@ add_executable(test_tx_prepare
     ../src/app_tokens/app_tokens.c
     ../src/ui/ui_utils.c
     ../src/ui/ui_warnings.c
+    ../src/ui/ui_formatters.c
     ../src/ui/tx_ui_format.c
     ../src/ui/tx_ui_helpers.c
     ../src/app_context.c
@@ -245,6 +246,7 @@ set(SIGN_TX_COMMON_SOURCES
     ../src/ui/tx_ui_helpers.c
     ../src/ui/ui_utils.c
     ../src/ui/ui_warnings.c
+    ../src/ui/ui_formatters.c
     ../src/app_context.c
     ../src/memory/mem_utils.c
     mock_sources/mem_alloc_stub.c

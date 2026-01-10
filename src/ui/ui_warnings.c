@@ -26,14 +26,14 @@
 
 static nbgl_warning_t *g_warning = NULL;
 
-int ui_build_warnings(warning_bits_t warnings) {
+ui_status_t ui_build_warnings(warning_bits_t warnings) {
     const warning_definition_t *warning_defs[WARNING_BIT_COUNT];
     size_t warning_count =
         warning_bits_to_definitions(warnings, warning_defs, WARNING_BIT_COUNT);
 
     if (warning_count == 0) {
         g_warning = NULL;
-        return SWO_SUCCESS;
+        return UI_STATUS_SUCCESS;
     }
 
     const nbgl_icon_details_t **icons =
@@ -50,7 +50,7 @@ int ui_build_warnings(warning_bits_t warnings) {
     if (icons == NULL || titles == NULL || subtexts == NULL || details == NULL || intro == NULL ||
         review == NULL || info == NULL || g_warning == NULL) {
         g_warning = NULL;
-        return SWO_INSUFFICIENT_MEMORY;
+        return UI_STATUS_OUT_OF_MEMORY;
     }
 
     for (size_t i = 0; i < warning_count; i++) {
@@ -99,10 +99,11 @@ int ui_build_warnings(warning_bits_t warnings) {
     g_warning->introTopRightIcon = &WARNING_ICON;
     g_warning->reviewTopRightIcon = &WARNING_ICON;
 
-    return SWO_SUCCESS;
+    return UI_STATUS_SUCCESS;
 }
 
 const nbgl_warning_t* ui_get_warnings(void) {
+    // Returns NULL if no warnings were built (warning count was 0)
     return g_warning;
 }
 

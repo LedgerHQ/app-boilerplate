@@ -1,6 +1,18 @@
 #pragma once
 
 /**
+ * Buffer safety margin for string allocations.
+ *
+ * +1: Space for null terminator (required)
+ * +1: Truncation detection byte. The Ledger SDK's snprintf does not return
+ *     how many characters would have been written, so we cannot detect
+ *     truncation via return value. By allocating one extra byte beyond
+ *     MAX_*_LENGTH, we can assert that strlen(result) <= MAX_*_LENGTH
+ *     to verify the string was not truncated by snprintf.
+ */
+#define UI_BUFFER_SAFETY_MARGIN 2
+
+/**
  * UI buffer size constants.
  */
 #define MAX_UINT16_STRING_LENGTH 6   // uint16 max (65535) = 5 digits + null
@@ -23,3 +35,4 @@
 #define MAX_PROFIT_MARGIN_STRING_LENGTH 50   // For pool margin percentage "100.99 %"
 #define MAX_VOTE_OPTION_LENGTH 16            // For vote option strings ("Abstain", "Yes", "No")
 #define MAX_DREP_OPTION_LENGTH 32            // For DRep option strings ("No Confidence")
+#define MAX_CERTIFICATE_TYPE_LENGTH 32       // For certificate type strings (longest: "DRep Deregistration")

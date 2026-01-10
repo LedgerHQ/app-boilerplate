@@ -35,33 +35,6 @@ void deriveAssetFingerprintBytes(const uint8_t* policyId,
     blake2b_160_hash(hashInput, hashInputSize, fingerprintBuffer, fingerprintBufferSize);
 }
 
-size_t deriveAssetFingerprintBech32(const uint8_t* policyId,
-                                    size_t policyIdSize,
-                                    const uint8_t* assetName,
-                                    size_t assetNameSize,
-                                    char* fingerprint,
-                                    size_t fingerprintMaxSize) {
-    ASSERT(policyIdSize == MINTING_POLICY_ID_LENGTH);
-    ASSERT(assetNameSize <= MAX_ASSET_NAME_LENGTH);
-
-    uint8_t fingerprintBuffer[ASSET_FINGERPRINT_SIZE];
-    deriveAssetFingerprintBytes(policyId,
-                                policyIdSize,
-                                assetName,
-                                assetNameSize,
-                                fingerprintBuffer,
-                                SIZEOF(fingerprintBuffer));
-
-    bool success = format_bech32("asset",
-                                 fingerprintBuffer,
-                                 SIZEOF(fingerprintBuffer),
-                                 fingerprint,
-                                 fingerprintMaxSize);
-    ASSERT(success);
-    ASSERT(strlen(fingerprint) + 1 < fingerprintMaxSize);
-
-    return strlen(fingerprint);
-}
 
 typedef struct {
     uint8_t fingerprint[ASSET_FINGERPRINT_SIZE];
@@ -96,12 +69,12 @@ static const token_info_t* _getTokenInfo(const token_group_t* tokenGroup,
     return NULL;
 }
 
-bool str_formatTokenAmountOutput(const token_group_t* tokenGroup,
-                                 const uint8_t* assetNameBytes,
-                                 size_t assetNameSize,
-                                 uint64_t amount,
-                                 char* out,
-                                 size_t outSize) {
+bool format_token_amount_output(const token_group_t* tokenGroup,
+                                   const uint8_t* assetNameBytes,
+                                   size_t assetNameSize,
+                                   uint64_t amount,
+                                   char* out,
+                                   size_t outSize) {
     ASSERT(assetNameSize <= MAX_ASSET_NAME_LENGTH);
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
 
@@ -125,12 +98,12 @@ bool str_formatTokenAmountOutput(const token_group_t* tokenGroup,
     return true;
 }
 
-bool str_formatTokenAmountMint(const token_group_t* tokenGroup,
-                               const uint8_t* assetNameBytes,
-                               size_t assetNameSize,
-                               int64_t amount,
-                               char* out,
-                               size_t outSize) {
+bool format_token_amount_mint(const token_group_t* tokenGroup,
+                                 const uint8_t* assetNameBytes,
+                                 size_t assetNameSize,
+                                 int64_t amount,
+                                 char* out,
+                                 size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
     ASSERT(outSize >= 2);
 
@@ -141,12 +114,12 @@ bool str_formatTokenAmountMint(const token_group_t* tokenGroup,
                  : '-';  // + sign instead of the space would be nice, but is unreadable on Nano S
     out[1] = '\0';
 
-    bool formatted = str_formatTokenAmountOutput(tokenGroup,
-                                                 assetNameBytes,
-                                                 assetNameSize,
-                                                 abs_int64(amount),
-                                                 out + 1,
-                                                 outSize - 1);
+    bool formatted = format_token_amount_output(tokenGroup,
+                                                   assetNameBytes,
+                                                   assetNameSize,
+                                                   abs_int64(amount),
+                                                   out + 1,
+                                                   outSize - 1);
     ASSERT(formatted);
 
     size_t length = strlen(out);

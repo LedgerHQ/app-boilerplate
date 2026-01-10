@@ -2,6 +2,7 @@
 
 #include "securityPolicy.h"
 #include "nbgl_use_case.h"
+#include "ui_utils.h"
 
 /**
  * Build NBGL warning structure from warning bits.
@@ -10,9 +11,9 @@
  * Memory is allocated via ui_mem_alloc and tracked for cleanup.
  *
  * @param warnings Warning bits to convert to NBGL warnings
- * @return SWO_SUCCESS on success, error code on failure
+ * @return UI_STATUS_SUCCESS on success, UI_STATUS_OUT_OF_MEMORY on failure
  */
-int ui_build_warnings(warning_bits_t warnings);
+ui_status_t ui_build_warnings(warning_bits_t warnings);
 
 /**
  * Get the prepared warning structure for use with nbgl_useCaseAdvancedReview.
