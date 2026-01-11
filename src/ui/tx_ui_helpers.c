@@ -225,7 +225,7 @@ void addAnchorUIPairs(const anchor_t *anchor) {
         return;
     }
 
-    UI_ADD_FORMAT2(UI_STATIC_LABEL("Anchor URL"), MAX_ANCHOR_URL_LENGTH, format_anchor_url, anchor->url, anchor->urlLength);
+    UI_ADD_FORMAT2(UI_STATIC_LABEL("Anchor URL"), MAX_ANCHOR_URL_LENGTH, format_url, anchor->url, anchor->urlLength);
     UI_ADD_FORMAT3(UI_STATIC_LABEL("Anchor hash"), MAX_BECH32_STRING_LENGTH, format_bech32, "anchor", anchor->hash, ANCHOR_HASH_LENGTH);
 }
 
@@ -407,7 +407,7 @@ void addStakingInfoUIPair(const addressParams_t* addressParams) {
             } else {
                 switch (addressParams->type) {
                     case BYRON:
-                        strncpy(value_tmp, "Legacy Byron address\n(no staking rewards)", MAX_BIP44_PATH_STRING_LENGTH + UI_BUFFER_SAFETY_MARGIN);
+                        strncpy(value_tmp, "Byron address (no staking rewards)", MAX_BIP44_PATH_STRING_LENGTH + UI_BUFFER_SAFETY_MARGIN);
                         if (!ui_pairs_add_static_label(UI_STATIC_LABEL("WARNING:"), value_tmp)) {
                             ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
                         }

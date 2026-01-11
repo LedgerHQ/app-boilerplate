@@ -14,26 +14,6 @@
 #define ASSET_NAME_HASH_SIZE 32
 #define ASSET_NAME_DISPLAY_SIZE 32
 
-typedef struct {
-    uint8_t policyId[MINTING_POLICY_ID_LENGTH];
-} token_group_t;
-
-typedef struct {
-    uint8_t assetNameBytes[MAX_ASSET_NAME_LENGTH];
-    size_t assetNameSize;
-    uint64_t amount;
-} output_token_amount_t;
-
-typedef enum {
-    ARRAY_LEGACY = 0,
-    MAP_BABBAGE = 1
-} tx_output_serialization_format_t;
-
-typedef enum {
-    DATUM_HASH = 0,
-    DATUM_INLINE = 1,
-} datum_type_t;
-
 typedef enum {
     DESTINATION_THIRD_PARTY = 1,
     DESTINATION_DEVICE_OWNED = 2,
@@ -68,15 +48,25 @@ typedef struct {
 } output_token_t;
 
 typedef struct {
-    s_flist_node node;
+    s_flist_node flist_node;
     output_token_t token_data;
-} output_token_list_item_t;
+} output_token_node_t;
 
 typedef struct {
     const uint8_t* policyId;
     uint16_t numTokens;
     s_flist_node* tokens;
-} asset_group_t;
+} output_asset_group_t;
+
+typedef struct {
+    s_flist_node flist_node;
+    output_asset_group_t asset_group;
+} output_asset_group_node_t;
+
+typedef enum {
+    DATUM_HASH = 0,
+    DATUM_INLINE = 1,
+} datum_type_t;
 
 typedef struct {
     bool hasDatum;
@@ -91,20 +81,25 @@ typedef struct {
 } output_datum_t;
 
 typedef struct {
+    bool hasRefScript;
     uint16_t size;
     const uint8_t* data;  // Points to data in raw_tx buffer
 } ref_script_t;
 
+typedef enum {
+    ARRAY_LEGACY = 0,
+    MAP_BABBAGE = 1
+} tx_output_serialization_format_t;
+
 typedef struct {
-    s_flist_node node;
+    s_flist_node flist_node;
     struct {
         tx_output_destination_storage_t destination;
         uint64_t adaAmount;
         uint16_t numAssetGroups;
-        asset_group_t* assetGroups;
+        s_flist_node* assetGroups;
         output_datum_t datum;
-        bool hasRefScript;
         ref_script_t refScript;
         tx_output_serialization_format_t format;
     } output_data;
-} tx_output_list_item_t;
+} tx_output_node_t;

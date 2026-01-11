@@ -31,9 +31,9 @@ typedef struct {
 } mint_token_t;
 
 typedef struct {
-    s_flist_node node;
-    mint_token_t token_data;
-} mint_token_list_item_t;
+    s_flist_node flist_node;
+    mint_token_t token;
+} mint_token_node_t;
 
 typedef struct {
     const uint8_t* policyId;
@@ -42,9 +42,9 @@ typedef struct {
 } mint_asset_group_t;
 
 typedef struct {
-    s_flist_node node;
+    s_flist_node flist_node;
     mint_asset_group_t asset_group;
-} mint_asset_group_list_item_t;
+} mint_asset_group_node_t;
 
 typedef enum {
     SIGN_TX_SIGNINGMODE_ORDINARY_TX = 3,
@@ -59,9 +59,9 @@ typedef enum {
 } tx_options_e;
 
 typedef struct {
-    s_flist_node node;
-    tx_input_t input_data;
-} tx_input_list_item_t;
+    s_flist_node flist_node;
+    tx_input_t input;
+} tx_input_node_t;
 
 typedef struct {
     ext_credential_t stakeCredential;
@@ -82,17 +82,17 @@ typedef struct {
 } required_signer_t;
 
 typedef struct {
-    s_flist_node node;
-    withdrawal_data_t withdrawal_data;
-} tx_withdrawal_list_item_t;
+    s_flist_node flist_node;
+    withdrawal_data_t withdrawal;
+} tx_withdrawal_node_t;
 
 typedef struct {
-    s_flist_node node;
-    required_signer_t required_signer_data;
-} tx_required_signer_list_item_t;
+    s_flist_node flist_node;
+    required_signer_t required_signer;
+} tx_required_signer_node_t;
 
 // Collateral inputs use the same structure as regular inputs
-typedef tx_input_list_item_t tx_collateral_input_list_item_t;
+typedef tx_input_node_t tx_collateral_input_node_t;
 
 // Certificate data structure supporting multiple certificate types
 // Fields are used selectively depending on certificate type:
@@ -131,9 +131,9 @@ typedef struct {
 } certificate_data_t;
 
 typedef struct {
-    s_flist_node node;
-    certificate_data_t certificate_data;
-} tx_certificate_list_item_t;
+    s_flist_node flist_node;
+    certificate_data_t certificate;
+} tx_certificate_node_t;
 
 typedef struct {
     // signing / network metadata
@@ -189,9 +189,8 @@ typedef struct {
         tx_output_destination_storage_t destination;
         uint64_t adaAmount;
         uint16_t numAssetGroups;
-        asset_group_t* assetGroups;
+        s_flist_node* assetGroups;
         output_datum_t datum;
-        bool hasRefScript;
         ref_script_t refScript;
         tx_output_serialization_format_t format;
     } collateral_output;

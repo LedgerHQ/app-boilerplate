@@ -134,9 +134,9 @@ bool format_constant_drep(ext_drep_type_t drep_type, char *out, size_t outSize);
 bool format_certificate_type(certificate_type_t type, char *out, size_t outSize);
 
 /**
- * Format anchor URL from raw buffer
+ * Format URL from raw buffer
  *
- * Copies anchor URL bytes and null-terminates them.
+ * Copies URL bytes and null-terminates them.
  * Matches UI_ADD_FORMAT2 signature for use with unified macros.
  *
  * @param url       Raw URL bytes (not null-terminated)
@@ -145,7 +145,7 @@ bool format_certificate_type(certificate_type_t type, char *out, size_t outSize)
  * @param outSize   Size of output buffer
  * @return true on success, false on failure
  */
-bool format_anchor_url(const uint8_t *url, size_t urlLength, char *out, size_t outSize);
+bool format_url(const uint8_t *url, size_t urlLength, char *out, size_t outSize);
 
 /**
  * Format asset fingerprint in bech32 format
@@ -153,17 +153,16 @@ bool format_anchor_url(const uint8_t *url, size_t urlLength, char *out, size_t o
  * Derives the fingerprint from policy ID and asset name, then encodes as bech32 with "asset" prefix.
  * Wrapper to match UI_ADD_FORMAT2 signature (tokenGroup and assetNameLen).
  *
- * @param tokenGroup       Token group containing policy ID
+ * @param policyId         Minting policy ID
  * @param assetName        Asset name bytes
  * @param assetNameLen     Length of asset name
  * @param out              Output buffer for formatted bech32 string
  * @param outSize          Size of output buffer
  * @return true on success, false on failure
  */
-bool format_asset_fingerprint_bech32(const token_group_t *tokenGroup,
-                                        const uint8_t *assetName,
-                                        size_t assetNameLen,
-                                        char *out,
-                                        size_t outSize);
-
+bool format_asset_fingerprint_bech32(const uint8_t *policyId,
+                                     const uint8_t *assetName,
+                                     size_t assetNameLen,
+                                     char *out,
+                                     size_t outSize);
 

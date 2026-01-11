@@ -26,7 +26,7 @@ __noinline_due_to_stack__ void deriveAssetFingerprintBytes(const uint8_t* policy
  * Formats token amount with appropriate decimal places based on token metadata.
  * Includes ticker symbol.
  *
- * @param tokenGroup       Token group containing policy ID
+ * @param policyId         Minting policy ID
  * @param assetNameBytes   Asset name bytes
  * @param assetNameSize    Size of asset name
  * @param amount           Token amount (unsigned)
@@ -34,12 +34,12 @@ __noinline_due_to_stack__ void deriveAssetFingerprintBytes(const uint8_t* policy
  * @param outSize          Size of output buffer
  * @return true on success, false on failure
  */
-bool format_token_amount_output(const token_group_t *tokenGroup,
-                                                          const uint8_t *assetNameBytes,
-                                                          size_t assetNameSize,
-                                                          uint64_t amount,
-                                                          char *out,
-                                                          size_t outSize);
+bool format_token_amount_output(const uint8_t *policyId,
+                                const uint8_t *assetNameBytes,
+                                size_t assetNameSize,
+                                uint64_t amount,
+                                char *out,
+                                size_t outSize);
 
 /**
  * Format token amount for minted tokens
@@ -47,7 +47,7 @@ bool format_token_amount_output(const token_group_t *tokenGroup,
  * Formats token amount for minting operations with sign prefix (space for positive, '-' for negative).
  * Includes ticker symbol.
  *
- * @param tokenGroup       Token group containing policy ID
+ * @param policyId         Minting policy ID
  * @param assetNameBytes   Asset name bytes
  * @param assetNameSize    Size of asset name
  * @param amount           Token amount (signed, can be negative)
@@ -55,10 +55,9 @@ bool format_token_amount_output(const token_group_t *tokenGroup,
  * @param outSize          Size of output buffer
  * @return true on success, false on failure
  */
-bool format_token_amount_mint(const token_group_t *tokenGroup,
-                                                        const uint8_t *assetNameBytes,
-                                                        size_t assetNameSize,
-                                                        int64_t amount,
-                                                        char *out,
-                                                        size_t outSize);
-
+bool format_token_amount_mint(const uint8_t *policyId,
+                              const uint8_t *assetNameBytes,
+                              size_t assetNameSize,
+                              int64_t amount,
+                              char *out,
+                              size_t outSize);

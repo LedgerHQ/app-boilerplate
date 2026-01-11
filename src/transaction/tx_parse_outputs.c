@@ -163,11 +163,9 @@ parser_status_e parse_output_datum(buffer_t* buf, output_datum_t* datum) {
 }
 
 parser_status_e parse_output_ref_script(buffer_t* buf,
-                                        ref_script_t* refScript,
-                                        bool* hasRefScript) {
+                                        ref_script_t* refScript) {
     LEDGER_ASSERT(buf != NULL, "NULL buf");
     LEDGER_ASSERT(refScript != NULL, "NULL refScript");
-    LEDGER_ASSERT(hasRefScript != NULL, "NULL hasRefScript");
 
     size_t offset_before = buf->offset;
     uint8_t has_ref_script_wire;
@@ -178,11 +176,13 @@ parser_status_e parse_output_ref_script(buffer_t* buf,
 
     switch (has_ref_script_wire) {
         case 0:  // No reference script
-            *hasRefScript = false;
+            refScript->hasRefScript = false;
+            refScript->size = 0;
+            refScript->data = NULL;
             break;
 
         case 2: {  // Has reference script
-            *hasRefScript = true;
+            refScript->hasRefScript = true;
 
             uint16_t script_size;
             if (!buffer_read_u16(buf, &script_size, BE)) {

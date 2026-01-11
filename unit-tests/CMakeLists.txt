@@ -277,7 +277,7 @@ set(SIGN_TX_COMMON_LIBS
 )
 add_library(cardano_sign_tx_core STATIC ${SIGN_TX_COMMON_SOURCES})
 target_link_libraries(cardano_sign_tx_core PUBLIC ${SIGN_TX_COMMON_LIBS})
-target_compile_definitions(cardano_sign_tx_core PRIVATE TRACE_TX_HASH_BUILDER)
+#target_compile_definitions(cardano_sign_tx_core PRIVATE TRACE_TX_HASH_BUILDER)
 
 # Crypto reference implementations
 add_library(blake2b_lib SHARED libs/blake2b.c)
@@ -405,7 +405,7 @@ add_test(test_sign_tx_mary test_sign_tx_mary)
 
 add_executable(test_sign_tx_shelley test_sign_tx_shelley.c)
 target_link_libraries(test_sign_tx_shelley PUBLIC cmocka gcov cardano_sign_tx_core)
-target_compile_definitions(test_sign_tx_shelley PRIVATE TRACE_TX_HASH_BUILDER)
+#target_compile_definitions(test_sign_tx_shelley PRIVATE TRACE_TX_HASH_BUILDER)
 add_test(test_sign_tx_shelley test_sign_tx_shelley)
 
 add_executable(test_sign_tx_byron test_sign_tx_byron.c)
@@ -436,7 +436,7 @@ add_test(test_sign_tx_alonzo_cip36 test_sign_tx_alonzo_cip36)
 # Babbage era tests (reference inputs, inline datums)
 add_executable(test_sign_tx_babbage test_sign_tx_babbage.c)
 target_link_libraries(test_sign_tx_babbage PUBLIC cmocka gcov cardano_sign_tx_core)
-target_compile_definitions(test_sign_tx_babbage PRIVATE TRACE_TX_HASH_BUILDER)
+#target_compile_definitions(test_sign_tx_babbage PRIVATE TRACE_TX_HASH_BUILDER)
 add_test(test_sign_tx_babbage test_sign_tx_babbage)
 
 # Conway era tests with governance certificates

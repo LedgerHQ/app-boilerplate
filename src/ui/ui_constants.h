@@ -29,7 +29,10 @@
 #define MAX_MINT_AMOUNT_STRING_LENGTH 71        // 70 + 1 for leading sign; TODO: confirm length rationale
 #define MAX_WARNING_MESSAGE_LENGTH 128       // For warning/error message text
 #define MAX_TX_HASH_DISPLAY_LENGTH 65        // For transaction hash hex display (32 bytes + null)
-#define MAX_REFERENCE_SCRIPT_STRING_LENGTH 30  // "Reference script (65535 bytes)"
+// TODO: Reference script size is not bounded by protocol; need more robust handling for large scripts
+#define MAX_REFERENCE_SCRIPT_STRING_LENGTH 5120  // 2560 bytes of script data = 5120 hex chars
+// TODO: Inline datum size is not bounded by protocol; need more robust handling for large datums
+#define MAX_INLINE_DATUM_STRING_LENGTH 5120  // 2560 bytes of datum data = 5120 hex chars
 #define MAX_COLLATERAL_STRING_LENGTH 13        // "return output"
 #define MAX_RELAY_INDEX_STRING_LENGTH 20     // For relay index "#4294967295"
 #define MAX_PROFIT_MARGIN_STRING_LENGTH 50   // For pool margin percentage "100.99 %"

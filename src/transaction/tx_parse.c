@@ -112,32 +112,38 @@ static inline bool canonical_key_ok(bool has_previous,
     return cbor_mapKeyFulfillsCanonicalOrdering(previous, previous_size, next, next_size);
 }
 
-static void free_asset_groups(asset_group_t *groups, uint16_t numGroups) {
-    if (groups == NULL) {
+static void free_asset_group_node(output_asset_group_node_t *group_node) {
+    if (group_node == NULL) {
         return;
     }
-    for (uint16_t i = 0; i < numGroups; i++) {
-        s_flist_node *token_node = groups[i].tokens;
-        while (token_node != NULL) {
-            s_flist_node *token_next = token_node->next;
-            app_mem_free(token_node);
-            token_node = token_next;
-        }
-        groups[i].tokens = NULL;
+    s_flist_node *token_node = group_node->asset_group.tokens;
+    while (token_node != NULL) {
+        s_flist_node *token_next = token_node->next;
+        app_mem_free(token_node);
+        token_node = token_next;
     }
-    app_mem_free(groups);
+    group_node->asset_group.tokens = NULL;
+    app_mem_free(group_node);
 }
 
-static void free_output_item(tx_output_list_item_t *item) {
+static void free_asset_groups(s_flist_node *group_node) {
+    while (group_node != NULL) {
+        s_flist_node *group_next = group_node->next;
+        free_asset_group_node((output_asset_group_node_t *) group_node);
+        group_node = group_next;
+    }
+}
+
+static void free_output_item(tx_output_node_t *item) {
     if (item == NULL) {
         return;
     }
-    free_asset_groups(item->output_data.assetGroups, item->output_data.numAssetGroups);
+    free_asset_groups(item->output_data.assetGroups);
     item->output_data.assetGroups = NULL;
     app_mem_free(item);
 }
 
-static void free_mint_item(mint_asset_group_list_item_t *item) {
+static void free_mint_item(mint_asset_group_node_t *item) {
     if (item == NULL) {
         return;
     }
@@ -328,7 +334,7 @@ int tx_handle_parse_error(parser_status_e status) {
 // Helper function to parse a single input (reused for inputs, collateral inputs, reference inputs)
 // error_on_failure: error code to return if parsing fails (e.g., INPUTS_PARSING_ERROR, COLLATERAL_INPUTS_PARSING_ERROR)
 static parser_status_e parse_input_item(buffer_t *buf, s_flist_node **list_head, parser_status_e error_on_failure) {
-    tx_input_list_item_t *item = (tx_input_list_item_t *) app_mem_alloc(sizeof(tx_input_list_item_t));
+    tx_input_node_t *item = (tx_input_node_t *) app_mem_alloc(sizeof(tx_input_node_t));
     if (item == NULL) {
         return OUT_OF_MEMORY_ERROR;
     }
@@ -340,14 +346,14 @@ static parser_status_e parse_input_item(buffer_t *buf, s_flist_node **list_head,
         return error_on_failure;
     }
     ASSERT(hash_ptr != NULL);
-    item->input_data.txHash = hash_ptr;
+    item->input.txHash = hash_ptr;
 
-    if (!buffer_read_u32(buf, &item->input_data.index, BE)) {
+    if (!buffer_read_u32(buf, &item->input.index, BE)) {
         app_mem_free(item);
         return error_on_failure;
     }
 
-    item->node.next = NULL;
+    item->flist_node.next = NULL;
     flist_push_back(list_head, (s_flist_node *) item);
     return PARSING_OK;
 }
@@ -381,7 +387,7 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
             .offset = 0                      // Start parsing from beginning of sub-buffer
         };
 
-        tx_output_list_item_t *item = (tx_output_list_item_t *) app_mem_alloc(sizeof(tx_output_list_item_t));
+        tx_output_node_t *item = (tx_output_node_t *) app_mem_alloc(sizeof(tx_output_node_t));
         if (item == NULL) {
             return OUT_OF_MEMORY_ERROR;
         }
@@ -416,25 +422,26 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
         }
         TRACE("Deserialize: Output %u: %u asset groups", i, item->output_data.numAssetGroups);
 
+        item->output_data.assetGroups = NULL;
         if (item->output_data.numAssetGroups > 0) {
-            item->output_data.assetGroups =
-                (asset_group_t *) app_mem_alloc(item->output_data.numAssetGroups * sizeof(asset_group_t));
-            if (item->output_data.assetGroups == NULL) {
-                app_mem_free(item);
-                return OUT_OF_MEMORY_ERROR;
-            }
-            explicit_bzero(item->output_data.assetGroups,
-                           item->output_data.numAssetGroups * sizeof(asset_group_t));
-
             const uint8_t* previous_policy_id = NULL;
             bool has_previous_policy = false;
 
             for (uint16_t ag = 0; ag < item->output_data.numAssetGroups; ag++) {
-                asset_group_t *group = &item->output_data.assetGroups[ag];
+                output_asset_group_node_t *group_node =
+                    (output_asset_group_node_t *) app_mem_alloc(sizeof(output_asset_group_node_t));
+                if (group_node == NULL) {
+                    free_output_item(item);
+                    return OUT_OF_MEMORY_ERROR;
+                }
+                explicit_bzero(group_node, sizeof(*group_node));
+
+                output_asset_group_t *group = &group_node->asset_group;
 
                 // Store pointer to policy ID in raw buffer instead of copying
                 uint8_t *policy_ptr = NULL;
                 if (!buffer_read_bytes_ptr(&output_buf, &policy_ptr, MINTING_POLICY_ID_LENGTH)) {
+                    free_asset_group_node(group_node);
                     free_output_item(item);
                     return OUTPUTS_PARSING_ERROR;
                 }
@@ -447,6 +454,7 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                                       policy_ptr,
                                       MINTING_POLICY_ID_LENGTH)) {
                     TRACE("Output %u asset groups not canonical", i);
+                    free_asset_group_node(group_node);
                     free_output_item(item);
                     return CANONICAL_ORDERING_ERROR;
                 }
@@ -456,6 +464,7 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                 TRACE("Deserialize: Asset group %u: policy ID read", ag);
 
                 if (!buffer_read_u16(&output_buf, &group->numTokens, BE)) {
+                    free_asset_group_node(group_node);
                     free_output_item(item);
                     return OUTPUTS_PARSING_ERROR;
                 }
@@ -470,9 +479,10 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
 
                 for (uint16_t tk = 0; tk < group->numTokens; tk++) {
                     // Allocate list node for this token
-                    output_token_list_item_t *token_item =
-                        (output_token_list_item_t *) app_mem_alloc(sizeof(output_token_list_item_t));
+                    output_token_node_t *token_item =
+                        (output_token_node_t *) app_mem_alloc(sizeof(output_token_node_t));
                     if (token_item == NULL) {
+                        free_asset_group_node(group_node);
                         free_output_item(item);
                         return OUT_OF_MEMORY_ERROR;
                     }
@@ -480,11 +490,13 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                     output_token_t *token = &token_item->token_data;
                     if (!buffer_read_u8(&output_buf, &token->assetNameLen)) {
                         app_mem_free(token_item);
+                        free_asset_group_node(group_node);
                         free_output_item(item);
                         return OUTPUTS_PARSING_ERROR;
                     }
                     if (token->assetNameLen > MAX_ASSET_NAME_LENGTH) {
                         app_mem_free(token_item);
+                        free_asset_group_node(group_node);
                         free_output_item(item);
                         return OUTPUTS_PARSING_ERROR;
                     }
@@ -494,6 +506,7 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                     uint8_t *name_ptr = NULL;
                     if (!buffer_read_bytes_ptr(&output_buf, &name_ptr, token->assetNameLen)) {
                         app_mem_free(token_item);
+                        free_asset_group_node(group_node);
                         free_output_item(item);
                         return OUTPUTS_PARSING_ERROR;
                     }
@@ -507,6 +520,7 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                                           token->assetNameLen)) {
                         TRACE("Output %u asset group %u tokens not canonical", i, ag);
                         app_mem_free(token_item);
+                        free_asset_group_node(group_node);
                         free_output_item(item);
                         return CANONICAL_ORDERING_ERROR;
                     }
@@ -516,6 +530,7 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
 
                     if (!buffer_read_u64(&output_buf, &token->amount, BE)) {
                         app_mem_free(token_item);
+                        free_asset_group_node(group_node);
                         free_output_item(item);
                         return OUTPUTS_PARSING_ERROR;
                     }
@@ -525,12 +540,13 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                     TRACE_UINT64(token->amount);
 
                     // Add token to asset group's token list
-                    token_item->node.next = NULL;
+                    token_item->flist_node.next = NULL;
                     flist_push_back(&group->tokens, (s_flist_node *) token_item);
                 }
+
+                group_node->flist_node.next = NULL;
+                flist_push_back(&item->output_data.assetGroups, (s_flist_node *) group_node);
             }
-        } else {
-            item->output_data.assetGroups = NULL;
         }
 
         // Parse datum (hash, inline, or none)
@@ -543,8 +559,7 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
 
         // Parse reference script (if present)
         status = parse_output_ref_script(&output_buf,
-                                        &item->output_data.refScript,
-                                        &item->output_data.hasRefScript);
+                                        &item->output_data.refScript);
         if (status != PARSING_OK) {
             free_output_item(item);
             return status;
@@ -568,7 +583,7 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
         }
         TRACE("Deserialize: Output %u complete, buffer offset now=%u", i, buf->offset);
 
-        item->node.next = NULL;
+        item->flist_node.next = NULL;
         flist_push_back(&tx->outputs, (s_flist_node *) item);
     }
     return PARSING_OK;
@@ -579,7 +594,7 @@ static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
     bool has_previous_policy = false;
 
     for (uint16_t ag = 0; ag < tx->num_mint_asset_groups; ag++) {
-        mint_asset_group_list_item_t *item = (mint_asset_group_list_item_t *) app_mem_alloc(sizeof(mint_asset_group_list_item_t));
+        mint_asset_group_node_t *item = (mint_asset_group_node_t *) app_mem_alloc(sizeof(mint_asset_group_node_t));
         if (item == NULL) {
             return OUT_OF_MEMORY_ERROR;
         }
@@ -621,13 +636,13 @@ static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
 
         for (uint16_t tk = 0; tk < item->asset_group.numTokens; tk++) {
             // Allocate list node for this token
-            mint_token_list_item_t *token_item = (mint_token_list_item_t *) app_mem_alloc(sizeof(mint_token_list_item_t));
+            mint_token_node_t *token_item = (mint_token_node_t *) app_mem_alloc(sizeof(mint_token_node_t));
             if (token_item == NULL) {
                 free_mint_item(item);
                 return OUT_OF_MEMORY_ERROR;
             }
 
-            mint_token_t *token = &token_item->token_data;
+            mint_token_t *token = &token_item->token;
             if (!buffer_read_u8(buf, &token->assetNameLen)) {
                 app_mem_free(token_item);
                 free_mint_item(item);
@@ -674,11 +689,11 @@ static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
             TRACE_INT64(token->amount);
 
             // Add token to asset group's token list
-            token_item->node.next = NULL;
+            token_item->flist_node.next = NULL;
             flist_push_back(&item->asset_group.tokens, (s_flist_node *) token_item);
         }
 
-        item->node.next = NULL;
+        item->flist_node.next = NULL;
         flist_push_back(&tx->mint_asset_groups, (s_flist_node *) item);
     }
     return PARSING_OK;
@@ -690,7 +705,7 @@ static parser_status_e parse_tx_certificates(buffer_t *buf, transaction_t *tx) {
           tx->num_certificates, buf->offset, buf->size);
     for (uint16_t i = 0; i < tx->num_certificates; i++) {
         TRACE(">>>>> Allocating memory for certificate %u", i);
-        tx_certificate_list_item_t *item = (tx_certificate_list_item_t *) app_mem_alloc(sizeof(tx_certificate_list_item_t));
+        tx_certificate_node_t *item = (tx_certificate_node_t *) app_mem_alloc(sizeof(tx_certificate_node_t));
         if (item == NULL) {
             TRACE(">>>>> OUT OF MEMORY");
             return OUT_OF_MEMORY_ERROR;
@@ -712,48 +727,48 @@ static parser_status_e parse_tx_certificates(buffer_t *buf, transaction_t *tx) {
         switch (cert_type) {
             case CERTIFICATE_STAKE_REGISTRATION:
             case CERTIFICATE_STAKE_DEREGISTRATION:
-                status = parse_certificate_stake_registration_deregistration(buf, cert_type, &item->certificate_data);
+                status = parse_certificate_stake_registration_deregistration(buf, cert_type, &item->certificate);
                 break;
 
             case CERTIFICATE_STAKE_DELEGATION:
-                status = parse_certificate_stake_delegation(buf, &item->certificate_data);
+                status = parse_certificate_stake_delegation(buf, &item->certificate);
                 break;
 
             case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
             case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY:
-                status = parse_certificate_stake_registration_deregistration_conway(buf, cert_type, &item->certificate_data);
+                status = parse_certificate_stake_registration_deregistration_conway(buf, cert_type, &item->certificate);
                 break;
 
             case CERTIFICATE_STAKE_POOL_RETIREMENT:
-                status = parse_certificate_stake_pool_retirement(buf, &item->certificate_data);
+                status = parse_certificate_stake_pool_retirement(buf, &item->certificate);
                 break;
 
             case CERTIFICATE_VOTE_DELEGATION:
-                status = parse_certificate_vote_delegation(buf, &item->certificate_data);
+                status = parse_certificate_vote_delegation(buf, &item->certificate);
                 break;
 
             case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT:
-                status = parse_certificate_authorize_committee_hot(buf, &item->certificate_data);
+                status = parse_certificate_authorize_committee_hot(buf, &item->certificate);
                 break;
 
             case CERTIFICATE_RESIGN_COMMITTEE_COLD:
-                status = parse_certificate_resign_committee_cold(buf, &item->certificate_data);
+                status = parse_certificate_resign_committee_cold(buf, &item->certificate);
                 break;
 
             case CERTIFICATE_DREP_REGISTRATION:
-                status = parse_certificate_drep_registration(buf, &item->certificate_data);
+                status = parse_certificate_drep_registration(buf, &item->certificate);
                 break;
 
             case CERTIFICATE_DREP_DEREGISTRATION:
-                status = parse_certificate_drep_deregistration(buf, &item->certificate_data);
+                status = parse_certificate_drep_deregistration(buf, &item->certificate);
                 break;
 
             case CERTIFICATE_DREP_UPDATE:
-                status = parse_certificate_drep_update(buf, &item->certificate_data);
+                status = parse_certificate_drep_update(buf, &item->certificate);
                 break;
 
             case CERTIFICATE_STAKE_POOL_REGISTRATION:
-                status = parse_certificate_stake_pool_registration(buf, &item->certificate_data);
+                status = parse_certificate_stake_pool_registration(buf, &item->certificate);
                 break;
 
         default:
@@ -768,7 +783,7 @@ static parser_status_e parse_tx_certificates(buffer_t *buf, transaction_t *tx) {
             return status;
         }
 
-        item->node.next = NULL;
+        item->flist_node.next = NULL;
         flist_push_back(&tx->certificates, (s_flist_node *) item);
     }
     return PARSING_OK;
@@ -781,26 +796,26 @@ static parser_status_e parse_tx_withdrawals(buffer_t *buf, transaction_t *tx) {
     // to the later planning stage where the derived reward addresses are already
     // exposed to policy checks.
     for (uint16_t i = 0; i < tx->num_withdrawals; i++) {
-        tx_withdrawal_list_item_t *item = (tx_withdrawal_list_item_t *) app_mem_alloc(sizeof(tx_withdrawal_list_item_t));
+        tx_withdrawal_node_t *item = (tx_withdrawal_node_t *) app_mem_alloc(sizeof(tx_withdrawal_node_t));
         if (item == NULL) {
             return OUT_OF_MEMORY_ERROR;
         }
 
-        if (!buffer_read_u64(buf, &item->withdrawal_data.amount, BE)) {
+        if (!buffer_read_u64(buf, &item->withdrawal.amount, BE)) {
             app_mem_free(item);
             return WITHDRAWALS_PARSING_ERROR;
         }
 
-        parser_status_e status = parse_stake_credential(buf, &item->withdrawal_data.stakeCredential);
+        parser_status_e status = parse_stake_credential(buf, &item->withdrawal.stakeCredential);
         if (status != PARSING_OK) {
             TRACE("Withdrawal %u credential parsing failed: status=%d", i, status);
             app_mem_free(item);
             return status;
         }
 
-        TRACE("Deserialize: Withdrawal %u, type=%u", i, item->withdrawal_data.stakeCredential.type);
+        TRACE("Deserialize: Withdrawal %u, type=%u", i, item->withdrawal.stakeCredential.type);
 
-        item->node.next = NULL;
+        item->flist_node.next = NULL;
         flist_push_back(&tx->withdrawals, (s_flist_node *) item);
     }
     return PARSING_OK;
@@ -812,22 +827,11 @@ void transaction_free_outputs(transaction_t *tx) {
 
     s_flist_node *output_node = tx->outputs;
     while (output_node != NULL) {
-        tx_output_list_item_t *item = (tx_output_list_item_t *) output_node;
+        tx_output_node_t *item = (tx_output_node_t *) output_node;
         s_flist_node *next = output_node->next;
 
         // Free asset groups and their tokens
-        if (item->output_data.assetGroups != NULL) {
-            for (uint16_t i = 0; i < item->output_data.numAssetGroups; i++) {
-                // Free all token nodes in the linked list
-                s_flist_node *token_node = item->output_data.assetGroups[i].tokens;
-                while (token_node != NULL) {
-                    s_flist_node *token_next = token_node->next;
-                    app_mem_free(token_node);
-                    token_node = token_next;
-                }
-            }
-            app_mem_free(item->output_data.assetGroups);
-        }
+        free_asset_groups(item->output_data.assetGroups);
 
         // Note: inline datum and reference script data are pointers into the raw_tx buffer,
         // not separately allocated, so they do not need to be freed
@@ -874,7 +878,7 @@ void transaction_free_mint(transaction_t *tx) {
 
     s_flist_node *mint_node = tx->mint_asset_groups;
     while (mint_node != NULL) {
-        mint_asset_group_list_item_t *item = (mint_asset_group_list_item_t *) mint_node;
+        mint_asset_group_node_t *item = (mint_asset_group_node_t *) mint_node;
         s_flist_node *next = mint_node->next;
 
         // Free all token nodes in the linked list
@@ -948,7 +952,7 @@ void transaction_free_voting_procedures(transaction_t *tx) {
 void transaction_free_collateral_output(transaction_t *tx) {
     LEDGER_ASSERT(tx != NULL, "NULL tx");
 
-    free_asset_groups(tx->collateral_output.assetGroups, tx->collateral_output.numAssetGroups);
+    free_asset_groups(tx->collateral_output.assetGroups);
     tx->collateral_output.assetGroups = NULL;
     tx->collateral_output.numAssetGroups = 0;
 }
@@ -1018,8 +1022,8 @@ static parser_status_e parse_tx_collateral_inputs(buffer_t *buf, transaction_t *
 
 static parser_status_e parse_tx_required_signers(buffer_t *buf, transaction_t *tx) {
     for (uint16_t i = 0; i < tx->num_required_signers; i++) {
-        tx_required_signer_list_item_t *item =
-            (tx_required_signer_list_item_t *) app_mem_alloc(sizeof(tx_required_signer_list_item_t));
+        tx_required_signer_node_t *item =
+            (tx_required_signer_node_t *) app_mem_alloc(sizeof(tx_required_signer_node_t));
         if (item == NULL) {
             return OUT_OF_MEMORY_ERROR;
         }
@@ -1030,20 +1034,20 @@ static parser_status_e parse_tx_required_signers(buffer_t *buf, transaction_t *t
             app_mem_free(item);
             return REQUIRED_SIGNERS_PARSING_ERROR;
         }
-        item->required_signer_data.type = (required_signer_type_t) type;
+        item->required_signer.type = (required_signer_type_t) type;
 
         // Read path or hash based on type
-        switch (item->required_signer_data.type) {
+        switch (item->required_signer.type) {
             case REQUIRED_SIGNER_WITH_PATH:
                 // Parse BIP44 path
-                if (!buffer_read_bip44_path(buf, &item->required_signer_data.keyPath)) {
+                if (!buffer_read_bip44_path(buf, &item->required_signer.keyPath)) {
                     app_mem_free(item);
                     return REQUIRED_SIGNERS_PARSING_ERROR;
                 }
                 break;
             case REQUIRED_SIGNER_WITH_HASH:
                 // Read 28-byte key hash
-                if (!buffer_read_bytes(buf, item->required_signer_data.keyHash, ADDRESS_KEY_HASH_LENGTH)) {
+                if (!buffer_read_bytes(buf, item->required_signer.keyHash, ADDRESS_KEY_HASH_LENGTH)) {
                     app_mem_free(item);
                     return REQUIRED_SIGNERS_PARSING_ERROR;
                 }
@@ -1053,7 +1057,7 @@ static parser_status_e parse_tx_required_signers(buffer_t *buf, transaction_t *t
                 return REQUIRED_SIGNERS_PARSING_ERROR;
         }
 
-        item->node.next = NULL;
+        item->flist_node.next = NULL;
         flist_push_back(&tx->required_signers, (s_flist_node *) item);
     }
     return PARSING_OK;
@@ -1065,7 +1069,7 @@ static parser_status_e parse_output_structure(buffer_t *output_buf,
                                              uint64_t *adaAmount,
                                              tx_output_serialization_format_t *format,
                                              uint16_t *numAssetGroups,
-                                             asset_group_t **assetGroups,
+                                             s_flist_node **assetGroups,
                                              uint8_t networkId) {
     // Parse destination
     parser_status_e status = parse_output_destination(output_buf, destination, networkId);
@@ -1089,24 +1093,26 @@ static parser_status_e parse_output_structure(buffer_t *output_buf,
         return OUTPUTS_PARSING_ERROR;
     }
 
-    // Parse asset groups
+    *assetGroups = NULL;
     if (*numAssetGroups > 0) {
-        *assetGroups = (asset_group_t *) app_mem_alloc(*numAssetGroups * sizeof(asset_group_t));
-        if (*assetGroups == NULL) {
-            return OUT_OF_MEMORY_ERROR;
-        }
-        explicit_bzero(*assetGroups, *numAssetGroups * sizeof(asset_group_t));
-
         const uint8_t* previous_policy_id = NULL;
         bool has_previous_policy = false;
 
         for (uint16_t ag = 0; ag < *numAssetGroups; ag++) {
-            asset_group_t *group = &(*assetGroups)[ag];
+            output_asset_group_node_t *group_node =
+                (output_asset_group_node_t *) app_mem_alloc(sizeof(output_asset_group_node_t));
+            if (group_node == NULL) {
+                free_asset_groups(*assetGroups);
+                return OUT_OF_MEMORY_ERROR;
+            }
+            explicit_bzero(group_node, sizeof(*group_node));
+
+            output_asset_group_t *group = &group_node->asset_group;
 
             uint8_t *policy_ptr = NULL;
             if (!buffer_read_bytes_ptr(output_buf, &policy_ptr, MINTING_POLICY_ID_LENGTH)) {
-                free_asset_groups(*assetGroups, *numAssetGroups);
-                *assetGroups = NULL;
+                free_asset_group_node(group_node);
+                free_asset_groups(*assetGroups);
                 return OUTPUTS_PARSING_ERROR;
             }
             ASSERT(policy_ptr != NULL);
@@ -1118,16 +1124,16 @@ static parser_status_e parse_output_structure(buffer_t *output_buf,
                                   policy_ptr,
                                   MINTING_POLICY_ID_LENGTH)) {
                 TRACE("Collateral asset groups not canonical");
-                free_asset_groups(*assetGroups, *numAssetGroups);
-                *assetGroups = NULL;
+                free_asset_group_node(group_node);
+                free_asset_groups(*assetGroups);
                 return CANONICAL_ORDERING_ERROR;
             }
             previous_policy_id = policy_ptr;
             has_previous_policy = true;
 
             if (!buffer_read_u16(output_buf, &group->numTokens, BE)) {
-                free_asset_groups(*assetGroups, *numAssetGroups);
-                *assetGroups = NULL;
+                free_asset_group_node(group_node);
+                free_asset_groups(*assetGroups);
                 return OUTPUTS_PARSING_ERROR;
             }
 
@@ -1140,33 +1146,33 @@ static parser_status_e parse_output_structure(buffer_t *output_buf,
 
             for (uint16_t tk = 0; tk < group->numTokens; tk++) {
                 // Allocate list node for this token
-                output_token_list_item_t *token_item =
-                    (output_token_list_item_t *) app_mem_alloc(sizeof(output_token_list_item_t));
+                output_token_node_t *token_item =
+                    (output_token_node_t *) app_mem_alloc(sizeof(output_token_node_t));
                 if (token_item == NULL) {
-                    free_asset_groups(*assetGroups, *numAssetGroups);
-                    *assetGroups = NULL;
+                    free_asset_group_node(group_node);
+                    free_asset_groups(*assetGroups);
                     return OUT_OF_MEMORY_ERROR;
                 }
 
                 output_token_t *token = &token_item->token_data;
                 if (!buffer_read_u8(output_buf, &token->assetNameLen)) {
                     app_mem_free(token_item);
-                    free_asset_groups(*assetGroups, *numAssetGroups);
-                    *assetGroups = NULL;
+                    free_asset_group_node(group_node);
+                    free_asset_groups(*assetGroups);
                     return OUTPUTS_PARSING_ERROR;
                 }
                 if (token->assetNameLen > MAX_ASSET_NAME_LENGTH) {
                     app_mem_free(token_item);
-                    free_asset_groups(*assetGroups, *numAssetGroups);
-                    *assetGroups = NULL;
+                    free_asset_group_node(group_node);
+                    free_asset_groups(*assetGroups);
                     return OUTPUTS_PARSING_ERROR;
                 }
 
                 uint8_t *name_ptr = NULL;
                 if (!buffer_read_bytes_ptr(output_buf, &name_ptr, token->assetNameLen)) {
                     app_mem_free(token_item);
-                    free_asset_groups(*assetGroups, *numAssetGroups);
-                    *assetGroups = NULL;
+                    free_asset_group_node(group_node);
+                    free_asset_groups(*assetGroups);
                     return OUTPUTS_PARSING_ERROR;
                 }
                 ASSERT(name_ptr != NULL);
@@ -1179,8 +1185,8 @@ static parser_status_e parse_output_structure(buffer_t *output_buf,
                                       token->assetNameLen)) {
                     TRACE("Collateral asset group %u tokens not canonical", ag);
                     app_mem_free(token_item);
-                    free_asset_groups(*assetGroups, *numAssetGroups);
-                    *assetGroups = NULL;
+                    free_asset_group_node(group_node);
+                    free_asset_groups(*assetGroups);
                     return CANONICAL_ORDERING_ERROR;
                 }
                 previous_token_name = name_ptr;
@@ -1189,18 +1195,19 @@ static parser_status_e parse_output_structure(buffer_t *output_buf,
 
                 if (!buffer_read_u64(output_buf, &token->amount, BE)) {
                     app_mem_free(token_item);
-                    free_asset_groups(*assetGroups, *numAssetGroups);
-                    *assetGroups = NULL;
+                    free_asset_group_node(group_node);
+                    free_asset_groups(*assetGroups);
                     return OUTPUTS_PARSING_ERROR;
                 }
 
                 // Add token to asset group's token list
-                token_item->node.next = NULL;
+                token_item->flist_node.next = NULL;
                 flist_push_back(&group->tokens, (s_flist_node *) token_item);
             }
+
+            group_node->flist_node.next = NULL;
+            flist_push_back(assetGroups, (s_flist_node *) group_node);
         }
-    } else {
-        *assetGroups = NULL;
     }
 
     return PARSING_OK;
@@ -1240,8 +1247,7 @@ static parser_status_e parse_tx_collateral_output(buffer_t *buf, transaction_t *
     }
 
     status = parse_output_ref_script(&output_buf,
-                                     &tx->collateral_output.refScript,
-                                     &tx->collateral_output.hasRefScript);
+                                       &tx->collateral_output.refScript);
     if (status != PARSING_OK) {
         return status;
     }
@@ -1395,12 +1401,12 @@ static parser_status_e parse_tx_voting_procedures(buffer_t *buf, transaction_t *
             }
 
             // Add vote to voter's vote list
-            vote_item->node.next = NULL;
+            vote_item->flist_node.next = NULL;
             flist_push_back(&voter_item->voter_votes_data.votes, (s_flist_node *) vote_item);
         }
 
         // Add voter to transaction's voter list
-        voter_item->node.next = NULL;
+        voter_item->flist_node.next = NULL;
         flist_push_back(&tx->voting_procedures, (s_flist_node *) voter_item);
     }
 

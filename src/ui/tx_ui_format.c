@@ -108,34 +108,58 @@ static bool format_input_with_index(const tx_input_t *input, char *out, size_t o
     return true;
 }
 
-static void ui_format_token_groups(asset_group_t* assetGroups,
-                                        uint16_t numGroups,
-                                        bool show_tokens) {
-    if (assetGroups == NULL) {
-        return;
-    }
+static void ui_strings_inputs(transaction_t *tx) {
+    s_flist_node *node = tx->inputs;
+    while (node != NULL) {
+        tx_input_node_t *input_node = (tx_input_node_t *) node;
+        security_policy_t input_policy = policyForSignTxInput(tx->txSigningMode, &input_node->input);
+        LEDGER_ASSERT(input_policy != POLICY_DENY, "Input denied during UI");
 
-    for (uint16_t ag = 0; ag < numGroups; ag++) {
-        asset_group_t *group = &assetGroups[ag];
-        s_flist_node *token_node = group->tokens;
-        while (token_node != NULL) {
-            output_token_list_item_t *token_item = (output_token_list_item_t *) token_node;
-            output_token_t *token = &token_item->token_data;
-            s_flist_node *token_next = token_node->next;
-
-            if (show_tokens) {
-                token_group_t tokenGroup;
-                memcpy(tokenGroup.policyId, group->policyId, MINTING_POLICY_ID_LENGTH);
-
-                UI_ADD_FORMAT3(UI_STATIC_LABEL("Asset fingerprint"), MAX_TOKEN_FINGERPRINT_STRING_LENGTH, format_asset_fingerprint_bech32, &tokenGroup, token->assetName, token->assetNameLen);
-                UI_ADD_FORMAT4(UI_STATIC_LABEL("Token amount"), MAX_TOKEN_AMOUNT_OUTPUT_STRING_LENGTH, format_token_amount_output, &tokenGroup, token->assetName, token->assetNameLen, token->amount);
-            }
-
-            app_mem_free(token_node);
-            token_node = token_next;
+        if (input_policy == POLICY_SHOW) {
+            UI_ADD_FORMAT1(UI_STATIC_LABEL("Input"), MAX_INPUT_DISPLAY_STRING_LENGTH, format_input_with_index, &input_node->input);
         }
-        group->tokens = NULL;
+
+        node = node->next;
+        app_mem_free(input_node); // only after next is assigned
     }
+    tx->inputs = NULL;
+}
+
+
+static void format_and_free_output_token_nodes(const output_asset_group_t *group,
+                                               s_flist_node *token_nodes_start,
+                                               bool show_tokens) {
+    s_flist_node *node = token_nodes_start;
+    while (node != NULL) {
+        output_token_node_t *token_item = (output_token_node_t *) node;
+        output_token_t *token = &token_item->token_data;
+
+        if (show_tokens) {
+            UI_ADD_FORMAT3(UI_STATIC_LABEL("Asset fingerprint"), MAX_TOKEN_FINGERPRINT_STRING_LENGTH, format_asset_fingerprint_bech32, group->policyId, token->assetName, token->assetNameLen);
+            UI_ADD_FORMAT4(UI_STATIC_LABEL("Token amount"), MAX_TOKEN_AMOUNT_OUTPUT_STRING_LENGTH, format_token_amount_output, group->policyId, token->assetName, token->assetNameLen, token->amount);
+        }
+
+        node = node->next;
+        app_mem_free(token_item);
+    }
+}
+
+static void ui_format_and_free_output_asset_groups(s_flist_node* assetGroupNodes,
+                                            uint16_t numGroups,
+                                            bool show_tokens) {
+    uint16_t group_count = 0;
+    s_flist_node *node = assetGroupNodes;
+    while (node != NULL) {
+        group_count++;
+        output_asset_group_node_t *group_node = (output_asset_group_node_t *) node;
+        output_asset_group_t *group = &group_node->asset_group;
+        format_and_free_output_token_nodes(group, group->tokens, show_tokens);
+        group->tokens = NULL;
+
+        node = node->next;
+        app_mem_free(group_node);
+    }
+    LEDGER_ASSERT(group_count == numGroups, "Output asset group count mismatch");
 }
 
 // Helper function to format output address (handles both third-party and device-owned destinations)
@@ -166,30 +190,13 @@ static bool format_output_address(const tx_output_description_t *output_desc, ch
     }
 }
 
-static void ui_strings_inputs(transaction_t *tx) {
-    security_policy_t input_policy = policyForSignTxInput(tx->txSigningMode);
-    LEDGER_ASSERT(input_policy != POLICY_DENY, "Input denied during UI");
-    s_flist_node *input_node = tx->inputs;
-    while (input_node != NULL) {
-        tx_input_list_item_t *input_item = (tx_input_list_item_t *) input_node;
-        s_flist_node *next = input_node->next;
-
-        if (input_policy == POLICY_SHOW) {
-            UI_ADD_FORMAT1(UI_STATIC_LABEL("Input"), MAX_INPUT_DISPLAY_STRING_LENGTH, format_input_with_index, &input_item->input_data);
-        }
-
-        app_mem_free(input_item);
-        input_node = next;
-    }
-    tx->inputs = NULL;
-}
-
+// TODO this needs revision, does not follow conventions and might not need tx_output_description_t?
 static void ui_strings_outputs(transaction_t *tx) {
     uint16_t output_num = 1;
     s_flist_node *output_node = tx->outputs;
-    TRACE("Materializing %u outputs", tx->num_outputs);
+    TRACE("Formatting %u outputs", tx->num_outputs);
     while (output_node != NULL) {
-        tx_output_list_item_t *output_item = (tx_output_list_item_t *) output_node;
+        tx_output_node_t *output_item = (tx_output_node_t *) output_node;
         s_flist_node *next_node = output_node->next;
 
         tx_output_description_t output_desc = {
@@ -197,7 +204,7 @@ static void ui_strings_outputs(transaction_t *tx) {
             .amount = output_item->output_data.adaAmount,
             .numAssetGroups = output_item->output_data.numAssetGroups,
             .includeDatum = output_item->output_data.datum.hasDatum,
-            .includeRefScript = output_item->output_data.hasRefScript,
+            .includeRefScript = output_item->output_data.refScript.hasRefScript,
         };
 
         if (output_item->output_data.destination.type == DESTINATION_THIRD_PARTY) {
@@ -223,19 +230,12 @@ static void ui_strings_outputs(transaction_t *tx) {
                 tx->protocolMagic,
                 &G_context.tx_info.warning_bits);
 
-        LEDGER_ASSERT(policy != POLICY_DENY, "Output denied during UI");
-
-        security_policy_t datum_policy = policyForSignTxOutputDatumHash(policy);
-        LEDGER_ASSERT(datum_policy != POLICY_DENY, "Output datum policy denied during UI");
-        security_policy_t ref_script_policy = policyForSignTxOutputRefScript(policy);
-        LEDGER_ASSERT(ref_script_policy != POLICY_DENY, "Output ref script policy denied during UI");
-
         switch (policy) {
             case POLICY_DENY:
-                // Already asserted above, this case should never be reached
+                LEDGER_ASSERT(false, "Output denied during UI");
                 break;
             case POLICY_SHOW: {
-                TRACE("Materializing output #%u", output_num);
+                TRACE("Formatting output #%u", output_num);
                 UI_ADD_FORMAT1(UI_STATIC_LABEL("Output"), MAX_UINT64_STRING_LENGTH, format_index_with_prefix, output_num);
                 UI_ADD_FORMAT1(UI_STATIC_LABEL("Address"), MAX_HUMAN_ADDRESS_LENGTH, format_output_address, &output_desc);
 
@@ -246,53 +246,36 @@ static void ui_strings_outputs(transaction_t *tx) {
                 }
 
                 UI_ADD_FORMAT1(UI_STATIC_LABEL("Amount"), MAX_ADA_AMOUNT_STRING_LENGTH, str_formatAdaAmount, output_item->output_data.adaAmount);
-                if (output_item->output_data.datum.hasDatum && datum_policy == POLICY_SHOW) {
-                    // TODO: Inline datum size is not bounded by protocol; handle large values more robustly.
-                    if (output_item->output_data.datum.type == DATUM_HASH) {
-                        UI_ADD_FORMAT2(UI_STATIC_LABEL("Datum hash"), MAX_DATUM_HASH_STRING_LENGTH, format_hex_ui, output_item->output_data.datum.hash, OUTPUT_DATUM_HASH_LENGTH);
-                    } else {
-                        // TODO not enough space for inline datum, how big a buffer to use here?
-                        // TODO these unlimited items in UI should perhaps be detected upfront, we can go over the whole tx and check if some individual field
-                        // TODO is too big for UI and run it via some streaming UI
-                        const int max_len = 100;
-                        char *datum_value_tmp = (char *) app_mem_alloc(max_len + 2);
-                        if (datum_value_tmp == NULL) {
-                            ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-                        } else {
-                            uint16_t inline_size = output_item->output_data.datum.inline_data.size;
-                            snprintf(datum_value_tmp, max_len + 2, "Inline datum (%u bytes)", inline_size);
-                            LEDGER_ASSERT(strlen(datum_value_tmp) <= MAX_DATUM_HASH_STRING_LENGTH, "Datum ui string buffer too short");
 
-                            if (!ui_pairs_add_static_label(UI_STATIC_LABEL("Inline datum"), datum_value_tmp)) {
-                                ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-                            }
+                if (output_item->output_data.datum.hasDatum) {
+                    security_policy_t datum_policy = policyForSignTxOutputDatumHash(policy);
+                    LEDGER_ASSERT(datum_policy != POLICY_DENY, "Output datum policy denied during UI");
+                    if (datum_policy == POLICY_SHOW) {
+                        if (output_item->output_data.datum.type == DATUM_HASH) {
+                            UI_ADD_FORMAT2(UI_STATIC_LABEL("Datum hash"), MAX_DATUM_HASH_STRING_LENGTH, format_hex_ui, output_item->output_data.datum.hash, OUTPUT_DATUM_HASH_LENGTH);
+                        } else {
+                            // TODO: Inline datum size is not bounded by protocol; handle large values more robustly.
+                            UI_ADD_FORMAT2(UI_STATIC_LABEL("Inline datum"), MAX_INLINE_DATUM_STRING_LENGTH, format_hex_ui, output_item->output_data.datum.inline_data.data, output_item->output_data.datum.inline_data.size);
                         }
                     }
                 }
 
-                if (output_item->output_data.hasRefScript && ref_script_policy == POLICY_SHOW) {
-                    // TODO: Reference script size is not bounded by protocol; handle large values more robustly.
-                    char *refscript_tmp = (char *) app_mem_alloc(MAX_REFERENCE_SCRIPT_STRING_LENGTH + UI_BUFFER_SAFETY_MARGIN);
-                    if (refscript_tmp == NULL) {
-                        ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-                    } else {
-                        snprintf(refscript_tmp,
-                                 MAX_REFERENCE_SCRIPT_STRING_LENGTH + UI_BUFFER_SAFETY_MARGIN,
-                                 "Reference script (%u bytes)",
-                                 output_item->output_data.refScript.size);
-                        LEDGER_ASSERT(strlen(refscript_tmp) <= MAX_REFERENCE_SCRIPT_STRING_LENGTH, "Reference script ui string buffer too short");
-                        if (!ui_pairs_add_static_label(UI_STATIC_LABEL("Reference script"), refscript_tmp)) {
-                            ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-                        }
+                if (output_item->output_data.refScript.hasRefScript) {
+                    security_policy_t ref_script_policy = policyForSignTxOutputRefScript(policy);
+                    LEDGER_ASSERT(ref_script_policy != POLICY_DENY, "Output ref script policy denied during UI");
+                    if (ref_script_policy == POLICY_SHOW) {
+                        // TODO: Reference script size is not bounded by protocol; handle large values more robustly.
+                        UI_ADD_FORMAT2(UI_STATIC_LABEL("Reference script"), MAX_REFERENCE_SCRIPT_STRING_LENGTH, format_hex_ui, output_item->output_data.refScript.data, output_item->output_data.refScript.size);
                     }
                 }
 
                 if (output_item->output_data.assetGroups != NULL) {
-                    ui_format_token_groups(
+                    ui_format_and_free_output_asset_groups(
                         output_item->output_data.assetGroups,
                         output_item->output_data.numAssetGroups,
                         true
                     );
+                    output_item->output_data.assetGroups = NULL;
                 }
 
                 output_num++;
@@ -303,16 +286,11 @@ static void ui_strings_outputs(transaction_t *tx) {
         }
 
         if (output_item->output_data.assetGroups != NULL) {
-            for (uint16_t ag = 0; ag < output_item->output_data.numAssetGroups; ag++) {
-                s_flist_node *token_node = output_item->output_data.assetGroups[ag].tokens;
-                while (token_node != NULL) {
-                    s_flist_node *token_next = token_node->next;
-                    app_mem_free(token_node);
-                    token_node = token_next;
-                }
-                output_item->output_data.assetGroups[ag].tokens = NULL;
-            }
-            app_mem_free(output_item->output_data.assetGroups);
+            ui_format_and_free_output_asset_groups(
+                output_item->output_data.assetGroups,
+                output_item->output_data.numAssetGroups,
+                false
+            );
             output_item->output_data.assetGroups = NULL;
         }
         // Note: inline datum and reference script data are pointers into the raw_tx buffer,
@@ -332,10 +310,9 @@ static void ui_strings_ttl(transaction_t *tx) {
         return;
     }
     security_policy_t ttl_policy = policyForSignTxTtl(tx->ttl);
-    LEDGER_ASSERT(ttl_policy != POLICY_DENY, "TTL denied during UI");
     switch (ttl_policy) {
         case POLICY_DENY:
-            // Already asserted above, this case should never be reached
+            LEDGER_ASSERT(false, "TTL denied during UI");
             break;
         case POLICY_SHOW:
             UI_ADD_FORMAT3(UI_STATIC_LABEL("TTL"), MAX_VALIDITY_BOUNDARY_STRING_LENGTH, str_formatValidityBoundary, tx->ttl, tx->networkId, tx->protocolMagic);
@@ -557,9 +534,9 @@ static void ui_strings_certificate_pool_registration(const certificate_data_t* c
     uint32_t owner_idx = 0;
     s_flist_node* owner_node = certificate_data->poolRegistration.poolOwners;
     while (owner_node != NULL) {
-        tx_certificate_list_item_t* owner_item =
-            (tx_certificate_list_item_t*) owner_node;
-        ext_credential_t* owner_cred = &owner_item->certificate_data.stakeCredential;
+        tx_certificate_node_t* owner_item =
+            (tx_certificate_node_t*) owner_node;
+        ext_credential_t* owner_cred = &owner_item->certificate.stakeCredential;
 
         // Check owner security policy
         security_policy_t owner_policy = policyForSignTxStakePoolRegistrationOwner(
@@ -593,9 +570,9 @@ static void ui_strings_certificate_pool_registration(const certificate_data_t* c
     uint32_t relay_idx = 0;
     s_flist_node* relay_node = certificate_data->poolRegistration.relays;
     while (relay_node != NULL) {
-        tx_certificate_list_item_t* relay_item =
-            (tx_certificate_list_item_t*) relay_node;
-        pool_relay_t* relay = (pool_relay_t*) &relay_item->certificate_data;
+        tx_certificate_node_t* relay_item =
+            (tx_certificate_node_t*) relay_node;
+        pool_relay_t* relay = (pool_relay_t*) &relay_item->certificate;
 
         // Check relay security policy
         security_policy_t relay_policy = policyForSignTxStakePoolRegistrationRelay(
@@ -704,22 +681,8 @@ static void ui_strings_certificate_pool_registration(const certificate_data_t* c
         LEDGER_ASSERT(metadata_policy != POLICY_DENY, "Metadata security policy denied");
 
         if (metadata_policy == POLICY_SHOW) {
-            size_t url_size = certificate_data->poolRegistration.poolMetadata.urlSize;
-            char *metadata_url = (char *) app_mem_alloc(url_size + 2);
-            if (metadata_url == NULL) {
-                ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-            } else {
-                memcpy(metadata_url,
-                        certificate_data->poolRegistration.poolMetadata.url,
-                        url_size);
-                metadata_url[url_size] = '\0';
-                LEDGER_ASSERT(strlen(metadata_url) <= url_size, "Pool metadata url ui string buffer too short");
-                if (!ui_pairs_add_static_label(UI_STATIC_LABEL("Pool metadata url"), metadata_url)) {
-                    ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-                } else {
-                    UI_ADD_FORMAT2(UI_STATIC_LABEL("Pool metadata hash"), MAX_POOL_METADATA_HASH_STRING_LENGTH, format_hex_ui, certificate_data->poolRegistration.poolMetadata.hash, POOL_METADATA_HASH_LENGTH);
-                }
-            }
+            UI_ADD_FORMAT2(UI_STATIC_LABEL("Pool metadata url"), MAX_POOL_METADATA_URL_LENGTH, format_url, certificate_data->poolRegistration.poolMetadata.url, certificate_data->poolRegistration.poolMetadata.urlSize);
+            UI_ADD_FORMAT2(UI_STATIC_LABEL("Pool metadata hash"), MAX_POOL_METADATA_HASH_STRING_LENGTH, format_hex_ui, certificate_data->poolRegistration.poolMetadata.hash, POOL_METADATA_HASH_LENGTH);
         }
     }
 }
@@ -727,15 +690,14 @@ static void ui_strings_certificate_pool_registration(const certificate_data_t* c
 static void ui_strings_certificates(transaction_t *tx) {
     uint16_t certificate_num = 1;
     s_flist_node *certificate_node = tx->certificates;
-    TRACE("Materializing %u certificates", tx->num_certificates);
+    TRACE("Formatting %u certificates", tx->num_certificates);
     while (certificate_node != NULL) {
-        tx_certificate_list_item_t *certificate_item =
-            (tx_certificate_list_item_t *) certificate_node;
-        s_flist_node *next = certificate_node->next;
+        tx_certificate_node_t *certificate_item =
+            (tx_certificate_node_t *) certificate_node;
 
         // Determine security policy based on certificate type
         security_policy_t policy = POLICY_DENY;
-        switch (certificate_item->certificate_data.type) {
+        switch (certificate_item->certificate.type) {
             case CERTIFICATE_STAKE_REGISTRATION:
             case CERTIFICATE_STAKE_DEREGISTRATION:
             case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
@@ -743,31 +705,31 @@ static void ui_strings_certificates(transaction_t *tx) {
             case CERTIFICATE_STAKE_DELEGATION:
                 policy = policyForSignTxCertificateStaking(
                     tx->txSigningMode,
-                    certificate_item->certificate_data.type,
-                    &certificate_item->certificate_data.stakeCredential
+                    certificate_item->certificate.type,
+                    &certificate_item->certificate.stakeCredential
                 );
                 break;
 
             case CERTIFICATE_VOTE_DELEGATION:
                 policy = policyForSignTxCertificateVoteDelegation(
                     tx->txSigningMode,
-                    &certificate_item->certificate_data.stakeCredential,
-                    &certificate_item->certificate_data.drep
+                    &certificate_item->certificate.stakeCredential,
+                    &certificate_item->certificate.drep
                 );
                 break;
 
             case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT:
                 policy = policyForSignTxCertificateCommitteeAuth(
                     tx->txSigningMode,
-                    &certificate_item->certificate_data.coldCredential,
-                    &certificate_item->certificate_data.hotCredential
+                    &certificate_item->certificate.coldCredential,
+                    &certificate_item->certificate.hotCredential
                 );
                 break;
 
             case CERTIFICATE_RESIGN_COMMITTEE_COLD:
                 policy = policyForSignTxCertificateCommitteeResign(
                     tx->txSigningMode,
-                    &certificate_item->certificate_data.coldCredential
+                    &certificate_item->certificate.coldCredential
                 );
                 break;
 
@@ -776,26 +738,26 @@ static void ui_strings_certificates(transaction_t *tx) {
             case CERTIFICATE_DREP_UPDATE:
                 policy = policyForSignTxCertificateDRep(
                     tx->txSigningMode,
-                    &certificate_item->certificate_data.dRepCredential
+                    &certificate_item->certificate.dRepCredential
                 );
                 break;
 
             case CERTIFICATE_STAKE_POOL_RETIREMENT:
                 policy = policyForSignTxCertificateStakePoolRetirement(
                     tx->txSigningMode,
-                    &certificate_item->certificate_data.poolCredential,
-                    certificate_item->certificate_data.retirementEpoch
+                    &certificate_item->certificate.poolCredential,
+                    certificate_item->certificate.retirementEpoch
                 );
                 break;
 
             case CERTIFICATE_STAKE_POOL_REGISTRATION:
                 {
                     pool_owner_counts_t pool_owner_counts = count_pool_owner_nodes(
-                        certificate_item->certificate_data.poolRegistration.poolOwners
+                        certificate_item->certificate.poolRegistration.poolOwners
                     );
                     policy = policyForSignTxStakePoolRegistrationInit(
                         tx->txSigningMode,
-                        certificate_item->certificate_data.poolRegistration.numPoolOwners,
+                        certificate_item->certificate.poolRegistration.numPoolOwners,
                         pool_owner_counts.path_owners
                     );
                 }
@@ -812,66 +774,66 @@ static void ui_strings_certificates(transaction_t *tx) {
                 LEDGER_ASSERT(false, "Certificate denied during UI");
                 break;
             case POLICY_SHOW: {
-                TRACE("Materializing certificate #%u type=%u", certificate_num, certificate_item->certificate_data.type);
+                TRACE("Formatting certificate #%u type=%u", certificate_num, certificate_item->certificate.type);
                 UI_ADD_FORMAT1(UI_STATIC_LABEL("Certificate"), MAX_UINT64_STRING_LENGTH, format_index_with_prefix, certificate_num);
-                UI_ADD_FORMAT1(UI_STATIC_LABEL("Type"), MAX_CERTIFICATE_TYPE_LENGTH, format_certificate_type, certificate_item->certificate_data.type);
+                UI_ADD_FORMAT1(UI_STATIC_LABEL("Type"), MAX_CERTIFICATE_TYPE_LENGTH, format_certificate_type, certificate_item->certificate.type);
 
                 // Certificate-specific fields
-                switch (certificate_item->certificate_data.type) {
+                switch (certificate_item->certificate.type) {
                     case CERTIFICATE_STAKE_REGISTRATION:
                     case CERTIFICATE_STAKE_DEREGISTRATION: {
-                        ui_strings_certificate_stake_registration(&certificate_item->certificate_data);
+                        ui_strings_certificate_stake_registration(&certificate_item->certificate);
                         break;
                     }
 
                     case CERTIFICATE_STAKE_DELEGATION: {
-                        ui_strings_certificate_stake_delegation(&certificate_item->certificate_data);
+                        ui_strings_certificate_stake_delegation(&certificate_item->certificate);
                         break;
                     }
 
                     case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
                     case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY: {
-                        ui_strings_certificate_stake_conway(&certificate_item->certificate_data);
+                        ui_strings_certificate_stake_conway(&certificate_item->certificate);
                         break;
                     }
 
                     case CERTIFICATE_STAKE_POOL_RETIREMENT: {
-                        ui_strings_certificate_pool_retirement(&certificate_item->certificate_data);
+                        ui_strings_certificate_pool_retirement(&certificate_item->certificate);
                         break;
                     }
 
                     case CERTIFICATE_VOTE_DELEGATION: {
-                        ui_strings_certificate_vote_delegation(&certificate_item->certificate_data);
+                        ui_strings_certificate_vote_delegation(&certificate_item->certificate);
                         break;
                     }
 
                     case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT: {
-                        ui_strings_certificate_committee_hot(&certificate_item->certificate_data);
+                        ui_strings_certificate_committee_hot(&certificate_item->certificate);
                         break;
                     }
 
                     case CERTIFICATE_RESIGN_COMMITTEE_COLD: {
-                        ui_strings_certificate_committee_resign(&certificate_item->certificate_data);
+                        ui_strings_certificate_committee_resign(&certificate_item->certificate);
                         break;
                     }
 
                     case CERTIFICATE_DREP_REGISTRATION: {
-                        ui_strings_certificate_drep_registration(&certificate_item->certificate_data);
+                        ui_strings_certificate_drep_registration(&certificate_item->certificate);
                         break;
                     }
 
                     case CERTIFICATE_DREP_DEREGISTRATION: {
-                        ui_strings_certificate_drep_deregistration(&certificate_item->certificate_data);
+                        ui_strings_certificate_drep_deregistration(&certificate_item->certificate);
                         break;
                     }
 
                     case CERTIFICATE_DREP_UPDATE: {
-                        ui_strings_certificate_drep_update(&certificate_item->certificate_data);
+                        ui_strings_certificate_drep_update(&certificate_item->certificate);
                         break;
                     }
 
                     case CERTIFICATE_STAKE_POOL_REGISTRATION: {
-                        ui_strings_certificate_pool_registration(&certificate_item->certificate_data, tx->txSigningMode);
+                        ui_strings_certificate_pool_registration(&certificate_item->certificate, tx->txSigningMode);
                         break;
                     }
 
@@ -886,6 +848,7 @@ static void ui_strings_certificates(transaction_t *tx) {
                 break;
         }
 
+        s_flist_node *next = certificate_node->next;
         app_mem_free(certificate_item);
         certificate_node = next;
     }
@@ -895,15 +858,14 @@ static void ui_strings_certificates(transaction_t *tx) {
 static void ui_strings_withdrawals(transaction_t *tx) {
     uint16_t withdrawal_num = 1;
     s_flist_node *withdrawal_node = tx->withdrawals;
-    TRACE("Materializing %u withdrawals", tx->num_withdrawals);
+    TRACE("Formatting %u withdrawals", tx->num_withdrawals);
     while (withdrawal_node != NULL) {
-        tx_withdrawal_list_item_t *withdrawal_item =
-            (tx_withdrawal_list_item_t *) withdrawal_node;
-        s_flist_node *next = withdrawal_node->next;
+        tx_withdrawal_node_t *withdrawal_item =
+            (tx_withdrawal_node_t *) withdrawal_node;
 
         security_policy_t policy = policyForSignTxWithdrawal(
             tx->txSigningMode,
-            &withdrawal_item->withdrawal_data.stakeCredential,
+            &withdrawal_item->withdrawal.stakeCredential,
             &G_context.tx_info.warning_bits
         );
         LEDGER_ASSERT(policy != POLICY_DENY, "Withdrawal denied during UI");
@@ -913,13 +875,13 @@ static void ui_strings_withdrawals(transaction_t *tx) {
                 // Already asserted above, this case should never be reached
                 break;
             case POLICY_SHOW: {
-                TRACE("Materializing withdrawal #%u", withdrawal_num);
+                TRACE("Formatting withdrawal #%u", withdrawal_num);
                 UI_ADD_FORMAT1(UI_STATIC_LABEL("Withdrawal"), MAX_UINT64_STRING_LENGTH, format_index_with_prefix, withdrawal_num);
-                UI_ADD_FORMAT1(UI_STATIC_LABEL("Amount"), MAX_ADA_AMOUNT_STRING_LENGTH, str_formatAdaAmount, withdrawal_item->withdrawal_data.amount);
+                UI_ADD_FORMAT1(UI_STATIC_LABEL("Amount"), MAX_ADA_AMOUNT_STRING_LENGTH, str_formatAdaAmount, withdrawal_item->withdrawal.amount);
 
                 addRewardAccountFromCredentialUIPairs(
                     G_context.tx_info.transaction.networkId,
-                    &withdrawal_item->withdrawal_data.stakeCredential
+                    &withdrawal_item->withdrawal.stakeCredential
                 );
                 withdrawal_num++;
             }
@@ -928,6 +890,7 @@ static void ui_strings_withdrawals(transaction_t *tx) {
                 break;
         }
 
+        s_flist_node *next = withdrawal_node->next;
         app_mem_free(withdrawal_item);
         withdrawal_node = next;
     }
@@ -962,81 +925,52 @@ static void ui_strings_validity_interval_start(transaction_t *tx) {
     }
 }
 
+// Local formatter for mint summary display (e.g., "2 asset groups", "1 asset group")
+static bool format_mint_summary(uint16_t num_groups, char *out, size_t outSize) {
+    snprintf(out, outSize, "%u asset group%s", num_groups, (num_groups == 1) ? "" : "s");
+    size_t len = strlen(out);
+    return len < outSize;
+}
+
 static void ui_strings_mint(transaction_t *tx) {
-    if (tx->num_mint_asset_groups > 0) {
-        security_policy_t mint_policy = policyForSignTxMintInit(tx->txSigningMode);
-        LEDGER_ASSERT(mint_policy != POLICY_DENY, "Mint denied during UI");
-        if (mint_policy == POLICY_SHOW) {
-            char *summary_tmp = (char *) app_mem_alloc(MAX_MINT_SUMMARY_STRING_LENGTH + UI_BUFFER_SAFETY_MARGIN);
-            if (summary_tmp == NULL) {
-                ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-            } else {
-                snprintf(summary_tmp,
-                         MAX_MINT_SUMMARY_STRING_LENGTH + UI_BUFFER_SAFETY_MARGIN,
-                         "%u asset group%s",
-                         tx->num_mint_asset_groups,
-                         (tx->num_mint_asset_groups == 1) ? "" : "s");
-                LEDGER_ASSERT(strlen(summary_tmp) <= MAX_MINT_SUMMARY_STRING_LENGTH, "Mint summary ui string buffer too short");
-                if (ui_pairs_add_static_label(UI_STATIC_LABEL("Mint"), summary_tmp)) {
-                    token_group_t tokenGroup;
-                    s_flist_node *mint_node = tx->mint_asset_groups;
-                    while (mint_node != NULL) {
-                        mint_asset_group_list_item_t *item =
-                            (mint_asset_group_list_item_t *) mint_node;
-                        s_flist_node *mint_next = mint_node->next;
-                        memcpy(tokenGroup.policyId,
-                               item->asset_group.policyId,
-                               sizeof(tokenGroup.policyId));
-
-                        if (item->asset_group.tokens == NULL) {
-                            mint_node = mint_node->next;
-                            continue;
-                        }
-
-                        // Iterate through linked list of tokens
-                        s_flist_node *token_node = item->asset_group.tokens;
-                        while (token_node != NULL) {
-                            mint_token_list_item_t *token_item = (mint_token_list_item_t *) token_node;
-                            mint_token_t *token = &token_item->token_data;
-                            s_flist_node *token_next = token_node->next;
-
-                            UI_ADD_FORMAT3(UI_STATIC_LABEL("Mint fingerprint"), MAX_TOKEN_FINGERPRINT_STRING_LENGTH, format_asset_fingerprint_bech32, &tokenGroup, token->assetName, token->assetNameLen);
-                            UI_ADD_FORMAT4(UI_STATIC_LABEL("Mint amount"), MAX_MINT_AMOUNT_STRING_LENGTH, format_token_amount_mint, &tokenGroup, token->assetName, token->assetNameLen, token->amount);
-
-                            // Free token node immediately after UI strings are formatted
-                            app_mem_free(token_node);
-                            token_node = token_next;
-                        }
-                        item->asset_group.tokens = NULL;
-
-                        app_mem_free(item);
-                        mint_node = mint_next;
-                    }
-                    tx->mint_asset_groups = NULL;
-                } else {
-                    ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-                }
-            }
-        }
+    if (tx->mint_asset_groups == NULL) {
+        return;
     }
-    if (tx->num_mint_asset_groups > 0 && tx->mint_asset_groups != NULL) {
-        s_flist_node *mint_node = tx->mint_asset_groups;
-        while (mint_node != NULL) {
-            mint_asset_group_list_item_t *item =
-                (mint_asset_group_list_item_t *) mint_node;
-            s_flist_node *mint_next = mint_node->next;
-            s_flist_node *token_node = item->asset_group.tokens;
-            while (token_node != NULL) {
-                s_flist_node *token_next = token_node->next;
-                app_mem_free(token_node);
-                token_node = token_next;
-            }
-            item->asset_group.tokens = NULL;
-            app_mem_free(item);
-            mint_node = mint_next;
-        }
-        tx->mint_asset_groups = NULL;
+
+    security_policy_t mint_policy = policyForSignTxMintInit(tx->txSigningMode);
+    LEDGER_ASSERT(mint_policy != POLICY_DENY, "Mint denied during UI");
+    const bool show_mint = (mint_policy == POLICY_SHOW);
+
+    if (show_mint) {
+        UI_ADD_FORMAT1(UI_STATIC_LABEL("Mint"), MAX_MINT_SUMMARY_STRING_LENGTH, format_mint_summary, tx->num_mint_asset_groups);
     }
+
+    s_flist_node *node = tx->mint_asset_groups;
+    while (node != NULL) {
+        mint_asset_group_node_t *asset_group_node =
+            (mint_asset_group_node_t *) node;
+        node = node->next;
+
+        ASSERT(asset_group_node->asset_group.policyId != NULL);
+        s_flist_node *token_node = asset_group_node->asset_group.tokens;
+        while (token_node != NULL) {
+            mint_token_node_t *token_node_entry = (mint_token_node_t *) token_node;
+            mint_token_t *token = &token_node_entry->token;
+            token_node = token_node->next;
+
+            if (show_mint) {
+                UI_ADD_FORMAT3(UI_STATIC_LABEL("Mint fingerprint"), MAX_TOKEN_FINGERPRINT_STRING_LENGTH, format_asset_fingerprint_bech32, asset_group_node->asset_group.policyId, token->assetName, token->assetNameLen);
+                UI_ADD_FORMAT4(UI_STATIC_LABEL("Mint amount"), MAX_MINT_AMOUNT_STRING_LENGTH, format_token_amount_mint, asset_group_node->asset_group.policyId, token->assetName, token->assetNameLen, token->amount);
+            }
+
+            app_mem_free(token_node_entry);
+        }
+
+        asset_group_node->asset_group.tokens = NULL;
+        app_mem_free(asset_group_node);
+    }
+
+    tx->mint_asset_groups = NULL;
 }
 
 static void ui_strings_script_data_hash(transaction_t *tx) {
@@ -1050,59 +984,52 @@ static void ui_strings_script_data_hash(transaction_t *tx) {
 }
 
 static void ui_strings_collateral_inputs(transaction_t *tx) {
-    if (tx->num_collateral_inputs == 0) {
-        return;
-    }
-
-    s_flist_node *collateral_input_node = tx->collateral_inputs;
-    while (collateral_input_node != NULL) {
-        tx_collateral_input_list_item_t *input_item =
-            (tx_collateral_input_list_item_t *) collateral_input_node;
-        s_flist_node *next = collateral_input_node->next;
+    s_flist_node *node = tx->collateral_inputs;
+    while (node != NULL) {
+        tx_collateral_input_node_t *collateral_input_node = (tx_collateral_input_node_t *) node;
 
         security_policy_t collateral_input_policy = policyForSignTxCollateralInput(
             tx->txSigningMode,
             tx->includeTotalCollateral,
-            &input_item->input_data);
+            &collateral_input_node->input);
         LEDGER_ASSERT(collateral_input_policy != POLICY_DENY, "Collateral input policy denied during UI");
 
         if (collateral_input_policy == POLICY_SHOW) {
-            UI_ADD_FORMAT1(UI_STATIC_LABEL("Coll input"), MAX_INPUT_DISPLAY_STRING_LENGTH, format_input_with_index, &input_item->input_data);
+            UI_ADD_FORMAT1(UI_STATIC_LABEL("Coll input"), MAX_INPUT_DISPLAY_STRING_LENGTH, format_input_with_index, &collateral_input_node->input);
         }
 
-        app_mem_free(input_item);
-        collateral_input_node = next;
+        node = node->next;
+        app_mem_free(collateral_input_node);
     }
     tx->collateral_inputs = NULL;
 }
 
 static void ui_strings_required_signers(transaction_t *tx) {
-    if (tx->num_required_signers > 0) {
-        s_flist_node *req_signer_node = tx->required_signers;
-        while (req_signer_node != NULL) {
-            tx_required_signer_list_item_t *item = (tx_required_signer_list_item_t *) req_signer_node;
-            s_flist_node *next = req_signer_node->next;
+    s_flist_node *node = tx->required_signers;
+    while (node != NULL) {
+        tx_required_signer_node_t *required_signer_node = (tx_required_signer_node_t *) node;
+        required_signer_t *required_signer = &required_signer_node->required_signer;
 
-            security_policy_t policy = policyForSignTxRequiredSigner(tx->txSigningMode, &item->required_signer_data);
-            LEDGER_ASSERT(policy != POLICY_DENY, "Required signer denied during UI");
+        security_policy_t policy = policyForSignTxRequiredSigner(tx->txSigningMode, required_signer);
+        LEDGER_ASSERT(policy != POLICY_DENY, "Required signer denied during UI");
 
-            if (policy == POLICY_SHOW) {
-                switch (item->required_signer_data.type) {
-                    case REQUIRED_SIGNER_WITH_HASH: {
-                        UI_ADD_FORMAT3(UI_STATIC_LABEL("Required signer"), MAX_BECH32_STRING_LENGTH, format_bech32, "vkh", item->required_signer_data.keyHash, ADDRESS_KEY_HASH_LENGTH);
-                        break;
-                    }
-                    case REQUIRED_SIGNER_WITH_PATH: {
-                        UI_ADD_FORMAT1(UI_STATIC_LABEL("Required signer"), MAX_BIP44_PATH_STRING_LENGTH, format_bip44_path, &item->required_signer_data.keyPath);
-                        break;
-                    }
-                    default:
-                        LEDGER_ASSERT(false, "Unknown required signer type");
+        if (policy == POLICY_SHOW) {
+            switch (required_signer->type) {
+                case REQUIRED_SIGNER_WITH_HASH: {
+                    UI_ADD_FORMAT3(UI_STATIC_LABEL("Required signer"), MAX_BECH32_STRING_LENGTH, format_bech32, "vkh", required_signer->keyHash, ADDRESS_KEY_HASH_LENGTH);
+                    break;
                 }
+                case REQUIRED_SIGNER_WITH_PATH: {
+                    UI_ADD_FORMAT1(UI_STATIC_LABEL("Required signer"), MAX_BIP44_PATH_STRING_LENGTH, format_bip44_path, &required_signer->keyPath);
+                    break;
+                }
+                default:
+                    LEDGER_ASSERT(false, "Unknown required signer type");
             }
-            app_mem_free(item);
-            req_signer_node = next;
         }
+
+        node = node->next;
+        app_mem_free(required_signer_node); // only after next is assigned
     }
     tx->required_signers = NULL;
 }
@@ -1116,7 +1043,7 @@ static void ui_strings_collateral_output(transaction_t *tx) {
         .amount = tx->collateral_output.adaAmount,
         .numAssetGroups = tx->collateral_output.numAssetGroups,
         .includeDatum = tx->collateral_output.datum.hasDatum,
-        .includeRefScript = tx->collateral_output.hasRefScript,
+        .includeRefScript = tx->collateral_output.refScript.hasRefScript,
     };
 
     if (tx->collateral_output.destination.type == DESTINATION_THIRD_PARTY) {
@@ -1179,24 +1106,12 @@ static void ui_strings_collateral_output(transaction_t *tx) {
         }
     }
 
-    ui_format_token_groups(
+    ui_format_and_free_output_asset_groups(
         tx->collateral_output.assetGroups,
         tx->collateral_output.numAssetGroups,
         show_collateral_tokens);
 
-    if (tx->collateral_output.assetGroups != NULL) {
-        for (uint16_t ag = 0; ag < tx->collateral_output.numAssetGroups; ag++) {
-            s_flist_node *token_node = tx->collateral_output.assetGroups[ag].tokens;
-            while (token_node != NULL) {
-                s_flist_node *token_next = token_node->next;
-                app_mem_free(token_node);
-                token_node = token_next;
-            }
-            tx->collateral_output.assetGroups[ag].tokens = NULL;
-        }
-        app_mem_free(tx->collateral_output.assetGroups);
-        tx->collateral_output.assetGroups = NULL;
-    }
+    tx->collateral_output.assetGroups = NULL;
 }
 
 static void ui_strings_total_collateral(transaction_t *tx) {
@@ -1211,26 +1126,21 @@ static void ui_strings_total_collateral(transaction_t *tx) {
 }
 
 static void ui_strings_reference_inputs(transaction_t *tx) {
-    if (tx->num_reference_inputs == 0) {
-        return;
-    }
-
-    s_flist_node *reference_input_node = tx->reference_inputs;
-    while (reference_input_node != NULL) {
-        tx_input_list_item_t *input_item = (tx_input_list_item_t *) reference_input_node;
-        s_flist_node *next = reference_input_node->next;
+    s_flist_node *ref_input_node = tx->reference_inputs;
+    while (ref_input_node != NULL) {
+        tx_input_node_t *ref_input = (tx_input_node_t *) ref_input_node;
 
         security_policy_t reference_input_policy = policyForSignTxReferenceInput(
             tx->txSigningMode,
-            &input_item->input_data);
+            &ref_input->input);
         LEDGER_ASSERT(reference_input_policy != POLICY_DENY, "Reference input denied during UI");
 
         if (reference_input_policy == POLICY_SHOW) {
-            UI_ADD_FORMAT1(UI_STATIC_LABEL("Ref input"), MAX_INPUT_DISPLAY_STRING_LENGTH, format_input_with_index, &input_item->input_data);
+            UI_ADD_FORMAT1(UI_STATIC_LABEL("Ref input"), MAX_INPUT_DISPLAY_STRING_LENGTH, format_input_with_index, &ref_input->input);
         }
 
-        app_mem_free(input_item);
-        reference_input_node = next;
+        ref_input_node = ref_input_node->next;
+        app_mem_free(ref_input);
     }
     tx->reference_inputs = NULL;
 }

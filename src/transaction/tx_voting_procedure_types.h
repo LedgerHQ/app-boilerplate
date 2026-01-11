@@ -13,7 +13,7 @@ typedef struct {
 
 // List node for individual votes (inner map entries)
 typedef struct {
-    s_flist_node node;
+    s_flist_node flist_node;
     vote_item_t vote_data;
 } vote_list_item_t;
 
@@ -26,6 +26,6 @@ typedef struct {
 
 // List node for voters (outer map entries)
 typedef struct {
-    s_flist_node node;
+    s_flist_node flist_node;
     voter_votes_t voter_votes_data;
 } voter_votes_list_item_t;

@@ -133,12 +133,12 @@ bool format_certificate_type(certificate_type_t type, char *out, size_t outSize)
 }
 
 /**
- * Format anchor URL from raw buffer
+ * Format URL from raw buffer
  *
- * Copies anchor URL bytes and null-terminates them.
+ * Copies URL bytes and null-terminates them.
  * Matches UI_ADD_FORMAT2 signature (2 params: buffer + length).
  */
-bool format_anchor_url(const uint8_t *url, size_t urlLength, char *out, size_t outSize) {
+bool format_url(const uint8_t *url, size_t urlLength, char *out, size_t outSize) {
     if (urlLength >= outSize) {
         return false;
     }
@@ -150,16 +150,16 @@ bool format_anchor_url(const uint8_t *url, size_t urlLength, char *out, size_t o
 /**
  * Format asset fingerprint in bech32 format
  */
-bool format_asset_fingerprint_bech32(const token_group_t *tokenGroup,
-                                        const uint8_t *assetName,
-                                        size_t assetNameLen,
-                                        char *out,
-                                        size_t outSize) {
+bool format_asset_fingerprint_bech32(const uint8_t *policyId,
+                                     const uint8_t *assetName,
+                                     size_t assetNameLen,
+                                     char *out,
+                                     size_t outSize) {
     // Derive fingerprint bytes from policy ID and asset name
     uint8_t fingerprintBuffer[20];  // ASSET_FINGERPRINT_SIZE = 20
     deriveAssetFingerprintBytes(
-        tokenGroup->policyId,
-        sizeof(tokenGroup->policyId),  // MINTING_POLICY_ID_LENGTH
+        policyId,
+        MINTING_POLICY_ID_LENGTH,
         assetName,
         assetNameLen,
         fingerprintBuffer,

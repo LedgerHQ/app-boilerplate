@@ -413,7 +413,8 @@ security_policy_t policyForSignTxInit(sign_tx_signingmode_t txSigningMode,
 }
 
 // For each transaction UTxO input
-security_policy_t policyForSignTxInput(sign_tx_signingmode_t txSigningMode) {
+security_policy_t policyForSignTxInput(sign_tx_signingmode_t txSigningMode,
+                                        const tx_input_t* input MARK_UNUSED) {
     switch (txSigningMode) {
         case SIGN_TX_SIGNINGMODE_PLUTUS_TX:
             // user should check inputs because they are not interchangeable for Plutus scripts

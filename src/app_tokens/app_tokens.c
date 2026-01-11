@@ -47,14 +47,15 @@ const token_info_t tokenInfos[] = {
 #include "../tokenRegistry/token_data.csource"
 };
 
-static const token_info_t* _getTokenInfo(const token_group_t* tokenGroup,
+static const token_info_t* _getTokenInfo(const uint8_t* policyId,
                                          const uint8_t* assetNameBytes,
                                          size_t assetNameSize) {
     ASSERT(assetNameSize <= MAX_ASSET_NAME_LENGTH);
 
     uint8_t fingerprintBuffer[ASSET_FINGERPRINT_SIZE];
-    deriveAssetFingerprintBytes(tokenGroup->policyId,
-                                SIZEOF(tokenGroup->policyId),
+    ASSERT(policyId != NULL);
+    deriveAssetFingerprintBytes(policyId,
+                                MINTING_POLICY_ID_LENGTH,
                                 assetNameBytes,
                                 assetNameSize,
                                 fingerprintBuffer,
@@ -69,18 +70,18 @@ static const token_info_t* _getTokenInfo(const token_group_t* tokenGroup,
     return NULL;
 }
 
-bool format_token_amount_output(const token_group_t* tokenGroup,
-                                   const uint8_t* assetNameBytes,
-                                   size_t assetNameSize,
-                                   uint64_t amount,
-                                   char* out,
-                                   size_t outSize) {
+bool format_token_amount_output(const uint8_t* policyId,
+                                const uint8_t* assetNameBytes,
+                                size_t assetNameSize,
+                                uint64_t amount,
+                                char* out,
+                                size_t outSize) {
     ASSERT(assetNameSize <= MAX_ASSET_NAME_LENGTH);
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
 
     explicit_bzero(out, outSize);
 
-    const token_info_t* tokenInfo = _getTokenInfo(tokenGroup, assetNameBytes, assetNameSize);
+    const token_info_t* tokenInfo = _getTokenInfo(policyId, assetNameBytes, assetNameSize);
     int decimals = (tokenInfo != NULL) ? tokenInfo->decimals : 0;
     TRACE("token decimal places = %u", decimals);
     bool formatted = str_formatDecimalAmount(amount, decimals, out, outSize);
@@ -98,12 +99,12 @@ bool format_token_amount_output(const token_group_t* tokenGroup,
     return true;
 }
 
-bool format_token_amount_mint(const token_group_t* tokenGroup,
-                                 const uint8_t* assetNameBytes,
-                                 size_t assetNameSize,
-                                 int64_t amount,
-                                 char* out,
-                                 size_t outSize) {
+bool format_token_amount_mint(const uint8_t* policyId,
+                              const uint8_t* assetNameBytes,
+                              size_t assetNameSize,
+                              int64_t amount,
+                              char* out,
+                              size_t outSize) {
     ASSERT(outSize < BUFFER_SIZE_PARANOIA);
     ASSERT(outSize >= 2);
 
@@ -114,12 +115,12 @@ bool format_token_amount_mint(const token_group_t* tokenGroup,
                  : '-';  // + sign instead of the space would be nice, but is unreadable on Nano S
     out[1] = '\0';
 
-    bool formatted = format_token_amount_output(tokenGroup,
-                                                   assetNameBytes,
-                                                   assetNameSize,
-                                                   abs_int64(amount),
-                                                   out + 1,
-                                                   outSize - 1);
+    bool formatted = format_token_amount_output(policyId,
+                                                assetNameBytes,
+                                                assetNameSize,
+                                                abs_int64(amount),
+                                                out + 1,
+                                                outSize - 1);
     ASSERT(formatted);
 
     size_t length = strlen(out);

@@ -71,10 +71,8 @@ parser_status_e parse_output_datum(buffer_t* buf, output_datum_t* datum);
  *     - data bytes: <size> bytes
  *
  * @param[in,out] buf Buffer to read from
- * @param[out] refScript Reference script structure to populate
- * @param[out] hasRefScript Whether reference script is present
+ * @param[out] refScript Reference script structure to populate (includes presence flag)
  * @return PARSING_OK on success, OUTPUTS_PARSING_ERROR on failure
  */
 parser_status_e parse_output_ref_script(buffer_t* buf,
-                                        ref_script_t* refScript,
-                                        bool* hasRefScript);
+                                        ref_script_t* refScript);
