@@ -214,19 +214,22 @@ static void ui_strings_outputs(transaction_t *tx) {
             output_desc.destination.params = &output_node->output_data.destination.params;
         }
 
+        warning_bits_t output_warnings = 0;
         security_policy_t policy = (output_desc.destination.type == DESTINATION_THIRD_PARTY)
             ? policyForSignTxOutputAddressBytes(
                 &output_desc,
                 tx->txSigningMode,
                 tx->networkId,
                 tx->protocolMagic,
-                &G_context.tx_info.warning_bits)
+                &output_warnings)
             : policyForSignTxOutputAddressParams(
                 &output_desc,
                 tx->txSigningMode,
                 tx->networkId,
                 tx->protocolMagic,
-                &G_context.tx_info.warning_bits);
+                &output_warnings);
+        LEDGER_ASSERT((output_warnings & ~G_context.tx_info.warning_bits) == 0,
+                      "Output warnings mismatch");
 
         switch (policy) {
             case POLICY_DENY:
@@ -674,11 +677,14 @@ static void ui_strings_withdrawals(transaction_t *tx) {
         tx_withdrawal_node_t *withdrawal_node =
             (tx_withdrawal_node_t *) node;
 
+        warning_bits_t withdrawal_warnings = 0;
         security_policy_t policy = policyForSignTxWithdrawal(
             tx->txSigningMode,
             &withdrawal_node->withdrawal.stakeCredential,
-            &G_context.tx_info.warning_bits
+            &withdrawal_warnings
         );
+        LEDGER_ASSERT((withdrawal_warnings & ~G_context.tx_info.warning_bits) == 0,
+                      "Withdrawal warnings mismatch");
 
         switch (policy) {
             case POLICY_DENY:
