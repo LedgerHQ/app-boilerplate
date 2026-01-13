@@ -165,15 +165,6 @@ static void free_vote_list(s_flist_node *vote_node) {
     }
 }
 
-static void free_voter_item(voter_votes_list_item_t *voter_item) {
-    if (voter_item == NULL) {
-        return;
-    }
-    free_vote_list(voter_item->voter_votes_data.votes);
-    voter_item->voter_votes_data.votes = NULL;
-    app_mem_free(voter_item);
-}
-
 parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
     LEDGER_ASSERT(buf != NULL, "NULL buf");
     LEDGER_ASSERT(buf->ptr != NULL, "NULL buffer ptr");
@@ -930,7 +921,7 @@ void transaction_free_voting_procedures(transaction_t *tx) {
 
     s_flist_node *voter_node = tx->voting_procedures;
     while (voter_node != NULL) {
-        voter_votes_list_item_t *voter_item = (voter_votes_list_item_t *) voter_node;
+        voter_votes_node_t *voter_item = (voter_votes_node_t *) voter_node;
         s_flist_node *next = voter_node->next;
         free_vote_list(voter_item->voter_votes_data.votes);
         app_mem_free(voter_node);
@@ -1254,8 +1245,8 @@ static parser_status_e parse_tx_voting_procedures(buffer_t *buf, transaction_t *
     // For each voter in the outer map
     for (uint16_t voter_idx = 0; voter_idx < tx->num_voters; voter_idx++) {
         // Allocate list node for this voter
-        voter_votes_list_item_t *voter_item =
-            (voter_votes_list_item_t *) app_mem_alloc(sizeof(voter_votes_list_item_t));
+        voter_votes_node_t *voter_item =
+            (voter_votes_node_t *) app_mem_alloc(sizeof(voter_votes_node_t));
         if (voter_item == NULL) {
             return OUT_OF_MEMORY_ERROR;
         }
@@ -1267,7 +1258,6 @@ static parser_status_e parse_tx_voting_procedures(buffer_t *buf, transaction_t *
         // Parse voter (ext_voter_t)
         uint8_t voter_type_byte;
         if (!buffer_read_u8(buf, &voter_type_byte)) {
-            free_voter_item(voter_item);
             return VOTING_PROCEDURES_PARSING_ERROR;
         }
         voter_item->voter_votes_data.voter.type = (ext_voter_type_t) voter_type_byte;
@@ -1278,7 +1268,6 @@ static parser_status_e parse_tx_voting_procedures(buffer_t *buf, transaction_t *
             case EXT_VOTER_DREP_KEY_PATH:
             case EXT_VOTER_STAKE_POOL_KEY_PATH:
                 if (!buffer_read_bip44_path(buf, &voter_item->voter_votes_data.voter.keyPath)) {
-                    free_voter_item(voter_item);
                     return VOTING_PROCEDURES_PARSING_ERROR;
                 }
                 break;
@@ -1288,7 +1277,6 @@ static parser_status_e parse_tx_voting_procedures(buffer_t *buf, transaction_t *
             case EXT_VOTER_STAKE_POOL_KEY_HASH:
                 if (!buffer_read_bytes(buf, voter_item->voter_votes_data.voter.keyHash,
                                       ADDRESS_KEY_HASH_LENGTH)) {
-                    free_voter_item(voter_item);
                     return VOTING_PROCEDURES_PARSING_ERROR;
                 }
                 break;
@@ -1297,50 +1285,40 @@ static parser_status_e parse_tx_voting_procedures(buffer_t *buf, transaction_t *
             case EXT_VOTER_DREP_SCRIPT_HASH:
                 if (!buffer_read_bytes(buf, voter_item->voter_votes_data.voter.scriptHash,
                                       SCRIPT_HASH_LENGTH)) {
-                    free_voter_item(voter_item);
                     return VOTING_PROCEDURES_PARSING_ERROR;
                 }
                 break;
 
             default:
-                free_voter_item(voter_item);
                 return VOTING_PROCEDURES_PARSING_ERROR;
         }
 
         if (!buffer_read_u16(buf, &voter_item->voter_votes_data.numVotes, BE)) {
-            free_voter_item(voter_item);
             return VOTING_PROCEDURES_PARSING_ERROR;
         }
 
         // Parse each vote for this voter
         for (uint16_t vote_idx = 0; vote_idx < voter_item->voter_votes_data.numVotes; vote_idx++) {
             // Allocate list node for this vote
-            vote_list_item_t *vote_item =
-                (vote_list_item_t *) app_mem_alloc(sizeof(vote_list_item_t));
+            vote_node_t *vote_item =
+                (vote_node_t *) app_mem_alloc(sizeof(vote_node_t));
             if (vote_item == NULL) {
-                free_voter_item(voter_item);
                 return OUT_OF_MEMORY_ERROR;
             }
             explicit_bzero(vote_item, sizeof(*vote_item));
 
             // Parse gov_action_id (tx_hash + index)
             if (!buffer_read_bytes_ptr(buf, &vote_item->vote_data.govActionId.txHash, TX_HASH_LENGTH)) {
-                app_mem_free(vote_item);
-                free_voter_item(voter_item);
                 return VOTING_PROCEDURES_PARSING_ERROR;
             }
             ASSERT(vote_item->vote_data.govActionId.txHash != NULL);
 
             if (!buffer_read_u32(buf, &vote_item->vote_data.govActionId.govActionIndex, BE)) {
-                app_mem_free(vote_item);
-                free_voter_item(voter_item);
                 return VOTING_PROCEDURES_PARSING_ERROR;
             }
             // Parse voting_procedure (vote + optional anchor)
             uint8_t vote_byte;
             if (!buffer_read_u8(buf, &vote_byte)) {
-                app_mem_free(vote_item);
-                free_voter_item(voter_item);
                 return VOTING_PROCEDURES_PARSING_ERROR;
             }
             vote_item->vote_data.voteOption = (vote_t) vote_byte;
@@ -1348,13 +1326,9 @@ static parser_status_e parse_tx_voting_procedures(buffer_t *buf, transaction_t *
             // Parse anchor inclusion flag using parseIncluded pattern
             uint8_t anchor_included_byte;
             if (!buffer_read_u8(buf, &anchor_included_byte)) {
-                app_mem_free(vote_item);
-                free_voter_item(voter_item);
                 return VOTING_PROCEDURES_PARSING_ERROR;
             }
             if (!parseIncluded(anchor_included_byte, &vote_item->vote_data.anchor.isIncluded)) {
-                app_mem_free(vote_item);
-                free_voter_item(voter_item);
                 return VOTING_PROCEDURES_PARSING_ERROR;
             }
 
@@ -1362,23 +1336,17 @@ static parser_status_e parse_tx_voting_procedures(buffer_t *buf, transaction_t *
                 // Parse URL length and pointer
                 uint16_t url_len;
                 if (!buffer_read_u16(buf, &url_len, BE)) {
-                    app_mem_free(vote_item);
-                    free_voter_item(voter_item);
                     return VOTING_PROCEDURES_PARSING_ERROR;
                 }
                 vote_item->vote_data.anchor.urlLength = url_len;
 
                 if (!buffer_read_bytes_ptr(buf, &vote_item->vote_data.anchor.url, url_len)) {
-                    app_mem_free(vote_item);
-                    free_voter_item(voter_item);
                     return VOTING_PROCEDURES_PARSING_ERROR;
                 }
                 ASSERT(vote_item->vote_data.anchor.url != NULL);
 
                 // Parse hash (32 bytes)
                 if (!buffer_read_bytes_ptr(buf, &vote_item->vote_data.anchor.hash, ANCHOR_HASH_LENGTH)) {
-                    app_mem_free(vote_item);
-                    free_voter_item(voter_item);
                     return VOTING_PROCEDURES_PARSING_ERROR;
                 }
                 ASSERT(vote_item->vote_data.anchor.hash != NULL);

@@ -1437,7 +1437,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
 
         s_flist_node *voter_node = G_context.tx_info.transaction.voting_procedures;
         while (voter_node != NULL) {
-            voter_votes_list_item_t *voter_item = (voter_votes_list_item_t *) voter_node;
+            voter_votes_node_t *voter_item = (voter_votes_node_t *) voter_node;
 
             // Security policy check for this voter
             security_policy_t voter_policy = policyForSignTxVotingProcedure(
@@ -1453,7 +1453,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                     // Count UI pairs for all votes
                     s_flist_node *vote_node = voter_item->voter_votes_data.votes;
                     while (vote_node != NULL) {
-                        vote_list_item_t *vote_item = (vote_list_item_t *) vote_node;
+                        vote_node_t *vote_item = (vote_node_t *) vote_node;
                         plan->pair_count += 3;  // gov action tx hash, gov action index, vote option
                         if (vote_item->vote_data.anchor.isIncluded) {
                             plan->pair_count += 2;  // anchor URL + anchor hash
@@ -1503,7 +1503,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
             size_t previous_vote_key_len = 0;
             bool has_previous_vote_key = false;
             while (vote_node != NULL) {
-                vote_list_item_t *vote_item = (vote_list_item_t *) vote_node;
+                vote_node_t *vote_item = (vote_node_t *) vote_node;
 
                 uint8_t gov_action_key[MAX_CBOR_GOV_ACTION_MAP_KEY_SIZE];
                 size_t gov_action_key_len = 0;

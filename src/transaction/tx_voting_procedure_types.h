@@ -15,17 +15,17 @@ typedef struct {
 typedef struct {
     s_flist_node flist_node;
     vote_item_t vote_data;
-} vote_list_item_t;
+} vote_node_t;
 
 // A voter with their votes
 typedef struct {
     ext_voter_t voter;                 // Voter (key_path, key_hash, or script_hash)
     uint16_t numVotes;                 // Number of votes for this voter
-    s_flist_node* votes;               // Linked list of vote_list_item_t
+    s_flist_node* votes;               // Linked list of vote_node_t
 } voter_votes_t;
 
 // List node for voters (outer map entries)
 typedef struct {
     s_flist_node flist_node;
     voter_votes_t voter_votes_data;
-} voter_votes_list_item_t;
+} voter_votes_node_t;

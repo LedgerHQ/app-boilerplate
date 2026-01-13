@@ -923,48 +923,34 @@ static void add_ui_and_free_reference_inputs(transaction_t *tx) {
 }
 
 static void add_ui_and_free_voting_procedures(transaction_t *tx) {
-    if (tx->num_voters > 0) {
-        s_flist_node *node = tx->voting_procedures;
-        while (node != NULL) {
-            voter_votes_list_item_t *voter_node = (voter_votes_list_item_t *) node;
+    s_flist_node *node = tx->voting_procedures;
+    while (node != NULL) {
+        voter_votes_node_t *voter_node = (voter_votes_node_t *) node;
 
-            security_policy_t policy = policyForSignTxVotingProcedure(tx->txSigningMode, &voter_node->voter_votes_data.voter);
-            LEDGER_ASSERT(policy != POLICY_DENY, "Voting procedure denied during UI");
+        security_policy_t policy = policyForSignTxVotingProcedure(tx->txSigningMode, &voter_node->voter_votes_data.voter);
+        LEDGER_ASSERT(policy != POLICY_DENY, "Voting procedure denied during UI");
+
+        if (policy == POLICY_SHOW) {
+            addVoterUIPairs(&voter_node->voter_votes_data.voter);
+        }
+        s_flist_node *vote_node = voter_node->voter_votes_data.votes;
+        while (vote_node != NULL) {
+            vote_node_t *vote_node_data = (vote_node_t *) vote_node;
 
             if (policy == POLICY_SHOW) {
-                // Display Voter
-                addVoterUIPairs(&voter_node->voter_votes_data.voter);
-                // Iterate votes
-                s_flist_node *vote_node = voter_node->voter_votes_data.votes;
-                while (vote_node != NULL) {
-                    vote_list_item_t *vote_node_data = (vote_list_item_t *) vote_node;
-
-                    // Gov Action Tx Hash
-                    UI_ADD_FORMAT2(UI_STATIC_LABEL("Gov action tx hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_bytes, vote_node_data->vote_data.govActionId.txHash, TX_HASH_LENGTH);
-
-                    // Gov Action Index
-                    UI_ADD_FORMAT1(UI_STATIC_LABEL("Gov action index"), MAX_UINT64_STRING_LENGTH, format_uint64, vote_node_data->vote_data.govActionId.govActionIndex);
-
-                    // Vote Option
-                    UI_ADD_FORMAT1(UI_STATIC_LABEL("Vote"), MAX_VOTE_OPTION_LENGTH, format_vote_option, vote_node_data->vote_data.voteOption);
-
-                    // Anchor
-                    addAnchorUIPairs(&vote_node_data->vote_data.anchor);
-
-                    vote_node = vote_node->next;
-                }
+                UI_ADD_FORMAT2(UI_STATIC_LABEL("Gov action tx hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_bytes, vote_node_data->vote_data.govActionId.txHash, TX_HASH_LENGTH);
+                UI_ADD_FORMAT1(UI_STATIC_LABEL("Gov action index"), MAX_UINT64_STRING_LENGTH, format_uint64, vote_node_data->vote_data.govActionId.govActionIndex);
+                UI_ADD_FORMAT1(UI_STATIC_LABEL("Vote"), MAX_VOTE_OPTION_LENGTH, format_vote_option, vote_node_data->vote_data.voteOption);
+                addAnchorUIPairs(&vote_node_data->vote_data.anchor);
             }
 
-            s_flist_node *vote_node = voter_node->voter_votes_data.votes;
-            while (vote_node != NULL) {
-                s_flist_node *vote_node_to_free = vote_node;
-                vote_node = vote_node->next;
-                app_mem_free(vote_node_to_free);
-            }
-            voter_node->voter_votes_data.votes = NULL;
-            node = node->next;
-            app_mem_free(voter_node);
+            vote_node = vote_node->next;
+            app_mem_free(vote_node_data);
         }
+        voter_node->voter_votes_data.votes = NULL;
+
+        node = node->next;
+        app_mem_free(voter_node);
     }
     tx->voting_procedures = NULL;
 }
@@ -975,6 +961,7 @@ static void add_ui_and_free_treasury(transaction_t *tx) {
     }
     security_policy_t policy = policyForSignTxTreasury(tx->txSigningMode, tx->treasury);
     LEDGER_ASSERT(policy != POLICY_DENY, "Treasury denied during UI");
+
     if (policy == POLICY_SHOW) {
         UI_ADD_FORMAT1(UI_STATIC_LABEL("Treasury"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, tx->treasury);
     }
@@ -986,6 +973,7 @@ static void add_ui_and_free_donation(transaction_t *tx) {
     }
     security_policy_t policy = policyForSignTxDonation(tx->txSigningMode, tx->donation);
     LEDGER_ASSERT(policy != POLICY_DENY, "Donation denied during UI");
+
     if (policy == POLICY_SHOW) {
         UI_ADD_FORMAT1(UI_STATIC_LABEL("Donation"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, tx->donation);
     }
