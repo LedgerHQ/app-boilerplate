@@ -479,8 +479,12 @@ void addAnchorUIPairs(const anchor_t *anchor) {
     UI_ADD_FORMAT3(UI_STATIC_LABEL("Anchor hash"), MAX_BECH32_STRING_LENGTH, format_bech32, "anchor", anchor->hash, ANCHOR_HASH_LENGTH);
 }
 
-void addWithdrawalUIPairs(uint8_t networkId, const ext_credential_t *credential) {
-    LEDGER_ASSERT(credential != NULL, "NULL credential");
+void addWithdrawalUIPairs(uint8_t networkId, const withdrawal_t *withdrawal) {
+    LEDGER_ASSERT(withdrawal != NULL, "NULL withdrawal");
+
+    UI_ADD_FORMAT1(UI_STATIC_LABEL("Withdrawal"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, withdrawal->amount);
+
+    const ext_credential_t *credential = &withdrawal->stakeCredential;
 
     switch (credential->type) {
         case EXT_CREDENTIAL_KEY_PATH: {
@@ -505,183 +509,99 @@ void addWithdrawalUIPairs(uint8_t networkId, const ext_credential_t *credential)
 void addCertificateUIPairs(const certificate_data_t* certificate_data, sign_tx_signingmode_t txSigningMode) {
     LEDGER_ASSERT(certificate_data != NULL, "NULL certificate data");
 
-    security_policy_t policy = POLICY_DENY;
+    TRACE("Formatting certificate type=%u", certificate_data->type);
+    UI_ADD_FORMAT1(UI_STATIC_LABEL("Certificate"),
+                   MAX_CERTIFICATE_TYPE_LENGTH,
+                   format_certificate_type,
+                   certificate_data->type);
+
     switch (certificate_data->type) {
         case CERTIFICATE_STAKE_REGISTRATION:
-        case CERTIFICATE_STAKE_DEREGISTRATION:
+        case CERTIFICATE_STAKE_DEREGISTRATION: {
+            addStakeCredentialUIPairs(&certificate_data->stakeCredential);
+            break;
+        }
+
+        case CERTIFICATE_STAKE_DELEGATION: {
+            addStakeCredentialUIPairs(&certificate_data->stakeCredential);
+            UI_ADD_FORMAT3(UI_STATIC_LABEL("Pool"),
+                           MAX_BECH32_STRING_LENGTH,
+                           format_bech32,
+                           "pool",
+                           certificate_data->poolKeyHash,
+                           POOL_KEY_HASH_LENGTH);
+            break;
+        }
+
         case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
-        case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY:
-        case CERTIFICATE_STAKE_DELEGATION:
-            policy = policyForSignTxCertificateStaking(
-                txSigningMode,
-                certificate_data->type,
-                &certificate_data->stakeCredential
-            );
+        case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY: {
+            addStakeCredentialUIPairs(&certificate_data->stakeCredential);
+            UI_ADD_FORMAT1(UI_STATIC_LABEL("Deposit"),
+                           MAX_ADA_AMOUNT_STRING_LENGTH,
+                           format_ada_amount,
+                           certificate_data->deposit);
             break;
+        }
 
-        case CERTIFICATE_VOTE_DELEGATION:
-            policy = policyForSignTxCertificateVoteDelegation(
-                txSigningMode,
-                &certificate_data->stakeCredential,
-                &certificate_data->drep
-            );
+        case CERTIFICATE_STAKE_POOL_RETIREMENT: {
+            addPoolRetirementUIPairs(certificate_data);
             break;
+        }
 
-        case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT:
-            policy = policyForSignTxCertificateCommitteeAuth(
-                txSigningMode,
-                &certificate_data->coldCredential,
-                &certificate_data->hotCredential
-            );
+        case CERTIFICATE_VOTE_DELEGATION: {
+            addVoterCredentialUIPairs(&certificate_data->stakeCredential);
+            addDRepUIPairs(&certificate_data->drep, UI_STATIC_LABEL("DRep"));
             break;
+        }
 
-        case CERTIFICATE_RESIGN_COMMITTEE_COLD:
-            policy = policyForSignTxCertificateCommitteeResign(
-                txSigningMode,
-                &certificate_data->coldCredential
-            );
+        case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT: {
+            addCommitteeColdCredentialUIPairs(&certificate_data->coldCredential);
+            addCommitteeHotCredentialUIPairs(&certificate_data->hotCredential);
             break;
+        }
 
-        case CERTIFICATE_DREP_REGISTRATION:
-        case CERTIFICATE_DREP_DEREGISTRATION:
-        case CERTIFICATE_DREP_UPDATE:
-            policy = policyForSignTxCertificateDRep(
-                txSigningMode,
-                &certificate_data->dRepCredential
-            );
+        case CERTIFICATE_RESIGN_COMMITTEE_COLD: {
+            addCommitteeColdCredentialUIPairs(&certificate_data->coldCredential);
+            addAnchorUIPairs(&certificate_data->anchor);
             break;
+        }
 
-        case CERTIFICATE_STAKE_POOL_RETIREMENT:
-            policy = policyForSignTxCertificateStakePoolRetirement(
-                txSigningMode,
-                &certificate_data->poolCredential,
-                certificate_data->retirementEpoch
-            );
+        case CERTIFICATE_DREP_REGISTRATION: {
+            addDRepCredentialUIPairs(&certificate_data->dRepCredential);
+            UI_ADD_FORMAT1(UI_STATIC_LABEL("Deposit"),
+                           MAX_ADA_AMOUNT_STRING_LENGTH,
+                           format_ada_amount,
+                           certificate_data->deposit);
+            addAnchorUIPairs(&certificate_data->anchor);
             break;
+        }
 
-        case CERTIFICATE_STAKE_POOL_REGISTRATION:
-            {
-                pool_owner_counts_t pool_owner_counts = count_pool_owner_nodes(
-                    certificate_data->poolRegistration.poolOwners
-                );
-                policy = policyForSignTxStakePoolRegistrationInit(
-                    txSigningMode,
-                    certificate_data->poolRegistration.numPoolOwners,
-                    pool_owner_counts.path_owners
-                );
-            }
+        case CERTIFICATE_DREP_DEREGISTRATION: {
+            addDRepCredentialUIPairs(&certificate_data->dRepCredential);
+            UI_ADD_FORMAT1(UI_STATIC_LABEL("Deposit"),
+                           MAX_ADA_AMOUNT_STRING_LENGTH,
+                           format_ada_amount,
+                           certificate_data->deposit);
             break;
+        }
+
+        case CERTIFICATE_DREP_UPDATE: {
+            addDRepCredentialUIPairs(&certificate_data->dRepCredential);
+            addAnchorUIPairs(&certificate_data->anchor);
+            break;
+        }
+
+        case CERTIFICATE_STAKE_POOL_REGISTRATION: {
+            ui_strings_certificate_pool_registration(certificate_data, txSigningMode);
+            break;
+        }
 
         default:
             LEDGER_ASSERT(false, "Unknown certificate type");
-            policy = POLICY_DENY;
-            break;
-    }
-
-    switch (policy) {
-        case POLICY_DENY:
-            LEDGER_ASSERT(false, "Certificate denied during UI");
-            break;
-        case POLICY_SHOW: {
-            TRACE("Formatting certificate type=%u", certificate_data->type);
-            UI_ADD_FORMAT1(UI_STATIC_LABEL("Certificate"),
-                           MAX_CERTIFICATE_TYPE_LENGTH,
-                           format_certificate_type,
-                           certificate_data->type);
-
-            switch (certificate_data->type) {
-                case CERTIFICATE_STAKE_REGISTRATION:
-                case CERTIFICATE_STAKE_DEREGISTRATION: {
-                    addStakeCredentialUIPairs(&certificate_data->stakeCredential);
-                    break;
-                }
-
-                case CERTIFICATE_STAKE_DELEGATION: {
-                    addStakeCredentialUIPairs(&certificate_data->stakeCredential);
-                    UI_ADD_FORMAT3(UI_STATIC_LABEL("Pool"),
-                                   MAX_BECH32_STRING_LENGTH,
-                                   format_bech32,
-                                   "pool",
-                                   certificate_data->poolKeyHash,
-                                   POOL_KEY_HASH_LENGTH);
-                    break;
-                }
-
-                case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
-                case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY: {
-                    addStakeCredentialUIPairs(&certificate_data->stakeCredential);
-                    UI_ADD_FORMAT1(UI_STATIC_LABEL("Deposit"),
-                                   MAX_ADA_AMOUNT_STRING_LENGTH,
-                                   format_ada_amount,
-                                   certificate_data->deposit);
-                    break;
-                }
-
-                case CERTIFICATE_STAKE_POOL_RETIREMENT: {
-                    addPoolRetirementUIPairs(certificate_data);
-                    break;
-                }
-
-                case CERTIFICATE_VOTE_DELEGATION: {
-                    addVoterCredentialUIPairs(&certificate_data->stakeCredential);
-                    addDRepUIPairs(&certificate_data->drep, UI_STATIC_LABEL("DRep"));
-                    break;
-                }
-
-                case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT: {
-                    addCommitteeColdCredentialUIPairs(&certificate_data->coldCredential);
-                    addCommitteeHotCredentialUIPairs(&certificate_data->hotCredential);
-                    break;
-                }
-
-                case CERTIFICATE_RESIGN_COMMITTEE_COLD: {
-                    addCommitteeColdCredentialUIPairs(&certificate_data->coldCredential);
-                    addAnchorUIPairs(&certificate_data->anchor);
-                    break;
-                }
-
-                case CERTIFICATE_DREP_REGISTRATION: {
-                    addDRepCredentialUIPairs(&certificate_data->dRepCredential);
-                    UI_ADD_FORMAT1(UI_STATIC_LABEL("Deposit"),
-                                   MAX_ADA_AMOUNT_STRING_LENGTH,
-                                   format_ada_amount,
-                                   certificate_data->deposit);
-                    addAnchorUIPairs(&certificate_data->anchor);
-                    break;
-                }
-
-                case CERTIFICATE_DREP_DEREGISTRATION: {
-                    addDRepCredentialUIPairs(&certificate_data->dRepCredential);
-                    UI_ADD_FORMAT1(UI_STATIC_LABEL("Deposit"),
-                                   MAX_ADA_AMOUNT_STRING_LENGTH,
-                                   format_ada_amount,
-                                   certificate_data->deposit);
-                    break;
-                }
-
-                case CERTIFICATE_DREP_UPDATE: {
-                    addDRepCredentialUIPairs(&certificate_data->dRepCredential);
-                    addAnchorUIPairs(&certificate_data->anchor);
-                    break;
-                }
-
-                case CERTIFICATE_STAKE_POOL_REGISTRATION: {
-                    ui_strings_certificate_pool_registration(certificate_data, txSigningMode);
-                    break;
-                }
-
-                default:
-                    LEDGER_ASSERT(false, "Unknown certificate type");
-            }
-
-            break;
-        }
-        case POLICY_HIDE:
-            break;
     }
 }
 
-void addPaymentInfoUIPair(const addressParams_t* addressParams) {
+void addPaymentInfoUIPairs(const addressParams_t* addressParams) {
     switch (determinePaymentChoice(addressParams->type)) {
         case PAYMENT_PATH: {
             UI_ADD_FORMAT1(UI_STATIC_LABEL("Payment key path"), MAX_BIP44_PATH_STRING_LENGTH, format_bip44_path, &addressParams->paymentKeyPath);
@@ -699,7 +619,7 @@ void addPaymentInfoUIPair(const addressParams_t* addressParams) {
     }
 }
 
-void addStakingInfoUIPair(const addressParams_t* addressParams) {
+void addStakingInfoUIPairs(const addressParams_t* addressParams) {
     switch (addressParams->stakingDataSource) {
         case NO_STAKING: {
             UI_ADD_FORMAT1(UI_STATIC_LABEL("Warning:"), MAX_BIP44_PATH_STRING_LENGTH, format_constant_string, "no staking rewards");

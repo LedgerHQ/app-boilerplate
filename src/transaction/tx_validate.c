@@ -1022,9 +1022,9 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                     return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                 case POLICY_SHOW:
                     if (withdrawal_item->withdrawal.stakeCredential.type == EXT_CREDENTIAL_KEY_PATH) {
-                        plan->pair_count += 4;
-                    } else {
                         plan->pair_count += 3;
+                    } else {
+                        plan->pair_count += 2;
                     }
                     break;
                 case POLICY_HIDE:

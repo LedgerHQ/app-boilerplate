@@ -85,14 +85,14 @@ void addDRepUIPairs(const ext_drep_t *drep, const char *label);
 void addAnchorUIPairs(const anchor_t *anchor);
 
 /**
- * Add withdrawal information from credential to UI pairs
+ * Add withdrawal information to UI pairs
  *
  * @param[in]  networkId     Network ID for reward address construction
- * @param[in]  credential    Credential to display (type + data)
+ * @param[in]  withdrawal    Withdrawal data (credential + amount)
  *
  * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
  */
-void addWithdrawalUIPairs(uint8_t networkId, const ext_credential_t *credential);
+void addWithdrawalUIPairs(uint8_t networkId, const withdrawal_t *withdrawal);
 
 /**
  * Add certificate UI pairs based on certificate type and security policy
@@ -113,7 +113,7 @@ void addCertificateUIPairs(const certificate_data_t* certificate_data, sign_tx_s
  *
  * @param[in]  addressParams  Address parameters containing payment info
  */
-void addPaymentInfoUIPair(const addressParams_t* addressParams);
+void addPaymentInfoUIPairs(const addressParams_t* addressParams);
 
 /**
  * Add staking credential UI pair for device-owned address
@@ -124,4 +124,4 @@ void addPaymentInfoUIPair(const addressParams_t* addressParams);
  *
  * @param[in]  addressParams  Address parameters containing staking info
  */
-void addStakingInfoUIPair(const addressParams_t* addressParams);
+void addStakingInfoUIPairs(const addressParams_t* addressParams);

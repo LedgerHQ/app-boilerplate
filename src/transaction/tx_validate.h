@@ -41,7 +41,7 @@
  * - Both files process elements in the same order: inputs, outputs, certificates, withdrawals, etc.
  *
  * **Example:** For device-owned outputs, Phase 1 counts +2 pairs (payment + staking info),
- * Phase 2 must call addPaymentInfoUIPair() + addStakingInfoUIPair().
+ * Phase 2 must call addPaymentInfoUIPairs() + addStakingInfoUIPairs().
  *
  * ## Why This Architecture?
  *

@@ -48,7 +48,7 @@
  *
  * **Example:** Device-owned addresses show 2 extra pairs:
  * - tx_validate.c: `plan->pair_count += 2`  (line 257, 1269)
- * - tx_ui_format.c: calls `addPaymentInfoUIPair()` + `addStakingInfoUIPair()` (line 263, 1655)
+ * - tx_ui_format.c: calls `addPaymentInfoUIPairs()` + `addStakingInfoUIPairs()` (line 263, 1655)
  *
  * See tx_validate.h for complete architecture documentation.
  */
@@ -238,8 +238,8 @@ static void ui_strings_outputs(transaction_t *tx) {
 
                 // For device-owned addresses, show payment and staking details
                 if (output_node->output_data.destination.type == DESTINATION_DEVICE_OWNED) {
-                    addPaymentInfoUIPair(&output_node->output_data.destination.params);
-                    addStakingInfoUIPair(&output_node->output_data.destination.params);
+                    addPaymentInfoUIPairs(&output_node->output_data.destination.params);
+                    addStakingInfoUIPairs(&output_node->output_data.destination.params);
                 }
 
                 UI_ADD_FORMAT1(UI_STATIC_LABEL("Amount"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, output_node->output_data.adaAmount);
@@ -319,12 +319,106 @@ static void ui_strings_ttl(transaction_t *tx) {
     }
 }
 
+static bool should_show_certificate(
+    certificate_type_t certificate_type,
+    const certificate_data_t *certificate_data,
+    sign_tx_signingmode_t txSigningMode) {
+    security_policy_t policy = POLICY_DENY;
+    LEDGER_ASSERT(certificate_data != NULL, "NULL certificate data");
+
+    switch (certificate_type) {
+        case CERTIFICATE_STAKE_REGISTRATION:
+        case CERTIFICATE_STAKE_DEREGISTRATION:
+        case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
+        case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY:
+        case CERTIFICATE_STAKE_DELEGATION:
+            policy = policyForSignTxCertificateStaking(
+                txSigningMode,
+                certificate_type,
+                &certificate_data->stakeCredential
+            );
+            break;
+
+        case CERTIFICATE_VOTE_DELEGATION:
+            policy = policyForSignTxCertificateVoteDelegation(
+                txSigningMode,
+                &certificate_data->stakeCredential,
+                &certificate_data->drep
+            );
+            break;
+
+        case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT:
+            policy = policyForSignTxCertificateCommitteeAuth(
+                txSigningMode,
+                &certificate_data->coldCredential,
+                &certificate_data->hotCredential
+            );
+            break;
+
+        case CERTIFICATE_RESIGN_COMMITTEE_COLD:
+            policy = policyForSignTxCertificateCommitteeResign(
+                txSigningMode,
+                &certificate_data->coldCredential
+            );
+            break;
+
+        case CERTIFICATE_DREP_REGISTRATION:
+        case CERTIFICATE_DREP_DEREGISTRATION:
+        case CERTIFICATE_DREP_UPDATE:
+            policy = policyForSignTxCertificateDRep(
+                txSigningMode,
+                &certificate_data->dRepCredential
+            );
+            break;
+
+        case CERTIFICATE_STAKE_POOL_RETIREMENT:
+            policy = policyForSignTxCertificateStakePoolRetirement(
+                txSigningMode,
+                &certificate_data->poolCredential,
+                certificate_data->retirementEpoch
+            );
+            break;
+
+        case CERTIFICATE_STAKE_POOL_REGISTRATION:
+            LEDGER_ASSERT(false, "CERTIFICATE_STAKE_POOL_REGISTRATION should be treated separately");
+            return false;
+
+        default:
+            LEDGER_ASSERT(false, "Unknown certificate type");
+            return false;
+    }
+
+    LEDGER_ASSERT(policy != POLICY_DENY, "Certificate denied during UI");
+    return policy == POLICY_SHOW;
+}
+
 static void ui_strings_certificates(transaction_t *tx) {
     s_flist_node *node = tx->certificates;
     TRACE("Formatting %u certificates", tx->num_certificates);
     while (node != NULL) {
         tx_certificate_node_t *certificate_node = (tx_certificate_node_t *) node;
-        addCertificateUIPairs(&certificate_node->certificate, tx->txSigningMode);
+
+        security_policy_t generic_policy = policyForSignTxCertificate(
+            tx->txSigningMode,
+            certificate_node->certificate.type
+        );
+        LEDGER_ASSERT(generic_policy != POLICY_DENY, "Certificate denied during UI");
+
+        if (generic_policy == POLICY_SHOW) {
+            if (certificate_node->certificate.type == CERTIFICATE_STAKE_POOL_REGISTRATION) {
+                TRACE("Formatting certificate type=%u", certificate_node->certificate.type);
+                UI_ADD_FORMAT1(UI_STATIC_LABEL("Certificate"),
+                               MAX_CERTIFICATE_TYPE_LENGTH,
+                               format_certificate_type,
+                               certificate_node->certificate.type);
+                ui_strings_certificate_pool_registration(&certificate_node->certificate, tx->txSigningMode);
+            } else if (should_show_certificate(
+                           certificate_node->certificate.type,
+                           &certificate_node->certificate,
+                           tx->txSigningMode)) {
+                addCertificateUIPairs(&certificate_node->certificate, tx->txSigningMode);
+            }
+        }
 
         node = node->next;
         app_mem_free(certificate_node);
@@ -333,7 +427,6 @@ static void ui_strings_certificates(transaction_t *tx) {
 }
 
 static void ui_strings_withdrawals(transaction_t *tx) {
-    uint16_t withdrawal_num = 1;
     s_flist_node *node = tx->withdrawals;
     TRACE("Formatting %u withdrawals", tx->num_withdrawals);
     while (node != NULL) {
@@ -350,18 +443,12 @@ static void ui_strings_withdrawals(transaction_t *tx) {
             case POLICY_DENY:
                 LEDGER_ASSERT(false, "Withdrawal denied during UI");
                 break;
-            case POLICY_SHOW: {
-                TRACE("Formatting withdrawal #%u", withdrawal_num);
-                UI_ADD_FORMAT1(UI_STATIC_LABEL("Withdrawal"), MAX_UINT64_STRING_LENGTH, format_index_with_prefix, withdrawal_num);
-                UI_ADD_FORMAT1(UI_STATIC_LABEL("Amount"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, withdrawal_node->withdrawal.amount);
-
+            case POLICY_SHOW:
                 addWithdrawalUIPairs(
                     G_context.tx_info.transaction.networkId,
-                    &withdrawal_node->withdrawal.stakeCredential
+                    &withdrawal_node->withdrawal
                 );
-                withdrawal_num++;
-            }
-            break;
+                break;
             case POLICY_HIDE:
                 break;
         }
@@ -567,8 +654,8 @@ static void ui_strings_collateral_output(transaction_t *tx) {
 
         // For device-owned collateral addresses, show payment and staking details
         if (collateral_desc.destination.type == DESTINATION_DEVICE_OWNED) {
-            addPaymentInfoUIPair(collateral_desc.destination.params);
-            addStakingInfoUIPair(collateral_desc.destination.params);
+            addPaymentInfoUIPairs(collateral_desc.destination.params);
+            addStakingInfoUIPairs(collateral_desc.destination.params);
         }
 
         if (collateral_ada_policy == POLICY_SHOW) {

@@ -66,7 +66,7 @@ typedef struct {
 typedef struct {
     ext_credential_t stakeCredential;
     uint64_t amount;
-} withdrawal_data_t;
+} withdrawal_t;
 
 typedef enum {
     REQUIRED_SIGNER_WITH_PATH = 0,
@@ -83,7 +83,7 @@ typedef struct {
 
 typedef struct {
     s_flist_node flist_node;
-    withdrawal_data_t withdrawal;
+    withdrawal_t withdrawal;
 } tx_withdrawal_node_t;
 
 typedef struct {
