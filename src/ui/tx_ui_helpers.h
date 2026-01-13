@@ -22,6 +22,7 @@
 
 #include "transaction/tx_credential_types.h"
 #include "transaction/tx_certificate_types.h"
+#include "transaction/tx.h"
 
 /**
  * Construct reward address from a credential and format to human-readable string
@@ -84,34 +85,24 @@ void addDRepUIPairs(const ext_drep_t *drep, const char *label);
 void addAnchorUIPairs(const anchor_t *anchor);
 
 /**
- * Add deposit amount to UI pair
- *
- * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
- *
- * @param[in]  deposit       Deposit amount in lovelace
- * @param[in]  label         Label for the UI pair (default: "Deposit")
- */
-void addDepositUIPairs(uint64_t deposit, const char *label);
-
-/**
- * Add pool key hash to UI pairs in bech32 format with "pool" prefix
- *
- * @param[in]  poolKeyHash   28-byte pool key hash
- * @param[in]  label         Label for the UI pair (e.g., "Pool", "Pool ID")
- *
- * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
- */
-void addPoolKeyHashUIPairs(const uint8_t *poolKeyHash, const char *label);
-
-/**
- * Add reward account from credential to UI pairs for withdrawals
+ * Add withdrawal information from credential to UI pairs
  *
  * @param[in]  networkId     Network ID for reward address construction
  * @param[in]  credential    Credential to display (type + data)
  *
  * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
  */
-void addRewardAccountFromCredentialUIPairs(uint8_t networkId, const ext_credential_t *credential);
+void addWithdrawalUIPairs(uint8_t networkId, const ext_credential_t *credential);
+
+/**
+ * Add certificate UI pairs based on certificate type and security policy
+ *
+ * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
+ *
+ * @param[in] certificate_data   Certificate data to display
+ * @param[in] txSigningMode      Transaction signing mode
+ */
+void addCertificateUIPairs(const certificate_data_t* certificate_data, sign_tx_signingmode_t txSigningMode);
 
 /**
  * Add payment credential UI pair for device-owned address

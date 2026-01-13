@@ -199,6 +199,18 @@ bool format_url(const uint8_t *url, size_t urlLength, char *out, size_t outSize)
 bool format_dns_name(const uint8_t *dnsName, size_t dnsLength, char *out, size_t outSize);
 
 /**
+ * Format a constant string (e.g., static warning or label)
+ *
+ * Matches UI_ADD_FORMAT1 signature for use with UI helpers and macros.
+ *
+ * @param constantString Constant, null-terminated string to display
+ * @param out            Output buffer for formatted string
+ * @param outSize        Size of output buffer
+ * @return true on success, false on failure
+ */
+bool format_constant_string(const char *constantString, char *out, size_t outSize);
+
+/**
  * Format asset fingerprint in bech32 format
  *
  * Derives the fingerprint from policy ID and asset name, then encodes as bech32 with "asset" prefix.

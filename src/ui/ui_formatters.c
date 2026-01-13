@@ -341,6 +341,19 @@ bool format_certificate_type(certificate_type_t type, char *out, size_t outSize)
     return len < outSize;
 }
 
+bool format_constant_string(const char *constantString, char *out, size_t outSize) {
+    ASSERT(outSize < BUFFER_SIZE_PARANOIA);
+    ASSERT(out != NULL);
+    ASSERT(constantString != NULL);
+
+    size_t required = strlen(constantString);
+    ASSERT(required + 1 <= outSize);
+    memcpy(out, constantString, required);
+    out[required] = '\0';
+
+    return true;
+}
+
 /**
  * Format URL from raw buffer
  *

@@ -29,6 +29,7 @@
 #define MAX_MINT_AMOUNT_STRING_LENGTH 71        // 70 + 1 for leading sign; TODO: confirm length rationale
 #define MAX_WARNING_MESSAGE_LENGTH 128       // For warning/error message text
 #define MAX_TX_HASH_DISPLAY_LENGTH 65        // For transaction hash hex display (32 bytes + null)
+#define MAX_POOL_METADATA_HASH_STRING_LENGTH (2 * POOL_METADATA_HASH_LENGTH + 1)
 // TODO: Reference script size is not bounded by protocol; need more robust handling for large scripts
 #define MAX_REFERENCE_SCRIPT_STRING_LENGTH 5120  // 2560 bytes of script data = 5120 hex chars
 // TODO: Inline datum size is not bounded by protocol; need more robust handling for large datums
