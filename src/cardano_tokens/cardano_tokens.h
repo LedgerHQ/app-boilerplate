@@ -3,6 +3,8 @@
 #include "transaction/tx_output_types.h"
 #include "utils/utils.h"
 
+uint64_t abs_int64(int64_t number);
+
 /**
  * Derive asset fingerprint bytes from policy ID and asset name
  *

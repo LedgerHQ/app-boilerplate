@@ -1,11 +1,18 @@
-#include "app_tokens.h"
+#include "cardano_tokens.h"
 #include "buffer_utils.h"
-#include "textUtils.h"
+#include "ui/ui_formatters.h"
 #include "hash.h"
-#include "addressUtils/bech32.h"
 #include "os.h"
 
 #define ASSET_FINGERPRINT_SIZE 20
+
+uint64_t abs_int64(int64_t number) {
+    // INT64_MIN cannot be negated safely, so handle it specially
+    if (number == INT64_MIN) {
+        return (uint64_t)INT64_MAX + 1;
+    }
+    return (uint64_t)(number < 0 ? -number : number);
+}
 
 void deriveAssetFingerprintBytes(const uint8_t* policyId,
                                  size_t policyIdSize,
@@ -84,7 +91,7 @@ bool format_token_amount_output(const uint8_t* policyId,
     const token_info_t* tokenInfo = _getTokenInfo(policyId, assetNameBytes, assetNameSize);
     int decimals = (tokenInfo != NULL) ? tokenInfo->decimals : 0;
     TRACE("token decimal places = %u", decimals);
-    bool formatted = str_formatDecimalAmount(amount, decimals, out, outSize);
+    bool formatted = format_decimal_amount(amount, decimals, out, outSize);
     ASSERT(formatted);
     size_t length = strlen(out);
 

@@ -35,7 +35,7 @@ set(CARDANO_SOURCE
     ${CARDANO_PATH}/src/addressUtils/bech32.c
     ${CARDANO_PATH}/src/addressUtils/bip44.c
     ${CARDANO_PATH}/src/apdu/dispatcher.c
-    ${CARDANO_PATH}/src/app_tokens/app_tokens.c
+    ${CARDANO_PATH}/src/cardano_tokens/cardano_tokens.c
     ${CARDANO_PATH}/src/cvote/aux_data_hash_builder.c
     ${CARDANO_PATH}/src/crypto/crypto.c
     ${CARDANO_PATH}/src/handler/get_app_name.c
@@ -55,7 +55,6 @@ set(CARDANO_SOURCE
     ${CARDANO_PATH}/src/transaction/tx_parse.c
     ${CARDANO_PATH}/src/transaction/tx_parse_certificates.c
     ${CARDANO_PATH}/src/transaction/tx_parse_outputs.c
-    ${CARDANO_PATH}/src/transaction/tx_prepare.c
     ${CARDANO_PATH}/src/transaction/tx_utils.c
     ${CARDANO_PATH}/src/transaction/tx_hash_builder.c
     ${CARDANO_PATH}/src/ui/menu.c
@@ -97,7 +96,7 @@ include_directories(
     ${CARDANO_PATH}/src
     ${CARDANO_PATH}/src/addressUtils
     ${CARDANO_PATH}/src/apdu
-    ${CARDANO_PATH}/src/app_tokens
+    ${CARDANO_PATH}/src/cardano_tokens
     ${CARDANO_PATH}/src/cvote
     ${CARDANO_PATH}/src/crypto
     ${CARDANO_PATH}/src/handler

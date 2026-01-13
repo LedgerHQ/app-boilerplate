@@ -88,12 +88,12 @@ static ui_status_t format_opcert_fields(const parsed_opcert_t* opcert) {
 
     UI_ADD_FORMAT1(UI_STATIC_LABEL("KES period"),
                    MAX_UINT64_STRING_LENGTH,
-                   format_u64_ui,
+                   format_uint64,
                    opcert->kesPeriod);
 
     UI_ADD_FORMAT1(UI_STATIC_LABEL("Issue counter"),
                    MAX_UINT64_STRING_LENGTH,
-                   format_u64_ui,
+                   format_uint64,
                    opcert->issueCounter);
 
     return ui_get_error_status();

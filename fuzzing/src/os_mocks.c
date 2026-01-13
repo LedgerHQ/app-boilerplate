@@ -9,7 +9,6 @@
 #include "buffer.h"
 #include "cardano_constants.h"
 #include "globals.h"
-#include "transaction/tx_prepare.h"
 
 typedef struct nbgl_warning_s nbgl_warning_t;
 

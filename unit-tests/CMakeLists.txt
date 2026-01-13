@@ -74,7 +74,28 @@ add_compile_definitions(PATCH_VERSION=0)
 add_executable(test_hex_utils test_hex_utils.c)
 add_executable(test_base58 test_base58.c)
 add_executable(test_bech32 test_bech32.c)
-add_executable(test_text_utils test_text_utils.c)
+add_executable(test_text_utils
+    test_text_utils.c
+    ../src/ui/ui_formatters.c
+    ../src/cardano_tokens/cardano_tokens.c
+    ../src/utils/textUtils.c
+    ../src/utils/ipUtils.c
+    mock_sources/hex_stub.c
+)
+add_executable(test_ui_formatters
+    test_ui_formatters.c
+    ../src/ui/ui_formatters.c
+    ../src/cardano_tokens/cardano_tokens.c
+    ../src/utils/ipUtils.c
+    mock_sources/hex_stub.c
+)
+add_executable(test_cardano_tokens
+    test_cardano_tokens.c
+    ../src/cardano_tokens/cardano_tokens.c
+    ../src/ui/ui_formatters.c
+    ../src/utils/ipUtils.c
+    mock_sources/hex_stub.c
+)
 add_executable(test_bip44 test_bip44.c)
 add_executable(test_cbor test_cbor.c)
 add_executable(test_buffer_utils test_buffer_utils.c)
@@ -137,7 +158,7 @@ add_executable(test_tx_prepare
     ../src/memory/mem.c
     ../src/memory/mem_utils.c
     ../src/memory/flist.c
-    ../src/app_tokens/app_tokens.c
+    ../src/cardano_tokens/cardano_tokens.c
     ../src/ui/ui_utils.c
     ../src/ui/ui_warnings.c
     ../src/ui/ui_formatters.c
@@ -163,6 +184,8 @@ set(TEST_EXECUTABLES
     test_base58
     test_bech32
     test_text_utils
+    test_ui_formatters
+    test_cardano_tokens
     test_bip44
     test_cbor
     test_buffer_utils
@@ -178,7 +201,7 @@ set(TEST_EXECUTABLES
     test_tx_prepare
     test_ui_utils
 )
-# add_executable(test_tokens test_tokens.c)  # TODO: needs crypto mocks (keyDerivation.h, etc.)
+# add_executable(test_tokens test_tokens.c)  # TODO: legacy filename, use test_cardano_tokens instead
 # add_executable(test_tx_parser test_tx_parser.c)  # TODO: create this file
 # add_executable(test_tx_utils test_tx_utils.c)    # TODO: create this file
 
@@ -237,7 +260,7 @@ set(SIGN_TX_COMMON_SOURCES
     ../src/securityPolicy/securityPolicy_privkey.c
     ../src/messageSigning/messageSigning.c
     ../src/keyDerivation/keyDerivation.c
-    ../src/app_tokens/app_tokens.c
+    ../src/cardano_tokens/cardano_tokens.c
     ../src/addressUtils/addressUtilsShelley.c
     ../src/addressUtils/addressUtilsByron.c
     ../src/transaction/tx_hash_builder.c
@@ -295,7 +318,42 @@ target_link_libraries(hash_mocks_lib PUBLIC blake2b_lib sha3_lib)
 target_link_libraries(test_hex_utils PUBLIC cmocka gcov hex_utils)
 target_link_libraries(test_base58 PUBLIC cmocka gcov base58 hex_utils)
 target_link_libraries(test_bech32 PUBLIC cmocka gcov bech32_lib hex_utils)
-target_link_libraries(test_text_utils PUBLIC cmocka gcov text_utils)
+target_link_libraries(test_text_utils
+    PUBLIC
+        cmocka
+        gcov
+        bech32_lib
+        hex_utils
+        hash_mocks_lib
+        blake2b_lib
+        sha3_lib
+        buffer_utils_lib
+        format
+)
+target_link_libraries(test_ui_formatters
+    PUBLIC
+        cmocka
+        gcov
+        bech32_lib
+        hex_utils
+        hash_mocks_lib
+        blake2b_lib
+        sha3_lib
+        buffer_utils_lib
+        format
+)
+target_link_libraries(test_cardano_tokens
+    PUBLIC
+        cmocka
+        gcov
+        bech32_lib
+        hex_utils
+        hash_mocks_lib
+        blake2b_lib
+        sha3_lib
+        buffer_utils_lib
+        format
+)
 target_link_libraries(test_bip44 PUBLIC cmocka gcov bip44_lib)
 target_link_libraries(test_cbor PUBLIC cmocka gcov cbor_lib hex_utils read write c)
 target_link_libraries(test_buffer_utils PUBLIC cmocka gcov buffer_utils_lib buffer write varint bip32)
@@ -502,6 +560,8 @@ add_test(test_apdu_info test_apdu_info)
 add_test(test_base58 test_base58)
 add_test(test_bech32 test_bech32)
 add_test(test_text_utils test_text_utils)
+add_test(test_ui_formatters test_ui_formatters)
+add_test(test_cardano_tokens test_cardano_tokens)
 add_test(test_bip44 test_bip44)
 add_test(test_cbor test_cbor)
 add_test(test_buffer_utils test_buffer_utils)

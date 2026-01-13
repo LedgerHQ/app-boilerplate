@@ -27,7 +27,6 @@
 #include "addressUtils/bip44.h"
 #include "addressUtils/bech32.h"
 #include "utils/assert.h"
-#include "utils/textUtils.h"
 #include "memory/mem.h"
 
 void addCredentialUIPairs(const ext_credential_t *credential,
@@ -232,7 +231,7 @@ void addAnchorUIPairs(const anchor_t *anchor) {
 void addDepositUIPairs(uint64_t deposit, const char *label) {
     LEDGER_ASSERT(label != NULL, "NULL label");
 
-    UI_ADD_FORMAT1(label, MAX_ADA_AMOUNT_STRING_LENGTH, str_formatAdaAmount, deposit);
+    UI_ADD_FORMAT1(label, MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, deposit);
 }
 
 void addPoolKeyHashUIPairs(const uint8_t *poolKeyHash, const char *label) {
@@ -342,40 +341,6 @@ void addRewardAccountUIPairs(uint8_t networkId,
         if (!ui_pairs_add_static_label(label, reward_tmp)) {
             ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
         }
-    }
-}
-
-const char *getCertificateTypeName(certificate_type_t type) {
-    switch (type) {
-        case CERTIFICATE_STAKE_REGISTRATION:
-            return "Stake Registration";
-        case CERTIFICATE_STAKE_DEREGISTRATION:
-            return "Stake Deregistration";
-        case CERTIFICATE_STAKE_DELEGATION:
-            return "Stake Delegation";
-        case CERTIFICATE_STAKE_POOL_RETIREMENT:
-            return "Pool Retirement";
-        case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
-            return "Stake Registration (Conway)";
-        case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY:
-            return "Stake Deregistration (Conway)";
-        case CERTIFICATE_VOTE_DELEGATION:
-            return "Vote Delegation";
-        case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT:
-            return "Committee Authorization";
-        case CERTIFICATE_RESIGN_COMMITTEE_COLD:
-            return "Committee Resignation";
-        case CERTIFICATE_DREP_REGISTRATION:
-            return "DRep Registration";
-        case CERTIFICATE_DREP_DEREGISTRATION:
-            return "DRep Deregistration";
-        case CERTIFICATE_DREP_UPDATE:
-            return "DRep Update";
-        case CERTIFICATE_STAKE_POOL_REGISTRATION:
-            return "Pool Registration";
-        default:
-            LEDGER_ASSERT(false, "Unknown certificate type");
-            return "Unknown";
     }
 }
 

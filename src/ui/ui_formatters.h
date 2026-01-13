@@ -19,7 +19,7 @@
  * @param outSize    Size of output buffer
  * @return true on success, false on failure
  */
-bool format_hex_ui(const uint8_t *bytes, size_t bytes_len, char *out, size_t outSize);
+bool format_hex_bytes(const uint8_t *bytes, size_t bytes_len, char *out, size_t outSize);
 
 /**
  * Format a uint64_t value to string
@@ -33,7 +33,44 @@ bool format_hex_ui(const uint8_t *bytes, size_t bytes_len, char *out, size_t out
  * @param outSize    Size of output buffer
  * @return true on success, false on failure
  */
-bool format_u64_ui(uint64_t value, char *out, size_t outSize);
+bool format_uint64(uint64_t value, char *out, size_t outSize);
+
+/**
+ * Format unsigned value with fixed decimal places and thousands separators
+ *
+ * @param amount   Amount to format
+ * @param places   Number of decimal places
+ * @param out      Output buffer for formatted string
+ * @param outSize  Size of output buffer
+ * @return true on success, false on failure
+ */
+bool format_decimal_amount(uint64_t amount, size_t places, char *out, size_t outSize);
+
+/**
+ * Format ADA amount (6 decimal places + " ADA" suffix)
+ *
+ * @param amount   Lovelace amount
+ * @param out      Output buffer for formatted string
+ * @param outSize  Size of output buffer
+ * @return true on success, false on failure
+ */
+bool format_ada_amount(uint64_t amount, char *out, size_t outSize);
+
+/**
+ * Format validity boundary (epoch/slot for mainnet, raw slot otherwise)
+ *
+ * @param slotNumber     Slot number to format
+ * @param networkId      Network ID
+ * @param protocolMagic  Protocol magic
+ * @param out            Output buffer for formatted string
+ * @param outSize        Size of output buffer
+ * @return true on success, false on failure
+ */
+bool format_validity_boundary(uint64_t slotNumber,
+                              uint8_t networkId,
+                              uint32_t protocolMagic,
+                              char *out,
+                              size_t outSize);
 
 /**
  * Format pool profit margin as percentage
@@ -57,7 +94,7 @@ bool format_pool_margin(uint64_t numerator, uint64_t denominator, char *out, siz
  * @param outSize Size of output buffer
  * @return true on success, false on failure
  */
-bool format_u16(uint16_t value, char *out, size_t outSize);
+bool format_uint16(uint16_t value, char *out, size_t outSize);
 
 /**
  * Format an unsigned integer with "#" prefix (for numbered items)
@@ -70,28 +107,28 @@ bool format_u16(uint16_t value, char *out, size_t outSize);
 bool format_index_with_prefix(uint32_t value, char *out, size_t outSize);
 
 /**
- * Format IPv4 address from byte array
+ * Format IPv4 address
  *
  * Wrapper around inet_ntop4 to match UI_ADD_FORMAT1 signature.
  *
- * @param src     4-byte IPv4 address
+ * @param ipv4    IPv4 address struct (can be null)
  * @param out     Output buffer for formatted string
  * @param outSize Size of output buffer
  * @return true on success, false on failure
  */
-bool format_ipv4(const uint8_t *src, char *out, size_t outSize);
+bool format_ipv4(const ipv4_t *ipv4, char *out, size_t outSize);
 
 /**
- * Format IPv6 address from byte array
+ * Format IPv6 address
  *
  * Wrapper around inet_ntop6 to match UI_ADD_FORMAT1 signature.
  *
- * @param src     16-byte IPv6 address
+ * @param ipv6    IPv6 address struct (can be null)
  * @param out     Output buffer for formatted string
  * @param outSize Size of output buffer
  * @return true on success, false on failure
  */
-bool format_ipv6(const uint8_t *src, char *out, size_t outSize);
+bool format_ipv6(const ipv6_t *ipv6, char *out, size_t outSize);
 
 /**
  * Format vote option enum to string
@@ -165,4 +202,3 @@ bool format_asset_fingerprint_bech32(const uint8_t *policyId,
                                      size_t assetNameLen,
                                      char *out,
                                      size_t outSize);
-

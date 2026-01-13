@@ -6,7 +6,7 @@
 #include "tx_validate.h"
 
 #include "os.h"
-#include "app_tokens/app_tokens.h"
+#include "cardano_tokens/cardano_tokens.h"
 #include "cardano_swo.h"
 #include "cardano_settings.h"
 #include "globals.h"

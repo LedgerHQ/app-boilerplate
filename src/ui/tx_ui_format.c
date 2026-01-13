@@ -74,7 +74,6 @@
 #include "securityPolicy/securityWarnings.h"
 #include "transaction/tx_utils.h"
 #include "utils/assert.h"
-#include "utils/textUtils.h"
 #include "utils/ipUtils.h"
 #include "ui/ui_utils.h"
 #include "ui/ui_formatters.h"
@@ -83,7 +82,7 @@
 #include "ui/tx_ui_helpers.h"
 #include "io.h"
 #include "app_context.h"
-#include "app_tokens/app_tokens.h"
+#include "cardano_tokens/cardano_tokens.h"
 #include "transaction/tx_voting_procedure_types.h"
 #include "addressUtils/bech32.h"
 
@@ -245,17 +244,17 @@ static void ui_strings_outputs(transaction_t *tx) {
                     addStakingInfoUIPair(&output_item->output_data.destination.params);
                 }
 
-                UI_ADD_FORMAT1(UI_STATIC_LABEL("Amount"), MAX_ADA_AMOUNT_STRING_LENGTH, str_formatAdaAmount, output_item->output_data.adaAmount);
+                UI_ADD_FORMAT1(UI_STATIC_LABEL("Amount"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, output_item->output_data.adaAmount);
 
                 if (output_item->output_data.datum.hasDatum) {
                     security_policy_t datum_policy = policyForSignTxOutputDatumHash(policy);
                     LEDGER_ASSERT(datum_policy != POLICY_DENY, "Output datum policy denied during UI");
                     if (datum_policy == POLICY_SHOW) {
                         if (output_item->output_data.datum.type == DATUM_HASH) {
-                            UI_ADD_FORMAT2(UI_STATIC_LABEL("Datum hash"), MAX_DATUM_HASH_STRING_LENGTH, format_hex_ui, output_item->output_data.datum.hash, OUTPUT_DATUM_HASH_LENGTH);
+                            UI_ADD_FORMAT2(UI_STATIC_LABEL("Datum hash"), MAX_DATUM_HASH_STRING_LENGTH, format_hex_bytes, output_item->output_data.datum.hash, OUTPUT_DATUM_HASH_LENGTH);
                         } else {
                             // TODO: Inline datum size is not bounded by protocol; handle large values more robustly.
-                            UI_ADD_FORMAT2(UI_STATIC_LABEL("Inline datum"), MAX_INLINE_DATUM_STRING_LENGTH, format_hex_ui, output_item->output_data.datum.inline_data.data, output_item->output_data.datum.inline_data.size);
+                            UI_ADD_FORMAT2(UI_STATIC_LABEL("Inline datum"), MAX_INLINE_DATUM_STRING_LENGTH, format_hex_bytes, output_item->output_data.datum.inline_data.data, output_item->output_data.datum.inline_data.size);
                         }
                     }
                 }
@@ -265,7 +264,7 @@ static void ui_strings_outputs(transaction_t *tx) {
                     LEDGER_ASSERT(ref_script_policy != POLICY_DENY, "Output ref script policy denied during UI");
                     if (ref_script_policy == POLICY_SHOW) {
                         // TODO: Reference script size is not bounded by protocol; handle large values more robustly.
-                        UI_ADD_FORMAT2(UI_STATIC_LABEL("Reference script"), MAX_REFERENCE_SCRIPT_STRING_LENGTH, format_hex_ui, output_item->output_data.refScript.data, output_item->output_data.refScript.size);
+                        UI_ADD_FORMAT2(UI_STATIC_LABEL("Reference script"), MAX_REFERENCE_SCRIPT_STRING_LENGTH, format_hex_bytes, output_item->output_data.refScript.data, output_item->output_data.refScript.size);
                     }
                 }
 
@@ -302,7 +301,7 @@ static void ui_strings_outputs(transaction_t *tx) {
 }
 
 static void ui_strings_fee(transaction_t *tx) {
-    UI_ADD_FORMAT1(UI_STATIC_LABEL("Fee"), MAX_ADA_AMOUNT_STRING_LENGTH, str_formatAdaAmount, tx->fee);
+    UI_ADD_FORMAT1(UI_STATIC_LABEL("Fee"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, tx->fee);
 }
 
 static void ui_strings_ttl(transaction_t *tx) {
@@ -315,7 +314,7 @@ static void ui_strings_ttl(transaction_t *tx) {
             LEDGER_ASSERT(false, "TTL denied during UI");
             break;
         case POLICY_SHOW:
-            UI_ADD_FORMAT3(UI_STATIC_LABEL("TTL"), MAX_VALIDITY_BOUNDARY_STRING_LENGTH, str_formatValidityBoundary, tx->ttl, tx->networkId, tx->protocolMagic);
+            UI_ADD_FORMAT3(UI_STATIC_LABEL("TTL"), MAX_VALIDITY_BOUNDARY_STRING_LENGTH, format_validity_boundary, tx->ttl, tx->networkId, tx->protocolMagic);
             break;
         case POLICY_HIDE:
             break;
@@ -419,48 +418,9 @@ static void ui_strings_certificate_pool_retirement(const certificate_data_t* cer
     addPoolKeyHashUIPairs(poolKeyHash, UI_STATIC_LABEL("Pool ID"));
 
     // Display retirement epoch
-    UI_ADD_FORMAT1(UI_STATIC_LABEL("Retirement epoch"), MAX_UINT64_STRING_LENGTH, format_u64_ui, certificate_data->retirementEpoch);
+    UI_ADD_FORMAT1(UI_STATIC_LABEL("Retirement epoch"), MAX_UINT64_STRING_LENGTH, format_uint64, certificate_data->retirementEpoch);
 }
 
-static void ui_strings_certificate_vote_delegation(const certificate_data_t* certificate_data) {
-    display_voter_credential(&certificate_data->stakeCredential);
-
-    const ext_drep_t* drep = &certificate_data->drep;
-    addDRepUIPairs(drep, UI_STATIC_LABEL("DRep"));
-}
-
-static void ui_strings_certificate_committee_hot(const certificate_data_t* certificate_data) {
-    const ext_credential_t* coldCred = &certificate_data->coldCredential;
-    display_committee_cold_credential(coldCred);
-
-    const ext_credential_t* hotCred = &certificate_data->hotCredential;
-    display_committee_hot_credential(hotCred);
-}
-
-static void ui_strings_certificate_committee_resign(const certificate_data_t* certificate_data) {
-    display_committee_cold_credential(&certificate_data->coldCredential);
-
-    addAnchorUIPairs(&certificate_data->anchor);
-}
-
-static void ui_strings_certificate_drep_registration(const certificate_data_t* certificate_data) {
-    display_drep_credential(&certificate_data->dRepCredential);
-
-    addDepositUIPairs(certificate_data->deposit, UI_STATIC_LABEL("Deposit"));
-    addAnchorUIPairs(&certificate_data->anchor);
-}
-
-static void ui_strings_certificate_drep_deregistration(const certificate_data_t* certificate_data) {
-    display_drep_credential(&certificate_data->dRepCredential);
-
-    addDepositUIPairs(certificate_data->deposit, UI_STATIC_LABEL("Deposit"));
-}
-
-static void ui_strings_certificate_drep_update(const certificate_data_t* certificate_data) {
-    display_drep_credential(&certificate_data->dRepCredential);
-
-    addAnchorUIPairs(&certificate_data->anchor);
-}
 
 static void ui_strings_certificate_pool_registration(const certificate_data_t* certificate_data, sign_tx_signingmode_t txSigningMode) {
     pool_owner_counts_t pool_owner_counts = count_pool_owner_nodes(
@@ -503,10 +463,10 @@ static void ui_strings_certificate_pool_registration(const certificate_data_t* c
     }
 
     // Display pledge
-    UI_ADD_FORMAT1(UI_STATIC_LABEL("Pledge"), MAX_ADA_AMOUNT_STRING_LENGTH, str_formatAdaAmount, certificate_data->poolRegistration.pledge);
+    UI_ADD_FORMAT1(UI_STATIC_LABEL("Pledge"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, certificate_data->poolRegistration.pledge);
 
     // Display cost
-    UI_ADD_FORMAT1(UI_STATIC_LABEL("Cost"), MAX_ADA_AMOUNT_STRING_LENGTH, str_formatAdaAmount, certificate_data->poolRegistration.cost);
+    UI_ADD_FORMAT1(UI_STATIC_LABEL("Cost"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, certificate_data->poolRegistration.cost);
 
     // Display profit margin as percentage
     UI_ADD_FORMAT2(UI_STATIC_LABEL("Profit margin"), MAX_PROFIT_MARGIN_STRING_LENGTH, format_pool_margin,
@@ -593,17 +553,17 @@ static void ui_strings_certificate_pool_registration(const certificate_data_t* c
                     case RELAY_SINGLE_HOST_IP: {
                         // Display IPv4 if present
                         if (!relay->ipv4.isNull) {
-                            UI_ADD_FORMAT1(UI_STATIC_LABEL("IPv4"), MAX_IPV4_STR_LENGTH, format_ipv4, relay->ipv4.ip);
+                            UI_ADD_FORMAT1(UI_STATIC_LABEL("IPv4"), MAX_IPV4_STR_LENGTH, format_ipv4, &relay->ipv4);
                         }
 
                         // Display IPv6 if present
                         if (!relay->ipv6.isNull) {
-                            UI_ADD_FORMAT1(UI_STATIC_LABEL("IPv6"), MAX_IPV6_STR_LENGTH, format_ipv6, relay->ipv6.ip);
+                            UI_ADD_FORMAT1(UI_STATIC_LABEL("IPv6"), MAX_IPV6_STR_LENGTH, format_ipv6, &relay->ipv6);
                         }
 
                         // Display port if present
                         if (!relay->port.isNull) {
-                            UI_ADD_FORMAT1(UI_STATIC_LABEL("Port"), MAX_UINT64_STRING_LENGTH, format_u16, relay->port.number);
+                            UI_ADD_FORMAT1(UI_STATIC_LABEL("Port"), MAX_UINT64_STRING_LENGTH, format_uint16, relay->port.number);
                         }
                         break;
                     }
@@ -625,7 +585,7 @@ static void ui_strings_certificate_pool_registration(const certificate_data_t* c
 
                         // Display port if present
                         if (!relay->port.isNull) {
-                            UI_ADD_FORMAT1(UI_STATIC_LABEL("Port"), MAX_UINT64_STRING_LENGTH, format_u16, relay->port.number);
+                            UI_ADD_FORMAT1(UI_STATIC_LABEL("Port"), MAX_UINT64_STRING_LENGTH, format_uint16, relay->port.number);
                         }
                         break;
                     }
@@ -682,7 +642,7 @@ static void ui_strings_certificate_pool_registration(const certificate_data_t* c
 
         if (metadata_policy == POLICY_SHOW) {
             UI_ADD_FORMAT2(UI_STATIC_LABEL("Pool metadata url"), MAX_POOL_METADATA_URL_LENGTH, format_url, certificate_data->poolRegistration.poolMetadata.url, certificate_data->poolRegistration.poolMetadata.urlSize);
-            UI_ADD_FORMAT2(UI_STATIC_LABEL("Pool metadata hash"), MAX_POOL_METADATA_HASH_STRING_LENGTH, format_hex_ui, certificate_data->poolRegistration.poolMetadata.hash, POOL_METADATA_HASH_LENGTH);
+            UI_ADD_FORMAT2(UI_STATIC_LABEL("Pool metadata hash"), MAX_POOL_METADATA_HASH_STRING_LENGTH, format_hex_bytes, certificate_data->poolRegistration.poolMetadata.hash, POOL_METADATA_HASH_LENGTH);
         }
     }
 }
@@ -803,32 +763,39 @@ static void ui_strings_certificates(transaction_t *tx) {
                     }
 
                     case CERTIFICATE_VOTE_DELEGATION: {
-                        ui_strings_certificate_vote_delegation(&certificate_item->certificate);
+                        display_voter_credential(&certificate_item->certificate.stakeCredential);
+                        addDRepUIPairs(&certificate_item->certificate.drep, UI_STATIC_LABEL("DRep"));
                         break;
                     }
 
                     case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT: {
-                        ui_strings_certificate_committee_hot(&certificate_item->certificate);
+                        display_committee_cold_credential(&certificate_item->certificate.coldCredential);
+                        display_committee_hot_credential(&certificate_item->certificate.hotCredential);
                         break;
                     }
 
                     case CERTIFICATE_RESIGN_COMMITTEE_COLD: {
-                        ui_strings_certificate_committee_resign(&certificate_item->certificate);
+                        display_committee_cold_credential(&certificate_item->certificate.coldCredential);
+                        addAnchorUIPairs(&certificate_item->certificate.anchor);
                         break;
                     }
 
                     case CERTIFICATE_DREP_REGISTRATION: {
-                        ui_strings_certificate_drep_registration(&certificate_item->certificate);
+                        display_drep_credential(&certificate_item->certificate.dRepCredential);
+                        addDepositUIPairs(certificate_item->certificate.deposit, UI_STATIC_LABEL("Deposit"));
+                        addAnchorUIPairs(&certificate_item->certificate.anchor);
                         break;
                     }
 
                     case CERTIFICATE_DREP_DEREGISTRATION: {
-                        ui_strings_certificate_drep_deregistration(&certificate_item->certificate);
+                        display_drep_credential(&certificate_item->certificate.dRepCredential);
+                        addDepositUIPairs(certificate_item->certificate.deposit, UI_STATIC_LABEL("Deposit"));
                         break;
                     }
 
                     case CERTIFICATE_DREP_UPDATE: {
-                        ui_strings_certificate_drep_update(&certificate_item->certificate);
+                        display_drep_credential(&certificate_item->certificate.dRepCredential);
+                        addAnchorUIPairs(&certificate_item->certificate.anchor);
                         break;
                     }
 
@@ -877,7 +844,7 @@ static void ui_strings_withdrawals(transaction_t *tx) {
             case POLICY_SHOW: {
                 TRACE("Formatting withdrawal #%u", withdrawal_num);
                 UI_ADD_FORMAT1(UI_STATIC_LABEL("Withdrawal"), MAX_UINT64_STRING_LENGTH, format_index_with_prefix, withdrawal_num);
-                UI_ADD_FORMAT1(UI_STATIC_LABEL("Amount"), MAX_ADA_AMOUNT_STRING_LENGTH, str_formatAdaAmount, withdrawal_item->withdrawal.amount);
+                UI_ADD_FORMAT1(UI_STATIC_LABEL("Amount"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, withdrawal_item->withdrawal.amount);
 
                 addRewardAccountFromCredentialUIPairs(
                     G_context.tx_info.transaction.networkId,
@@ -902,7 +869,7 @@ static void ui_strings_aux_data_hash(transaction_t *tx) {
         security_policy_t policy = policyForSignTxAuxData(tx->auxDataType);
         LEDGER_ASSERT(policy != POLICY_DENY, "Aux data denied during UI");
         if (policy == POLICY_SHOW) {
-            UI_ADD_FORMAT2(UI_STATIC_LABEL("Auxiliary data hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_ui, tx->auxDataHash, AUX_DATA_HASH_LENGTH);
+            UI_ADD_FORMAT2(UI_STATIC_LABEL("Auxiliary data hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_bytes, tx->auxDataHash, AUX_DATA_HASH_LENGTH);
         }
     }
 }
@@ -918,7 +885,7 @@ static void ui_strings_validity_interval_start(transaction_t *tx) {
             // Already asserted above, this case should never be reached
             break;
         case POLICY_SHOW:
-            UI_ADD_FORMAT3(UI_STATIC_LABEL("Validity interval start"), MAX_VALIDITY_BOUNDARY_STRING_LENGTH, str_formatValidityBoundary, tx->validityIntervalStart, tx->networkId, tx->protocolMagic);
+            UI_ADD_FORMAT3(UI_STATIC_LABEL("Validity interval start"), MAX_VALIDITY_BOUNDARY_STRING_LENGTH, format_validity_boundary, tx->validityIntervalStart, tx->networkId, tx->protocolMagic);
             break;
         case POLICY_HIDE:
             break;
@@ -978,7 +945,7 @@ static void ui_strings_script_data_hash(transaction_t *tx) {
         security_policy_t policy = policyForSignTxScriptDataHash(tx->txSigningMode);
         LEDGER_ASSERT(policy != POLICY_DENY, "Script data hash denied during UI");
         if (policy == POLICY_SHOW) {
-            UI_ADD_FORMAT2(UI_STATIC_LABEL("Script data hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_ui, tx->scriptDataHash, SCRIPT_DATA_HASH_LENGTH);
+            UI_ADD_FORMAT2(UI_STATIC_LABEL("Script data hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_bytes, tx->scriptDataHash, SCRIPT_DATA_HASH_LENGTH);
         }
     }
 }
@@ -1098,7 +1065,7 @@ static void ui_strings_collateral_output(transaction_t *tx) {
         }
 
         if (collateral_ada_policy == POLICY_SHOW) {
-            UI_ADD_FORMAT1(UI_STATIC_LABEL("Collateral amount"), MAX_ADA_AMOUNT_STRING_LENGTH, str_formatAdaAmount, collateral_desc.amount);
+            UI_ADD_FORMAT1(UI_STATIC_LABEL("Collateral amount"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, collateral_desc.amount);
         }
 
         if (collateral_confirm_policy == POLICY_SHOW) {
@@ -1121,7 +1088,7 @@ static void ui_strings_total_collateral(transaction_t *tx) {
     security_policy_t policy = policyForSignTxTotalCollateral();
     LEDGER_ASSERT(policy != POLICY_DENY, "Total collateral denied during UI");
     if (policy == POLICY_SHOW) {
-        UI_ADD_FORMAT1(UI_STATIC_LABEL("Total collateral"), MAX_ADA_AMOUNT_STRING_LENGTH, str_formatAdaAmount, tx->totalCollateral);
+        UI_ADD_FORMAT1(UI_STATIC_LABEL("Total collateral"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, tx->totalCollateral);
     }
 }
 
@@ -1164,10 +1131,10 @@ static void ui_strings_voting_procedures(transaction_t *tx) {
                     vote_list_item_t *vote_item = (vote_list_item_t *) vote_node;
 
                     // Gov Action Tx Hash
-                    UI_ADD_FORMAT2(UI_STATIC_LABEL("Gov action tx hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_ui, vote_item->vote_data.govActionId.txHash, TX_HASH_LENGTH);
+                    UI_ADD_FORMAT2(UI_STATIC_LABEL("Gov action tx hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_bytes, vote_item->vote_data.govActionId.txHash, TX_HASH_LENGTH);
 
                     // Gov Action Index
-                    UI_ADD_FORMAT1(UI_STATIC_LABEL("Gov action index"), MAX_UINT64_STRING_LENGTH, format_u64_ui, vote_item->vote_data.govActionId.govActionIndex);
+                    UI_ADD_FORMAT1(UI_STATIC_LABEL("Gov action index"), MAX_UINT64_STRING_LENGTH, format_uint64, vote_item->vote_data.govActionId.govActionIndex);
 
                     // Vote Option
                     UI_ADD_FORMAT1(UI_STATIC_LABEL("Vote"), MAX_VOTE_OPTION_LENGTH, format_vote_option, vote_item->vote_data.voteOption);
@@ -1198,7 +1165,7 @@ static void ui_strings_treasury(transaction_t *tx) {
         security_policy_t policy = policyForSignTxTreasury(tx->txSigningMode, tx->treasury);
         LEDGER_ASSERT(policy != POLICY_DENY, "Treasury denied during UI");
         if (policy == POLICY_SHOW) {
-            UI_ADD_FORMAT1(UI_STATIC_LABEL("Treasury"), MAX_ADA_AMOUNT_STRING_LENGTH, str_formatAdaAmount, tx->treasury);
+            UI_ADD_FORMAT1(UI_STATIC_LABEL("Treasury"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, tx->treasury);
         }
     }
 }
@@ -1208,7 +1175,7 @@ static void ui_strings_donation(transaction_t *tx) {
         security_policy_t policy = policyForSignTxDonation(tx->txSigningMode, tx->donation);
         LEDGER_ASSERT(policy != POLICY_DENY, "Donation denied during UI");
         if (policy == POLICY_SHOW) {
-            UI_ADD_FORMAT1(UI_STATIC_LABEL("Donation"), MAX_ADA_AMOUNT_STRING_LENGTH, str_formatAdaAmount, tx->donation);
+            UI_ADD_FORMAT1(UI_STATIC_LABEL("Donation"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, tx->donation);
         }
     }
 }
@@ -1220,7 +1187,7 @@ static void ui_strings_tx_hash(void) {
         G_context.tx_info.raw_tx_len = 0;
     }
 
-    UI_ADD_FORMAT2(UI_STATIC_LABEL("Transaction hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_ui, G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash));
+    UI_ADD_FORMAT2(UI_STATIC_LABEL("Transaction hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_bytes, G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash));
 }
 
 static int add_ui_strings_and_free_parsed_data(void) {

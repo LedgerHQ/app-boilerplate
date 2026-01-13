@@ -7,9 +7,32 @@
 
 #include <cmocka.h>
 
-#include "app_tokens/app_tokens.h"
+#include "cardano_tokens/cardano_tokens.h"
 #include "addressUtils/bech32.h"
 #include "hexUtils.h"
+
+// Test abs_int64
+static void test_abs_int64(void **state) {
+    (void) state;
+
+    struct {
+        int64_t input;
+        uint64_t expected;
+    } testVectors[] = {
+        {0, 0},
+        {1, 1},
+        {-1, 1},
+        {123456, 123456},
+        {-123456, 123456},
+        {INT64_MAX, (uint64_t) INT64_MAX},
+        {INT64_MIN, (uint64_t) INT64_MAX + 1},  // Special case: INT64_MIN
+    };
+
+    for (size_t i = 0; i < sizeof(testVectors) / sizeof(testVectors[0]); i++) {
+        uint64_t result = abs_int64(testVectors[i].input);
+        assert_int_equal(result, testVectors[i].expected);
+    }
+}
 
 // Test asset fingerprint bytes derivation (CIP-14)
 static void test_asset_fingerprint(void **state) {
@@ -58,10 +81,10 @@ static void test_asset_fingerprint(void **state) {
                                     sizeof(fingerprintBytes));
 
         char fingerprint[200] = {0};
-        bool success = format_bech32("asset", fingerprintBytes, sizeof(fingerprintBytes), fingerprint, sizeof(fingerprint));
-        assert_true(success);
+        bool success_bech32 = format_bech32("asset", fingerprintBytes, sizeof(fingerprintBytes), fingerprint, sizeof(fingerprint));
+        assert_true(success_bech32);
 
-        assert_string_equal(fingerprint, testVectors[i].expected);
+        assert_string_equal(fingerprint, testVectors[i].expectedBech32);
     }
 }
 
@@ -138,6 +161,7 @@ static void test_format_token_amount_mint(void **state) {
 
 int main(void) {
     const struct CMUnitTest tests[] = {
+        cmocka_unit_test(test_abs_int64),
         cmocka_unit_test(test_asset_fingerprint),
         cmocka_unit_test(test_format_token_amount_output),
         cmocka_unit_test(test_format_token_amount_mint),

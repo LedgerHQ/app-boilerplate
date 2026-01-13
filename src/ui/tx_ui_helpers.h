@@ -145,15 +145,6 @@ void addRewardAccountUIPairs(uint8_t networkId,
                             const char *label);
 
 /**
- * Get human-readable name for a certificate type
- *
- * @param[in]  type          Certificate type to get name for
- *
- * @return Pointer to constant string with certificate type name
- */
-const char *getCertificateTypeName(certificate_type_t type);
-
-/**
  * Add payment credential UI pair for device-owned address
  *
  * Adds one UI pair showing the payment credential (either key path or script hash)

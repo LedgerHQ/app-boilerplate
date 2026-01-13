@@ -31,6 +31,14 @@ and run tests with
 CTEST_OUTPUT_ON_FAILURE=1 make -C build test
 ```
 
+To run a specific test binary (e.g., `test_ui_formatters`), use:
+
+```shell
+cd unit-tests
+cmake -Bbuild -H. && make -C build
+CTEST_OUTPUT_ON_FAILURE=1 ctest --test-dir build -R test_ui_formatters
+```
+
 ## Generate code coverage
 
 Just execute in `unit-tests` folder
