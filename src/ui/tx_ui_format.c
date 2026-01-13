@@ -620,7 +620,6 @@ static void ui_strings_certificate_pool_registration(const certificate_data_t* c
 }
 
 static void ui_strings_certificates(transaction_t *tx) {
-    uint16_t certificate_num = 1;
     s_flist_node *certificate_node = tx->certificates;
     TRACE("Formatting %u certificates", tx->num_certificates);
     while (certificate_node != NULL) {
@@ -706,9 +705,8 @@ static void ui_strings_certificates(transaction_t *tx) {
                 LEDGER_ASSERT(false, "Certificate denied during UI");
                 break;
             case POLICY_SHOW: {
-                TRACE("Formatting certificate #%u type=%u", certificate_num, certificate_item->certificate.type);
-                UI_ADD_FORMAT1(UI_STATIC_LABEL("Certificate"), MAX_UINT64_STRING_LENGTH, format_index_with_prefix, certificate_num);
-                UI_ADD_FORMAT1(UI_STATIC_LABEL("Type"), MAX_CERTIFICATE_TYPE_LENGTH, format_certificate_type, certificate_item->certificate.type);
+                TRACE("Formatting certificate type=%u", certificate_item->certificate.type);
+                UI_ADD_FORMAT1(UI_STATIC_LABEL("Certificate"), MAX_CERTIFICATE_TYPE_LENGTH, format_certificate_type, certificate_item->certificate.type);
 
                 // Certificate-specific fields
                 switch (certificate_item->certificate.type) {
@@ -782,7 +780,6 @@ static void ui_strings_certificates(transaction_t *tx) {
                         LEDGER_ASSERT(false, "Unknown certificate type");
                 }
 
-                certificate_num++;
                 break;
             }
             case POLICY_HIDE:
