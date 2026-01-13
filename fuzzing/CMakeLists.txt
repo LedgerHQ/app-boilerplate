@@ -37,6 +37,7 @@ set(CARDANO_SOURCE
     ${CARDANO_PATH}/src/apdu/dispatcher.c
     ${CARDANO_PATH}/src/cardano_tokens/cardano_tokens.c
     ${CARDANO_PATH}/src/cvote/aux_data_hash_builder.c
+    ${CARDANO_PATH}/src/cvote/cvote_parser.c
     ${CARDANO_PATH}/src/crypto/crypto.c
     ${CARDANO_PATH}/src/handler/get_app_name.c
     ${CARDANO_PATH}/src/handler/get_public_key.c
@@ -57,15 +58,17 @@ set(CARDANO_SOURCE
     ${CARDANO_PATH}/src/transaction/tx_parse_outputs.c
     ${CARDANO_PATH}/src/transaction/tx_utils.c
     ${CARDANO_PATH}/src/transaction/tx_hash_builder.c
+    ${CARDANO_PATH}/src/transaction/tx_validate.c
     ${CARDANO_PATH}/src/ui/menu.c
     ${CARDANO_PATH}/src/ui/nbgl_display_opcert.c
     ${CARDANO_PATH}/src/ui/nbgl_display_pubkey.c
     ${CARDANO_PATH}/src/ui/nbgl_display_transaction.c
     ${CARDANO_PATH}/src/ui/nbgl_display_witness.c
-    ${CARDANO_PATH}/src/ui/nbgl_screens.c
-    ${CARDANO_PATH}/src/ui/tx_ui_materialize.c
+    ${CARDANO_PATH}/src/ui/tx_ui_format.c
     ${CARDANO_PATH}/src/ui/tx_ui_helpers.c
+    ${CARDANO_PATH}/src/ui/ui_formatters.c
     ${CARDANO_PATH}/src/ui/ui_utils.c
+    ${CARDANO_PATH}/src/ui/ui_warnings.c
     ${CARDANO_PATH}/src/utils/buffer_utils.c
     ${CARDANO_PATH}/src/app_context.c
     ${CARDANO_PATH}/src/utils/cbor.c
