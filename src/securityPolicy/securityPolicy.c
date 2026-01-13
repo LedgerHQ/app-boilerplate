@@ -1231,6 +1231,7 @@ security_policy_t policyForSignTxStakePoolRegistrationRewardAccount(
     LEDGER_ASSERT(poolRewardAccount != NULL, "NULL pool reward account");
     switch (poolRewardAccount->keyReferenceType) {
         case KEY_REFERENCE_HASH: {
+            LEDGER_ASSERT(poolRewardAccount->hashBuffer != NULL, "NULL reward account hash buffer");
             const uint8_t header = getAddressHeader(poolRewardAccount->hashBuffer,
                                                     REWARD_ACCOUNT_LENGTH);
             const address_type_t address_type = getAddressType(header);

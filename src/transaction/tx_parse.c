@@ -246,7 +246,7 @@ parser_status_e parse_tx(buffer_t *buf, transaction_t *tx) {
 
     // key 11: script data hash
     if (tx->includeScriptDataHash) {
-        if (!buffer_read_bytes(buf, tx->scriptDataHash, SCRIPT_DATA_HASH_LENGTH)) {
+        if (!buffer_read_bytes_ptr(buf, &tx->scriptDataHash, SCRIPT_DATA_HASH_LENGTH)) {
             return SCRIPT_DATA_HASH_PARSING_ERROR;
         }
     }
@@ -340,13 +340,11 @@ static parser_status_e parse_input_item(buffer_t *buf, s_flist_node **list_head,
     }
 
     // Store pointer to tx hash in raw buffer instead of copying
-    uint8_t *hash_ptr = NULL;
-    if (!buffer_read_bytes_ptr(buf, &hash_ptr, TX_HASH_LENGTH)) {
+    if (!buffer_read_bytes_ptr(buf, &item->input.txHash, TX_HASH_LENGTH)) {
         app_mem_free(item);
         return error_on_failure;
     }
-    ASSERT(hash_ptr != NULL);
-    item->input.txHash = hash_ptr;
+    ASSERT(item->input.txHash != NULL);
 
     if (!buffer_read_u32(buf, &item->input.index, BE)) {
         app_mem_free(item);
@@ -439,26 +437,24 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                 output_asset_group_t *group = &group_node->asset_group;
 
                 // Store pointer to policy ID in raw buffer instead of copying
-                uint8_t *policy_ptr = NULL;
-                if (!buffer_read_bytes_ptr(&output_buf, &policy_ptr, MINTING_POLICY_ID_LENGTH)) {
+                if (!buffer_read_bytes_ptr(&output_buf, &group->policyId, MINTING_POLICY_ID_LENGTH)) {
                     free_asset_group_node(group_node);
                     free_output_item(item);
                     return OUTPUTS_PARSING_ERROR;
                 }
-                ASSERT(policy_ptr != NULL);
-                group->policyId = policy_ptr;
+                ASSERT(group->policyId != NULL);
 
                 if (!canonical_key_ok(has_previous_policy,
                                       previous_policy_id,
                                       MINTING_POLICY_ID_LENGTH,
-                                      policy_ptr,
+                                      group->policyId,
                                       MINTING_POLICY_ID_LENGTH)) {
                     TRACE("Output %u asset groups not canonical", i);
                     free_asset_group_node(group_node);
                     free_output_item(item);
                     return CANONICAL_ORDERING_ERROR;
                 }
-                previous_policy_id = policy_ptr;
+                previous_policy_id = group->policyId;
                 has_previous_policy = true;
 
                 TRACE("Deserialize: Asset group %u: policy ID read", ag);
@@ -503,20 +499,18 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
 
                     // Store pointer to asset name in raw buffer instead of copying
                     // Note: assetNameLen can be 0 for empty asset names, which is valid
-                    uint8_t *name_ptr = NULL;
-                    if (!buffer_read_bytes_ptr(&output_buf, &name_ptr, token->assetNameLen)) {
+                    if (!buffer_read_bytes_ptr(&output_buf, &token->assetName, token->assetNameLen)) {
                         app_mem_free(token_item);
                         free_asset_group_node(group_node);
                         free_output_item(item);
                         return OUTPUTS_PARSING_ERROR;
                     }
-                    ASSERT(name_ptr != NULL);
-                    token->assetName = name_ptr;
+                    ASSERT(token->assetName != NULL);
 
                     if (!canonical_key_ok(has_previous_token,
                                           previous_token_name,
                                           previous_token_len,
-                                          name_ptr,
+                                          token->assetName,
                                           token->assetNameLen)) {
                         TRACE("Output %u asset group %u tokens not canonical", i, ag);
                         app_mem_free(token_item);
@@ -524,7 +518,7 @@ static parser_status_e parse_tx_outputs(buffer_t *buf, transaction_t *tx) {
                         free_output_item(item);
                         return CANONICAL_ORDERING_ERROR;
                     }
-                    previous_token_name = name_ptr;
+                    previous_token_name = token->assetName;
                     previous_token_len = token->assetNameLen;
                     has_previous_token = true;
 
@@ -601,23 +595,21 @@ static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
         explicit_bzero(item, sizeof(*item));
 
         // Store pointer to policy ID in raw buffer instead of copying
-        uint8_t *policy_ptr = NULL;
-        if (!buffer_read_bytes_ptr(buf, &policy_ptr, MINTING_POLICY_ID_LENGTH)) {
+        if (!buffer_read_bytes_ptr(buf, &item->asset_group.policyId, MINTING_POLICY_ID_LENGTH)) {
             free_mint_item(item);
             return MINT_PARSING_ERROR;
         }
-        ASSERT(policy_ptr != NULL);
-        item->asset_group.policyId = policy_ptr;
+        ASSERT(item->asset_group.policyId != NULL);
         if (!canonical_key_ok(has_previous_policy,
                               previous_policy_id,
                               MINTING_POLICY_ID_LENGTH,
-                              policy_ptr,
+                              item->asset_group.policyId,
                               MINTING_POLICY_ID_LENGTH)) {
             TRACE("Mint asset groups not canonical");
             free_mint_item(item);
             return CANONICAL_ORDERING_ERROR;
         }
-        previous_policy_id = policy_ptr;
+        previous_policy_id = item->asset_group.policyId;
         has_previous_policy = true;
         TRACE("Deserialize: Mint asset group %u: policy ID read", ag);
 
@@ -656,26 +648,24 @@ static parser_status_e parse_tx_mint_groups(buffer_t *buf, transaction_t *tx) {
 
             // Store pointer to asset name in raw buffer instead of copying
             // Note: assetNameLen can be 0 for empty asset names, which is valid
-            uint8_t *name_ptr = NULL;
-            if (!buffer_read_bytes_ptr(buf, &name_ptr, token->assetNameLen)) {
+            if (!buffer_read_bytes_ptr(buf, &token->assetName, token->assetNameLen)) {
                 app_mem_free(token_item);
                 free_mint_item(item);
                 return MINT_PARSING_ERROR;
             }
-            ASSERT(name_ptr != NULL);
-            token->assetName = name_ptr;
+            ASSERT(token->assetName != NULL);
 
             if (!canonical_key_ok(has_previous_token,
                                   previous_token_name,
                                   previous_token_len,
-                                  name_ptr,
+                                  token->assetName,
                                   token->assetNameLen)) {
                 TRACE("Mint asset group %u tokens not canonical", ag);
                 app_mem_free(token_item);
                 free_mint_item(item);
                 return CANONICAL_ORDERING_ERROR;
             }
-            previous_token_name = name_ptr;
+            previous_token_name = token->assetName;
             previous_token_len = token->assetNameLen;
             has_previous_token = true;
 
@@ -1047,10 +1037,11 @@ static parser_status_e parse_tx_required_signers(buffer_t *buf, transaction_t *t
                 break;
             case REQUIRED_SIGNER_WITH_HASH:
                 // Read 28-byte key hash
-                if (!buffer_read_bytes(buf, item->required_signer.keyHash, ADDRESS_KEY_HASH_LENGTH)) {
+                if (!buffer_read_bytes_ptr(buf, &item->required_signer.keyHash, ADDRESS_KEY_HASH_LENGTH)) {
                     app_mem_free(item);
                     return REQUIRED_SIGNERS_PARSING_ERROR;
                 }
+                ASSERT(item->required_signer.keyHash != NULL);
                 break;
             default:
                 app_mem_free(item);
@@ -1109,26 +1100,24 @@ static parser_status_e parse_output_structure(buffer_t *output_buf,
 
             output_asset_group_t *group = &group_node->asset_group;
 
-            uint8_t *policy_ptr = NULL;
-            if (!buffer_read_bytes_ptr(output_buf, &policy_ptr, MINTING_POLICY_ID_LENGTH)) {
+            if (!buffer_read_bytes_ptr(output_buf, &group->policyId, MINTING_POLICY_ID_LENGTH)) {
                 free_asset_group_node(group_node);
                 free_asset_groups(*assetGroups);
                 return OUTPUTS_PARSING_ERROR;
             }
-            ASSERT(policy_ptr != NULL);
-            group->policyId = policy_ptr;
+            ASSERT(group->policyId != NULL);
 
             if (!canonical_key_ok(has_previous_policy,
                                   previous_policy_id,
                                   MINTING_POLICY_ID_LENGTH,
-                                  policy_ptr,
+                                  group->policyId,
                                   MINTING_POLICY_ID_LENGTH)) {
                 TRACE("Collateral asset groups not canonical");
                 free_asset_group_node(group_node);
                 free_asset_groups(*assetGroups);
                 return CANONICAL_ORDERING_ERROR;
             }
-            previous_policy_id = policy_ptr;
+            previous_policy_id = group->policyId;
             has_previous_policy = true;
 
             if (!buffer_read_u16(output_buf, &group->numTokens, BE)) {
@@ -1168,20 +1157,18 @@ static parser_status_e parse_output_structure(buffer_t *output_buf,
                     return OUTPUTS_PARSING_ERROR;
                 }
 
-                uint8_t *name_ptr = NULL;
-                if (!buffer_read_bytes_ptr(output_buf, &name_ptr, token->assetNameLen)) {
+                if (!buffer_read_bytes_ptr(output_buf, &token->assetName, token->assetNameLen)) {
                     app_mem_free(token_item);
                     free_asset_group_node(group_node);
                     free_asset_groups(*assetGroups);
                     return OUTPUTS_PARSING_ERROR;
                 }
-                ASSERT(name_ptr != NULL);
-                token->assetName = name_ptr;
+                ASSERT(token->assetName != NULL);
 
                 if (!canonical_key_ok(has_previous_token,
                                       previous_token_name,
                                       previous_token_len,
-                                      name_ptr,
+                                      token->assetName,
                                       token->assetNameLen)) {
                     TRACE("Collateral asset group %u tokens not canonical", ag);
                     app_mem_free(token_item);
@@ -1189,7 +1176,7 @@ static parser_status_e parse_output_structure(buffer_t *output_buf,
                     free_asset_groups(*assetGroups);
                     return CANONICAL_ORDERING_ERROR;
                 }
-                previous_token_name = name_ptr;
+                previous_token_name = token->assetName;
                 previous_token_len = token->assetNameLen;
                 has_previous_token = true;
 
@@ -1337,13 +1324,12 @@ static parser_status_e parse_tx_voting_procedures(buffer_t *buf, transaction_t *
             explicit_bzero(vote_item, sizeof(*vote_item));
 
             // Parse gov_action_id (tx_hash + index)
-            uint8_t *tx_hash_ptr = NULL;
-            if (!buffer_read_bytes_ptr(buf, &tx_hash_ptr, TX_HASH_LENGTH)) {
+            if (!buffer_read_bytes_ptr(buf, &vote_item->vote_data.govActionId.txHash, TX_HASH_LENGTH)) {
                 app_mem_free(vote_item);
                 free_voter_item(voter_item);
                 return VOTING_PROCEDURES_PARSING_ERROR;
             }
-            vote_item->vote_data.govActionId.txHash = tx_hash_ptr;
+            ASSERT(vote_item->vote_data.govActionId.txHash != NULL);
 
             if (!buffer_read_u32(buf, &vote_item->vote_data.govActionId.govActionIndex, BE)) {
                 app_mem_free(vote_item);
@@ -1382,22 +1368,20 @@ static parser_status_e parse_tx_voting_procedures(buffer_t *buf, transaction_t *
                 }
                 vote_item->vote_data.anchor.urlLength = url_len;
 
-                uint8_t *url_ptr = NULL;
-                if (!buffer_read_bytes_ptr(buf, &url_ptr, url_len)) {
+                if (!buffer_read_bytes_ptr(buf, &vote_item->vote_data.anchor.url, url_len)) {
                     app_mem_free(vote_item);
                     free_voter_item(voter_item);
                     return VOTING_PROCEDURES_PARSING_ERROR;
                 }
-                vote_item->vote_data.anchor.url = url_ptr;
+                ASSERT(vote_item->vote_data.anchor.url != NULL);
 
                 // Parse hash (32 bytes)
-                uint8_t *hash_ptr = NULL;
-                if (!buffer_read_bytes_ptr(buf, &hash_ptr, ANCHOR_HASH_LENGTH)) {
+                if (!buffer_read_bytes_ptr(buf, &vote_item->vote_data.anchor.hash, ANCHOR_HASH_LENGTH)) {
                     app_mem_free(vote_item);
                     free_voter_item(voter_item);
                     return VOTING_PROCEDURES_PARSING_ERROR;
                 }
-                vote_item->vote_data.anchor.hash = hash_ptr;
+                ASSERT(vote_item->vote_data.anchor.hash != NULL);
             }
 
             // Add vote to voter's vote list

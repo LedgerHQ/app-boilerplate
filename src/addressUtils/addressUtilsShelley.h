@@ -14,7 +14,7 @@ typedef struct {
     key_reference_type_t keyReferenceType;
     union {
         bip44_path_t path;
-        uint8_t hashBuffer[REWARD_ACCOUNT_LENGTH];
+        const uint8_t* hashBuffer;
     };
 // TODO maybe we do not need this type and it could be replaced by credential
 // TODO since network id is stored globally for tx, but it might affect public API in ledgerjs

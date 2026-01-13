@@ -10,7 +10,7 @@
 #define OPCERT_ISSUE_COUNTER_SIZE 8  // uint64_t
 
 typedef struct {
-    uint8_t *kesPublicKey;
+    const uint8_t *kesPublicKey;
     uint64_t kesPeriod;
     uint64_t issueCounter;
     bip44_path_t poolColdKeyPath;

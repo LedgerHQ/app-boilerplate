@@ -1355,8 +1355,7 @@ static void _relay_addIpv4(tx_hash_builder_t* builder, const ipv4_t* ipv4) {
     if (ipv4->isNull) {
         BUILDER_APPEND_CBOR(CBOR_TYPE_NULL, 0);
     } else {
-        STATIC_ASSERT(sizeof(ipv4->ip) == IPV4_LENGTH,
-                      "wrong ipv4 size");  // SIZEOF does not work for 4-byte buffers
+        LEDGER_ASSERT(ipv4->ip != NULL, "NULL ipv4");
         BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, IPV4_LENGTH);
         BUILDER_APPEND_DATA(ipv4->ip, IPV4_LENGTH);
     }
@@ -1373,7 +1372,7 @@ static void _relay_addIpv6(tx_hash_builder_t* builder, const ipv6_t* ipv6) {
     if (ipv6->isNull) {
         BUILDER_APPEND_CBOR(CBOR_TYPE_NULL, 0);
     } else {
-        STATIC_ASSERT(SIZEOF(ipv6->ip) == IPV6_LENGTH, "wrong ipv6 size");
+        LEDGER_ASSERT(ipv6->ip != NULL, "NULL ipv6");
         BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, IPV6_LENGTH);
 
         // serialized as 4 big-endian uint32
@@ -1382,7 +1381,7 @@ static void _relay_addIpv6(tx_hash_builder_t* builder, const ipv6_t* ipv6) {
         // it away
         uint8_t ipBuffer[IPV6_LENGTH] = {0};
         memmove(ipBuffer, ipv6->ip, SIZEOF(ipBuffer));
-        STATIC_ASSERT(SIZEOF(ipBuffer) == 16, "wrong ipv6 size");
+        STATIC_ASSERT(SIZEOF(ipBuffer) == IPV6_LENGTH, "wrong ipv6 size");
 
         uint32_t* as_uint32 = (uint32_t*) ipBuffer;
         for (size_t i = 0; i < 4; i++) {

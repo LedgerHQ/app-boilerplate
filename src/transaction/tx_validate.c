@@ -847,6 +847,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                     if (certData->poolId.keyReferenceType == KEY_REFERENCE_PATH) {
                         bip44_pathToKeyHash(&certData->poolId.path, poolKeyHash, sizeof(poolKeyHash));
                     } else {
+                        LEDGER_ASSERT(certData->poolId.hash != NULL, "NULL pool ID hash");
                         memcpy(poolKeyHash, certData->poolId.hash, POOL_KEY_HASH_LENGTH);
                     }
                     txHashBuilder_poolRegistrationCertificate_poolKeyHash(
@@ -859,7 +860,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                     txHashBuilder_poolRegistrationCertificate_vrfKeyHash(
                         &txHashBuilder,
                         certData->vrfKeyHash,
-                        sizeof(certData->vrfKeyHash)
+                        VRF_KEY_HASH_LENGTH
                     );
 
                     // Financials
@@ -1220,6 +1221,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                                    keyHash, sizeof(keyHash));
             } else {
                 ASSERT(signer_item->required_signer.type == REQUIRED_SIGNER_WITH_HASH);
+                LEDGER_ASSERT(signer_item->required_signer.keyHash != NULL, "NULL required signer key hash");
                 memmove(keyHash, signer_item->required_signer.keyHash, sizeof(keyHash));
             }
             txHashBuilder_addRequiredSigner(&txHashBuilder, keyHash, sizeof(keyHash));

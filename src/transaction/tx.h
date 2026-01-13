@@ -77,7 +77,7 @@ typedef struct {
     required_signer_type_t type;
     union {
         bip44_path_t keyPath;
-        uint8_t keyHash[ADDRESS_KEY_HASH_LENGTH];
+        const uint8_t* keyHash;
     };
 } required_signer_t;
 
@@ -121,7 +121,7 @@ typedef struct {
         uint64_t deposit;
         uint64_t retirementEpoch;
         ext_drep_t drep;
-        uint8_t vrfKeyHash[VRF_KEY_HASH_LENGTH];
+        const uint8_t* vrfKeyHash;
     };
     // Extended data for pool registration
     union {
@@ -174,7 +174,7 @@ typedef struct {
     uint8_t auxDataHash[AUX_DATA_HASH_LENGTH];
 
     bool includeScriptDataHash;         // key 11
-    uint8_t scriptDataHash[SCRIPT_DATA_HASH_LENGTH];
+    const uint8_t* scriptDataHash;
 
     uint16_t num_collateral_inputs;     // key 13
     s_flist_node* collateral_inputs;

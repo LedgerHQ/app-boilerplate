@@ -156,13 +156,11 @@ parser_status_e parse_certificate_stake_delegation(buffer_t *buf,
     }
 
     // Store pointer to pool key hash in raw buffer instead of copying
-    uint8_t *hash_ptr = NULL;
-    if (!buffer_read_bytes_ptr(buf, &hash_ptr, POOL_KEY_HASH_LENGTH)) {
+    if (!buffer_read_bytes_ptr(buf, &cert_data->poolKeyHash, POOL_KEY_HASH_LENGTH)) {
         TRACE("Failed to read pool key hash");
         return CERTIFICATES_PARSING_ERROR;
     }
-    ASSERT(hash_ptr != NULL);
-    cert_data->poolKeyHash = hash_ptr;
+    ASSERT(cert_data->poolKeyHash != NULL);
     TRACE("Successfully parsed STAKE_DELEGATION");
     return PARSING_OK;
 }
@@ -343,13 +341,11 @@ static parser_status_e _parse_anchor(buffer_t *buf, anchor_t *anchor) {
 
     // Store pointer to URL in raw buffer instead of copying
     // Note: urlLength can be 0 for empty URLs, which is valid
-    uint8_t *url_ptr = NULL;
-    if (!buffer_read_bytes_ptr(buf, &url_ptr, anchor->urlLength)) {
+    if (!buffer_read_bytes_ptr(buf, &anchor->url, anchor->urlLength)) {
         TRACE("Failed to read anchor URL");
         return CERTIFICATES_PARSING_ERROR;
     }
-    ASSERT(url_ptr != NULL);
-    anchor->url = url_ptr;
+    ASSERT(anchor->url != NULL);
     if (!str_isPrintableAsciiWithoutSpaces(anchor->url, anchor->urlLength)) {
         TRACE("Anchor URL contains non-printable ASCII or spaces");
         return CERTIFICATES_PARSING_ERROR;
@@ -357,13 +353,11 @@ static parser_status_e _parse_anchor(buffer_t *buf, anchor_t *anchor) {
     TRACE("Successfully parsed anchor URL");
 
     // Store pointer to hash in raw buffer instead of copying
-    uint8_t *hash_ptr = NULL;
-    if (!buffer_read_bytes_ptr(buf, &hash_ptr, ANCHOR_HASH_LENGTH)) {
+    if (!buffer_read_bytes_ptr(buf, &anchor->hash, ANCHOR_HASH_LENGTH)) {
         TRACE("Failed to read anchor hash");
         return CERTIFICATES_PARSING_ERROR;
     }
-    ASSERT(hash_ptr != NULL);
-    anchor->hash = hash_ptr;
+    ASSERT(anchor->hash != NULL);
 
     TRACE("Successfully parsed anchor");
     return PARSING_OK;
@@ -525,10 +519,11 @@ static parser_status_e _parse_pool_id(buffer_t *buf, pool_id_t *pool_id) {
     switch (pool_id_type_wire) {
         case 0x00:  // KEY_HASH (pool key hash)
             pool_id->keyReferenceType = KEY_REFERENCE_HASH;
-            if (!buffer_read_bytes(buf, pool_id->hash, POOL_KEY_HASH_LENGTH)) {
+            if (!buffer_read_bytes_ptr(buf, &pool_id->hash, POOL_KEY_HASH_LENGTH)) {
                 TRACE("Failed to read pool key hash");
                 return CERTIFICATES_PARSING_ERROR;
             }
+            ASSERT(pool_id->hash != NULL);
             TRACE("Successfully parsed pool ID as KEY_HASH");
             break;
         case 0x02:  // KEY_PATH (pool cold key path)
@@ -598,10 +593,11 @@ static parser_status_e _parse_pool_relay(buffer_t *buf, pool_relay_t *relay) {
             }
             relay->ipv4.isNull = !ipv4_included;
             if (ipv4_included) {
-                if (!buffer_read_bytes(buf, relay->ipv4.ip, IPV4_LENGTH)) {
+                if (!buffer_read_bytes_ptr(buf, &relay->ipv4.ip, IPV4_LENGTH)) {
                     TRACE("Failed to read IPv4 address");
                     return CERTIFICATES_PARSING_ERROR;
                 }
+                ASSERT(relay->ipv4.ip != NULL);
                 TRACE("Relay IPv4 present");
             }
 
@@ -618,10 +614,11 @@ static parser_status_e _parse_pool_relay(buffer_t *buf, pool_relay_t *relay) {
             }
             relay->ipv6.isNull = !ipv6_included;
             if (ipv6_included) {
-                if (!buffer_read_bytes(buf, relay->ipv6.ip, IPV6_LENGTH)) {
+                if (!buffer_read_bytes_ptr(buf, &relay->ipv6.ip, IPV6_LENGTH)) {
                     TRACE("Failed to read IPv6 address");
                     return CERTIFICATES_PARSING_ERROR;
                 }
+                ASSERT(relay->ipv6.ip != NULL);
                 TRACE("Relay IPv6 present");
             }
             if (relay->ipv4.isNull && relay->ipv6.isNull) {
@@ -671,12 +668,11 @@ static parser_status_e _parse_pool_relay(buffer_t *buf, pool_relay_t *relay) {
                     TRACE("DNS name length exceeds maximum: %u > %u", dns_len, MAX_DNS_NAME_LENGTH);
                     return CERTIFICATES_PARSING_ERROR;
                 }
-                uint8_t *dns_ptr = NULL;
-                if (!buffer_read_bytes_ptr(buf, &dns_ptr, dns_len)) {
+                if (!buffer_read_bytes_ptr(buf, &relay->dnsName, dns_len)) {
                     TRACE("Failed to read DNS name");
                     return CERTIFICATES_PARSING_ERROR;
                 }
-                relay->dnsName = dns_ptr;
+                ASSERT(relay->dnsName != NULL);
             } else {
                 relay->dnsName = NULL;
             }
@@ -711,12 +707,11 @@ static parser_status_e _parse_pool_relay(buffer_t *buf, pool_relay_t *relay) {
                     TRACE("DNS name length exceeds maximum: %u > %u", dns_len, MAX_DNS_NAME_LENGTH);
                     return CERTIFICATES_PARSING_ERROR;
                 }
-                uint8_t *dns_ptr = NULL;
-                if (!buffer_read_bytes_ptr(buf, &dns_ptr, dns_len)) {
+                if (!buffer_read_bytes_ptr(buf, &relay->dnsName, dns_len)) {
                     TRACE("Failed to read DNS name");
                     return CERTIFICATES_PARSING_ERROR;
                 }
-                relay->dnsName = dns_ptr;
+                ASSERT(relay->dnsName != NULL);
             } else {
                 relay->dnsName = NULL;
             }
@@ -768,12 +763,11 @@ static parser_status_e _parse_pool_metadata(buffer_t *buf, pool_metadata_t *meta
         return CERTIFICATES_PARSING_ERROR;
     }
 
-    uint8_t *url_ptr = NULL;
-    if (!buffer_read_bytes_ptr(buf, &url_ptr, url_len)) {
+    if (!buffer_read_bytes_ptr(buf, &metadata->url, url_len)) {
         TRACE("Failed to read metadata URL");
         return CERTIFICATES_PARSING_ERROR;
     }
-    metadata->url = url_ptr;
+    ASSERT(metadata->url != NULL);
     TRACE("Metadata URL length: %u", url_len);
     if (!str_isPrintableAsciiWithoutSpaces(metadata->url, metadata->urlSize)) {
         TRACE("Metadata URL contains non-printable ASCII or spaces");
@@ -781,12 +775,11 @@ static parser_status_e _parse_pool_metadata(buffer_t *buf, pool_metadata_t *meta
     }
 
     // Hash (32 bytes for blake2b-256)
-    uint8_t *hash_ptr = NULL;
-    if (!buffer_read_bytes_ptr(buf, &hash_ptr, ANCHOR_HASH_LENGTH)) {
+    if (!buffer_read_bytes_ptr(buf, &metadata->hash, ANCHOR_HASH_LENGTH)) {
         TRACE("Failed to read metadata hash");
         return CERTIFICATES_PARSING_ERROR;
     }
-    metadata->hash = hash_ptr;
+    ASSERT(metadata->hash != NULL);
     TRACE("Successfully parsed pool metadata");
     return PARSING_OK;
 }
@@ -805,8 +798,7 @@ parser_status_e parse_certificate_stake_pool_registration(buffer_t *buf,
     }
 
     // Parse VRF key hash (32 bytes)
-    STATIC_ASSERT(SIZEOF(cert_data->vrfKeyHash) == VRF_KEY_HASH_LENGTH, "wrong vrfKeyHash size");
-    if (!buffer_read_bytes(buf, cert_data->vrfKeyHash, VRF_KEY_HASH_LENGTH)) {
+    if (!buffer_read_bytes_ptr(buf, &cert_data->vrfKeyHash, VRF_KEY_HASH_LENGTH)) {
         TRACE("Failed to read VRF key hash");
         return CERTIFICATES_PARSING_ERROR;
     }
@@ -863,11 +855,12 @@ parser_status_e parse_certificate_stake_pool_registration(buffer_t *buf,
     switch (reward_account_type) {
         case 0x00:  // KEY_HASH
             cert_data->poolRegistration.rewardAccount.keyReferenceType = KEY_REFERENCE_HASH;
-            if (!buffer_read_bytes(buf, cert_data->poolRegistration.rewardAccount.hashBuffer,
-                                  REWARD_ACCOUNT_LENGTH)) {
+            if (!buffer_read_bytes_ptr(buf, &cert_data->poolRegistration.rewardAccount.hashBuffer,
+                                       REWARD_ACCOUNT_LENGTH)) {
                 TRACE("Failed to read reward account hash");
                 return CERTIFICATES_PARSING_ERROR;
             }
+            ASSERT(cert_data->poolRegistration.rewardAccount.hashBuffer != NULL);
             TRACE("Successfully parsed reward account as KEY_HASH");
             break;
         case 0x02:  // KEY_PATH

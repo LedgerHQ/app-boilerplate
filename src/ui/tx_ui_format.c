@@ -340,6 +340,7 @@ static void ui_strings_certificate_pool_registration(const certificate_data_t* c
             bip44_pathToKeyHash(&pool_id->path, pool_key_hash, sizeof(pool_key_hash));
             break;
         case KEY_REFERENCE_HASH:
+            LEDGER_ASSERT(pool_id->hash != NULL, "NULL pool ID hash");
             memcpy(pool_key_hash, pool_id->hash, POOL_KEY_HASH_LENGTH);
             break;
         default:

@@ -99,10 +99,10 @@ bool buffer_read_bytes(buffer_t *buffer, uint8_t *destBuffer, size_t n) {
     return buffer_seek_cur(buffer, n);
 }
 
-bool buffer_read_bytes_ptr(buffer_t *buffer, uint8_t **destBuffer, size_t n) {
+bool buffer_read_bytes_ptr(buffer_t *buffer, const uint8_t **destBuffer, size_t n) {
     LEDGER_ASSERT(buffer != NULL, "NULL buffer");
 
-    *destBuffer = (uint8_t *)(buffer->ptr + buffer->offset);
+    *destBuffer = (const uint8_t *)(buffer->ptr + buffer->offset);
     if (!buffer_seek_cur(buffer, n)) {
         return false;
     }

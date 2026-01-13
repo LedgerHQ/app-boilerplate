@@ -48,12 +48,10 @@ parser_status_e parse_output_destination(buffer_t* buf,
             destination->address.size = addr_size;
 
             // Store pointer to address in raw buffer instead of copying
-            uint8_t *addr_ptr = NULL;
-            if (!buffer_read_bytes_ptr(buf, &addr_ptr, addr_size)) {
+            if (!buffer_read_bytes_ptr(buf, &destination->address.buffer, addr_size)) {
                 return OUTPUTS_PARSING_ERROR;
             }
-            ASSERT(addr_ptr != NULL);
-            destination->address.buffer = addr_ptr;
+            ASSERT(destination->address.buffer != NULL);
             break;
         }
 
@@ -120,12 +118,10 @@ parser_status_e parse_output_datum(buffer_t* buf, output_datum_t* datum) {
             datum->hasDatum = true;
             datum->type = DATUM_HASH;
 
-            uint8_t *hash_ptr = NULL;
-            if (!buffer_read_bytes_ptr(buf, &hash_ptr, OUTPUT_DATUM_HASH_LENGTH)) {
+            if (!buffer_read_bytes_ptr(buf, &datum->hash, OUTPUT_DATUM_HASH_LENGTH)) {
                 return OUTPUTS_PARSING_ERROR;
             }
-            ASSERT(hash_ptr != NULL);
-            datum->hash = hash_ptr;
+            ASSERT(datum->hash != NULL);
             TRACE("Datum hash read");
             TRACE_BUFFER(datum->hash, OUTPUT_DATUM_HASH_LENGTH);
             break;
@@ -144,12 +140,10 @@ parser_status_e parse_output_datum(buffer_t* buf, output_datum_t* datum) {
             }
             datum->inline_data.size = datum_size;
 
-            uint8_t *data_ptr = NULL;
-            if (!buffer_read_bytes_ptr(buf, &data_ptr, datum_size)) {
+            if (!buffer_read_bytes_ptr(buf, &datum->inline_data.data, datum_size)) {
                 return OUTPUTS_PARSING_ERROR;
             }
-            ASSERT(data_ptr != NULL);
-            datum->inline_data.data = data_ptr;
+            ASSERT(datum->inline_data.data != NULL);
             TRACE("Inline datum read: %u bytes", datum_size);
             TRACE_BUFFER(datum->inline_data.data, datum->inline_data.size);
             break;
@@ -193,12 +187,10 @@ parser_status_e parse_output_ref_script(buffer_t* buf,
             }
             refScript->size = script_size;
 
-            uint8_t *data_ptr = NULL;
-            if (!buffer_read_bytes_ptr(buf, &data_ptr, script_size)) {
+            if (!buffer_read_bytes_ptr(buf, &refScript->data, script_size)) {
                 return OUTPUTS_PARSING_ERROR;
             }
-            ASSERT(data_ptr != NULL);
-            refScript->data = data_ptr;
+            ASSERT(refScript->data != NULL);
             TRACE("Reference script read: %u bytes", script_size);
             break;
         }

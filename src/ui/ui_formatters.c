@@ -250,6 +250,7 @@ bool format_ipv4(const ipv4_t *ipv4, char *out, size_t outSize) {
     if (ipv4->isNull) {
         snprintf(out, outSize, "(none)");
     } else {
+        ASSERT(ipv4->ip != NULL);
         inet_ntop4(ipv4->ip, out, outSize);
     }
 
@@ -272,6 +273,7 @@ bool format_ipv6(const ipv6_t *ipv6, char *out, size_t outSize) {
     if (ipv6->isNull) {
         snprintf(out, outSize, "(none)");
     } else {
+        ASSERT(ipv6->ip != NULL);
         inet_ntop6(ipv6->ip, out, outSize);
     }
 

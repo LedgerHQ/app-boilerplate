@@ -826,8 +826,7 @@ void poolRewardAccountToBuffer(const pool_reward_account_t* rewardAccount,
                                uint8_t* rewardAccountBuffer) {
     switch (rewardAccount->keyReferenceType) {
         case KEY_REFERENCE_HASH: {
-            STATIC_ASSERT(SIZEOF(rewardAccount->hashBuffer) == REWARD_ACCOUNT_LENGTH,
-                          "wrong reward account hash buffer size");
+            LEDGER_ASSERT(rewardAccount->hashBuffer != NULL, "NULL reward account hash buffer");
             memmove(rewardAccountBuffer, rewardAccount->hashBuffer, REWARD_ACCOUNT_LENGTH);
             break;
         }

@@ -225,24 +225,27 @@ static void test_format_ipv4(void **state) {
 
     char tmp[MAX_IPV4_STR_LENGTH + 2] = {0};  // +2 to check we don't exceed buffer
 
-    ipv4_t ipv4_null = {.isNull = true, .ip = {0, 0, 0, 0}};
+    ipv4_t ipv4_null = {.isNull = true, .ip = NULL};
     bool success = format_ipv4(&ipv4_null, tmp, sizeof(tmp));
     assert_true(success);
     assert_string_equal(tmp, "(none)");
 
-    ipv4_t ipv4_valid = {.isNull = false, .ip = {192, 168, 1, 1}};
+    const uint8_t ipv4_valid_bytes[IPV4_LENGTH] = {192, 168, 1, 1};
+    ipv4_t ipv4_valid = {.isNull = false, .ip = ipv4_valid_bytes};
     memset(tmp, 0, sizeof(tmp));
     success = format_ipv4(&ipv4_valid, tmp, sizeof(tmp));
     assert_true(success);
     assert_string_equal(tmp, "192.168.1.1");
 
-    ipv4_t ipv4_zeros = {.isNull = false, .ip = {0, 0, 0, 0}};
+    const uint8_t ipv4_zeros_bytes[IPV4_LENGTH] = {0, 0, 0, 0};
+    ipv4_t ipv4_zeros = {.isNull = false, .ip = ipv4_zeros_bytes};
     memset(tmp, 0, sizeof(tmp));
     success = format_ipv4(&ipv4_zeros, tmp, sizeof(tmp));
     assert_true(success);
     assert_string_equal(tmp, "0.0.0.0");
 
-    ipv4_t ipv4_max = {.isNull = false, .ip = {255, 255, 255, 255}};
+    const uint8_t ipv4_max_bytes[IPV4_LENGTH] = {255, 255, 255, 255};
+    ipv4_t ipv4_max = {.isNull = false, .ip = ipv4_max_bytes};
     memset(tmp, 0, sizeof(tmp));
     success = format_ipv4(&ipv4_max, tmp, sizeof(tmp));
     assert_true(success);
@@ -254,24 +257,27 @@ static void test_format_ipv6(void **state) {
 
     char tmp[MAX_IPV6_STR_LENGTH + 2] = {0};  // +2 to check we don't exceed buffer
 
-    ipv6_t ipv6_null = {.isNull = true, .ip = {0}};
+    ipv6_t ipv6_null = {.isNull = true, .ip = NULL};
     bool success = format_ipv6(&ipv6_null, tmp, sizeof(tmp));
     assert_true(success);
     assert_string_equal(tmp, "(none)");
 
-    ipv6_t ipv6_zeros = {.isNull = false, .ip = {0}};
+    const uint8_t ipv6_zeros_bytes[IPV6_LENGTH] = {0};
+    ipv6_t ipv6_zeros = {.isNull = false, .ip = ipv6_zeros_bytes};
     memset(tmp, 0, sizeof(tmp));
     success = format_ipv6(&ipv6_zeros, tmp, sizeof(tmp));
     assert_true(success);
     assert_string_equal(tmp, "::");
 
-    ipv6_t ipv6_loopback = {.isNull = false, .ip = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}};
+    const uint8_t ipv6_loopback_bytes[IPV6_LENGTH] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
+    ipv6_t ipv6_loopback = {.isNull = false, .ip = ipv6_loopback_bytes};
     memset(tmp, 0, sizeof(tmp));
     success = format_ipv6(&ipv6_loopback, tmp, sizeof(tmp));
     assert_true(success);
     assert_string_equal(tmp, "::1");
 
-    ipv6_t ipv6_valid = {.isNull = false, .ip = {0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}};
+    const uint8_t ipv6_valid_bytes[IPV6_LENGTH] = {0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
+    ipv6_t ipv6_valid = {.isNull = false, .ip = ipv6_valid_bytes};
     memset(tmp, 0, sizeof(tmp));
     success = format_ipv6(&ipv6_valid, tmp, sizeof(tmp));
     assert_true(success);

@@ -127,7 +127,7 @@ static void test_buffer_read_bytes_ptr(void **state) {
         .offset = 0,
     };
 
-    uint8_t *slice = NULL;
+    const uint8_t *slice = NULL;
     assert_true(buffer_read_bytes_ptr(&buf, &slice, 2));
     assert_ptr_equal(slice, raw);
     assert_int_equal(buf.offset, 2);

@@ -140,7 +140,7 @@ bool buffer_write_cbor_token(write_buffer_t *buffer, uint8_t type, uint64_t valu
  * @return true if success, false if not enough data available
  */
 bool buffer_read_bytes(buffer_t *buffer, uint8_t *destBuffer, size_t n);
-bool buffer_read_bytes_ptr(buffer_t *buffer, uint8_t **destBuffer, size_t n);
+bool buffer_read_bytes_ptr(buffer_t *buffer, const uint8_t **destBuffer, size_t n);
 
 /**
  * Read 8 bytes from buffer as signed int64 with specified endianness.

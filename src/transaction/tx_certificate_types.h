@@ -34,12 +34,12 @@ typedef enum {
 
 typedef struct {
     bool isNull;
-    uint8_t ip[IPV4_LENGTH];
+    const uint8_t* ip;
 } ipv4_t;
 
 typedef struct {
     bool isNull;
-    uint8_t ip[IPV6_LENGTH];
+    const uint8_t* ip;
 } ipv6_t;
 
 typedef struct {
@@ -60,7 +60,7 @@ typedef struct {
     key_reference_type_t keyReferenceType;
     union {
         bip44_path_t path;
-        uint8_t hash[POOL_KEY_HASH_LENGTH];
+        const uint8_t* hash;
     };
 } pool_id_t;
 
