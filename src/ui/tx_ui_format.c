@@ -467,11 +467,11 @@ static void ui_strings_certificate_pool_registration(const certificate_data_t* c
 
     // Display reward account
     if (reward_policy == POLICY_SHOW) {
-        addRewardAccountUIPairs(
-            G_context.tx_info.transaction.networkId,
-            &certificate_data->poolRegistration.rewardAccount,
-            UI_STATIC_LABEL("Pool reward address")
-        );
+        UI_ADD_FORMAT2(UI_STATIC_LABEL("Pool reward address"),
+                       MAX_HUMAN_ADDRESS_LENGTH,
+                       format_pool_reward_account,
+                       G_context.tx_info.transaction.networkId,
+                       &certificate_data->poolRegistration.rewardAccount);
     }
 
     // Display pool owners
@@ -490,11 +490,11 @@ static void ui_strings_certificate_pool_registration(const certificate_data_t* c
         LEDGER_ASSERT(owner_policy != POLICY_DENY, "Pool owner security policy denied");
 
         if (owner_policy == POLICY_SHOW) {
-            addRewardAddressFromCredentialUIPairs(
-                G_context.tx_info.transaction.networkId,
-                owner_cred,
-                UI_STATIC_LABEL("Owner reward address")
-            );
+            UI_ADD_FORMAT2(UI_STATIC_LABEL("Owner reward address"),
+                           MAX_HUMAN_ADDRESS_LENGTH,
+                           format_reward_account_from_credential,
+                           G_context.tx_info.transaction.networkId,
+                           owner_cred);
         }
 
         owner_node = owner_node->next;

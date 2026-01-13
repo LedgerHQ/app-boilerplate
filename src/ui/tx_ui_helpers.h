@@ -36,11 +36,6 @@
  *
  * @return true if formatting succeeded, false on error
  */
-bool formatRewardAddressFromCredential(uint8_t networkId,
-                                      const ext_credential_t *credential,
-                                      char *buffer,
-                                      size_t buffer_size);
-
 /**
  * Add credential (key path, key hash, or script hash) to UI pairs with context-specific bech32 prefix
  *
@@ -117,32 +112,6 @@ void addPoolKeyHashUIPairs(const uint8_t *poolKeyHash, const char *label);
  * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
  */
 void addRewardAccountFromCredentialUIPairs(uint8_t networkId, const ext_credential_t *credential);
-
-/**
- * Add reward address derived from a credential to UI pairs
- *
- * @param[in]  networkId     Network ID for reward address construction
- * @param[in]  credential    Credential to display (type + data)
- * @param[in]  label         Label for the UI pair
- *
- * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
- */
-void addRewardAddressFromCredentialUIPairs(uint8_t networkId,
-                                          const ext_credential_t *credential,
-                                          const char *label);
-
-/**
- * Add reward account address to UI pairs (pool reward account)
- *
- * @param[in]  networkId      Network ID for reward address construction
- * @param[in]  rewardAccount  Reward account to display (type + data)
- * @param[in]  label          Label for the UI pair
- *
- * On error, error status is set via ui_set_error_status() and can be retrieved with ui_get_error_status()
- */
-void addRewardAccountUIPairs(uint8_t networkId,
-                            const reward_account_t *rewardAccount,
-                            const char *label);
 
 /**
  * Add payment credential UI pair for device-owned address

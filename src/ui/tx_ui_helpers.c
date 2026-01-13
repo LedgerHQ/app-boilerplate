@@ -162,61 +162,6 @@ void addDRepUIPairs(const ext_drep_t *drep, const char *label) {
     }
 }
 
-bool formatRewardAddressFromCredential(uint8_t networkId,
-                                      const ext_credential_t *credential,
-                                      char *buffer,
-                                      size_t buffer_size) {
-    LEDGER_ASSERT(credential != NULL, "NULL credential");
-    LEDGER_ASSERT(buffer != NULL, "NULL buffer");
-
-    uint8_t reward_addr_bytes[REWARD_ACCOUNT_LENGTH];
-    size_t reward_addr_len = 0;
-
-    switch (credential->type) {
-        case EXT_CREDENTIAL_KEY_PATH:
-            reward_addr_len = constructRewardAddressFromKeyPath(
-                &credential->keyPath,
-                networkId,
-                reward_addr_bytes,
-                sizeof(reward_addr_bytes)
-            );
-            break;
-        case EXT_CREDENTIAL_KEY_HASH:
-            reward_addr_len = constructRewardAddressFromHash(
-                networkId,
-                REWARD_HASH_SOURCE_KEY,
-                credential->keyHash,
-                ADDRESS_KEY_HASH_LENGTH,
-                reward_addr_bytes,
-                sizeof(reward_addr_bytes)
-            );
-            break;
-        case EXT_CREDENTIAL_SCRIPT_HASH:
-            reward_addr_len = constructRewardAddressFromHash(
-                networkId,
-                REWARD_HASH_SOURCE_SCRIPT,
-                credential->scriptHash,
-                SCRIPT_HASH_LENGTH,
-                reward_addr_bytes,
-                sizeof(reward_addr_bytes)
-            );
-            break;
-        default:
-            return false;
-    }
-
-    if (reward_addr_len == 0) {
-        return false;
-    }
-
-    return format_address_human_readable(
-        reward_addr_bytes,
-        reward_addr_len,
-        buffer,
-        buffer_size
-    );
-}
-
 void addAnchorUIPairs(const anchor_t *anchor) {
     LEDGER_ASSERT(anchor != NULL, "NULL anchor");
 
@@ -244,104 +189,24 @@ void addPoolKeyHashUIPairs(const uint8_t *poolKeyHash, const char *label) {
 void addRewardAccountFromCredentialUIPairs(uint8_t networkId, const ext_credential_t *credential) {
     LEDGER_ASSERT(credential != NULL, "NULL credential");
 
-    char reward_addr_buf[MAX_HUMAN_ADDRESS_LENGTH + UI_BUFFER_SAFETY_MARGIN];
-    bool reward_formatted = formatRewardAddressFromCredential(networkId, credential, reward_addr_buf, sizeof(reward_addr_buf));
-    LEDGER_ASSERT(reward_formatted, "Unable to format reward account");
-    LEDGER_ASSERT(strlen(reward_addr_buf) <= MAX_HUMAN_ADDRESS_LENGTH, "Reward address ui string buffer too short");
-
-    char *value_tmp = NULL;
-
     switch (credential->type) {
         case EXT_CREDENTIAL_KEY_PATH: {
-            char path_buf[MAX_BIP44_PATH_STRING_LENGTH + UI_BUFFER_SAFETY_MARGIN];
-            bool cred_formatted = format_bip44_path(&credential->keyPath, path_buf, sizeof(path_buf));
-            LEDGER_ASSERT(cred_formatted, "Unable to format credential path");
-            LEDGER_ASSERT(strlen(path_buf) <= MAX_BIP44_PATH_STRING_LENGTH, "Credential path buffer too short");
-
-            value_tmp = (char *) app_mem_alloc(MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 4);
-            if (value_tmp == NULL) {
-                ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-            } else {
-                snprintf(value_tmp,
-                        MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 4,
-                        "%s %s",
-                        path_buf,
-                        reward_addr_buf);
-                LEDGER_ASSERT(strlen(value_tmp) <= MAX_HUMAN_ADDRESS_LENGTH + MAX_BIP44_PATH_STRING_LENGTH + 1, "Address path ui string buffer too short");
-                if (!ui_pairs_add_static_label(UI_STATIC_LABEL("Reward account"), value_tmp)) {
-                    ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-                }
-            }
+            UI_ADD_FORMAT1(UI_STATIC_LABEL("Withdrawal path"), MAX_BIP44_PATH_STRING_LENGTH, format_bip44_path, &credential->keyPath);
             break;
         }
         case EXT_CREDENTIAL_KEY_HASH:
         case EXT_CREDENTIAL_SCRIPT_HASH: {
-            value_tmp = (char *) app_mem_alloc(MAX_HUMAN_ADDRESS_LENGTH + UI_BUFFER_SAFETY_MARGIN);
-            if (value_tmp == NULL) {
-                ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-            } else {
-                snprintf(value_tmp, MAX_HUMAN_ADDRESS_LENGTH + UI_BUFFER_SAFETY_MARGIN, "%s", reward_addr_buf);
-                LEDGER_ASSERT(strlen(value_tmp) <= MAX_HUMAN_ADDRESS_LENGTH, "Reward address ui string buffer too short");
-                if (!ui_pairs_add_static_label(UI_STATIC_LABEL("Reward account"), value_tmp)) {
-                    ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-                }
-            }
             break;
         }
         default:
             LEDGER_ASSERT(false, "Unknown credential type");
     }
-}
 
-void addRewardAddressFromCredentialUIPairs(uint8_t networkId,
-                                          const ext_credential_t *credential,
-                                          const char *label) {
-    LEDGER_ASSERT(credential != NULL, "NULL credential");
-    LEDGER_ASSERT(label != NULL, "NULL label");
-
-    char *reward_tmp = (char *) app_mem_alloc(MAX_HUMAN_ADDRESS_LENGTH + UI_BUFFER_SAFETY_MARGIN);
-    if (reward_tmp == NULL) {
-        ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-    } else {
-        bool reward_formatted = formatRewardAddressFromCredential(networkId,
-                                                                  credential,
-                                                                  reward_tmp,
-                                                                  MAX_HUMAN_ADDRESS_LENGTH + UI_BUFFER_SAFETY_MARGIN);
-        LEDGER_ASSERT(reward_formatted, "Unable to format reward address");
-        LEDGER_ASSERT(strlen(reward_tmp) <= MAX_HUMAN_ADDRESS_LENGTH, "Reward address ui string buffer too short");
-
-        if (!ui_pairs_add_static_label(label, reward_tmp)) {
-            ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-        }
-    }
-}
-
-void addRewardAccountUIPairs(uint8_t networkId,
-                            const reward_account_t *rewardAccount,
-                            const char *label) {
-    LEDGER_ASSERT(rewardAccount != NULL, "NULL reward account");
-    LEDGER_ASSERT(label != NULL, "NULL label");
-
-    uint8_t reward_account_buf[REWARD_ACCOUNT_LENGTH] = {0};
-    rewardAccountToBuffer(rewardAccount,
-                          networkId,
-                          reward_account_buf);
-
-    char *reward_tmp = (char *) app_mem_alloc(MAX_HUMAN_ADDRESS_LENGTH + UI_BUFFER_SAFETY_MARGIN);
-    if (reward_tmp == NULL) {
-        ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-    } else {
-        bool reward_formatted = format_address_human_readable(reward_account_buf,
-                                                              REWARD_ACCOUNT_LENGTH,
-                                                              reward_tmp,
-                                                              MAX_HUMAN_ADDRESS_LENGTH + UI_BUFFER_SAFETY_MARGIN);
-        LEDGER_ASSERT(reward_formatted, "Unable to format reward account address");
-        LEDGER_ASSERT(strlen(reward_tmp) <= MAX_HUMAN_ADDRESS_LENGTH, "Reward address ui string buffer too short");
-
-        if (!ui_pairs_add_static_label(label, reward_tmp)) {
-            ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-        }
-    }
+    UI_ADD_FORMAT2(UI_STATIC_LABEL("Withdrawal"),
+                   MAX_HUMAN_ADDRESS_LENGTH,
+                   format_reward_account_from_credential,
+                   networkId,
+                   credential);
 }
 
 void addPaymentInfoUIPair(const addressParams_t* addressParams) {
@@ -388,7 +253,6 @@ void addStakingInfoUIPair(const addressParams_t* addressParams) {
 
                     default:
                         LEDGER_ASSERT(false, "Invalid address type for NO_STAKING");
-                        ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
                 }
             }
             break;
@@ -416,6 +280,5 @@ void addStakingInfoUIPair(const addressParams_t* addressParams) {
 
         default:
             LEDGER_ASSERT(false, "Invalid staking data source");
-            ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
     }
 }

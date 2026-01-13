@@ -437,9 +437,9 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                         case POLICY_SHOW:
                             if (certificate_item->certificate.type == CERTIFICATE_STAKE_REGISTRATION ||
                                 certificate_item->certificate.type == CERTIFICATE_STAKE_DEREGISTRATION) {
-                                plan->pair_count += 3;  // cert# + type + stake credential
+                                plan->pair_count += 2;  // type + stake credential
                             } else {
-                                plan->pair_count += 4;  // cert# + type + stake credential + deposit
+                                plan->pair_count += 3;  // type + stake credential + deposit
                             }
                             break;
                         case POLICY_HIDE:
@@ -457,7 +457,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                         case POLICY_DENY:
                             return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
-                            plan->pair_count += 4;  // cert# + type + stake credential + pool keyhash
+                            plan->pair_count += 3;  // type + stake credential + pool keyhash
                             break;
                         case POLICY_HIDE:
                             break;
@@ -474,7 +474,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                         case POLICY_DENY:
                             return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
-                            plan->pair_count += 4;  // cert# + type + stake credential + DRep
+                            plan->pair_count += 3;  // type + stake credential + DRep
                             break;
                         case POLICY_HIDE:
                             break;
@@ -491,7 +491,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                         case POLICY_DENY:
                             return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
-                            plan->pair_count += 4;  // cert# + type + cold credential + hot credential
+                            plan->pair_count += 3;  // type + cold credential + hot credential
                             break;
                         case POLICY_HIDE:
                             break;
@@ -507,8 +507,8 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                         case POLICY_DENY:
                             return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
-                            // cert# + type + cold credential + anchor (URL + hash if present)
-                            plan->pair_count += 3;
+                            // type + cold credential + anchor (URL + hash if present)
+                            plan->pair_count += 2;
                             if (certificate_item->certificate.anchor.isIncluded) {
                                 plan->pair_count += 2;  // anchor URL + anchor hash
                             }
@@ -530,17 +530,17 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                             return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
                             if (certificate_item->certificate.type == CERTIFICATE_DREP_REGISTRATION) {
-                                // cert# + type + DRep credential + deposit + anchor (URL + hash if present)
-                                plan->pair_count += 4;
+                                // type + DRep credential + deposit + anchor (URL + hash if present)
+                                plan->pair_count += 3;
                                 if (certificate_item->certificate.anchor.isIncluded) {
                                     plan->pair_count += 2;  // anchor URL + anchor hash
                                 }
                             } else if (certificate_item->certificate.type == CERTIFICATE_DREP_DEREGISTRATION) {
-                                // cert# + type + DRep credential + deposit
-                                plan->pair_count += 4;
-                            } else {  // CERTIFICATE_DREP_UPDATE
-                                // cert# + type + DRep credential + anchor (URL + hash if present)
+                                // type + DRep credential + deposit
                                 plan->pair_count += 3;
+                            } else {  // CERTIFICATE_DREP_UPDATE
+                                // type + DRep credential + anchor (URL + hash if present)
+                                plan->pair_count += 2;
                                 if (certificate_item->certificate.anchor.isIncluded) {
                                     plan->pair_count += 2;  // anchor URL + anchor hash
                                 }
@@ -589,7 +589,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                         case POLICY_HIDE:
                             break;
                         case POLICY_SHOW: {
-                            uint16_t pool_pairs = 2;  // cert# + type
+                            uint16_t pool_pairs = 1;  // type
 
                             security_policy_t pool_id_policy = policyForSignTxStakePoolRegistrationPoolId(
                                 G_context.tx_info.transaction.txSigningMode,
@@ -761,7 +761,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                         case POLICY_DENY:
                             return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                         case POLICY_SHOW:
-                            plan->pair_count += 4;  // cert# + type + pool ID + retirement epoch
+                            plan->pair_count += 3;  // type + pool ID + retirement epoch
                             break;
                         case POLICY_HIDE:
                             break;
@@ -873,7 +873,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
 
                     // Reward Account
                     uint8_t rewardAccountBuf[REWARD_ACCOUNT_LENGTH];
-                    rewardAccountToBuffer(
+                    poolRewardAccountToBuffer(
                         &poolReg->rewardAccount,
                         G_context.tx_info.transaction.networkId,
                         rewardAccountBuf
@@ -1021,7 +1021,11 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                     TRACE("Withdrawal security policy denied");
                     return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
                 case POLICY_SHOW:
-                    plan->pair_count += 3;
+                    if (withdrawal_item->withdrawal.stakeCredential.type == EXT_CREDENTIAL_KEY_PATH) {
+                        plan->pair_count += 4;
+                    } else {
+                        plan->pair_count += 3;
+                    }
                     break;
                 case POLICY_HIDE:
                     break;

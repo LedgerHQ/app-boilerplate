@@ -136,7 +136,7 @@ security_policy_t policyForSignTxStakePoolRegistrationVrfKey(sign_tx_signingmode
 security_policy_t policyForSignTxStakePoolRegistrationRewardAccount(
     sign_tx_signingmode_t txSigningMode,
     uint8_t networkId,
-    const reward_account_t* poolRewardAccount);
+    const pool_reward_account_t* poolRewardAccount);
 security_policy_t policyForSignTxStakePoolRegistrationOwner(
     const sign_tx_signingmode_t txSigningMode,
     const ext_credential_t* ownerCredential);

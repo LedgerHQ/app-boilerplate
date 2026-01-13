@@ -496,6 +496,78 @@ bool format_address_human_readable(const uint8_t* address,
     }
 }
 
+bool format_reward_account_from_credential(uint8_t networkId,
+                                           const ext_credential_t* credential,
+                                           char* out,
+                                           size_t outSize) {
+    ASSERT(credential != NULL);
+    ASSERT(out != NULL);
+
+    uint8_t reward_addr_bytes[REWARD_ACCOUNT_LENGTH];
+    size_t reward_addr_len = 0;
+
+    switch (credential->type) {
+        case EXT_CREDENTIAL_KEY_PATH:
+            reward_addr_len = constructRewardAddressFromKeyPath(
+                &credential->keyPath,
+                networkId,
+                reward_addr_bytes,
+                sizeof(reward_addr_bytes)
+            );
+            break;
+        case EXT_CREDENTIAL_KEY_HASH:
+            reward_addr_len = constructRewardAddressFromHash(
+                networkId,
+                REWARD_HASH_SOURCE_KEY,
+                credential->keyHash,
+                ADDRESS_KEY_HASH_LENGTH,
+                reward_addr_bytes,
+                sizeof(reward_addr_bytes)
+            );
+            break;
+        case EXT_CREDENTIAL_SCRIPT_HASH:
+            reward_addr_len = constructRewardAddressFromHash(
+                networkId,
+                REWARD_HASH_SOURCE_SCRIPT,
+                credential->scriptHash,
+                SCRIPT_HASH_LENGTH,
+                reward_addr_bytes,
+                sizeof(reward_addr_bytes)
+            );
+            break;
+        default:
+            return false;
+    }
+
+    if (reward_addr_len == 0) {
+        return false;
+    }
+
+    return format_address_human_readable(
+        reward_addr_bytes,
+        reward_addr_len,
+        out,
+        outSize
+    );
+}
+
+bool format_pool_reward_account(uint8_t networkId,
+                                const pool_reward_account_t* rewardAccount,
+                                char* out,
+                                size_t outSize) {
+    ASSERT(rewardAccount != NULL);
+    ASSERT(out != NULL);
+
+    uint8_t reward_account_buf[REWARD_ACCOUNT_LENGTH] = {0};
+    poolRewardAccountToBuffer(rewardAccount, networkId, reward_account_buf);
+    return format_address_human_readable(
+        reward_account_buf,
+        REWARD_ACCOUNT_LENGTH,
+        out,
+        outSize
+    );
+}
+
 /*
  * Apart from parsing, we validate that the input contains nothing more than the params.
  *
@@ -749,9 +821,9 @@ payment_choice_t determinePaymentChoice(address_type_t addressType) {
     }
 }
 
-void rewardAccountToBuffer(const reward_account_t* rewardAccount,
-                           uint8_t networkId,
-                           uint8_t* rewardAccountBuffer) {
+void poolRewardAccountToBuffer(const pool_reward_account_t* rewardAccount,
+                               uint8_t networkId,
+                               uint8_t* rewardAccountBuffer) {
     switch (rewardAccount->keyReferenceType) {
         case KEY_REFERENCE_HASH: {
             STATIC_ASSERT(SIZEOF(rewardAccount->hashBuffer) == REWARD_ACCOUNT_LENGTH,

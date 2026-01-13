@@ -2,6 +2,7 @@
 
 #include "cardano_constants.h"
 #include "addressUtils/bip44.h"
+#include "transaction/tx_credential_types.h"
 #include "utils/utils.h"
 
 typedef enum {
@@ -17,7 +18,7 @@ typedef struct {
     };
 // TODO maybe we do not need this type and it could be replaced by credential
 // TODO since network id is stored globally for tx, but it might affect public API in ledgerjs
-} reward_account_t;
+} pool_reward_account_t;
 
 typedef enum {
     // base address contains explicit payment info (key hash / script hash)
@@ -136,6 +137,16 @@ bool format_blockchain_pointer(blockchainPointer_t blockchainPointer, char* out,
 
 bool format_address_human_readable(const uint8_t* address, size_t addressSize, char* out, size_t outSize);
 
+bool format_reward_account_from_credential(uint8_t networkId,
+                                           const ext_credential_t* credential,
+                                           char* out,
+                                           size_t outSize);
+
+bool format_pool_reward_account(uint8_t networkId,
+                                const pool_reward_account_t* rewardAccount,
+                                char* out,
+                                size_t outSize);
+
 bool buffer_parseAddressParams(buffer_t* buffer, addressParams_t* params);
 
 bool isValidAddressParams(const addressParams_t* addressParams);
@@ -149,6 +160,6 @@ payment_choice_t determinePaymentChoice(address_type_t addressType);
  * @param networkId The network ID to use for the reward account
  * @param rewardAccountBuffer Output buffer to store the serialized reward account (REWARD_ACCOUNT_LENGTH bytes)
  */
-void rewardAccountToBuffer(const reward_account_t* rewardAccount,
-                           uint8_t networkId,
-                           uint8_t* rewardAccountBuffer);
+void poolRewardAccountToBuffer(const pool_reward_account_t* rewardAccount,
+                               uint8_t networkId,
+                               uint8_t* rewardAccountBuffer);
