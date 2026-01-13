@@ -289,7 +289,7 @@ void addWithdrawalUIPairs(uint8_t networkId, const withdrawal_t *withdrawal) {
                    credential);
 }
 
-void addCertificateUIPairs(const certificate_data_t* certificate_data, sign_tx_signingmode_t txSigningMode) {
+void addCertificateUIPairs(const certificate_data_t* certificate_data) {
     LEDGER_ASSERT(certificate_data != NULL, "NULL certificate data");
 
     TRACE("Formatting certificate type=%u", certificate_data->type);

@@ -102,7 +102,7 @@ void addWithdrawalUIPairs(uint8_t networkId, const withdrawal_t *withdrawal);
  * @param[in] certificate_data   Certificate data to display
  * @param[in] txSigningMode      Transaction signing mode
  */
-void addCertificateUIPairs(const certificate_data_t* certificate_data, sign_tx_signingmode_t txSigningMode);
+void addCertificateUIPairs(const certificate_data_t* certificate_data);
 
 /**
  * Add payment credential UI pair for device-owned address

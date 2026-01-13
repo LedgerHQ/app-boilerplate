@@ -657,7 +657,7 @@ static void ui_strings_certificates(transaction_t *tx) {
                        certificate_node->certificate.type,
                        &certificate_node->certificate,
                        tx->txSigningMode)) {
-            addCertificateUIPairs(&certificate_node->certificate, tx->txSigningMode);
+            addCertificateUIPairs(&certificate_node->certificate);
         }
 
         node = node->next;
