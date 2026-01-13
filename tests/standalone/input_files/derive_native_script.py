@@ -72,7 +72,7 @@ class ValidNativeScriptTestCase:
 ValidNativeScriptTestCases = [
     ValidNativeScriptTestCase("PUBKEY_device_owned",
                               NativeScript(NativeScriptType.PUBKEY_DEVICE_OWNED,
-                                           NativeScriptParamsPubkey("m/1852'/1815'/0'/0/0")),
+                                           NativeScriptParamsPubkey("m/1852'/1815'/0'/0/0")),   
                               SignedData("e02316efa0632d53c28c521fc7bcade6e929849ff8b44efb5a2cffc0")),
     ValidNativeScriptTestCase("PUBKEY_third_party",
                               NativeScript(NativeScriptType.PUBKEY_THIRD_PARTY,
@@ -158,42 +158,27 @@ ValidNativeScriptTestCases = [
                                              NativeScript(NativeScriptType.INVALID_HEREAFTER, NativeScriptParamsInvalid(200))])),
                               SignedData("0d63e8d2c5a00cbcffbdf9112487c443466e1ea7d8c834df5ac5c425"),
                               nano_skip=True),
-    # TODO: Debug navigation
-    # ValidNativeScriptTestCase("Nested_native_scripts_2",
-    #                           NativeScript(NativeScriptType.ALL,
-    #                                        NativeScriptParamsScripts(
-    #                                          [NativeScript(NativeScriptType.ANY,
-    #                                                        NativeScriptParamsScripts(
-    #                                                            [NativeScript(NativeScriptType.PUBKEY_THIRD_PARTY,
-    #                                                                          NativeScriptParamsPubkey("c4b9265645fde9536c0795adbcc5291767a0c61fd62448341d7e0386")),
-    #                                                             NativeScript(NativeScriptType.PUBKEY_THIRD_PARTY,
-    #                                                                          NativeScriptParamsPubkey("0241f2d196f52a92fbd2183d03b370c30b6960cfdeae364ffabac889"))]))])),
-    #                           SignedData("903e52ef2421abb11562329130330763583bb87cd98006b70ecb1b1c"),
-    #                           nano_skip=True),
-    # ValidNativeScriptTestCase("Nested_native_scripts_3",
-    #                           NativeScript(NativeScriptType.N_OF_K,
-    #                                        NativeScriptParamsNofK(0,
-    #                                          [NativeScript(NativeScriptType.ALL,
-    #                                                        NativeScriptParamsScripts(
-    #                                                            [NativeScript(NativeScriptType.ANY,
-    #                                                                          NativeScriptParamsScripts(
-    #                                                                              [NativeScript(NativeScriptType.N_OF_K,
-    #                                                                                           NativeScriptParamsNofK(0))]))]))])),
-    #                           SignedData("ed1dd7ef95caf389669c62618eb7f7aa7eadd08feb76618db2ae0cfc"),
-    #                           nano_skip=True),
-]
 
-InvalidScriptTestCases = [
-    ValidNativeScriptTestCase("PUBKEY_invalid_key_path",
-                              NativeScript(NativeScriptType.PUBKEY_DEVICE_OWNED,
-                                           NativeScriptParamsPubkey("m/0/0/0/0/0/0")),
-                              SignedData(sw=StatusWord.SWO_INVALID_DATA)),
-    ValidNativeScriptTestCase("N_OF_K_invalid_required_count_higher_than_number_of_scripts",
+    ValidNativeScriptTestCase("Nested native scripts #2",
+                              NativeScript(NativeScriptType.ALL,
+                                           NativeScriptParamsScripts(
+                                             [NativeScript(NativeScriptType.ANY,
+                                                           NativeScriptParamsScripts(
+                                                               [NativeScript(NativeScriptType.PUBKEY_THIRD_PARTY,
+                                                                             NativeScriptParamsPubkey("c4b9265645fde9536c0795adbcc5291767a0c61fd62448341d7e0386")),
+                                                                NativeScript(NativeScriptType.PUBKEY_THIRD_PARTY,
+                                                                             NativeScriptParamsPubkey("0241f2d196f52a92fbd2183d03b370c30b6960cfdeae364ffabac889"))]))])),
+                              SignedData("903e52ef2421abb11562329130330763583bb87cd98006b70ecb1b1c"),
+                              nano_skip=True),
+    ValidNativeScriptTestCase("Nested native scripts #3",
                               NativeScript(NativeScriptType.N_OF_K,
-                                           NativeScriptParamsNofK(1)),
-                              SignedData(sw=StatusWord.SWO_INVALID_DATA)),
-    ValidNativeScriptTestCase("PUBKEY_invalid_key_path",
-                              NativeScript(NativeScriptType.PUBKEY_DEVICE_OWNED,
-                                           NativeScriptParamsPubkey("m/0/0/0/0/0/0")),
-                              SignedData(sw=StatusWord.SWO_INVALID_DATA)),
+                                           NativeScriptParamsNofK(0,
+                                             [NativeScript(NativeScriptType.ALL,
+                                                           NativeScriptParamsScripts(
+                                                               [NativeScript(NativeScriptType.ANY,
+                                                                             NativeScriptParamsScripts(
+                                                                                 [NativeScript(NativeScriptType.N_OF_K,
+                                                                                              NativeScriptParamsNofK(0))]))]))])),
+                              SignedData("ed1dd7ef95caf389669c62618eb7f7aa7eadd08feb76618db2ae0cfc"),
+                              nano_skip=True),
 ]

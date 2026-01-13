@@ -14,6 +14,7 @@
 #include "transaction/tx_state.h"
 #include "opcert/opcert_types.h"
 #include "deriveAddress/deriveAddress_types.h"
+#include "deriveNativeScriptHash/deriveNativeScriptHash_types.h"
 #include "apdu/apdu_constants.h"
 #include "keyDerivation.h"
 
@@ -75,6 +76,24 @@ typedef struct {
     bool silentExport;
 } pubkey_ctx_t;
 
+/*
+    Derive native script hash context.
+*/
+typedef struct {
+    uint8_t level;
+    // stores information about a complex script at the index level
+    complex_native_script_t complexScripts[MAX_SCRIPT_DEPTH];
+
+    uint8_t scriptHashBuffer[SCRIPT_HASH_LENGTH];
+    native_script_hash_builder_t hashBuilder;
+
+    native_script_content_t scriptContent;
+
+    // UI information
+    int ui_step;
+    native_script_type ui_scriptType;
+} ins_derive_native_script_hash_ctx_t;
+
 /**
  * Global context for user requests.
  */
@@ -89,6 +108,7 @@ typedef struct {
         transaction_ctx_t tx_info;
         sign_opcert_ctx_t opcert_info;
         ins_derive_address_ctx_t derive_address_info;
+        ins_derive_native_script_hash_ctx_t derive_native_script_hash_info;
     };
 
     request_type_e req_type;

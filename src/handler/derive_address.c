@@ -19,11 +19,15 @@ static void prepareResponse() {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
     ctx->address.size =
         deriveAddress(&ctx->addressParams, ctx->address.buffer, SIZEOF(ctx->address.buffer));
-    TRACE_BUFFER(ctx->address.buffer, ctx->address.size);
     ctx->responseReadyMagic = RESPONSE_READY_MAGIC;
 }
 
 int handler_derive_address(buffer_t *cdata, uint8_t display_type) {
+
+    explicit_bzero(&G_context, sizeof(G_context));
+    G_context.req_type = REQUEST_EXPORT_PUBKEY;
+
+
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
     ctx->responseReadyMagic = 0;
     bool is_parsed = buffer_parseAddressParams(cdata, &ctx->addressParams);

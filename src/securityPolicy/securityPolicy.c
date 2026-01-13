@@ -230,6 +230,16 @@ security_policy_t policyForReturnDeriveAddress(const addressParams_t* addressPar
     return _policyForDeriveAddress(addressParams, policy);
 }
 
+security_policy_t policyForDeriveNativeScriptHashDevicePubkey(const bip44_path_t *path) {
+    // TODO: expert mode check ok?
+    // in expert mode, do not derive script hash without permission
+    security_policy_t policy =
+        is_expert_mode() ? POLICY_SHOW : POLICY_HIDE;
+    // TODO: restrict to reasonable paths only?
+    DENY_UNLESS(bip44_isPathReasonable(path));
+    return policy;
+}
+
 // Derive address and show it to the user
 security_policy_t policyForShowDeriveAddress(const addressParams_t* addressParams) {
     return _policyForDeriveAddress(addressParams, POLICY_SHOW);

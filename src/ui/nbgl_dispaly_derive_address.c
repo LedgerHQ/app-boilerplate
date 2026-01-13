@@ -34,6 +34,7 @@ static void derive_address_buffer_cleanup(void) {
 }
 
 static void derive_address_review_choice(bool confirm) {
+    // TODO: choose only one cleanup
     derive_address_buffer_cleanup();
     TRACE("derive_address_buffer_cleanup\n");
     if (confirm) {

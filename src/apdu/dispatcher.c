@@ -57,6 +57,8 @@ static command_e req_type_to_instruction(request_type_e req_type) {
             return INS_SIGN_TX;
         case REQUEST_SIGN_OPCERT:
             return INS_SIGN_OPCERT;
+        case REQUEST_DERIVE_NATIVE_SCRIPT_HASH:
+            return INS_DERIVE_NATIVE_SCRIPT_HASH;
         default:
             LEDGER_ASSERT(false, "Unknown request type");
             return INS_GET_VERSION;  // Unreachable
@@ -147,12 +149,11 @@ void apdu_dispatcher(const command_t *cmd) {
         }
 
         case INS_DERIVE_ADDRESS:
-            TRACE("cmd->p1 %d\n", cmd->p1);
             // P2 must be unused for all transaction APDU types
             if (cmd->p2 != P2_UNUSED) {
                 return io_send_sw(SWO_INCORRECT_P1_P2);
             }
-            
+
             // Validate P1 value
             if (cmd->p1 != P1_RETURN && cmd->p1 != P1_DISPLAY) {
                 return io_send_sw(SWO_INCORRECT_P1_P2);
@@ -171,12 +172,16 @@ void apdu_dispatcher(const command_t *cmd) {
             return ;
 
         case INS_DERIVE_NATIVE_SCRIPT_HASH:
-            TRACE("cmd->p1 %d\n", cmd->p1);
             // P2 must be unused for all transaction APDU types
             if (cmd->p2 != P2_UNUSED) {
                 return io_send_sw(SWO_INCORRECT_P1_P2);
             }
             // Validate P1 value
+            if(cmd->p1 != STAGE_COMPLEX_SCRIPT_START &&
+               cmd->p1 != STAGE_ADD_SIMPLE_SCRIPT &&
+               cmd->p1 != STAGE_WHOLE_NATIVE_SCRIPT_FINISH) {
+                return io_send_sw(SWO_INCORRECT_P1_P2);
+            }
 
             if (!cmd->data) {
                 return io_send_sw(SWO_WRONG_DATA_LENGTH);
@@ -185,7 +190,6 @@ void apdu_dispatcher(const command_t *cmd) {
             buf.ptr = cmd->data;
             buf.size = cmd->lc;
             buf.offset = 0;
-            
             return handler_derive_native_script_hash(&buf, cmd->p1);
 
         case INS_SIGN_TX:

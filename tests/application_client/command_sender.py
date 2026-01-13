@@ -7,6 +7,7 @@ from ragger.backend.interface import BackendInterface, RAPDU
 from standalone.input_files.signOpCert import OpCertTestCase
 from application_client.command_builder import CommandBuilder, gather_witness_paths, P1Type
 from standalone.input_files.derive_address import DeriveAddressTestCase
+from standalone.input_files.derive_native_script import NativeScript, NativeScriptHashDisplayFormat
 from application_client.status_words import StatusWord
 from standalone.input_files.signTx import Transaction, TxAuxiliaryDataCIP36, TxAuxiliaryDataType
 
@@ -258,4 +259,53 @@ class CommandSender:
         """
 
         return self._exchange(self._cmd_builder.derive_address(p1, testCase))
+<<<<<<< HEAD
 >>>>>>> 1f05ffa (derive address tests)
+=======
+    
+    @contextmanager
+    def derive_script_add_simple(self, script: NativeScript) -> Generator[None, None, None]:
+        """APDU NATIVE SCRIPT HASH - SIMPLE SCRIPT step
+
+        Args:
+            script (NativeScript): Input Test param
+
+        Returns:
+            Generator
+        """
+
+        with self._exchange_async(self._cmd_builder.derive_script_add_simple(script)):
+            yield
+
+
+    @contextmanager
+    def derive_script_add_complex(self, script: NativeScript) -> Generator[None, None, None]:
+        """APDU NATIVE SCRIPT HASH - COMPLEX SCRIPT step
+
+        Args:
+            script (NativeScript): Input Test param
+
+        Returns:
+            Generator
+        """
+
+        with self._exchange_async(self._cmd_builder.derive_script_add_complex(script)):
+            yield
+
+
+    @contextmanager
+    def derive_script_finish(self, displayFormat: NativeScriptHashDisplayFormat) -> Generator[None, None, None]:
+        """APDU NATIVE SCRIPT HASH - FINISH step
+
+        Args:
+            displayFormat (NativeScriptHashDisplayFormat): Input Test param
+
+        Returns:
+            Generator
+        """
+
+        with self._exchange_async(self._cmd_builder.derive_script_finish(displayFormat)):
+            yield
+
+    
+>>>>>>> d027bc3 (derive native script hash added with ragger tests)

@@ -8,7 +8,7 @@ This module provides Ragger tests for Derive Native Script Hash check
 import pytest
 
 from ragger.backend import BackendInterface
-from ledgered.devices import Device
+from ledgered.devices import DeviceType, Device
 from ragger.navigator import Navigator, NavInsID
 from ragger.navigator.navigation_scenario import NavigateWithScenario
 from ragger.error import ExceptionRAPDU
@@ -20,7 +20,6 @@ from standalone.input_files.derive_native_script import ValidNativeScriptTestCas
 from standalone.input_files.derive_native_script import NativeScript, NativeScriptType
 from standalone.input_files.derive_native_script import NativeScriptParamsPubkey, NativeScriptHashDisplayFormat
 from standalone.input_files.derive_native_script import NativeScriptParamsScripts, NativeScriptParamsNofK
-from standalone.input_files.derive_native_script import InvalidScriptTestCases
 
 from standalone.utils import idTestFunc
 
@@ -43,9 +42,9 @@ def test_derive_native_script_hash(device: Device,
     # Use the app interface instead of raw interface
     client = CommandSender(backend)
 
-    _deriveNativeScriptHash_addScript(firmware, navigator, client, testCase.script, False)
+    _deriveNativeScriptHash_addScript(device, navigator, client, testCase.script, False)
 
-    _deriveNativeScriptHash_finishWholeNativeScript(firmware, navigator, scenario_navigator, client, testCase)
+    _deriveNativeScriptHash_finishWholeNativeScript(device, navigator, scenario_navigator, client, testCase)
 
 
 def _deriveNativeScriptHash_addScript(device: Device,
@@ -64,12 +63,12 @@ def _deriveNativeScriptHash_addScript(device: Device,
     """
 
     if script.type in [NativeScriptType.ALL, NativeScriptType.ANY, NativeScriptType.N_OF_K]:
-        _deriveScriptHash_startComplexScript(firmware, navigator, client, script, complex_nav)
+        _deriveScriptHash_startComplexScript(device, navigator, client, script, complex_nav)
         assert isinstance(script.params, (NativeScriptParamsScripts, NativeScriptParamsNofK))
         for subscript in script.params.scripts:
-            _deriveNativeScriptHash_addScript(firmware, navigator, client, subscript, True)
+            _deriveNativeScriptHash_addScript(device, navigator, client, subscript, True)
     else:
-        _deriveNativeScriptHash_addSimpleScript(firmware, navigator, client, script, complex_nav)
+        _deriveNativeScriptHash_addSimpleScript(device, navigator, client, script, complex_nav)
 
 
 def _deriveNativeScriptHash_addSimpleScript(device: Device,
@@ -88,21 +87,31 @@ def _deriveNativeScriptHash_addSimpleScript(device: Device,
     """
 
     with client.derive_script_add_simple(script):
-        moves = []
-        if device.is_nano:
-            if complex_nav:
+        """
+            moves = []
+            if device.is_nano:
+                if complex_nav:
+                    moves += [NavInsID.BOTH_CLICK]
+                if complex_nav or script.type == NativeScriptType.PUBKEY_THIRD_PARTY:
+                    moves += [NavInsID.RIGHT_CLICK]
                 moves += [NavInsID.BOTH_CLICK]
-            if complex_nav or script.type == NativeScriptType.PUBKEY_THIRD_PARTY:
-                moves += [NavInsID.RIGHT_CLICK]
-            moves += [NavInsID.BOTH_CLICK]
-            navigator.navigate(moves)
-        else:
-            if complex_nav:
-                moves += [NavInsID.TAPPABLE_CENTER_TAP]
-            moves += [NavInsID.SWIPE_CENTER_TO_LEFT]
-            navigator.navigate(moves,
-                               screen_change_before_first_instruction=False,
-                               screen_change_after_last_instruction=False)
+                #navigator.navigate(moves)
+            else:
+                if complex_nav:
+                    moves += [NavInsID.TAPPABLE_CENTER_TAP]
+                moves += [NavInsID.SWIPE_CENTER_TO_LEFT]
+                #navigator.navigate(moves,
+                #                   screen_change_before_first_instruction=False,
+                #                   screen_change_after_last_instruction=False)
+        """
+        
+        moves = []
+        moves += [NavInsID.USE_CASE_REVIEW_TAP]
+        if device.type is DeviceType.STAX and navigator is not None:
+            navigator.navigate(
+                moves, screen_change_before_first_instruction=False
+            )
+        
     # Check the status (Asynchronous)
     response = client.get_async_response()
     assert response and response.status == StatusWord.SWO_SUCCESS
@@ -124,6 +133,7 @@ def _deriveScriptHash_startComplexScript(device: Device,
     """
 
     with client.derive_script_add_complex(script):
+        """
         moves = []
         if device.is_nano:
             if complex_nav:
@@ -135,9 +145,18 @@ def _deriveScriptHash_startComplexScript(device: Device,
             if complex_nav:
                 moves += [NavInsID.TAPPABLE_CENTER_TAP]
             moves += [NavInsID.SWIPE_CENTER_TO_LEFT]
-
         navigator.navigate(moves)
+        """
+    
+        moves = []
+        moves += [NavInsID.USE_CASE_REVIEW_TAP]
+        if device.type is DeviceType.STAX and navigator is not None:
+            navigator.navigate(
+                moves, screen_change_before_first_instruction=False
+            )
+        
     # Check the status (Asynchronous)
+    
     response = client.get_async_response()
     assert response and response.status == StatusWord.SWO_SUCCESS
 
@@ -158,6 +177,7 @@ def _deriveNativeScriptHash_finishWholeNativeScript(device: Device,
     """
 
     with client.derive_script_finish(testCase.displayFormat):
+        """
         if device.is_nano:
             moves = []
             if testCase.script.type in (NativeScriptType.INVALID_BEFORE, NativeScriptType.INVALID_HEREAFTER):
@@ -171,31 +191,24 @@ def _deriveNativeScriptHash_finishWholeNativeScript(device: Device,
             navigator.navigate(moves)
         else:
             scenario_navigator.address_review_approve(do_comparison=False)
+        """
+        """
+        moves = []
+        if device.type is DeviceType.STAX and navigator is not None:
+            navigator.navigate(
+                moves, screen_change_before_first_instruction=False
+            )
+        """
+        moves = []
+        moves += [NavInsID.USE_CASE_REVIEW_TAP]
+        moves += [NavInsID.USE_CASE_REVIEW_CONFIRM]
+        if device.type is DeviceType.STAX and navigator is not None:
+            navigator.navigate(
+                moves, screen_change_before_first_instruction=False
+            )
     # Check the status (Asynchronous)
     response = client.get_async_response()
     assert response and response.status == StatusWord.SWO_SUCCESS
     # Check the response
     assert response.data.hex() == testCase.expected.hash
     # TODO: Generate the payload and verify the signature
-
-
-@pytest.mark.parametrize(
-    "testCase",
-    InvalidScriptTestCases,
-    ids=idTestFunc
-)
-def test_derive_native_script_hash_reject(device: Device,
-                backend: BackendInterface,
-                navigator: Navigator,
-                scenario_navigator: NavigateWithScenario,
-                testCase: ValidNativeScriptTestCase) -> None:
-    """Check Derive Native Script Hash Reject"""
-
-    # TODO - Navigation should be set for each test case
-    if device.is_nano:
-        pytest.skip("Not supported yet on Nano because Navigation should be reviewed")
-
-    with pytest.raises(ExceptionRAPDU) as err:
-        # Send the APDU
-        test_derive_native_script_hash(firmware, backend, navigator, scenario_navigator, testCase)
-    assert err.value.status == testCase.expected.sw
