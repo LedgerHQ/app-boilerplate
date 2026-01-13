@@ -107,7 +107,7 @@ static bool format_input_with_index(const tx_input_t *input, char *out, size_t o
     return true;
 }
 
-static void ui_strings_inputs(transaction_t *tx) {
+static void add_ui_and_free_inputs(transaction_t *tx) {
     s_flist_node *node = tx->inputs;
     while (node != NULL) {
         tx_input_node_t *input_node = (tx_input_node_t *) node;
@@ -190,7 +190,7 @@ static bool format_output_address(const tx_output_description_t *output_desc, ch
 }
 
 // TODO this needs revision, does not follow conventions and might not need tx_output_description_t?
-static void ui_strings_outputs(transaction_t *tx) {
+static void add_ui_and_free_outputs(transaction_t *tx) {
     uint16_t output_num = 1;
     s_flist_node *node = tx->outputs;
     TRACE("Formatting %u outputs", tx->num_outputs);
@@ -294,11 +294,11 @@ static void ui_strings_outputs(transaction_t *tx) {
     tx->outputs = NULL;
 }
 
-static void ui_strings_fee(transaction_t *tx) {
+static void add_ui_and_free_fee(transaction_t *tx) {
     UI_ADD_FORMAT1(UI_STATIC_LABEL("Fee"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, tx->fee);
 }
 
-static void ui_strings_ttl(transaction_t *tx) {
+static void add_ui_and_free_ttl(transaction_t *tx) {
     if (!tx->includeTtl) {
         return;
     }
@@ -309,7 +309,7 @@ static void ui_strings_ttl(transaction_t *tx) {
     }
 }
 
-static void ui_strings_certificate_pool_registration(const certificate_data_t* certificate_data,
+static void add_ui_and_free_certificate_pool_registration(const certificate_data_t* certificate_data,
                                                      sign_tx_signingmode_t txSigningMode) {
     pool_owner_counts_t pool_owner_counts = count_pool_owner_nodes(
         certificate_data->poolRegistration.poolOwners
@@ -622,7 +622,7 @@ static bool should_show_certificate(
     return policy == POLICY_SHOW;
 }
 
-static void ui_strings_certificates(transaction_t *tx) {
+static void add_ui_and_free_certificates(transaction_t *tx) {
     s_flist_node *node = tx->certificates;
     TRACE("Formatting %u certificates", tx->num_certificates);
     while (node != NULL) {
@@ -634,7 +634,7 @@ static void ui_strings_certificates(transaction_t *tx) {
                                MAX_CERTIFICATE_TYPE_LENGTH,
                                format_certificate_type,
                                certificate_node->certificate.type);
-                ui_strings_certificate_pool_registration(&certificate_node->certificate, tx->txSigningMode);
+                add_ui_and_free_certificate_pool_registration(&certificate_node->certificate, tx->txSigningMode);
             }
         } else if (should_show_certificate(
                        certificate_node->certificate.type,
@@ -649,7 +649,7 @@ static void ui_strings_certificates(transaction_t *tx) {
     tx->certificates = NULL;
 }
 
-static void ui_strings_withdrawals(transaction_t *tx) {
+static void add_ui_and_free_withdrawals(transaction_t *tx) {
     s_flist_node *node = tx->withdrawals;
     TRACE("Formatting %u withdrawals", tx->num_withdrawals);
     while (node != NULL) {
@@ -679,17 +679,18 @@ static void ui_strings_withdrawals(transaction_t *tx) {
     tx->withdrawals = NULL;
 }
 
-static void ui_strings_aux_data_hash(transaction_t *tx) {
-    if (tx->includeAuxDataHash) {
-        security_policy_t policy = policyForSignTxAuxData(tx->auxDataType);
-        LEDGER_ASSERT(policy != POLICY_DENY, "Aux data denied during UI");
-        if (policy == POLICY_SHOW) {
-            UI_ADD_FORMAT2(UI_STATIC_LABEL("Auxiliary data hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_bytes, tx->auxDataHash, AUX_DATA_HASH_LENGTH);
-        }
+static void add_ui_and_free_aux_data_hash(transaction_t *tx) {
+    if (!tx->includeAuxDataHash) {
+        return;
+    }
+    security_policy_t policy = policyForSignTxAuxData(tx->auxDataType);
+    LEDGER_ASSERT(policy != POLICY_DENY, "Aux data denied during UI");
+    if (policy == POLICY_SHOW) {
+        UI_ADD_FORMAT2(UI_STATIC_LABEL("Auxiliary data hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_bytes, tx->auxDataHash, AUX_DATA_HASH_LENGTH);
     }
 }
 
-static void ui_strings_validity_interval_start(transaction_t *tx) {
+static void add_ui_and_free_validity_interval_start(transaction_t *tx) {
     if (!tx->includeValidityIntervalStart) {
         return;
     }
@@ -707,7 +708,7 @@ static bool format_mint_summary(uint16_t num_groups, char *out, size_t outSize) 
     return len < outSize;
 }
 
-static void ui_strings_mint(transaction_t *tx) {
+static void add_ui_and_free_mint(transaction_t *tx) {
     if (tx->mint_asset_groups == NULL) {
         return;
     }
@@ -748,17 +749,18 @@ static void ui_strings_mint(transaction_t *tx) {
     tx->mint_asset_groups = NULL;
 }
 
-static void ui_strings_script_data_hash(transaction_t *tx) {
-    if (tx->includeScriptDataHash) {
-        security_policy_t policy = policyForSignTxScriptDataHash(tx->txSigningMode);
-        LEDGER_ASSERT(policy != POLICY_DENY, "Script data hash denied during UI");
-        if (policy == POLICY_SHOW) {
-            UI_ADD_FORMAT2(UI_STATIC_LABEL("Script data hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_bytes, tx->scriptDataHash, SCRIPT_DATA_HASH_LENGTH);
-        }
+static void add_ui_and_free_script_data_hash(transaction_t *tx) {
+    if (!tx->includeScriptDataHash) {
+        return;
+    }
+    security_policy_t policy = policyForSignTxScriptDataHash(tx->txSigningMode);
+    LEDGER_ASSERT(policy != POLICY_DENY, "Script data hash denied during UI");
+    if (policy == POLICY_SHOW) {
+        UI_ADD_FORMAT2(UI_STATIC_LABEL("Script data hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_bytes, tx->scriptDataHash, SCRIPT_DATA_HASH_LENGTH);
     }
 }
 
-static void ui_strings_collateral_inputs(transaction_t *tx) {
+static void add_ui_and_free_collateral_inputs(transaction_t *tx) {
     s_flist_node *node = tx->collateral_inputs;
     while (node != NULL) {
         tx_collateral_input_node_t *collateral_input_node = (tx_collateral_input_node_t *) node;
@@ -779,7 +781,7 @@ static void ui_strings_collateral_inputs(transaction_t *tx) {
     tx->collateral_inputs = NULL;
 }
 
-static void ui_strings_required_signers(transaction_t *tx) {
+static void add_ui_and_free_required_signers(transaction_t *tx) {
     s_flist_node *node = tx->required_signers;
     while (node != NULL) {
         tx_required_signer_node_t *required_signer_node = (tx_required_signer_node_t *) node;
@@ -809,7 +811,7 @@ static void ui_strings_required_signers(transaction_t *tx) {
     tx->required_signers = NULL;
 }
 
-static void ui_strings_collateral_output(transaction_t *tx) {
+static void add_ui_and_free_collateral_output(transaction_t *tx) {
     if (!tx->includeCollateralOutput) {
         return;
     }
@@ -889,7 +891,7 @@ static void ui_strings_collateral_output(transaction_t *tx) {
     tx->collateral_output.assetGroups = NULL;
 }
 
-static void ui_strings_total_collateral(transaction_t *tx) {
+static void add_ui_and_free_total_collateral(transaction_t *tx) {
     if (!tx->includeTotalCollateral) {
         return;
     }
@@ -900,7 +902,7 @@ static void ui_strings_total_collateral(transaction_t *tx) {
     }
 }
 
-static void ui_strings_reference_inputs(transaction_t *tx) {
+static void add_ui_and_free_reference_inputs(transaction_t *tx) {
     s_flist_node *ref_input_node = tx->reference_inputs;
     while (ref_input_node != NULL) {
         tx_input_node_t *ref_input = (tx_input_node_t *) ref_input_node;
@@ -920,7 +922,7 @@ static void ui_strings_reference_inputs(transaction_t *tx) {
     tx->reference_inputs = NULL;
 }
 
-static void ui_strings_voting_procedures(transaction_t *tx) {
+static void add_ui_and_free_voting_procedures(transaction_t *tx) {
     if (tx->num_voters > 0) {
         s_flist_node *node = tx->voting_procedures;
         while (node != NULL) {
@@ -967,33 +969,29 @@ static void ui_strings_voting_procedures(transaction_t *tx) {
     tx->voting_procedures = NULL;
 }
 
-static void ui_strings_treasury(transaction_t *tx) {
-    if (tx->includeTreasury) {
-        security_policy_t policy = policyForSignTxTreasury(tx->txSigningMode, tx->treasury);
-        LEDGER_ASSERT(policy != POLICY_DENY, "Treasury denied during UI");
-        if (policy == POLICY_SHOW) {
-            UI_ADD_FORMAT1(UI_STATIC_LABEL("Treasury"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, tx->treasury);
-        }
+static void add_ui_and_free_treasury(transaction_t *tx) {
+    if (!tx->includeTreasury) {
+        return;
+    }
+    security_policy_t policy = policyForSignTxTreasury(tx->txSigningMode, tx->treasury);
+    LEDGER_ASSERT(policy != POLICY_DENY, "Treasury denied during UI");
+    if (policy == POLICY_SHOW) {
+        UI_ADD_FORMAT1(UI_STATIC_LABEL("Treasury"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, tx->treasury);
     }
 }
 
-static void ui_strings_donation(transaction_t *tx) {
-    if (tx->includeDonation) {
-        security_policy_t policy = policyForSignTxDonation(tx->txSigningMode, tx->donation);
-        LEDGER_ASSERT(policy != POLICY_DENY, "Donation denied during UI");
-        if (policy == POLICY_SHOW) {
-            UI_ADD_FORMAT1(UI_STATIC_LABEL("Donation"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, tx->donation);
-        }
+static void add_ui_and_free_donation(transaction_t *tx) {
+    if (!tx->includeDonation) {
+        return;
+    }
+    security_policy_t policy = policyForSignTxDonation(tx->txSigningMode, tx->donation);
+    LEDGER_ASSERT(policy != POLICY_DENY, "Donation denied during UI");
+    if (policy == POLICY_SHOW) {
+        UI_ADD_FORMAT1(UI_STATIC_LABEL("Donation"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, tx->donation);
     }
 }
 
-static void ui_strings_tx_hash(void) {
-    if (G_context.tx_info.raw_tx != NULL) {
-        app_mem_free(G_context.tx_info.raw_tx);
-        G_context.tx_info.raw_tx = NULL;
-        G_context.tx_info.raw_tx_len = 0;
-    }
-
+static void add_ui_and_free_tx_hash(void) {
     UI_ADD_FORMAT2(UI_STATIC_LABEL("Transaction hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_bytes, G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash));
 }
 
@@ -1006,25 +1004,25 @@ static int add_ui_strings_and_free_parsed_data(void) {
 
     TRACE("UI formatting starting");
 
-    ui_strings_inputs(tx);
-    ui_strings_outputs(tx);
-    ui_strings_fee(tx);
-    ui_strings_ttl(tx);
-    ui_strings_certificates(tx);
-    ui_strings_withdrawals(tx);
-    ui_strings_aux_data_hash(tx);
-    ui_strings_validity_interval_start(tx);
-    ui_strings_mint(tx);
-    ui_strings_script_data_hash(tx);
-    ui_strings_collateral_inputs(tx);
-    ui_strings_required_signers(tx);
-    ui_strings_collateral_output(tx);
-    ui_strings_total_collateral(tx);
-    ui_strings_reference_inputs(tx);
-    ui_strings_voting_procedures(tx);
-    ui_strings_treasury(tx);
-    ui_strings_donation(tx);
-    ui_strings_tx_hash();
+    add_ui_and_free_inputs(tx);
+    add_ui_and_free_outputs(tx);
+    add_ui_and_free_fee(tx);
+    add_ui_and_free_ttl(tx);
+    add_ui_and_free_certificates(tx);
+    add_ui_and_free_withdrawals(tx);
+    add_ui_and_free_aux_data_hash(tx);
+    add_ui_and_free_validity_interval_start(tx);
+    add_ui_and_free_mint(tx);
+    add_ui_and_free_script_data_hash(tx);
+    add_ui_and_free_collateral_inputs(tx);
+    add_ui_and_free_required_signers(tx);
+    add_ui_and_free_collateral_output(tx);
+    add_ui_and_free_total_collateral(tx);
+    add_ui_and_free_reference_inputs(tx);
+    add_ui_and_free_voting_procedures(tx);
+    add_ui_and_free_treasury(tx);
+    add_ui_and_free_donation(tx);
+    add_ui_and_free_tx_hash();
 
     TRACE("UI formatting complete");
     ui_status_t status = ui_get_error_status();
