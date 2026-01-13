@@ -86,6 +86,7 @@ add_executable(test_ui_formatters
     test_ui_formatters.c
     ../src/ui/ui_formatters.c
     ../src/cardano_tokens/cardano_tokens.c
+    ../src/utils/textUtils.c
     ../src/utils/ipUtils.c
     mock_sources/hex_stub.c
 )
@@ -93,6 +94,7 @@ add_executable(test_cardano_tokens
     test_cardano_tokens.c
     ../src/cardano_tokens/cardano_tokens.c
     ../src/ui/ui_formatters.c
+    ../src/utils/textUtils.c
     ../src/utils/ipUtils.c
     mock_sources/hex_stub.c
 )

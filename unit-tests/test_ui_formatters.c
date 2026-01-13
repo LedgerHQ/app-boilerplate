@@ -349,6 +349,16 @@ static void test_format_url(void **state) {
     assert_false(success);
 }
 
+static void test_format_dns_name(void **state) {
+    (void) state;
+
+    const uint8_t dns_name[] = "relay.example.com";
+    char tmp[32] = {0};
+    bool success = format_dns_name(dns_name, strlen((const char *) dns_name), tmp, sizeof(tmp));
+    assert_true(success);
+    assert_string_equal(tmp, "relay.example.com");
+}
+
 static void test_format_asset_fingerprint_bech32(void **state) {
     (void) state;
 
@@ -414,6 +424,7 @@ int main(void) {
         cmocka_unit_test(test_format_constant_drep),
         cmocka_unit_test(test_format_certificate_type),
         cmocka_unit_test(test_format_url),
+        cmocka_unit_test(test_format_dns_name),
         cmocka_unit_test(test_format_asset_fingerprint_bech32),
     };
 

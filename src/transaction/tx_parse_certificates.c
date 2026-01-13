@@ -350,6 +350,10 @@ static parser_status_e _parse_anchor(buffer_t *buf, anchor_t *anchor) {
     }
     ASSERT(url_ptr != NULL);
     anchor->url = url_ptr;
+    if (!str_isPrintableAsciiWithoutSpaces(anchor->url, anchor->urlLength)) {
+        TRACE("Anchor URL contains non-printable ASCII or spaces");
+        return CERTIFICATES_PARSING_ERROR;
+    }
     TRACE("Successfully parsed anchor URL");
 
     // Store pointer to hash in raw buffer instead of copying

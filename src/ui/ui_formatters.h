@@ -185,6 +185,20 @@ bool format_certificate_type(certificate_type_t type, char *out, size_t outSize)
 bool format_url(const uint8_t *url, size_t urlLength, char *out, size_t outSize);
 
 /**
+ * Format DNS name from raw buffer
+ *
+ * Copies DNS bytes and null-terminates them.
+ * Matches UI_ADD_FORMAT2 signature for use with unified macros.
+ *
+ * @param dnsName   Raw DNS bytes (not null-terminated)
+ * @param dnsLength Length of DNS bytes
+ * @param out       Output buffer for formatted string
+ * @param outSize   Size of output buffer
+ * @return true on success, false on failure
+ */
+bool format_dns_name(const uint8_t *dnsName, size_t dnsLength, char *out, size_t outSize);
+
+/**
  * Format asset fingerprint in bech32 format
  *
  * Derives the fingerprint from policy ID and asset name, then encodes as bech32 with "asset" prefix.

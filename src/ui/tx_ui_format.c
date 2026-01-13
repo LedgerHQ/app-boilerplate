@@ -378,22 +378,6 @@ static void display_voter_credential(const ext_credential_t* credential) {
     );
 }
 
-static void ui_strings_certificate_stake_registration(const certificate_data_t* certificate_data) {
-    display_stake_credential(&certificate_data->stakeCredential);
-}
-
-static void ui_strings_certificate_stake_delegation(const certificate_data_t* certificate_data) {
-    display_stake_credential(&certificate_data->stakeCredential);
-    addPoolKeyHashUIPairs(certificate_data->poolKeyHash, UI_STATIC_LABEL("Pool"));
-}
-
-static void ui_strings_certificate_stake_conway(const certificate_data_t* certificate_data) {
-    // Display stake credential
-    display_stake_credential(&certificate_data->stakeCredential);
-
-    // Display deposit
-    addDepositUIPairs(certificate_data->deposit, UI_STATIC_LABEL("Deposit"));
-}
 
 static void ui_strings_certificate_pool_retirement(const certificate_data_t* certificate_data) {
     // Display pool credential
@@ -570,17 +554,11 @@ static void ui_strings_certificate_pool_registration(const certificate_data_t* c
                     case RELAY_SINGLE_HOST_NAME: {
                         // Display DNS name
                         if (relay->dnsNameSize > 0) {
-                            char *dns_str = (char *) app_mem_alloc(relay->dnsNameSize + 2);
-                            if (dns_str == NULL) {
-                                ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-                            } else {
-                                memcpy(dns_str, relay->dnsName, relay->dnsNameSize);
-                                dns_str[relay->dnsNameSize] = '\0';
-                                LEDGER_ASSERT(strlen(dns_str) == relay->dnsNameSize, "DNS name length mismatch");
-                                if (!ui_pairs_add_static_label(UI_STATIC_LABEL("DNS name"), dns_str)) {
-                                    ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-                                }
-                            }
+                            UI_ADD_FORMAT2(UI_STATIC_LABEL("DNS name"),
+                                           MAX_DNS_NAME_LENGTH,
+                                           format_dns_name,
+                                           relay->dnsName,
+                                           relay->dnsNameSize);
                         }
 
                         // Display port if present
@@ -592,17 +570,11 @@ static void ui_strings_certificate_pool_registration(const certificate_data_t* c
                     case RELAY_MULTIPLE_HOST_NAME: {
                         // Display DNS name (SRV record)
                         if (relay->dnsNameSize > 0) {
-                            char *dns_str = (char *) app_mem_alloc(relay->dnsNameSize + 2);
-                            if (dns_str == NULL) {
-                                ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-                            } else {
-                                memcpy(dns_str, relay->dnsName, relay->dnsNameSize);
-                                dns_str[relay->dnsNameSize] = '\0';
-                                LEDGER_ASSERT(strlen(dns_str) == relay->dnsNameSize, "SRV DNS name length mismatch");
-                                if (!ui_pairs_add_static_label(UI_STATIC_LABEL("SRV DNS"), dns_str)) {
-                                    ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-                                }
-                            }
+                            UI_ADD_FORMAT2(UI_STATIC_LABEL("SRV DNS"),
+                                           MAX_DNS_NAME_LENGTH,
+                                           format_dns_name,
+                                           relay->dnsName,
+                                           relay->dnsNameSize);
                         }
                         break;
                     }
@@ -742,18 +714,20 @@ static void ui_strings_certificates(transaction_t *tx) {
                 switch (certificate_item->certificate.type) {
                     case CERTIFICATE_STAKE_REGISTRATION:
                     case CERTIFICATE_STAKE_DEREGISTRATION: {
-                        ui_strings_certificate_stake_registration(&certificate_item->certificate);
+                        display_stake_credential(&certificate_item->certificate.stakeCredential);
                         break;
                     }
 
                     case CERTIFICATE_STAKE_DELEGATION: {
-                        ui_strings_certificate_stake_delegation(&certificate_item->certificate);
+                        display_stake_credential(&certificate_item->certificate.stakeCredential);
+                        addPoolKeyHashUIPairs(certificate_item->certificate.poolKeyHash, UI_STATIC_LABEL("Pool"));
                         break;
                     }
 
                     case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
                     case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY: {
-                        ui_strings_certificate_stake_conway(&certificate_item->certificate);
+                        display_stake_credential(&certificate_item->certificate.stakeCredential);
+                        addDepositUIPairs(certificate_item->certificate.deposit, UI_STATIC_LABEL("Deposit"));
                         break;
                     }
 

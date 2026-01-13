@@ -1,5 +1,6 @@
 #include "ui_formatters.h"
 #include "utils/utils.h"
+#include "utils/textUtils.h"
 #include "utils/ipUtils.h"
 #include "format.h"
 #include "cardano_tokens/cardano_tokens.h"
@@ -344,14 +345,27 @@ bool format_certificate_type(certificate_type_t type, char *out, size_t outSize)
  * Format URL from raw buffer
  *
  * Copies URL bytes and null-terminates them.
- * Matches UI_ADD_FORMAT2 signature (2 params: buffer + length).
  */
 bool format_url(const uint8_t *url, size_t urlLength, char *out, size_t outSize) {
     if (urlLength >= outSize) {
         return false;
     }
+    STATIC_ASSERT(MAX_ANCHOR_URL_LENGTH == MAX_POOL_METADATA_URL_LENGTH, "URL length limits must match");
+    ASSERT(urlLength <= MAX_ANCHOR_URL_LENGTH);
+    ASSERT(str_isPrintableAsciiWithoutSpaces(url, urlLength));
     memcpy(out, url, urlLength);
     out[urlLength] = '\0';
+    return true;
+}
+
+bool format_dns_name(const uint8_t *dnsName, size_t dnsLength, char *out, size_t outSize) {
+    if (dnsLength >= outSize) {
+        return false;
+    }
+    ASSERT(dnsLength <= MAX_DNS_NAME_LENGTH);
+    ASSERT(str_isUnambiguousAscii(dnsName, dnsLength));
+    memcpy(out, dnsName, dnsLength);
+    out[dnsLength] = '\0';
     return true;
 }
 
