@@ -230,14 +230,10 @@ static void ui_strings_outputs(transaction_t *tx) {
                 &output_warnings);
         LEDGER_ASSERT((output_warnings & ~G_context.tx_info.warning_bits) == 0,
                       "Output warnings mismatch");
-
-        switch (policy) {
-            case POLICY_DENY:
-                LEDGER_ASSERT(false, "Output denied during UI");
-                break;
-            case POLICY_SHOW: {
-                TRACE("Formatting output #%u", output_num);
-                UI_ADD_FORMAT1(UI_STATIC_LABEL("Output"), MAX_UINT64_STRING_LENGTH, format_index_with_prefix, output_num);
+        LEDGER_ASSERT(policy != POLICY_DENY, "Output denied during UI");
+        if (policy == POLICY_SHOW) {
+            TRACE("Formatting output #%u", output_num);
+            UI_ADD_FORMAT1(UI_STATIC_LABEL("Output"), MAX_UINT64_STRING_LENGTH, format_index_with_prefix, output_num);
                 UI_ADD_FORMAT1(UI_STATIC_LABEL("Address"), MAX_HUMAN_ADDRESS_LENGTH, format_output_address, &output_desc);
 
                 // For device-owned addresses, show payment and staking details
@@ -280,10 +276,6 @@ static void ui_strings_outputs(transaction_t *tx) {
                 }
 
                 output_num++;
-                break;
-            }
-            case POLICY_HIDE:
-                break;
         }
 
         if (output_node->output_data.assetGroups != NULL) {
@@ -311,15 +303,9 @@ static void ui_strings_ttl(transaction_t *tx) {
         return;
     }
     security_policy_t ttl_policy = policyForSignTxTtl(tx->ttl);
-    switch (ttl_policy) {
-        case POLICY_DENY:
-            LEDGER_ASSERT(false, "TTL denied during UI");
-            break;
-        case POLICY_SHOW:
-            UI_ADD_FORMAT3(UI_STATIC_LABEL("TTL"), MAX_VALIDITY_BOUNDARY_STRING_LENGTH, format_validity_boundary, tx->ttl, tx->networkId, tx->protocolMagic);
-            break;
-        case POLICY_HIDE:
-            break;
+    LEDGER_ASSERT(ttl_policy != POLICY_DENY, "TTL denied during UI");
+    if (ttl_policy == POLICY_SHOW) {
+        UI_ADD_FORMAT3(UI_STATIC_LABEL("TTL"), MAX_VALIDITY_BOUNDARY_STRING_LENGTH, format_validity_boundary, tx->ttl, tx->networkId, tx->protocolMagic);
     }
 }
 
@@ -445,58 +431,51 @@ static void ui_strings_certificate_pool_registration(const certificate_data_t* c
             G_context.tx_info.transaction.txSigningMode,
             relay
         );
-        switch (relay_policy) {
-            case POLICY_DENY:
-                LEDGER_ASSERT(false, "Relay security policy denied");
-                break;
-            case POLICY_HIDE:
-                break;
-            case POLICY_SHOW: {
-                UI_ADD_FORMAT1(UI_STATIC_LABEL("Relay"),
-                               MAX_RELAY_INDEX_STRING_LENGTH,
-                               format_index_with_prefix,
-                               relay_index + 1);
+        LEDGER_ASSERT(relay_policy != POLICY_DENY, "Relay security policy denied");
+        if (relay_policy == POLICY_SHOW) {
+            UI_ADD_FORMAT1(UI_STATIC_LABEL("Relay"),
+                           MAX_RELAY_INDEX_STRING_LENGTH,
+                           format_index_with_prefix,
+                           relay_index + 1);
 
-                switch (relay->format) {
-                    case RELAY_SINGLE_HOST_IP:
-                        if (!relay->ipv4.isNull) {
-                            UI_ADD_FORMAT1(UI_STATIC_LABEL("IPv4"), MAX_IPV4_STR_LENGTH, format_ipv4, &relay->ipv4);
-                        }
-                        if (!relay->ipv6.isNull) {
-                            UI_ADD_FORMAT1(UI_STATIC_LABEL("IPv6"), MAX_IPV6_STR_LENGTH, format_ipv6, &relay->ipv6);
-                        }
-                        if (!relay->port.isNull) {
-                            UI_ADD_FORMAT1(UI_STATIC_LABEL("Port"), MAX_UINT64_STRING_LENGTH, format_uint16, relay->port.number);
-                        }
-                        break;
+            switch (relay->format) {
+                case RELAY_SINGLE_HOST_IP:
+                    if (!relay->ipv4.isNull) {
+                        UI_ADD_FORMAT1(UI_STATIC_LABEL("IPv4"), MAX_IPV4_STR_LENGTH, format_ipv4, &relay->ipv4);
+                    }
+                    if (!relay->ipv6.isNull) {
+                        UI_ADD_FORMAT1(UI_STATIC_LABEL("IPv6"), MAX_IPV6_STR_LENGTH, format_ipv6, &relay->ipv6);
+                    }
+                    if (!relay->port.isNull) {
+                        UI_ADD_FORMAT1(UI_STATIC_LABEL("Port"), MAX_UINT64_STRING_LENGTH, format_uint16, relay->port.number);
+                    }
+                    break;
 
-                    case RELAY_SINGLE_HOST_NAME:
-                        if (relay->dnsNameSize > 0) {
-                            UI_ADD_FORMAT2(UI_STATIC_LABEL("DNS name"),
-                                           MAX_DNS_NAME_LENGTH,
-                                           format_dns_name,
-                                           relay->dnsName,
-                                           relay->dnsNameSize);
-                        }
-                        if (!relay->port.isNull) {
-                            UI_ADD_FORMAT1(UI_STATIC_LABEL("Port"), MAX_UINT64_STRING_LENGTH, format_uint16, relay->port.number);
-                        }
-                        break;
+                case RELAY_SINGLE_HOST_NAME:
+                    if (relay->dnsNameSize > 0) {
+                        UI_ADD_FORMAT2(UI_STATIC_LABEL("DNS name"),
+                                       MAX_DNS_NAME_LENGTH,
+                                       format_dns_name,
+                                       relay->dnsName,
+                                       relay->dnsNameSize);
+                    }
+                    if (!relay->port.isNull) {
+                        UI_ADD_FORMAT1(UI_STATIC_LABEL("Port"), MAX_UINT64_STRING_LENGTH, format_uint16, relay->port.number);
+                    }
+                    break;
 
-                    case RELAY_MULTIPLE_HOST_NAME:
-                        if (relay->dnsNameSize > 0) {
-                            UI_ADD_FORMAT2(UI_STATIC_LABEL("SRV DNS"),
-                                           MAX_DNS_NAME_LENGTH,
-                                           format_dns_name,
-                                           relay->dnsName,
-                                           relay->dnsNameSize);
-                        }
-                        break;
+                case RELAY_MULTIPLE_HOST_NAME:
+                    if (relay->dnsNameSize > 0) {
+                        UI_ADD_FORMAT2(UI_STATIC_LABEL("SRV DNS"),
+                                       MAX_DNS_NAME_LENGTH,
+                                       format_dns_name,
+                                       relay->dnsName,
+                                       relay->dnsNameSize);
+                    }
+                    break;
 
-                    default:
-                        LEDGER_ASSERT(false, "Unknown relay type");
-                }
-                break;
+                default:
+                    LEDGER_ASSERT(false, "Unknown relay type");
             }
         }
 
@@ -686,18 +665,12 @@ static void ui_strings_withdrawals(transaction_t *tx) {
         LEDGER_ASSERT((withdrawal_warnings & ~G_context.tx_info.warning_bits) == 0,
                       "Withdrawal warnings mismatch");
 
-        switch (policy) {
-            case POLICY_DENY:
-                LEDGER_ASSERT(false, "Withdrawal denied during UI");
-                break;
-            case POLICY_SHOW:
-                addWithdrawalUIPairs(
-                    G_context.tx_info.transaction.networkId,
-                    &withdrawal_node->withdrawal
-                );
-                break;
-            case POLICY_HIDE:
-                break;
+        LEDGER_ASSERT(policy != POLICY_DENY, "Withdrawal denied during UI");
+        if (policy == POLICY_SHOW) {
+            addWithdrawalUIPairs(
+                G_context.tx_info.transaction.networkId,
+                &withdrawal_node->withdrawal
+            );
         }
 
         node = node->next;
@@ -721,15 +694,9 @@ static void ui_strings_validity_interval_start(transaction_t *tx) {
         return;
     }
     security_policy_t validity_interval_start_policy = policyForSignTxValidityIntervalStart();
-    switch (validity_interval_start_policy) {
-        case POLICY_DENY:
-            LEDGER_ASSERT(false, "Validity interval start denied during UI");
-            break;
-        case POLICY_SHOW:
-            UI_ADD_FORMAT3(UI_STATIC_LABEL("Validity interval start"), MAX_VALIDITY_BOUNDARY_STRING_LENGTH, format_validity_boundary, tx->validityIntervalStart, tx->networkId, tx->protocolMagic);
-            break;
-        case POLICY_HIDE:
-            break;
+    LEDGER_ASSERT(validity_interval_start_policy != POLICY_DENY, "Validity interval start denied during UI");
+    if (validity_interval_start_policy == POLICY_SHOW) {
+        UI_ADD_FORMAT3(UI_STATIC_LABEL("Validity interval start"), MAX_VALIDITY_BOUNDARY_STRING_LENGTH, format_validity_boundary, tx->validityIntervalStart, tx->networkId, tx->protocolMagic);
     }
 }
 
