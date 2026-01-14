@@ -110,15 +110,11 @@ static const uint8_t* _voter_key_data_with_size(const ext_voter_t* voter, size_t
     }
 }
 
-void txHashBuilder_serializeVoterKey(const ext_voter_t* voter,
-                                     uint8_t* buffer,
-                                     size_t bufferLen,
-                                     size_t* bytesWritten) {
+size_t txHashBuilder_serializeVoterKey(const ext_voter_t* voter,
+                                       uint8_t* buffer,
+                                       size_t bufferLen) {
     LEDGER_ASSERT(voter != NULL, "NULL voter");
     LEDGER_ASSERT(buffer != NULL, "NULL buffer");
-    LEDGER_ASSERT(bytesWritten != NULL, "NULL bytesWritten");
-    *bytesWritten = 0;
-
     size_t offset = 0;
     size_t keyLen = 0;
     const uint8_t* keyBytes = _voter_key_data_with_size(voter, &keyLen);
@@ -129,26 +125,22 @@ void txHashBuilder_serializeVoterKey(const ext_voter_t* voter,
     _append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_BYTES, keyLen);
     _append_map_key_bytes(buffer, bufferLen, &offset, keyBytes, keyLen);
 
-    *bytesWritten = offset;
+    return offset;
 }
 
-void txHashBuilder_serializeGovActionKey(const gov_action_id_t* govActionId,
-                                         uint8_t* buffer,
-                                         size_t bufferLen,
-                                         size_t* bytesWritten) {
+size_t txHashBuilder_serializeGovActionKey(const gov_action_id_t* govActionId,
+                                           uint8_t* buffer,
+                                           size_t bufferLen) {
     LEDGER_ASSERT(govActionId != NULL, "NULL gov action id");
     LEDGER_ASSERT(buffer != NULL, "NULL buffer");
     LEDGER_ASSERT(govActionId->txHash != NULL, "NULL tx hash");
-    LEDGER_ASSERT(bytesWritten != NULL, "NULL bytesWritten");
-    *bytesWritten = 0;
-
     size_t offset = 0;
     _append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_ARRAY, 2);
     _append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_BYTES, TX_HASH_LENGTH);
     _append_map_key_bytes(buffer, bufferLen, &offset, govActionId->txHash, TX_HASH_LENGTH);
     _append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_UNSIGNED, govActionId->govActionIndex);
 
-    *bytesWritten = offset;
+    return offset;
 }
 
 /* End of hash computation utilities. */

@@ -202,15 +202,13 @@ void txHashBuilder_addOutput_token(tx_hash_builder_t* builder,
 #define MAX_CBOR_VOTER_MAP_KEY_SIZE 64
 #define MAX_CBOR_GOV_ACTION_MAP_KEY_SIZE 72
 
-void txHashBuilder_serializeVoterKey(const ext_voter_t* voter,
-                                     uint8_t* buffer,
-                                     size_t bufferLen,
-                                     size_t* bytesWritten);
+size_t txHashBuilder_serializeVoterKey(const ext_voter_t* voter,
+                                       uint8_t* buffer,
+                                       size_t bufferLen);
 
-void txHashBuilder_serializeGovActionKey(const gov_action_id_t* govActionId,
-                                         uint8_t* buffer,
-                                         size_t bufferLen,
-                                         size_t* bytesWritten);
+size_t txHashBuilder_serializeGovActionKey(const gov_action_id_t* govActionId,
+                                           uint8_t* buffer,
+                                           size_t bufferLen);
 
 void txHashBuilder_addOutput_datum(tx_hash_builder_t* builder,
                                    datum_type_t datumType,

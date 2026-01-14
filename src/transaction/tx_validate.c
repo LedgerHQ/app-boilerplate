@@ -1428,6 +1428,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
     }
 
     // key 19: voting procedures
+    // TODO this needs extra careful review, we did not support more votes previously
     if (G_context.tx_info.transaction.num_voters > 0) {
         txHashBuilder_enterVotingProcedures(&txHashBuilder);
 
@@ -1469,13 +1470,10 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
             ext_voter_t voter_for_hash = _voterForTxHash(&voter_item->voter_votes_data.voter);
 
             uint8_t voter_key[MAX_CBOR_VOTER_MAP_KEY_SIZE];
-            size_t voter_key_len = 0;
-            txHashBuilder_serializeVoterKey(
+            size_t voter_key_len = txHashBuilder_serializeVoterKey(
                 &voter_for_hash,
                 voter_key,
-                sizeof(voter_key),
-                &voter_key_len);
-            // TODO not sure why we use voter_key_len as argument for this
+                sizeof(voter_key));
 
             if (has_previous_voter_key &&
                 !cbor_mapKeyFulfillsCanonicalOrdering(
@@ -1504,13 +1502,10 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                 vote_node_t *vote_item = (vote_node_t *) vote_node;
 
                 uint8_t gov_action_key[MAX_CBOR_GOV_ACTION_MAP_KEY_SIZE];
-                size_t gov_action_key_len = 0;
-
-                txHashBuilder_serializeGovActionKey(
+                size_t gov_action_key_len = txHashBuilder_serializeGovActionKey(
                         &vote_item->vote_data.govActionId,
                         gov_action_key,
-                        sizeof(gov_action_key),
-                        &gov_action_key_len);
+                        sizeof(gov_action_key));
 
                 if (has_previous_vote_key &&
                     !cbor_mapKeyFulfillsCanonicalOrdering(
