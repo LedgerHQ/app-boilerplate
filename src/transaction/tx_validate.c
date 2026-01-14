@@ -1323,6 +1323,11 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                 &collateral_desc
             );
 
+        if (collateral_policy == POLICY_SHOW &&
+            collateral_desc.numAssetGroups > 0) {
+            warning_bits_set(&G_context.tx_info.warning_bits, WARNING_BIT_COLLATERAL_OUTPUT_WARNING);
+        }
+
         switch (collateral_policy) {
             case POLICY_DENY:
                 TRACE("Collateral output security policy denied");

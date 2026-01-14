@@ -860,10 +860,6 @@ static void add_ui_and_free_collateral_output(transaction_t *tx) {
     security_policy_t collateral_tokens_policy =
         policyForSignTxCollateralOutputTokens(collateral_policy, &collateral_desc);
     LEDGER_ASSERT(collateral_tokens_policy != POLICY_DENY, "Collateral tokens policy denied during UI");
-    security_policy_t collateral_confirm_policy =
-        policyForSignTxCollateralOutputConfirm(collateral_policy, collateral_desc.numAssetGroups);
-    LEDGER_ASSERT(collateral_confirm_policy != POLICY_DENY, "Collateral confirm policy denied during UI");
-
     bool show_collateral_tokens =
         (collateral_policy == POLICY_SHOW) && (collateral_tokens_policy == POLICY_SHOW);
     TRACE("Collateral output: policy=%d ada=%d tokens=%d numAssets=%u",
@@ -883,9 +879,6 @@ static void add_ui_and_free_collateral_output(transaction_t *tx) {
             UI_ADD_FORMAT1(UI_STATIC_LABEL("Collateral amount"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, collateral_desc.amount);
         }
 
-        if (collateral_confirm_policy == POLICY_SHOW) {
-            warning_bits_set(&G_context.tx_info.warning_bits, WARNING_BIT_COLLATERAL_OUTPUT_WARNING);
-        }
     }
 
     add_ui_and_free_output_asset_groups(

@@ -85,10 +85,6 @@ security_policy_t policyForSignTxOutputDatumHash(security_policy_t outputPolicy)
 
 security_policy_t policyForSignTxOutputRefScript(security_policy_t outputPolicy);
 
-security_policy_t policyForSignTxOutputConfirm(security_policy_t addressPolicy,
-                                               uint64_t numAssetGroups,
-                                               bool containsDatum,
-                                               bool containsRefScript);
 
 security_policy_t policyForSignTxCollateralOutputAddressBytes(const tx_output_description_t* output,
                                                               sign_tx_signingmode_t txSigningMode,
@@ -104,8 +100,6 @@ security_policy_t policyForSignTxCollateralOutputAdaAmount(security_policy_t out
                                                            bool isTotalCollateralPresent);
 security_policy_t policyForSignTxCollateralOutputTokens(security_policy_t outputPolicy,
                                                         const tx_output_description_t* output);
-security_policy_t policyForSignTxCollateralOutputConfirm(security_policy_t outputPolicy,
-                                                         uint64_t numAssetGroups);
 
 security_policy_t policyForSignTxTtl(uint32_t ttl);
 security_policy_t policyForSignTxCertificate(sign_tx_signingmode_t txSigningMode,

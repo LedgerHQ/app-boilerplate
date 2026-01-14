@@ -715,27 +715,6 @@ security_policy_t policyForSignTxOutputRefScript(security_policy_t outputPolicy)
     }
 }
 
-// For final output confirmation
-security_policy_t policyForSignTxOutputConfirm(security_policy_t outputPolicy,
-                                               uint64_t numAssetGroups,
-                                               bool containsDatum,
-                                               bool containsRefScript) {
-    switch (outputPolicy) {
-        case POLICY_DENY:
-            LEDGER_ASSERT(false, "Output policy DENY should not reach confirm policy");
-            DENY();
-        case POLICY_SHOW:
-            SHOW_IF(numAssetGroups > 0);
-            SHOW_IF(containsDatum && is_expert_mode());
-            SHOW_IF(containsRefScript && is_expert_mode());
-            HIDE();
-        case POLICY_HIDE:
-            HIDE();
-        default:
-            ASSERT(false);
-            DENY();
-    }
-}
 
 static bool is_address_suitable_for_collateral_output(const tx_output_description_t* output) {
     switch (getDestinationAddressType(&output->destination)) {
@@ -852,21 +831,6 @@ security_policy_t policyForSignTxCollateralOutputTokens(security_policy_t output
     HIDE();
 }
 
-// For final collateral return output confirmation
-security_policy_t policyForSignTxCollateralOutputConfirm(security_policy_t outputPolicy,
-                                                         uint64_t numAssetGroups) {
-    if (outputPolicy == POLICY_HIDE) {
-        HIDE();
-    }
-
-    if (outputPolicy == POLICY_SHOW) {
-        SHOW_IF(numAssetGroups > 0);
-        HIDE();
-    }
-
-    ASSERT(false);
-    DENY();
-}
 
 // For transaction TTL
 security_policy_t policyForSignTxTtl(uint32_t ttl MARK_UNUSED) {
@@ -2051,7 +2015,7 @@ static const warning_definition_t WARNING_DEFINITIONS[WARNING_BIT_COUNT] = {
     },
     [WARNING_BIT_COLLATERAL_OUTPUT_WARNING] = {
         .bit = WARNING_BIT_COLLATERAL_OUTPUT_WARNING,
-        .title = "Collateral tokens returned",
+        .title = "Tokens in collateral input/output",
         .description = "Collateral return output includes tokens",
     },
     [WARNING_BIT_PLUTUS_MISSING_SCRIPT_DATA_HASH] = {
