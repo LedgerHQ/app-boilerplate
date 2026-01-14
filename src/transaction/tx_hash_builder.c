@@ -957,20 +957,20 @@ void txHashBuilder_addCertificate_voteDelegation(tx_hash_builder_t* builder,
             switch (drep->type) {
                 case DREP_KEY_HASH: {
                     BUILDER_APPEND_CBOR(CBOR_TYPE_ARRAY, 2);
-                    BUILDER_APPEND_CBOR(CBOR_TYPE_UNSIGNED, EXT_DREP_KEY_HASH);
+                    BUILDER_APPEND_CBOR(CBOR_TYPE_UNSIGNED, DREP_KEY_HASH);
                     BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, SIZEOF(drep->keyHash));
                     BUILDER_APPEND_DATA(drep->keyHash, SIZEOF(drep->keyHash));
                     break;
                 }
                 case DREP_SCRIPT_HASH: {
                     BUILDER_APPEND_CBOR(CBOR_TYPE_ARRAY, 2);
-                    BUILDER_APPEND_CBOR(CBOR_TYPE_UNSIGNED, EXT_DREP_SCRIPT_HASH);
+                    BUILDER_APPEND_CBOR(CBOR_TYPE_UNSIGNED, DREP_SCRIPT_HASH);
                     BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, SIZEOF(drep->scriptHash));
                     BUILDER_APPEND_DATA(drep->scriptHash, SIZEOF(drep->scriptHash));
                     break;
                 }
                 case DREP_ABSTAIN:
-                case EXT_DREP_NO_CONFIDENCE: {
+                case DREP_NO_CONFIDENCE: {
                     BUILDER_APPEND_CBOR(CBOR_TYPE_ARRAY, 1);
                     BUILDER_APPEND_CBOR(CBOR_TYPE_UNSIGNED, drep->type);
                     break;
