@@ -142,7 +142,7 @@ typedef struct {
     const char *skip_reason;
 } sign_tx_reject_fixture_t;
 
-#include "generated_sign_tx_rejects.h"
+#include "test_sign_tx_fixtures_rejects.h"
 
 
 // ----------------------------------------------------------------------

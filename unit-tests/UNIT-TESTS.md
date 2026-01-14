@@ -68,19 +68,19 @@ Generators (run from repo root with the standalone venv):
 
 ```bash
 source tests/standalone/venv/bin/activate
-python3 unit-tests/generate_all_fixtures.py all
-# or a single era:
-python3 unit-tests/generate_all_fixtures.py <era>
-python3 unit-tests/generate_complete_tests.py
-python3 unit-tests/generate_reject_fixtures.py
+python3 unit-tests/generate_unit_tests_from_ragger.py
+# or individual steps:
+python3 unit-tests/generate_unit_tests_from_ragger.py fixtures
+python3 unit-tests/generate_unit_tests_from_ragger.py generate-test-runners
+python3 unit-tests/generate_unit_tests_from_ragger.py rejects
 ```
 
+The default command runs all generators in order (fixtures, complete-tests, rejects, mock-data).
+
 Notes:
-- `unit-tests/generate_all_fixtures.py` produces `unit-tests/test_sign_tx_fixtures_*.h` from
-  `tests/standalone/input_files/signTx.py` and the shared command builder.
-- `unit-tests/generate_complete_tests.py` rewrites each `unit-tests/test_sign_tx_*.c`
-  with `tx_fixture_t` + `run_fixture_with_expert_mode` cases extracted from the fixture headers.
-- `unit-tests/generate_reject_fixtures.py` emits `unit-tests/generated_sign_tx_rejects.h`.
+- `unit-tests/generate_unit_tests_from_ragger.py` produces `unit-tests/test_sign_tx_fixtures_*.h` from
+  `tests/standalone/input_files/signTx.py`, rewrites each `unit-tests/test_sign_tx_*.c`
+  with `tx_fixture_t` + `run_fixture_with_expert_mode`, and emits `unit-tests/test_sign_tx_fixtures_rejects.h`.
 - `unit-tests/export_sign_tx_rejects.js` runs inside `../ledgerjs-cardano-shelley` (via Node)
   to export reject fixtures that are then serialized with `tests/application_client/command_builder.py`.
 - APDU fixtures use the app’s binary schema (presence flags + length-prefixed ASCII for relays/metadata);
@@ -89,7 +89,6 @@ Notes:
 Suggested improvements:
 - Add a single `unit-tests/generate_fixtures.py` entry point that runs all generators in order
   (all fixtures, complete tests, rejects, mock data) and verifies a clean diff.
-- Remove the absolute `BASE_PATH` from `generate_complete_tests.py` in favor of repo-relative paths.
 - Extract shared helper code (path setup, base58 shim, command builder utilities) into a small
   `unit-tests/fixture_utils.py` to reduce duplication across generators.
 
@@ -99,11 +98,11 @@ Mock key material lives in `unit-tests/mocks/crypto_mock_data.h` and is regenera
 
 ```bash
 source tests/standalone/venv/bin/activate
-python3 unit-tests/regenerate_mock_data.py
-mv unit-tests/mocks/crypto_mock_data_regenerated.h unit-tests/mocks/crypto_mock_data.h
+python3 unit-tests/generate_unit_tests_from_ragger.py mock-data
 ```
 
 This updates public keys, chain codes, and key hashes while preserving signature vectors.
+The file is rewritten in place.
 
 ## Regenerating Mock Data
 
@@ -114,9 +113,7 @@ cd unit-tests
 # Activate the ragger venv (required!)
 source ../tests/standalone/venv/bin/activate
 # Run the regeneration script
-python3 regenerate_mock_data.py
-# Review the output
-mv mocks/crypto_mock_data_regenerated.h mocks/crypto_mock_data.h
+python3 generate_unit_tests_from_ragger.py mock-data
 ```
 
 The script:
@@ -228,7 +225,7 @@ If mock data (public keys, chain codes, key hashes) becomes outdated or incorrec
 cd unit-tests
 # Activate the ragger venv (required!)
 source ../tests/standalone/venv/bin/activate
-python3 regenerate_mock_data.py
+python3 generate_unit_tests_from_ragger.py mock-data
 # Review the changes in crypto_mock_data_regenerated.h
 mv mocks/crypto_mock_data_regenerated.h mocks/crypto_mock_data.h
 ```
@@ -255,7 +252,7 @@ All these paths are verified in the mock data tests.
 To add a new mock path entry:
 
 1. Add the path to `mocks/crypto_mock_data.h` MOCK_PATHS array
-2. Run `python3 regenerate_mock_data.py` to compute key material
+2. Run `python3 generate_unit_tests_from_ragger.py mock-data` to compute key material
 3. The key derivation test will automatically verify the new entry
 4. If the test fails, check that the path is correct
 
