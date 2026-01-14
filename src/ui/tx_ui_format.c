@@ -125,10 +125,10 @@ static void add_ui_and_free_inputs(transaction_t *tx) {
 }
 
 
-static void format_and_free_output_token_nodes(const output_asset_group_t *group,
-                                               s_flist_node *token_nodes_start,
+static void add_ui_and_free_output_tokens(const output_asset_group_t *group,
+                                               s_flist_node *token_nodes,
                                                bool show_tokens) {
-    s_flist_node *node = token_nodes_start;
+    s_flist_node *node = token_nodes;
     while (node != NULL) {
         output_token_node_t *token_node = (output_token_node_t *) node;
         output_token_t *token = &token_node->token_data;
@@ -143,16 +143,16 @@ static void format_and_free_output_token_nodes(const output_asset_group_t *group
     }
 }
 
-static void ui_format_and_free_output_asset_groups(s_flist_node* assetGroupNodes,
+static void add_ui_and_free_output_asset_groups(s_flist_node* asset_group_nodes,
                                             uint16_t numGroups,
                                             bool show_tokens) {
     uint16_t group_count = 0;
-    s_flist_node *node = assetGroupNodes;
+    s_flist_node *node = asset_group_nodes;
     while (node != NULL) {
         group_count++;
         output_asset_group_node_t *group_node = (output_asset_group_node_t *) node;
         output_asset_group_t *group = &group_node->asset_group;
-        format_and_free_output_token_nodes(group, group->tokens, show_tokens);
+        add_ui_and_free_output_tokens(group, group->tokens, show_tokens);
         group->tokens = NULL;
 
         node = node->next;
@@ -267,7 +267,7 @@ static void add_ui_and_free_outputs(transaction_t *tx) {
                 }
 
                 if (output_node->output_data.assetGroups != NULL) {
-                    ui_format_and_free_output_asset_groups(
+                    add_ui_and_free_output_asset_groups(
                         output_node->output_data.assetGroups,
                         output_node->output_data.numAssetGroups,
                         true
@@ -279,7 +279,7 @@ static void add_ui_and_free_outputs(transaction_t *tx) {
         }
 
         if (output_node->output_data.assetGroups != NULL) {
-            ui_format_and_free_output_asset_groups(
+            add_ui_and_free_output_asset_groups(
                 output_node->output_data.assetGroups,
                 output_node->output_data.numAssetGroups,
                 false
@@ -309,34 +309,66 @@ static void add_ui_and_free_ttl(transaction_t *tx) {
     }
 }
 
-static void add_ui_and_free_certificate_pool_registration(const certificate_data_t* certificate_data,
-                                                     sign_tx_signingmode_t txSigningMode) {
-    pool_owner_counts_t pool_owner_counts = count_pool_owner_nodes(
-        certificate_data->poolRegistration.poolOwners
+static bool should_show_pool_registration(
+    const certificate_data_t *certificate,
+    sign_tx_signingmode_t txSigningMode,
+    pool_owner_counts_t *pool_owner_counts) {
+    LEDGER_ASSERT(certificate != NULL, "NULL certificate data");
+    LEDGER_ASSERT(pool_owner_counts != NULL, "NULL pool owner counts");
+
+    security_policy_t generic_policy = policyForSignTxCertificate(
+        txSigningMode,
+        certificate->type
     );
+    LEDGER_ASSERT(generic_policy != POLICY_DENY, "Certificate denied during UI");
+
+    *pool_owner_counts = count_pool_owner_nodes(
+        certificate->poolRegistration.poolOwners
+    );
+    security_policy_t policy = policyForSignTxStakePoolRegistrationInit(
+        txSigningMode,
+        certificate->poolRegistration.numPoolOwners,
+        pool_owner_counts->path_owners
+    );
+    LEDGER_ASSERT(policy != POLICY_DENY, "Certificate denied during UI");
+    return policy == POLICY_SHOW;
+}
+
+static void add_ui_and_free_certificate_pool_registration(const certificate_data_t* certificate,
+                                                     sign_tx_signingmode_t txSigningMode) {
+    pool_owner_counts_t pool_owner_counts;
+    if (!should_show_pool_registration(certificate, txSigningMode, &pool_owner_counts)) {
+        return;
+    }
+
+    TRACE("Formatting certificate type=%u", certificate->type);
+    UI_ADD_FORMAT1(UI_STATIC_LABEL("Certificate"),
+                   MAX_CERTIFICATE_TYPE_LENGTH,
+                   format_certificate_type,
+                   certificate->type);
 
     security_policy_t pool_id_policy = policyForSignTxStakePoolRegistrationPoolId(
         txSigningMode,
-        &certificate_data->poolId
+        &certificate->poolId
     );
     LEDGER_ASSERT(pool_id_policy != POLICY_DENY, "Pool ID security policy denied");
 
-    const pool_id_t *pool_id = &certificate_data->poolId;
-    uint8_t pool_key_hash[POOL_KEY_HASH_LENGTH];
-
-    switch (pool_id->keyReferenceType) {
-        case KEY_REFERENCE_PATH:
-            bip44_pathToKeyHash(&pool_id->path, pool_key_hash, sizeof(pool_key_hash));
-            break;
-        case KEY_REFERENCE_HASH:
-            LEDGER_ASSERT(pool_id->hash != NULL, "NULL pool ID hash");
-            memcpy(pool_key_hash, pool_id->hash, POOL_KEY_HASH_LENGTH);
-            break;
-        default:
-            LEDGER_ASSERT(false, "Unsupported pool ID type");
-    }
-
     if (pool_id_policy == POLICY_SHOW) {
+        const pool_id_t *pool_id = &certificate->poolId;
+        uint8_t pool_key_hash[POOL_KEY_HASH_LENGTH];
+
+        switch (pool_id->keyReferenceType) {
+            case KEY_REFERENCE_PATH:
+                bip44_pathToKeyHash(&pool_id->path, pool_key_hash, sizeof(pool_key_hash));
+                break;
+            case KEY_REFERENCE_HASH:
+                LEDGER_ASSERT(pool_id->hash != NULL, "NULL pool ID hash");
+                memcpy(pool_key_hash, pool_id->hash, POOL_KEY_HASH_LENGTH);
+                break;
+            default:
+                LEDGER_ASSERT(false, "Unsupported pool ID type");
+        }
+
         UI_ADD_FORMAT3(UI_STATIC_LABEL("Pool ID"),
                        MAX_BECH32_STRING_LENGTH,
                        format_bech32,
@@ -353,30 +385,30 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
                        MAX_BECH32_STRING_LENGTH,
                        format_bech32,
                        "vrf_vk",
-                       certificate_data->vrfKeyHash,
+                       certificate->vrfKeyHash,
                        VRF_KEY_HASH_LENGTH);
     }
 
     UI_ADD_FORMAT1(UI_STATIC_LABEL("Pledge"),
                    MAX_ADA_AMOUNT_STRING_LENGTH,
                    format_ada_amount,
-                   certificate_data->poolRegistration.pledge);
+                   certificate->poolRegistration.pledge);
 
     UI_ADD_FORMAT1(UI_STATIC_LABEL("Cost"),
                    MAX_ADA_AMOUNT_STRING_LENGTH,
                    format_ada_amount,
-                   certificate_data->poolRegistration.cost);
+                   certificate->poolRegistration.cost);
 
     UI_ADD_FORMAT2(UI_STATIC_LABEL("Profit margin"),
                    MAX_PROFIT_MARGIN_STRING_LENGTH,
                    format_pool_margin,
-                   certificate_data->poolRegistration.marginNumerator,
-                   certificate_data->poolRegistration.marginDenominator);
+                   certificate->poolRegistration.marginNumerator,
+                   certificate->poolRegistration.marginDenominator);
 
     security_policy_t reward_policy = policyForSignTxStakePoolRegistrationRewardAccount(
         txSigningMode,
         G_context.tx_info.transaction.networkId,
-        &certificate_data->poolRegistration.rewardAccount
+        &certificate->poolRegistration.rewardAccount
     );
     LEDGER_ASSERT(reward_policy != POLICY_DENY, "Reward account security policy denied");
 
@@ -385,11 +417,11 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
                        MAX_HUMAN_ADDRESS_LENGTH,
                        format_pool_reward_account,
                        G_context.tx_info.transaction.networkId,
-                       &certificate_data->poolRegistration.rewardAccount);
+                       &certificate->poolRegistration.rewardAccount);
     }
 
     uint32_t owner_index = 0;
-    s_flist_node* owner_node = certificate_data->poolRegistration.poolOwners;
+    s_flist_node* owner_node = certificate->poolRegistration.poolOwners;
     while (owner_node != NULL) {
         tx_certificate_node_t* owner_item = (tx_certificate_node_t*) owner_node;
         ext_credential_t* owner_credential = &owner_item->certificate.stakeCredential;
@@ -422,7 +454,7 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
     }
 
     uint32_t relay_index = 0;
-    s_flist_node* relay_node = certificate_data->poolRegistration.relays;
+    s_flist_node* relay_node = certificate->poolRegistration.relays;
     while (relay_node != NULL) {
         tx_certificate_node_t* relay_item = (tx_certificate_node_t*) relay_node;
         pool_relay_t* relay = (pool_relay_t*) &relay_item->certificate;
@@ -483,7 +515,7 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
         relay_index++;
     }
 
-    ASSERT(relay_index == certificate_data->poolRegistration.numRelays);
+    ASSERT(relay_index == certificate->poolRegistration.numRelays);
     if (relay_index == 0) {
         warning_bits_set(&G_context.tx_info.warning_bits,
                          WARNING_BIT_POOL_REGISTRATION_NO_RELAYS);
@@ -492,7 +524,7 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
         }
     }
 
-    if (certificate_data->poolRegistration.poolMetadataIsNull) {
+    if (certificate->poolRegistration.poolMetadataIsNull) {
         security_policy_t no_metadata_policy = policyForSignTxStakePoolRegistrationNoMetadata();
         LEDGER_ASSERT(no_metadata_policy != POLICY_DENY, "No metadata security policy denied");
 
@@ -509,46 +541,22 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
             UI_ADD_FORMAT2(UI_STATIC_LABEL("Pool metadata url"),
                            MAX_POOL_METADATA_URL_LENGTH,
                            format_url,
-                           certificate_data->poolRegistration.poolMetadata.url,
-                           certificate_data->poolRegistration.poolMetadata.urlSize);
+                           certificate->poolRegistration.poolMetadata.url,
+                           certificate->poolRegistration.poolMetadata.urlSize);
             UI_ADD_FORMAT2(UI_STATIC_LABEL("Pool metadata hash"),
                            MAX_POOL_METADATA_HASH_STRING_LENGTH,
                            format_hex_bytes,
-                           certificate_data->poolRegistration.poolMetadata.hash,
+                           certificate->poolRegistration.poolMetadata.hash,
                            POOL_METADATA_HASH_LENGTH);
         }
     }
 }
 
-static bool should_show_pool_registration(
-    const certificate_data_t *certificate_data,
-    sign_tx_signingmode_t txSigningMode) {
-    LEDGER_ASSERT(certificate_data != NULL, "NULL certificate data");
-
-    security_policy_t generic_policy = policyForSignTxCertificate(
-        txSigningMode,
-        certificate_data->type
-    );
-    LEDGER_ASSERT(generic_policy != POLICY_DENY, "Certificate denied during UI");
-
-    pool_owner_counts_t pool_owner_counts = count_pool_owner_nodes(
-        certificate_data->poolRegistration.poolOwners
-    );
-    security_policy_t policy = policyForSignTxStakePoolRegistrationInit(
-        txSigningMode,
-        certificate_data->poolRegistration.numPoolOwners,
-        pool_owner_counts.path_owners
-    );
-    LEDGER_ASSERT(policy != POLICY_DENY, "Certificate denied during UI");
-    return policy == POLICY_SHOW;
-}
-
 static bool should_show_certificate(
     certificate_type_t certificate_type,
-    const certificate_data_t *certificate_data,
+    const certificate_data_t *certificate,
     sign_tx_signingmode_t txSigningMode) {
-    security_policy_t policy = POLICY_DENY;
-    LEDGER_ASSERT(certificate_data != NULL, "NULL certificate data");
+    LEDGER_ASSERT(certificate != NULL, "NULL certificate data");
 
     security_policy_t generic_policy = policyForSignTxCertificate(
         txSigningMode,
@@ -556,6 +564,7 @@ static bool should_show_certificate(
     );
     LEDGER_ASSERT(generic_policy != POLICY_DENY, "Certificate denied during UI");
 
+    security_policy_t policy = POLICY_DENY;
     switch (certificate_type) {
         case CERTIFICATE_STAKE_REGISTRATION:
         case CERTIFICATE_STAKE_DEREGISTRATION:
@@ -565,30 +574,30 @@ static bool should_show_certificate(
             policy = policyForSignTxCertificateStaking(
                 txSigningMode,
                 certificate_type,
-                &certificate_data->stakeCredential
+                &certificate->stakeCredential
             );
             break;
 
         case CERTIFICATE_VOTE_DELEGATION:
             policy = policyForSignTxCertificateVoteDelegation(
                 txSigningMode,
-                &certificate_data->stakeCredential,
-                &certificate_data->drep
+                &certificate->stakeCredential,
+                &certificate->drep
             );
             break;
 
         case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT:
             policy = policyForSignTxCertificateCommitteeAuth(
                 txSigningMode,
-                &certificate_data->coldCredential,
-                &certificate_data->hotCredential
+                &certificate->coldCredential,
+                &certificate->hotCredential
             );
             break;
 
         case CERTIFICATE_RESIGN_COMMITTEE_COLD:
             policy = policyForSignTxCertificateCommitteeResign(
                 txSigningMode,
-                &certificate_data->coldCredential
+                &certificate->coldCredential
             );
             break;
 
@@ -597,15 +606,15 @@ static bool should_show_certificate(
         case CERTIFICATE_DREP_UPDATE:
             policy = policyForSignTxCertificateDRep(
                 txSigningMode,
-                &certificate_data->dRepCredential
+                &certificate->dRepCredential
             );
             break;
 
         case CERTIFICATE_STAKE_POOL_RETIREMENT:
             policy = policyForSignTxCertificateStakePoolRetirement(
                 txSigningMode,
-                &certificate_data->poolCredential,
-                certificate_data->retirementEpoch
+                &certificate->poolCredential,
+                certificate->retirementEpoch
             );
             break;
 
@@ -627,20 +636,15 @@ static void add_ui_and_free_certificates(transaction_t *tx) {
     TRACE("Formatting %u certificates", tx->num_certificates);
     while (node != NULL) {
         tx_certificate_node_t *certificate_node = (tx_certificate_node_t *) node;
-        if (certificate_node->certificate.type == CERTIFICATE_STAKE_POOL_REGISTRATION) {
-            if (should_show_pool_registration(&certificate_node->certificate, tx->txSigningMode)) {
-                TRACE("Formatting certificate type=%u", certificate_node->certificate.type);
-                UI_ADD_FORMAT1(UI_STATIC_LABEL("Certificate"),
-                               MAX_CERTIFICATE_TYPE_LENGTH,
-                               format_certificate_type,
-                               certificate_node->certificate.type);
-                add_ui_and_free_certificate_pool_registration(&certificate_node->certificate, tx->txSigningMode);
-            }
+        const certificate_data_t *certificate = &certificate_node->certificate;
+        if (certificate->type == CERTIFICATE_STAKE_POOL_REGISTRATION) {
+            // treated separately
+            add_ui_and_free_certificate_pool_registration(certificate, tx->txSigningMode);
         } else if (should_show_certificate(
-                       certificate_node->certificate.type,
-                       &certificate_node->certificate,
+                       certificate->type,
+                       certificate,
                        tx->txSigningMode)) {
-            addCertificateUIPairs(&certificate_node->certificate);
+            addCertificateUIPairs(certificate);
         }
 
         node = node->next;
@@ -723,26 +727,26 @@ static void add_ui_and_free_mint(transaction_t *tx) {
 
     s_flist_node *node = tx->mint_asset_groups;
     while (node != NULL) {
-        mint_asset_group_node_t *asset_group_node =
-            (mint_asset_group_node_t *) node;
-        node = node->next;
+        mint_asset_group_node_t *asset_group_node = (mint_asset_group_node_t *) node;
+        mint_asset_group_t *asset_group = &asset_group_node->asset_group;
 
-        ASSERT(asset_group_node->asset_group.policyId != NULL);
-        s_flist_node *token_node = asset_group_node->asset_group.tokens;
-        while (token_node != NULL) {
-            mint_token_node_t *token_node_entry = (mint_token_node_t *) token_node;
+        ASSERT(asset_group->policyId != NULL);
+        s_flist_node *node2 = asset_group->tokens;
+        while (node2 != NULL) {
+            mint_token_node_t *token_node_entry = (mint_token_node_t *) node2;
             mint_token_t *token = &token_node_entry->token;
-            token_node = token_node->next;
 
             if (show_mint) {
-                UI_ADD_FORMAT3(UI_STATIC_LABEL("Mint fingerprint"), MAX_TOKEN_FINGERPRINT_STRING_LENGTH, format_asset_fingerprint_bech32, asset_group_node->asset_group.policyId, token->assetName, token->assetNameLen);
-                UI_ADD_FORMAT4(UI_STATIC_LABEL("Mint amount"), MAX_MINT_AMOUNT_STRING_LENGTH, format_token_amount_mint, asset_group_node->asset_group.policyId, token->assetName, token->assetNameLen, token->amount);
+                UI_ADD_FORMAT3(UI_STATIC_LABEL("Mint fingerprint"), MAX_TOKEN_FINGERPRINT_STRING_LENGTH, format_asset_fingerprint_bech32, asset_group->policyId, token->assetName, token->assetNameLen);
+                UI_ADD_FORMAT4(UI_STATIC_LABEL("Mint amount"), MAX_MINT_AMOUNT_STRING_LENGTH, format_token_amount_mint, asset_group->policyId, token->assetName, token->assetNameLen, token->amount);
             }
 
+            node2 = node2->next;
             app_mem_free(token_node_entry);
         }
-
         asset_group_node->asset_group.tokens = NULL;
+
+        node = node->next;
         app_mem_free(asset_group_node);
     }
 
@@ -811,6 +815,7 @@ static void add_ui_and_free_required_signers(transaction_t *tx) {
     tx->required_signers = NULL;
 }
 
+// TODO needs clean up
 static void add_ui_and_free_collateral_output(transaction_t *tx) {
     if (!tx->includeCollateralOutput) {
         return;
@@ -883,7 +888,7 @@ static void add_ui_and_free_collateral_output(transaction_t *tx) {
         }
     }
 
-    ui_format_and_free_output_asset_groups(
+    add_ui_and_free_output_asset_groups(
         tx->collateral_output.assetGroups,
         tx->collateral_output.numAssetGroups,
         show_collateral_tokens);
@@ -903,21 +908,21 @@ static void add_ui_and_free_total_collateral(transaction_t *tx) {
 }
 
 static void add_ui_and_free_reference_inputs(transaction_t *tx) {
-    s_flist_node *ref_input_node = tx->reference_inputs;
-    while (ref_input_node != NULL) {
-        tx_input_node_t *ref_input = (tx_input_node_t *) ref_input_node;
+    s_flist_node *node = tx->reference_inputs;
+    while (node != NULL) {
+        tx_input_node_t *ref_input_node = (tx_input_node_t *) node;
 
         security_policy_t reference_input_policy = policyForSignTxReferenceInput(
             tx->txSigningMode,
-            &ref_input->input);
+            &ref_input_node->input);
         LEDGER_ASSERT(reference_input_policy != POLICY_DENY, "Reference input denied during UI");
 
         if (reference_input_policy == POLICY_SHOW) {
-            UI_ADD_FORMAT1(UI_STATIC_LABEL("Ref input"), MAX_INPUT_DISPLAY_STRING_LENGTH, format_input_with_index, &ref_input->input);
+            UI_ADD_FORMAT1(UI_STATIC_LABEL("Ref input"), MAX_INPUT_DISPLAY_STRING_LENGTH, format_input_with_index, &ref_input_node->input);
         }
 
-        ref_input_node = ref_input_node->next;
-        app_mem_free(ref_input);
+        node = node->next;
+        app_mem_free(ref_input_node);
     }
     tx->reference_inputs = NULL;
 }
@@ -936,12 +941,13 @@ static void add_ui_and_free_voting_procedures(transaction_t *tx) {
         s_flist_node *vote_node = voter_node->voter_votes_data.votes;
         while (vote_node != NULL) {
             vote_node_t *vote_node_data = (vote_node_t *) vote_node;
+            vote_item_t *vote_data = &vote_node_data->vote_data;
 
             if (policy == POLICY_SHOW) {
-                UI_ADD_FORMAT2(UI_STATIC_LABEL("Gov action tx hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_bytes, vote_node_data->vote_data.govActionId.txHash, TX_HASH_LENGTH);
-                UI_ADD_FORMAT1(UI_STATIC_LABEL("Gov action index"), MAX_UINT64_STRING_LENGTH, format_uint64, vote_node_data->vote_data.govActionId.govActionIndex);
-                UI_ADD_FORMAT1(UI_STATIC_LABEL("Vote"), MAX_VOTE_OPTION_LENGTH, format_vote_option, vote_node_data->vote_data.voteOption);
-                addAnchorUIPairs(&vote_node_data->vote_data.anchor);
+                UI_ADD_FORMAT2(UI_STATIC_LABEL("Gov action tx hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_bytes, vote_data->govActionId.txHash, TX_HASH_LENGTH);
+                UI_ADD_FORMAT1(UI_STATIC_LABEL("Gov action index"), MAX_UINT64_STRING_LENGTH, format_uint64, vote_data->govActionId.govActionIndex);
+                UI_ADD_FORMAT1(UI_STATIC_LABEL("Vote"), MAX_VOTE_OPTION_LENGTH, format_vote_option, vote_data->voteOption);
+                addAnchorUIPairs(&vote_data->anchor);
             }
 
             vote_node = vote_node->next;

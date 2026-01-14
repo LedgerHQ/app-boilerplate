@@ -62,6 +62,7 @@ typedef struct {
         bip44_path_t path;
         const uint8_t* hash;
     };
+    // TODO possibly just use ext_credential_t for this when it is refactored to use pointers instead of arrays
 } pool_id_t;
 
 typedef struct {
