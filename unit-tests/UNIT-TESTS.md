@@ -83,14 +83,8 @@ Notes:
   with `tx_fixture_t` + `run_fixture_with_expert_mode`, and emits `unit-tests/test_sign_tx_fixtures_rejects.h`.
 - `unit-tests/export_sign_tx_rejects.js` runs inside `../ledgerjs-cardano-shelley` (via Node)
   to export reject fixtures that are then serialized with `tests/application_client/command_builder.py`.
-- APDU fixtures use the app’s binary schema (presence flags + length-prefixed ASCII for relays/metadata);
+- APDU fixtures use the app's binary schema (presence flags + length-prefixed ASCII for relays/metadata);
   they are not CBOR byte dumps from LedgerJS. CBOR fixtures remain the source of truth for tx body/hash validation.
-
-Suggested improvements:
-- Add a single `unit-tests/generate_fixtures.py` entry point that runs all generators in order
-  (all fixtures, complete tests, rejects, mock data) and verifies a clean diff.
-- Extract shared helper code (path setup, base58 shim, command builder utilities) into a small
-  `unit-tests/fixture_utils.py` to reduce duplication across generators.
 
 ### Mock Crypto Fixtures
 
