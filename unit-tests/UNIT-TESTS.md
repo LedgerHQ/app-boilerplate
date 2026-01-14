@@ -71,7 +71,11 @@ source tests/standalone/venv/bin/activate
 python3 unit-tests/generate_unit_tests_from_ragger.py
 # or individual steps:
 python3 unit-tests/generate_unit_tests_from_ragger.py fixtures
+<<<<<<< HEAD
 python3 unit-tests/generate_unit_tests_from_ragger.py generate-test-runners
+=======
+python3 unit-tests/generate_unit_tests_from_ragger.py complete-tests
+>>>>>>> 583d1e1 (unit test generation script)
 python3 unit-tests/generate_unit_tests_from_ragger.py rejects
 ```
 
@@ -86,6 +90,15 @@ Notes:
 - APDU fixtures use the app's binary schema (presence flags + length-prefixed ASCII for relays/metadata);
   they are not CBOR byte dumps from LedgerJS. CBOR fixtures remain the source of truth for tx body/hash validation.
 
+<<<<<<< HEAD
+=======
+Suggested improvements:
+- Add a single `unit-tests/generate_fixtures.py` entry point that runs all generators in order
+  (all fixtures, complete tests, rejects, mock data) and verifies a clean diff.
+- Extract shared helper code (path setup, base58 shim, command builder utilities) into a small
+  `unit-tests/fixture_utils.py` to reduce duplication across generators.
+
+>>>>>>> 583d1e1 (unit test generation script)
 ### Mock Crypto Fixtures
 
 Mock key material lives in `unit-tests/mocks/crypto_mock_data.h` and is regenerated with:

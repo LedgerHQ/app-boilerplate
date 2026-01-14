@@ -600,8 +600,8 @@ def _generate_complete_test_file(era: str, fixture_file: str, test_c_file: str, 
     test_path.write_text(complete_file)
     print(f"Generated {test_c_file}: {len(fixtures)} tests")
 
-
 def generate_test_runners() -> None:
+
     for era, (fixture_file, test_c_file, era_upper) in ERA_TEST_FILE_MAP.items():
         _generate_complete_test_file(era, fixture_file, test_c_file, era_upper)
 
@@ -1197,7 +1197,9 @@ def _build_reject_fixtures() -> str:
         chunks = [
             ChunkInfo(
                 p1=chunk[2],
+                
                 more=chunk[2] != P1Type.P1_TX_CHUNK_LAST,
+
                 hex_payload=chunk[5:].hex().upper(),
             )
             for chunk in builder.serialize_transaction_chunks(tx)
