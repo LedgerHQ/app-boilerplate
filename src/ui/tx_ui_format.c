@@ -1068,7 +1068,7 @@ int ui_prepare_transaction_review(void) {
 
     // If pair count exceeds UI capability, reject the transaction
     if (pair_count > MAX_UI_PAIRS) {
-        send_swo_and_reset(SWO_UI_PAIRS_EXCEED_CAPABILITY);
+        send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
 
     if (!ui_pairs_init((uint8_t) pair_count)) {
