@@ -3,6 +3,7 @@
 #include "cbor.h"
 #include "write.h"
 #include "utils/assert.h"
+#include "utils/utils.h"
 #include <string.h>
 
 /*
@@ -91,18 +92,18 @@ static void _append_map_key_bytes(uint8_t* buffer,
     *offset += dataLen;
 }
 
-static const uint8_t* _voter_key_data_with_size(const ext_voter_t* voter, size_t* out_size) {
+static const uint8_t* _voter_key_data_with_size(const voter_t* voter, size_t* out_size) {
     LEDGER_ASSERT(voter != NULL, "NULL voter");
     LEDGER_ASSERT(out_size != NULL, "NULL accept");
 
     switch (voter->type) {
-        case EXT_VOTER_COMMITTEE_HOT_KEY_HASH:
-        case EXT_VOTER_DREP_KEY_HASH:
-        case EXT_VOTER_STAKE_POOL_KEY_HASH:
+        case VOTER_COMMITTEE_HOT_KEY_HASH:
+        case VOTER_DREP_KEY_HASH:
+        case VOTER_STAKE_POOL_KEY_HASH:
             *out_size = ADDRESS_KEY_HASH_LENGTH;
             return voter->keyHash;
-        case EXT_VOTER_COMMITTEE_HOT_SCRIPT_HASH:
-        case EXT_VOTER_DREP_SCRIPT_HASH:
+        case VOTER_COMMITTEE_HOT_SCRIPT_HASH:
+        case VOTER_DREP_SCRIPT_HASH:
             *out_size = SCRIPT_HASH_LENGTH;
             return voter->scriptHash;
         default:
@@ -110,7 +111,7 @@ static const uint8_t* _voter_key_data_with_size(const ext_voter_t* voter, size_t
     }
 }
 
-size_t txHashBuilder_serializeVoterKey(const ext_voter_t* voter,
+size_t txHashBuilder_serializeVoterKey(const voter_t* voter,
                                        uint8_t* buffer,
                                        size_t bufferLen) {
     LEDGER_ASSERT(voter != NULL, "NULL voter");
@@ -933,7 +934,7 @@ void txHashBuilder_addCertificate_stakeDelegation(tx_hash_builder_t* builder,
 
 void txHashBuilder_addCertificate_voteDelegation(tx_hash_builder_t* builder,
                                                  const ext_credential_t* stakeCredential,
-                                                 const ext_drep_t* drep) {
+                                                 const drep_t* drep) {
     _initNewCertificate(builder);
 
     // Array(3)[
@@ -954,21 +955,21 @@ void txHashBuilder_addCertificate_voteDelegation(tx_hash_builder_t* builder,
         {
             // DRep
             switch (drep->type) {
-                case EXT_DREP_KEY_HASH: {
+                case DREP_KEY_HASH: {
                     BUILDER_APPEND_CBOR(CBOR_TYPE_ARRAY, 2);
                     BUILDER_APPEND_CBOR(CBOR_TYPE_UNSIGNED, EXT_DREP_KEY_HASH);
                     BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, SIZEOF(drep->keyHash));
                     BUILDER_APPEND_DATA(drep->keyHash, SIZEOF(drep->keyHash));
                     break;
                 }
-                case EXT_DREP_SCRIPT_HASH: {
+                case DREP_SCRIPT_HASH: {
                     BUILDER_APPEND_CBOR(CBOR_TYPE_ARRAY, 2);
                     BUILDER_APPEND_CBOR(CBOR_TYPE_UNSIGNED, EXT_DREP_SCRIPT_HASH);
                     BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, SIZEOF(drep->scriptHash));
                     BUILDER_APPEND_DATA(drep->scriptHash, SIZEOF(drep->scriptHash));
                     break;
                 }
-                case EXT_DREP_ABSTAIN:
+                case DREP_ABSTAIN:
                 case EXT_DREP_NO_CONFIDENCE: {
                     BUILDER_APPEND_CBOR(CBOR_TYPE_ARRAY, 1);
                     BUILDER_APPEND_CBOR(CBOR_TYPE_UNSIGNED, drep->type);
@@ -2049,7 +2050,7 @@ void txHashBuilder_enterVotingProcedures(tx_hash_builder_t* builder) {
 }
 
 void txHashBuilder_addVoter(tx_hash_builder_t* builder,
-                            ext_voter_t* voter,
+                            const voter_t* voter,
                             uint16_t numVotes) {
     _TRACE("state = %d, remainingVotingProcedures = %u, numVotes = %u",
            builder->state,
@@ -2061,10 +2062,6 @@ void txHashBuilder_addVoter(tx_hash_builder_t* builder,
     ASSERT(numVotes > 0);
 
     // Assert no KEY_PATH variants (must be converted before calling)
-    ASSERT(voter->type != EXT_VOTER_COMMITTEE_HOT_KEY_PATH);
-    ASSERT(voter->type != EXT_VOTER_DREP_KEY_PATH);
-    ASSERT(voter->type != EXT_VOTER_STAKE_POOL_KEY_PATH);
-
     builder->remainingVotingProcedures--;
 
     // voter - Array(2)[Unsigned[voter type], Bytes[key or script hash]]
@@ -2072,15 +2069,15 @@ void txHashBuilder_addVoter(tx_hash_builder_t* builder,
     BUILDER_APPEND_CBOR(CBOR_TYPE_UNSIGNED, voter->type);
 
     switch (voter->type) {
-        case EXT_VOTER_COMMITTEE_HOT_KEY_HASH:
-        case EXT_VOTER_DREP_KEY_HASH:
-        case EXT_VOTER_STAKE_POOL_KEY_HASH: {
+        case VOTER_COMMITTEE_HOT_KEY_HASH:
+        case VOTER_DREP_KEY_HASH:
+        case VOTER_STAKE_POOL_KEY_HASH: {
             BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, SIZEOF(voter->keyHash));
             BUILDER_APPEND_DATA(voter->keyHash, SIZEOF(voter->keyHash));
             break;
         }
-        case EXT_VOTER_COMMITTEE_HOT_SCRIPT_HASH:
-        case EXT_VOTER_DREP_SCRIPT_HASH: {
+        case VOTER_COMMITTEE_HOT_SCRIPT_HASH:
+        case VOTER_DREP_SCRIPT_HASH: {
             BUILDER_APPEND_CBOR(CBOR_TYPE_BYTES, SIZEOF(voter->scriptHash));
             BUILDER_APPEND_DATA(voter->scriptHash, SIZEOF(voter->scriptHash));
             break;

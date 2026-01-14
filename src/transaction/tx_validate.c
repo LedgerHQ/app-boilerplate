@@ -20,6 +20,7 @@
 #include "securityPolicy/securityPolicy.h"
 #include "securityPolicy/securityWarnings.h"
 #include "utils/assert.h"
+#include "utils/utils.h"
 #include "io.h"
 #include "app_context.h"
 #include "utils/cbor.h"
@@ -37,7 +38,7 @@ static ext_credential_t _credentialForTxHash(const ext_credential_t* credential)
 
     if (credential->type == EXT_CREDENTIAL_KEY_PATH) {
         result.type = EXT_CREDENTIAL_KEY_HASH;
-        bip44_pathToKeyHash(&credential->keyPath, result.keyHash, sizeof(result.keyHash));
+        bip44_pathToKeyHash(&credential->keyPath, result.keyHash, SIZEOF(result.keyHash));
     }
 
     return result;
@@ -48,47 +49,83 @@ static ext_credential_t _credentialForTxHash(const ext_credential_t* credential)
  * Converts KEY_PATH to KEY_HASH, leaves other types unchanged.
  * Does NOT modify the input drep.
  */
-static ext_drep_t _drepForTxHash(const ext_drep_t* drep) {
-    ext_drep_t result = *drep;
+static drep_t _drepForTxHash(const ext_drep_t* ext_drep) {
+    drep_t result = { .type = (drep_type_t) ext_drep->type };
 
-    if (drep->type == EXT_DREP_KEY_PATH) {
-        result.type = EXT_DREP_KEY_HASH;
-        bip44_pathToKeyHash(&drep->keyPath, result.keyHash, sizeof(result.keyHash));
-    }
-
-    return result;
-}
-
-static ext_voter_t _voterForTxHash(const ext_voter_t* voter) {
-    ext_voter_t result = *voter;
-
-    // Convert KEY_PATH variants to KEY_HASH
-    switch (voter->type) {
-        case EXT_VOTER_COMMITTEE_HOT_KEY_PATH:
-            result.type = EXT_VOTER_COMMITTEE_HOT_KEY_HASH;
-            bip44_pathToKeyHash(&voter->keyPath, result.keyHash, sizeof(result.keyHash));
+    switch (ext_drep->type) {
+        case EXT_DREP_KEY_PATH:
+            result.type = DREP_KEY_HASH;
+            bip44_pathToKeyHash(&ext_drep->keyPath, result.keyHash, SIZEOF(result.keyHash));
             break;
-        case EXT_VOTER_DREP_KEY_PATH:
-            result.type = EXT_VOTER_DREP_KEY_HASH;
-            bip44_pathToKeyHash(&voter->keyPath, result.keyHash, sizeof(result.keyHash));
+        case EXT_DREP_KEY_HASH:
+            LEDGER_ASSERT(ext_drep->keyHash != NULL, "NULL drep key hash pointer");
+            result.type = DREP_KEY_HASH;
+            memcpy(result.keyHash, ext_drep->keyHash, SIZEOF(result.keyHash));
             break;
-        case EXT_VOTER_STAKE_POOL_KEY_PATH:
-            result.type = EXT_VOTER_STAKE_POOL_KEY_HASH;
-            bip44_pathToKeyHash(&voter->keyPath, result.keyHash, sizeof(result.keyHash));
+        case EXT_DREP_SCRIPT_HASH:
+            LEDGER_ASSERT(ext_drep->scriptHash != NULL, "NULL drep script hash pointer");
+            result.type = DREP_SCRIPT_HASH;
+            memcpy(result.scriptHash, ext_drep->scriptHash, SIZEOF(result.scriptHash));
             break;
-        // KEY_HASH and SCRIPT_HASH types: no conversion needed, just copy
-        case EXT_VOTER_COMMITTEE_HOT_KEY_HASH:
-        case EXT_VOTER_DREP_KEY_HASH:
-        case EXT_VOTER_STAKE_POOL_KEY_HASH:
-        case EXT_VOTER_COMMITTEE_HOT_SCRIPT_HASH:
-        case EXT_VOTER_DREP_SCRIPT_HASH:
-            // Already copied above
+        case EXT_DREP_ABSTAIN:
+            result.type = DREP_ABSTAIN;
+            break;
+        case EXT_DREP_NO_CONFIDENCE:
+            result.type = DREP_NO_CONFIDENCE;
             break;
         default:
             ASSERT(false);
     }
 
     return result;
+}
+
+static voter_t _voterForTxHash(const ext_voter_t* ext_voter) {
+    voter_t voter = {0};
+
+    switch (ext_voter->type) {
+        case EXT_VOTER_COMMITTEE_HOT_KEY_PATH:
+            voter.type = VOTER_COMMITTEE_HOT_KEY_HASH;
+            bip44_pathToKeyHash(&ext_voter->keyPath, voter.keyHash, SIZEOF(voter.keyHash));
+            break;
+        case EXT_VOTER_DREP_KEY_PATH:
+            voter.type = VOTER_DREP_KEY_HASH;
+            bip44_pathToKeyHash(&ext_voter->keyPath, voter.keyHash, SIZEOF(voter.keyHash));
+            break;
+        case EXT_VOTER_STAKE_POOL_KEY_PATH:
+            voter.type = VOTER_STAKE_POOL_KEY_HASH;
+            bip44_pathToKeyHash(&ext_voter->keyPath, voter.keyHash, SIZEOF(voter.keyHash));
+            break;
+        case EXT_VOTER_COMMITTEE_HOT_KEY_HASH:
+            LEDGER_ASSERT(ext_voter->keyHash != NULL, "NULL committee hot key hash voter");
+            voter.type = VOTER_COMMITTEE_HOT_KEY_HASH;
+            memcpy(voter.keyHash, ext_voter->keyHash, SIZEOF(voter.keyHash));
+            break;
+        case EXT_VOTER_DREP_KEY_HASH:
+            LEDGER_ASSERT(ext_voter->keyHash != NULL, "NULL drep key hash voter");
+            voter.type = VOTER_DREP_KEY_HASH;
+            memcpy(voter.keyHash, ext_voter->keyHash, SIZEOF(voter.keyHash));
+            break;
+        case EXT_VOTER_STAKE_POOL_KEY_HASH:
+            LEDGER_ASSERT(ext_voter->keyHash != NULL, "NULL stake pool key hash voter");
+            voter.type = VOTER_STAKE_POOL_KEY_HASH;
+            memcpy(voter.keyHash, ext_voter->keyHash, SIZEOF(voter.keyHash));
+            break;
+        case EXT_VOTER_COMMITTEE_HOT_SCRIPT_HASH:
+            LEDGER_ASSERT(ext_voter->scriptHash != NULL, "NULL committee hot script hash voter");
+            voter.type = VOTER_COMMITTEE_HOT_SCRIPT_HASH;
+            memcpy(voter.scriptHash, ext_voter->scriptHash, SIZEOF(voter.scriptHash));
+            break;
+        case EXT_VOTER_DREP_SCRIPT_HASH:
+            LEDGER_ASSERT(ext_voter->scriptHash != NULL, "NULL drep script hash voter");
+            voter.type = VOTER_DREP_SCRIPT_HASH;
+            memcpy(voter.scriptHash, ext_voter->scriptHash, SIZEOF(voter.scriptHash));
+            break;
+        default:
+            ASSERT(false);
+    }
+
+    return voter;
 }
 
 int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
@@ -934,7 +971,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                 }
                 case CERTIFICATE_VOTE_DELEGATION: {
                     ext_credential_t stakeCred = _credentialForTxHash(&certificate_item->certificate.stakeCredential);
-                    ext_drep_t drep = _drepForTxHash(&certificate_item->certificate.drep);
+                    drep_t drep = _drepForTxHash(&certificate_item->certificate.drep);
                     txHashBuilder_addCertificate_voteDelegation(
                         &txHashBuilder,
                         &stakeCred,
@@ -1467,7 +1504,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
             }
 
             // Convert voter for hash building (KEY_PATH -> KEY_HASH)
-            ext_voter_t voter_for_hash = _voterForTxHash(&voter_item->voter_votes_data.voter);
+            voter_t voter_for_hash = _voterForTxHash(&voter_item->voter_votes_data.voter);
 
             uint8_t voter_key[MAX_CBOR_VOTER_MAP_KEY_SIZE];
             size_t voter_key_len = txHashBuilder_serializeVoterKey(

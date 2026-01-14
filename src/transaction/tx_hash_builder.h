@@ -202,7 +202,7 @@ void txHashBuilder_addOutput_token(tx_hash_builder_t* builder,
 #define MAX_CBOR_VOTER_MAP_KEY_SIZE 64
 #define MAX_CBOR_GOV_ACTION_MAP_KEY_SIZE 72
 
-size_t txHashBuilder_serializeVoterKey(const ext_voter_t* voter,
+size_t txHashBuilder_serializeVoterKey(const voter_t* voter,
                                        uint8_t* buffer,
                                        size_t bufferLen);
 
@@ -246,7 +246,7 @@ void txHashBuilder_addCertificate_stakeDelegation(tx_hash_builder_t* builder,
 
 void txHashBuilder_addCertificate_voteDelegation(tx_hash_builder_t* builder,
                                                  const ext_credential_t* stakeCredential,
-                                                 const ext_drep_t* drep);
+                                                 const drep_t* drep);
 
 void txHashBuilder_addCertificate_committeeAuthHot(tx_hash_builder_t* builder,
                                                    const ext_credential_t* coldCredential,
@@ -381,7 +381,7 @@ void txHashBuilder_addReferenceInput(tx_hash_builder_t* builder, const tx_input_
 void txHashBuilder_enterVotingProcedures(tx_hash_builder_t* builder);
 
 void txHashBuilder_addVoter(tx_hash_builder_t* builder,
-                            ext_voter_t* voter,
+                            const voter_t* voter,
                             uint16_t numVotes);
 
 void txHashBuilder_addVote(tx_hash_builder_t* builder,

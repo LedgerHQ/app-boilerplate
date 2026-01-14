@@ -179,8 +179,8 @@ static void test_tx_hash_builder_full(void** state) {
     txHashBuilder_enterReferenceInputs(&builder);
     txHashBuilder_addReferenceInput(&builder, &referenceInput);
 
-    ext_voter_t voter = {0};
-    voter.type = EXT_VOTER_STAKE_POOL_KEY_HASH;
+    voter_t voter = {0};
+    voter.type = VOTER_STAKE_POOL_KEY_HASH;
     decode_hex_buffer("2A2B2C2D2E2F303132333435363738393A3B3C3D3E3F40414243",
                       voter.keyHash,
                       SIZEOF(voter.keyHash));

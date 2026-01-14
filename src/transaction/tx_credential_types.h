@@ -23,19 +23,34 @@ typedef struct {
 
 // DReps are extended to allow key derivation paths
 typedef enum {
-    EXT_DREP_KEY_HASH = 0,
-    EXT_DREP_SCRIPT_HASH = 1,
-    EXT_DREP_ABSTAIN = 2,
-    EXT_DREP_NO_CONFIDENCE = 3,
-    EXT_DREP_KEY_PATH = 4,  // internal-only marker for host-supplied paths
+    DREP_KEY_HASH = 0,
+    DREP_SCRIPT_HASH = 1,
+    DREP_ABSTAIN = 2,
+    DREP_NO_CONFIDENCE = 3,
+} drep_type_t;
+
+typedef struct {
+    drep_type_t type;
+    union {
+        uint8_t keyHash[ADDRESS_KEY_HASH_LENGTH];
+        uint8_t scriptHash[SCRIPT_HASH_LENGTH];
+    };
+} drep_t;
+
+typedef enum {
+    EXT_DREP_KEY_HASH = DREP_KEY_HASH,
+    EXT_DREP_KEY_PATH = DREP_KEY_HASH + 100,
+    EXT_DREP_SCRIPT_HASH = DREP_SCRIPT_HASH,
+    EXT_DREP_ABSTAIN = DREP_ABSTAIN,
+    EXT_DREP_NO_CONFIDENCE = DREP_NO_CONFIDENCE,
 } ext_drep_type_t;
 
-// Extended DREP structure
+// Extended DREP structure (includes CBOR hashes + optional key paths)
 typedef struct {
     ext_drep_type_t type;
     union {
         bip44_path_t keyPath;
-        uint8_t keyHash[ADDRESS_KEY_HASH_LENGTH];
-        uint8_t scriptHash[SCRIPT_HASH_LENGTH];
+        const uint8_t* keyHash;
+        const uint8_t* scriptHash;
     };
 } ext_drep_t;

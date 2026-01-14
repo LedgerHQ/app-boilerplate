@@ -1275,16 +1275,16 @@ static parser_status_e parse_tx_voting_procedures(buffer_t *buf, transaction_t *
             case EXT_VOTER_COMMITTEE_HOT_KEY_HASH:
             case EXT_VOTER_DREP_KEY_HASH:
             case EXT_VOTER_STAKE_POOL_KEY_HASH:
-                if (!buffer_read_bytes(buf, voter_item->voter_votes_data.voter.keyHash,
-                                      ADDRESS_KEY_HASH_LENGTH)) {
+                if (!buffer_read_bytes_ptr(buf, &voter_item->voter_votes_data.voter.keyHash,
+                                           ADDRESS_KEY_HASH_LENGTH)) {
                     return VOTING_PROCEDURES_PARSING_ERROR;
                 }
                 break;
 
             case EXT_VOTER_COMMITTEE_HOT_SCRIPT_HASH:
             case EXT_VOTER_DREP_SCRIPT_HASH:
-                if (!buffer_read_bytes(buf, voter_item->voter_votes_data.voter.scriptHash,
-                                      SCRIPT_HASH_LENGTH)) {
+                if (!buffer_read_bytes_ptr(buf, &voter_item->voter_votes_data.voter.scriptHash,
+                                           SCRIPT_HASH_LENGTH)) {
                     return VOTING_PROCEDURES_PARSING_ERROR;
                 }
                 break;

@@ -275,9 +275,7 @@ static parser_status_e _parse_drep(buffer_t *buf, ext_drep_t *drep) {
             TRACE("Successfully parsed DRep KEY_PATH");
             break;
         case EXT_DREP_KEY_HASH: {
-            STATIC_ASSERT(SIZEOF(drep->keyHash) == ADDRESS_KEY_HASH_LENGTH,
-                          "drep key hash size mismatch");
-            if (!buffer_read_bytes(buf, drep->keyHash, ADDRESS_KEY_HASH_LENGTH)) {
+            if (!buffer_read_bytes_ptr(buf, &drep->keyHash, ADDRESS_KEY_HASH_LENGTH)) {
                 TRACE("Failed to read DRep key hash");
                 return CERTIFICATES_PARSING_ERROR;
             }
@@ -285,9 +283,7 @@ static parser_status_e _parse_drep(buffer_t *buf, ext_drep_t *drep) {
             break;
         }
         case EXT_DREP_SCRIPT_HASH: {
-            STATIC_ASSERT(SIZEOF(drep->scriptHash) == SCRIPT_HASH_LENGTH,
-                          "drep script hash size mismatch");
-            if (!buffer_read_bytes(buf, drep->scriptHash, SCRIPT_HASH_LENGTH)) {
+            if (!buffer_read_bytes_ptr(buf, &drep->scriptHash, SCRIPT_HASH_LENGTH)) {
                 TRACE("Failed to read DRep script hash");
                 return CERTIFICATES_PARSING_ERROR;
             }

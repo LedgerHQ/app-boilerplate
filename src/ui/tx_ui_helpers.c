@@ -81,6 +81,7 @@ void addVoterUIPairs(const ext_voter_t *voter) {
                            &voter->keyPath);
             break;
         case EXT_VOTER_COMMITTEE_HOT_KEY_HASH:
+            LEDGER_ASSERT(voter->keyHash != NULL, "NULL committee hot key hash voter");
             UI_ADD_FORMAT3(UI_STATIC_LABEL("Committee hot key hash"),
                            MAX_BECH32_STRING_LENGTH,
                            format_bech32,
@@ -89,6 +90,7 @@ void addVoterUIPairs(const ext_voter_t *voter) {
                            ADDRESS_KEY_HASH_LENGTH);
             break;
         case EXT_VOTER_COMMITTEE_HOT_SCRIPT_HASH:
+            LEDGER_ASSERT(voter->scriptHash != NULL, "NULL committee hot script hash voter");
             UI_ADD_FORMAT3(UI_STATIC_LABEL("Committee hot script hash"),
                            MAX_BECH32_STRING_LENGTH,
                            format_bech32,
@@ -103,6 +105,7 @@ void addVoterUIPairs(const ext_voter_t *voter) {
                            &voter->keyPath);
             break;
         case EXT_VOTER_DREP_KEY_HASH:
+            LEDGER_ASSERT(voter->keyHash != NULL, "NULL drep key hash voter");
             UI_ADD_FORMAT3(UI_STATIC_LABEL("DRep key hash"),
                            MAX_BECH32_STRING_LENGTH,
                            format_bech32,
@@ -111,6 +114,7 @@ void addVoterUIPairs(const ext_voter_t *voter) {
                            ADDRESS_KEY_HASH_LENGTH);
             break;
         case EXT_VOTER_DREP_SCRIPT_HASH:
+            LEDGER_ASSERT(voter->scriptHash != NULL, "NULL drep script hash voter");
             UI_ADD_FORMAT3(UI_STATIC_LABEL("DRep script hash"),
                            MAX_BECH32_STRING_LENGTH,
                            format_bech32,
@@ -125,6 +129,7 @@ void addVoterUIPairs(const ext_voter_t *voter) {
                            &voter->keyPath);
             break;
         case EXT_VOTER_STAKE_POOL_KEY_HASH:
+            LEDGER_ASSERT(voter->keyHash != NULL, "NULL stake pool key hash voter");
             UI_ADD_FORMAT3(UI_STATIC_LABEL("Stake pool key hash"),
                            MAX_BECH32_STRING_LENGTH,
                            format_bech32,
@@ -148,10 +153,12 @@ void addDRepUIPairs(const ext_drep_t *drep, const char *label) {
             break;
         }
         case EXT_DREP_KEY_HASH: {
+            LEDGER_ASSERT(drep->keyHash != NULL, "NULL drep key hash pointer");
             UI_ADD_FORMAT3(label, MAX_BECH32_STRING_LENGTH, format_bech32, "drep", drep->keyHash, ADDRESS_KEY_HASH_LENGTH);
             break;
         }
         case EXT_DREP_SCRIPT_HASH: {
+            LEDGER_ASSERT(drep->scriptHash != NULL, "NULL drep script hash pointer");
             UI_ADD_FORMAT3(label, MAX_BECH32_STRING_LENGTH, format_bech32, "drep", drep->scriptHash, SCRIPT_HASH_LENGTH);
             break;
         }
