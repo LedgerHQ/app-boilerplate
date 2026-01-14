@@ -295,7 +295,15 @@ static void add_ui_and_free_outputs(transaction_t *tx) {
 }
 
 static void add_ui_and_free_fee(transaction_t *tx) {
-    UI_ADD_FORMAT1(UI_STATIC_LABEL("Fee"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, tx->fee);
+    warning_bits_t fee_warnings = 0;
+    security_policy_t fee_policy =
+        policyForSignTxFee(tx->txSigningMode, tx->fee, &fee_warnings);
+    LEDGER_ASSERT(fee_policy != POLICY_DENY, "Fee security policy denied during UI");
+    LEDGER_ASSERT((fee_warnings & ~G_context.tx_info.warning_bits) == 0,
+                  "Fee warnings mismatch between validation and UI");
+    if (fee_policy == POLICY_SHOW) {
+        UI_ADD_FORMAT1(UI_STATIC_LABEL("Fee"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, tx->fee);
+    }
 }
 
 static void add_ui_and_free_ttl(transaction_t *tx) {
@@ -978,7 +986,15 @@ static void add_ui_and_free_donation(transaction_t *tx) {
 }
 
 static void add_ui_and_free_tx_hash(void) {
-    UI_ADD_FORMAT2(UI_STATIC_LABEL("Transaction hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_bytes, G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash));
+    security_policy_t policy = policyForSignTxDisplayTxHash(G_context.tx_info.transaction.txSigningMode);
+    LEDGER_ASSERT(policy != POLICY_DENY, "Transaction hash display denied during UI");
+    if (policy == POLICY_SHOW) {
+        UI_ADD_FORMAT2(UI_STATIC_LABEL("Transaction hash"),
+                       MAX_TX_HASH_DISPLAY_LENGTH,
+                       format_hex_bytes,
+                       G_context.tx_info.tx_hash,
+                       sizeof(G_context.tx_info.tx_hash));
+    }
 }
 
 static int add_ui_strings_and_free_parsed_data(void) {

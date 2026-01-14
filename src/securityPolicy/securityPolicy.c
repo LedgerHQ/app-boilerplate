@@ -1890,6 +1890,19 @@ security_policy_t policyForSignTxDonation(sign_tx_signingmode_t txSigningMode MA
     SHOW();
 }
 
+security_policy_t policyForSignTxDisplayTxHash(sign_tx_signingmode_t signingMode) {
+    switch (signingMode) {
+        case SIGN_TX_SIGNINGMODE_ORDINARY_TX:
+        case SIGN_TX_SIGNINGMODE_MULTISIG_TX:
+            SHOW_IF(is_expert_mode());
+            HIDE();
+        case SIGN_TX_SIGNINGMODE_PLUTUS_TX:
+            SHOW();
+        default:
+            HIDE();
+    }
+}
+
 security_policy_t policyForCVoteRegistrationVoteKey() {
     SHOW();
 }

@@ -231,20 +231,20 @@ static int validate_and_hash_outputs(tx_hash_builder_t* txHashBuilder, tx_ui_pla
 
                 if (output_node->output_data.assetGroups != NULL) {
                     uint16_t asset_group_count = 0;
-                    s_flist_node *node = output_node->output_data.assetGroups;
-                    while (node != NULL) {
+                    s_flist_node *node2 = output_node->output_data.assetGroups;
+                    while (node2 != NULL) {
                         output_asset_group_node_t *asset_group_node =
-                            (output_asset_group_node_t *) node;
+                            (output_asset_group_node_t *) node2;
                         const output_asset_group_t *asset_group = &asset_group_node->asset_group;
                         {
-                            s_flist_node *node = asset_group->tokens;
-                            while (node != NULL) {
+                            s_flist_node *node3 = asset_group->tokens;
+                            while (node3 != NULL) {
                                 plan->pair_count += 2;
-                                node = node->next;
+                                node3 = node3->next;
                             }
                         }
                         asset_group_count++;
-                        node = node->next;
+                        node2 = node2->next;
                     }
                     LEDGER_ASSERT(asset_group_count == output_node->output_data.numAssetGroups,
                                   "Output asset group count mismatch");
@@ -288,10 +288,10 @@ static int validate_and_hash_outputs(tx_hash_builder_t* txHashBuilder, tx_ui_pla
 
         {
             uint16_t asset_group_count = 0;
-            s_flist_node *node = output_node->output_data.assetGroups;
-            while (node != NULL) {
+            s_flist_node *node2 = output_node->output_data.assetGroups;
+            while (node2 != NULL) {
                 output_asset_group_node_t *asset_group_node =
-                    (output_asset_group_node_t *) node;
+                    (output_asset_group_node_t *) node2;
                 const output_asset_group_t *asset_group = &asset_group_node->asset_group;
                 txHashBuilder_addOutput_tokenGroup(txHashBuilder,
                                                    asset_group->policyId,
@@ -299,19 +299,19 @@ static int validate_and_hash_outputs(tx_hash_builder_t* txHashBuilder, tx_ui_pla
                                                    asset_group->numTokens);
 
                 {
-                    s_flist_node *node = asset_group->tokens;
-                    while (node != NULL) {
-                        output_token_node_t *token_node = (output_token_node_t *) node;
+                    s_flist_node *node3 = asset_group->tokens;
+                    while (node3 != NULL) {
+                        output_token_node_t *token_node = (output_token_node_t *) node3;
                         const output_token_t *token = &token_node->token_data;
                         txHashBuilder_addOutput_token(txHashBuilder,
                                                       token->assetName,
                                                       token->assetNameLen,
                                                       (uint64_t) token->amount);
-                        node = node->next;
+                        node3 = node3->next;
                     }
                 }
                 asset_group_count++;
-                node = node->next;
+                node2 = node2->next;
             }
             LEDGER_ASSERT(asset_group_count == output_node->output_data.numAssetGroups,
                           "Output asset group count mismatch");
@@ -358,6 +358,8 @@ static int validate_and_hash_fee(tx_hash_builder_t* txHashBuilder, tx_ui_plan_t*
         case POLICY_DENY:
             return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW:
+            plan->pair_count++;
+            break;
         case POLICY_HIDE:
             break;
         default:
@@ -572,9 +574,9 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                   "Multiple pool registrations in owner mode");
                     if (owner_counts.path_owners == 1) {
                         {
-                            s_flist_node *node = certificate->poolRegistration.poolOwners;
-                            while (node != NULL) {
-                                tx_certificate_node_t *owner_node = (tx_certificate_node_t *) node;
+                            s_flist_node *node2 = certificate->poolRegistration.poolOwners;
+                            while (node2 != NULL) {
+                                tx_certificate_node_t *owner_node = (tx_certificate_node_t *) node2;
                                 const ext_credential_t *owner_credential =
                                     &owner_node->certificate.stakeCredential;
                                 if (owner_credential->type == EXT_CREDENTIAL_KEY_PATH) {
@@ -582,7 +584,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                     G_context.tx_info.pool_owner_path_present = true;
                                     break;
                                 }
-                                node = node->next;
+                                node2 = node2->next;
                             }
                         }
                         LEDGER_ASSERT(G_context.tx_info.pool_owner_path_present,
@@ -656,9 +658,9 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         }
 
                         {
-                            s_flist_node *node = certificate->poolRegistration.poolOwners;
-                            while (node != NULL) {
-                                tx_certificate_node_t *owner_node = (tx_certificate_node_t *) node;
+                            s_flist_node *node2 = certificate->poolRegistration.poolOwners;
+                            while (node2 != NULL) {
+                                tx_certificate_node_t *owner_node = (tx_certificate_node_t *) node2;
                                 ext_credential_t *owner_credential =
                                     &owner_node->certificate.stakeCredential;
 
@@ -679,7 +681,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                         return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                                 }
 
-                                node = node->next;
+                                node2 = node2->next;
                             }
                         }
                         ASSERT(owner_counts.total_owners ==
@@ -690,9 +692,9 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
 
                         uint32_t relay_count = 0;
                         {
-                            s_flist_node *node = certificate->poolRegistration.relays;
-                            while (node != NULL) {
-                                tx_certificate_node_t *relay_node = (tx_certificate_node_t *) node;
+                            s_flist_node *node2 = certificate->poolRegistration.relays;
+                            while (node2 != NULL) {
+                                tx_certificate_node_t *relay_node = (tx_certificate_node_t *) node2;
                                 const pool_relay_t *relay = (const pool_relay_t *) &relay_node->certificate;
 
                                 security_policy_t relay_policy = policyForSignTxStakePoolRegistrationRelay(
@@ -740,7 +742,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                         return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                                 }
 
-                                node = node->next;
+                                node2 = node2->next;
                                 relay_count++;
                             }
                         }
@@ -925,9 +927,9 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
 
                 txHashBuilder_addPoolRegistrationCertificate_enterOwners(txHashBuilder);
                 {
-                    s_flist_node *node = poolReg->poolOwners;
-                    while (node != NULL) {
-                        tx_certificate_node_t *owner_node = (tx_certificate_node_t *) node;
+                    s_flist_node *node2 = poolReg->poolOwners;
+                    while (node2 != NULL) {
+                        tx_certificate_node_t *owner_node = (tx_certificate_node_t *) node2;
                         ext_credential_t *owner_credential = &owner_node->certificate.stakeCredential;
                         ext_credential_t owner_credential_for_hash =
                             _credentialForTxHash(owner_credential);
@@ -936,18 +938,18 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                             owner_credential_for_hash.keyHash,
                             sizeof(owner_credential_for_hash.keyHash)
                         );
-                        node = node->next;
+                        node2 = node2->next;
                     }
                 }
 
                 txHashBuilder_addPoolRegistrationCertificate_enterRelays(txHashBuilder);
                 {
-                    s_flist_node *node = poolReg->relays;
-                    while (node != NULL) {
-                        tx_certificate_node_t *relay_node = (tx_certificate_node_t *) node;
+                    s_flist_node *node2 = poolReg->relays;
+                    while (node2 != NULL) {
+                        tx_certificate_node_t *relay_node = (tx_certificate_node_t *) node2;
                         const pool_relay_t *relay = (const pool_relay_t *) &relay_node->certificate;
                         txHashBuilder_addPoolRegistrationCertificate_addRelay(txHashBuilder, relay);
-                        node = node->next;
+                        node2 = node2->next;
                     }
                 }
 
@@ -1233,15 +1235,15 @@ static int validate_and_hash_mint(tx_hash_builder_t* txHashBuilder, tx_ui_plan_t
                                          asset_group->numTokens);
 
         {
-            s_flist_node *node = asset_group->tokens;
-            while (node != NULL) {
-                mint_token_node_t *token_node = (mint_token_node_t *) node;
+            s_flist_node *node2 = asset_group->tokens;
+            while (node2 != NULL) {
+                mint_token_node_t *token_node = (mint_token_node_t *) node2;
                 const mint_token_t *token = &token_node->token;
-            txHashBuilder_addMint_token(txHashBuilder,
+                txHashBuilder_addMint_token(txHashBuilder,
                                         token->assetName,
                                         token->assetNameLen,
                                         (uint64_t) token->amount);
-                node = node->next;
+                node2 = node2->next;
             }
         }
 
@@ -1446,21 +1448,21 @@ static int validate_and_hash_collateral_output(tx_hash_builder_t* txHashBuilder,
             if (collateral_tokens_policy == POLICY_SHOW &&
                 G_context.tx_info.transaction.collateral_output.assetGroups != NULL) {
                 uint16_t collateral_group_count = 0;
-                s_flist_node *node =
+                s_flist_node *node2 =
                     G_context.tx_info.transaction.collateral_output.assetGroups;
-                while (node != NULL) {
+                while (node2 != NULL) {
                     output_asset_group_node_t *asset_group_node =
-                        (output_asset_group_node_t *) node;
+                        (output_asset_group_node_t *) node2;
                     const output_asset_group_t *asset_group = &asset_group_node->asset_group;
                     {
-                        s_flist_node *node = asset_group->tokens;
-                        while (node != NULL) {
+                        s_flist_node *node3 = asset_group->tokens;
+                        while (node3 != NULL) {
                             plan->pair_count += 2;
-                            node = node->next;
+                            node3 = node3->next;
                         }
                     }
                     collateral_group_count++;
-                    node = node->next;
+                    node2 = node2->next;
                 }
                 LEDGER_ASSERT(collateral_group_count ==
                               G_context.tx_info.transaction.collateral_output.numAssetGroups,
@@ -1502,10 +1504,10 @@ static int validate_and_hash_collateral_output(tx_hash_builder_t* txHashBuilder,
     }
 
     uint16_t collateral_group_count = 0;
-    s_flist_node *node = G_context.tx_info.transaction.collateral_output.assetGroups;
-    while (node != NULL) {
+    s_flist_node *node2 = G_context.tx_info.transaction.collateral_output.assetGroups;
+    while (node2 != NULL) {
         output_asset_group_node_t *asset_group_node =
-            (output_asset_group_node_t *) node;
+            (output_asset_group_node_t *) node2;
         const output_asset_group_t *asset_group = &asset_group_node->asset_group;
         txHashBuilder_addCollateralOutput_tokenGroup(txHashBuilder,
                                                      asset_group->policyId,
@@ -1513,19 +1515,19 @@ static int validate_and_hash_collateral_output(tx_hash_builder_t* txHashBuilder,
                                                      asset_group->numTokens);
 
         {
-            s_flist_node *node = asset_group->tokens;
-            while (node != NULL) {
-                output_token_node_t *token_node = (output_token_node_t *) node;
+            s_flist_node *node3 = asset_group->tokens;
+            while (node3 != NULL) {
+                output_token_node_t *token_node = (output_token_node_t *) node3;
                 const output_token_t *token = &token_node->token_data;
-            txHashBuilder_addCollateralOutput_token(txHashBuilder,
-                                                    token->assetName,
-                                                    token->assetNameLen,
-                                                    (uint64_t) token->amount);
-                node = node->next;
+                txHashBuilder_addCollateralOutput_token(txHashBuilder,
+                                                        token->assetName,
+                                                        token->assetNameLen,
+                                                        (uint64_t) token->amount);
+                node3 = node3->next;
             }
         }
         collateral_group_count++;
-        node = node->next;
+        node2 = node2->next;
     }
     LEDGER_ASSERT(collateral_group_count ==
                   G_context.tx_info.transaction.collateral_output.numAssetGroups,
@@ -1622,15 +1624,15 @@ static int validate_and_hash_voting_procedures(tx_hash_builder_t* txHashBuilder,
                 return SWO_SECURITY_CONDITION_NOT_SATISFIED;
             case POLICY_SHOW: {
                 plan->pair_count++;
-                s_flist_node *node = voter_votes->votes;
-                while (node != NULL) {
-                    vote_node_t *vote_node = (vote_node_t *) node;
+                s_flist_node *node2 = voter_votes->votes;
+                while (node2 != NULL) {
+                    vote_node_t *vote_node = (vote_node_t *) node2;
                     const vote_item_t *vote_data = &vote_node->vote_data;
                     plan->pair_count += 3;
                     if (vote_data->anchor.isIncluded) {
                         plan->pair_count += 2;
                     }
-                    node = node->next;
+                    node2 = node2->next;
                 }
                 break;
             }
@@ -1671,9 +1673,9 @@ static int validate_and_hash_voting_procedures(tx_hash_builder_t* txHashBuilder,
         size_t previous_vote_key_len = 0;
         bool has_previous_vote_key = false;
         {
-            s_flist_node *node = voter_votes->votes;
-            while (node != NULL) {
-                vote_node_t *vote_node = (vote_node_t *) node;
+            s_flist_node *node2 = voter_votes->votes;
+            while (node2 != NULL) {
+                vote_node_t *vote_node = (vote_node_t *) node2;
                 const vote_item_t *vote_data = &vote_node->vote_data;
 
                 uint8_t gov_action_key[MAX_CBOR_GOV_ACTION_MAP_KEY_SIZE];
@@ -1706,7 +1708,7 @@ static int validate_and_hash_voting_procedures(tx_hash_builder_t* txHashBuilder,
                                      &gov_action_id,
                                      &voting_procedure);
 
-                node = node->next;
+                node2 = node2->next;
             }
         }
 
@@ -1775,7 +1777,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
     TRACE("Expert mode: %d", is_expert_mode());
 
     G_context.tx_info.pool_owner_path_present = false;
-    plan->pair_count = 2;  // fee + tx hash
+    plan->pair_count = 0;
     plan->has_excessive_length_element = false;  // TODO: Implement detection during validation
 
     tx_hash_builder_t txHashBuilder;
@@ -1846,6 +1848,18 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                           sizeof(G_context.tx_info.tx_hash));
 
     TRACE("Hash: %.*H", sizeof(G_context.tx_info.tx_hash), G_context.tx_info.tx_hash);
+
+    security_policy_t tx_hash_policy =
+        policyForSignTxDisplayTxHash(G_context.tx_info.transaction.txSigningMode);
+    switch (tx_hash_policy) {
+        case POLICY_SHOW:
+            plan->pair_count++;
+            break;
+        case POLICY_HIDE:
+            break;
+        default:
+            LEDGER_ASSERT(false, "Unknown tx hash display policy");
+    }
 
     // TODO: implement streaming review flow and remove this assertion once we're handling overflow.
     LEDGER_ASSERT(plan->pair_count <= UI_PAIR_LIMIT, "Need streaming UI fallback");

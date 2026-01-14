@@ -172,6 +172,7 @@ security_policy_t policyForSignTxVotingProcedure(sign_tx_signingmode_t txSigning
 security_policy_t policyForSignTxTreasury(sign_tx_signingmode_t txSigningMode, uint64_t treasury);
 
 security_policy_t policyForSignTxDonation(sign_tx_signingmode_t txSigningMode, uint64_t donation);
+security_policy_t policyForSignTxDisplayTxHash(sign_tx_signingmode_t txSigningMode);
 
 security_policy_t policyForSignOpCert(const bip44_path_t* poolColdKeyPathSpec,
                                       warning_bits_t* warnings);
