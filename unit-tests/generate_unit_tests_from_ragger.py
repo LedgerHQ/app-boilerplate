@@ -1197,7 +1197,7 @@ def _build_reject_fixtures() -> str:
         chunks = [
             ChunkInfo(
                 p1=chunk[2],
-                more=chunk[2] == P1Type.P1_TX_DATA_CHUNK,
+                more=chunk[2] != P1Type.P1_TX_CHUNK_LAST,
                 hex_payload=chunk[5:].hex().upper(),
             )
             for chunk in builder.serialize_transaction_chunks(tx)

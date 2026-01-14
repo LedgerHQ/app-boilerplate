@@ -19,10 +19,12 @@
 
 #include "os.h"
 #include "io.h"
+#include "buffer.h"
 
 #include "get_serial.h"
 #include "cardano_swo.h"
 #include "utils/assert.h"
+#include "app_context.h"
 
 /**
  * Device serial number length as returned by os_serial().
@@ -30,7 +32,15 @@
  */
 #define SERIAL_LENGTH 7
 
-void handler_get_serial(void) {
+void handler_get_serial(const buffer_t *data_buffer) {
+    ASSERT(data_buffer != NULL);
+
+    // Verify no data is present
+    if (buffer_can_read(data_buffer, 1)) {
+        send_swo_and_reset(SWO_WRONG_DATA_LENGTH);
+        return;
+    }
+
     uint8_t serial[SERIAL_LENGTH] = {0};
 
     // Get device serial from the system

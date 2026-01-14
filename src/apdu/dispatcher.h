@@ -28,6 +28,12 @@ enum { P1_UNUSED = 0, P2_UNUSED = 0 };
 #define P1_TX_AUX_DATA 0x03
 
 /**
+ * Parameter 1 for transaction witness signing (legacy protocol).
+ * Signals witness request with BIP32 path.
+ */
+#define P1_TX_SIGN_WITNESS 0x0f
+
+/**
  * Parameter 2 values for CVote auxiliary data APDUs.
  */
 #define P2_AUX_DATA_INIT 0x36

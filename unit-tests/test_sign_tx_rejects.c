@@ -162,7 +162,7 @@ static void run_sign_tx_reject_fixture(const sign_tx_reject_fixture_t *fixture) 
     };
 
     g_last_sw = 0;
-    handler_sign_tx(&init_buf, P1_TX_INIT, false);
+    handler_sign_tx(&init_buf, P1_TX_INIT);
 
     if (fixture->expect_init_failure) {
         assert_int_equal(g_last_sw, fixture->expected_sw);
@@ -189,7 +189,7 @@ static void run_sign_tx_reject_fixture(const sign_tx_reject_fixture_t *fixture) 
         if (segment->p1 == P1_TX_WITNESSES) {
             handler_sign_tx_witness(&chunk_buf);
         } else {
-            handler_sign_tx(&chunk_buf, segment->p1, segment->more);
+            handler_sign_tx(&chunk_buf, segment->p1);
         }
         if (g_last_sw != 0) {
             if (g_last_sw == SWO_SUCCESS) {

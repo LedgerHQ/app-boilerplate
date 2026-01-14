@@ -98,6 +98,13 @@ void apdu_dispatcher(const command_t *cmd) {
         return;
     }
 
+    // Create data buffer upfront from APDU data
+    buffer_t data_buffer = {
+        .ptr = cmd->data,
+        .size = cmd->lc,
+        .offset = 0
+    };
+
     switch (cmd->ins) {
         case INS_GET_SERIAL:
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
@@ -105,7 +112,7 @@ void apdu_dispatcher(const command_t *cmd) {
                 return;
             }
 
-            handler_get_serial();
+            handler_get_serial(&data_buffer);
             return;
 
         case INS_GET_VERSION:
@@ -114,7 +121,7 @@ void apdu_dispatcher(const command_t *cmd) {
                 return;
             }
 
-            handler_get_version();
+            handler_get_version(&data_buffer);
             return;
 
         case INS_GET_APP_NAME:
@@ -123,7 +130,7 @@ void apdu_dispatcher(const command_t *cmd) {
                 return;
             }
 
-            handler_get_app_name();
+            handler_get_app_name(&data_buffer);
             return;
 
         case INS_GET_PUBLIC_KEY: {
@@ -132,82 +139,42 @@ void apdu_dispatcher(const command_t *cmd) {
                 return;
             }
 
-            buffer_t pubkey_buf = {0};
-            pubkey_buf.ptr = cmd->data;
-            pubkey_buf.size = cmd->lc;
-            pubkey_buf.offset = 0;
-
-            handler_get_public_key(&pubkey_buf);
+            handler_get_public_key(&data_buffer);
             return;
         }
 
         case INS_SIGN_TX:
-            // Check if this is a witness APDU (P1 = 0x0f)
-            if (cmd->p1 == 0x0f) {
-                // Witness signing - P2 must be unused
+            // Check if this is a witness APDU
+            if (cmd->p1 == P1_TX_SIGN_WITNESS) {
                 if (cmd->p2 != P2_UNUSED) {
                     send_swo_and_reset(SWO_INCORRECT_P1_P2);
                     return;
                 }
 
-                if (!cmd->data) {
-                    send_swo_and_reset(SWO_WRONG_DATA_LENGTH);
-                    return;
-                }
-
-                buffer_t witness_buf = {0};
-                witness_buf.ptr = cmd->data;
-                witness_buf.size = cmd->lc;
-                witness_buf.offset = 0;
-
-                handler_sign_tx_witness(&witness_buf);
+                handler_sign_tx_witness(&data_buffer);
                 return;
             }
 
-            // Transaction signing with redesigned protocol:
-            // P1 controls flow: P1_TX_INIT (0x00), P1_TX_DATA_CHUNK (0x01),
-            // P1_TX_CHUNK_LAST (0x02), P1_TX_AUX_DATA (0x03)
+            // Check if this is auxiliary data APDU (CVote)
             if (cmd->p1 == P1_TX_AUX_DATA) {
                 if (cmd->p2 != P2_AUX_DATA_INIT && cmd->p2 != P2_AUX_DATA_DELEGATION) {
                     send_swo_and_reset(SWO_INCORRECT_P1_P2);
                     return;
                 }
-            } else {
-                // P2 must be unused for non-AUX_DATA APDUs
-                if (cmd->p2 != P2_UNUSED) {
-                    send_swo_and_reset(SWO_INCORRECT_P1_P2);
-                    return;
-                }
+
+                handler_sign_tx_aux_data(&data_buffer, cmd->p2);
+                return;
             }
 
-            // Validate P1 value
-            if (cmd->p1 != P1_TX_INIT &&
-                cmd->p1 != P1_TX_DATA_CHUNK &&
-                cmd->p1 != P1_TX_CHUNK_LAST &&
-                cmd->p1 != P1_TX_AUX_DATA) {
+            // Transaction processing
+            // P1 controls flow: P1_TX_INIT (0x00), P1_TX_DATA_CHUNK (0x01), P1_TX_CHUNK_LAST (0x02)
+            // P2 must be unused for transaction body APDUs
+            if (cmd->p2 != P2_UNUSED) {
                 send_swo_and_reset(SWO_INCORRECT_P1_P2);
                 return;
             }
 
-            if (!cmd->data) {
-                send_swo_and_reset(SWO_WRONG_DATA_LENGTH);
-                return;
-            }
-
-            buffer_t tx_buf = {0};
-            tx_buf.ptr = cmd->data;
-            tx_buf.size = cmd->lc;
-            tx_buf.offset = 0;
-
-            if (cmd->p1 == P1_TX_AUX_DATA) {
-                handler_sign_tx_aux_data(&tx_buf, cmd->p2);
-                return;
-            }
-
-            // Determine if more data follows based on P1
-            // P1_TX_CHUNK_LAST signals no more data, all others signal more data to come
-            bool more = (cmd->p1 != P1_TX_CHUNK_LAST);
-            handler_sign_tx(&tx_buf, cmd->p1, more);
+            handler_sign_tx(&data_buffer, cmd->p1);
             return;
 
         case INS_SIGN_OPCERT: {
@@ -215,12 +182,8 @@ void apdu_dispatcher(const command_t *cmd) {
                 send_swo_and_reset(SWO_INCORRECT_P1_P2);
                 return;
             }
-            buffer_t opcert_buf = {0};
-            opcert_buf.ptr = cmd->data;
-            opcert_buf.size = cmd->lc;
-            opcert_buf.offset = 0;
 
-            handler_sign_opcert(&opcert_buf);
+            handler_sign_opcert(&data_buffer);
             return;
         }
 
@@ -232,12 +195,7 @@ void apdu_dispatcher(const command_t *cmd) {
                 return;
             }
 
-            buffer_t debug_buf = {0};
-            debug_buf.ptr = cmd->data;
-            debug_buf.size = cmd->lc;
-            debug_buf.offset = 0;
-
-            handler_debug_set_settings(&debug_buf);
+            handler_debug_set_settings(&data_buffer);
             return;
         }
 #endif

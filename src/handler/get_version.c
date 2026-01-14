@@ -25,8 +25,18 @@
 #include "get_version.h"
 #include "globals.h"
 #include "cardano_swo.h"
+#include "utils/assert.h"
+#include "app_context.h"
 
-void handler_get_version() {
+void handler_get_version(const buffer_t *data_buffer) {
+    ASSERT(data_buffer != NULL);
+
+    // Verify no data is present
+    if (buffer_can_read(data_buffer, 1)) {
+        send_swo_and_reset(SWO_WRONG_DATA_LENGTH);
+        return;
+    }
+
     _Static_assert(APPVERSION_LEN == 3, "Length of (MAJOR || MINOR || PATCH) must be 3!");
     _Static_assert(MAJOR_VERSION >= 0 && MAJOR_VERSION <= UINT8_MAX,
                    "MAJOR version must be between 0 and 255!");

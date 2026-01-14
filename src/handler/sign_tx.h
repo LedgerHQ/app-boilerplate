@@ -30,15 +30,13 @@
  *
  * @param[in,out] cdata
  *   Command data with BIP32 path and raw transaction serialized.
- * @param[in]     chunk
- *   Index number of the APDU chunk.
- * @param[in]       more
- *   Whether more APDU chunk to be received or not.
+ * @param[in]     p1
+ *   P1 parameter indicating chunk type (P1_TX_INIT, P1_TX_DATA_CHUNK, P1_TX_CHUNK_LAST).
  *
  * @return zero or positive integer if success, negative integer otherwise.
  *
  */
-void handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more);
+void handler_sign_tx(buffer_t *cdata, uint8_t p1);
 
 /**
  * Handler for SIGN_TX AUX_DATA (CVote) APDUs.

@@ -23,8 +23,18 @@
 #include "get_app_name.h"
 #include "globals.h"
 #include "cardano_swo.h"
+#include "utils/assert.h"
+#include "app_context.h"
 
-void handler_get_app_name() {
+void handler_get_app_name(const buffer_t *data_buffer) {
+    ASSERT(data_buffer != NULL);
+
+    // Verify no data is present
+    if (buffer_can_read(data_buffer, 1)) {
+        send_swo_and_reset(SWO_WRONG_DATA_LENGTH);
+        return;
+    }
+
     _Static_assert(APPNAME_LEN < MAX_APP_NAME_LENGTH, "APPNAME must be at most 64 characters!");
 
     io_send_response_pointer(PIC(APPNAME), APPNAME_LEN, SWO_SUCCESS);

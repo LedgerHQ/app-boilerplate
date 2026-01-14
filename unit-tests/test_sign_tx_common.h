@@ -44,7 +44,7 @@ static inline void run_tx_and_verify(const uint8_t* init_raw,
                                      size_t* response_len,
                                      uint16_t* response_sw) {
     assert_true(init_len > 0);
-    handler_sign_tx(&(buffer_t){.ptr = (uint8_t*)init_raw, .size = init_len, .offset = 0}, 0x00, false);
+    handler_sign_tx(&(buffer_t){.ptr = (uint8_t*)init_raw, .size = init_len, .offset = 0}, P1_TX_INIT);
     assert_int_equal(G_context.req_type, REQUEST_SIGN_TRANSACTION);
     if (include_aux_data_hash && aux_data_type == AUX_DATA_TYPE_CVOTE_REGISTRATION) {
         assert_int_equal(G_context.state.tx_state, TX_STATE_AUX_DATA);
@@ -85,7 +85,7 @@ static inline void run_tx_and_verify(const uint8_t* init_raw,
         .size = raw_tx_len,
         .offset = 0,
     };
-    handler_sign_tx(&tx_buf, 0x02, false);
+    handler_sign_tx(&tx_buf, P1_TX_CHUNK_LAST);
 
     uint8_t expected_cbor[100 * 1024];
     size_t cbor_len = hex_to_bytes(cbor_hex, expected_cbor, sizeof(expected_cbor));

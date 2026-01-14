@@ -660,65 +660,78 @@ static void handle_tx_data_chunk(buffer_t *cdata, bool more) {
     // Final chunk - will be handled by caller
 }
 
-void handler_sign_tx(buffer_t *cdata, uint8_t chunk_type, bool more) {
-    if (chunk_type == P1_TX_INIT) {
-        G_context.req_type = REQUEST_SIGN_TRANSACTION;
-        G_context.state.tx_state = TX_STATE_NONE;
-        handle_tx_init_apdu(cdata);
-        return;
-
-    } else {  // parse transaction data chunks
-        if (G_context.req_type != REQUEST_SIGN_TRANSACTION) {
-            send_swo_and_reset(SWO_BAD_STATE);
+void handler_sign_tx(buffer_t *cdata, uint8_t p1) {
+    switch (p1) {
+        case P1_TX_INIT:
+            G_context.req_type = REQUEST_SIGN_TRANSACTION;
+            G_context.state.tx_state = TX_STATE_NONE;
+            handle_tx_init_apdu(cdata);
             return;
-        }
 
-        // Handle chunk accumulation
-        handle_tx_data_chunk(cdata, more);
-        if (more) {
+        case P1_TX_DATA_CHUNK:
+            if (G_context.req_type != REQUEST_SIGN_TRANSACTION) {
+                send_swo_and_reset(SWO_BAD_STATE);
+                return;
+            }
+
+            // More data chunks to follow
+            handle_tx_data_chunk(cdata, true);
             return;
-        }
 
-        // Final chunk - parse and build hash
-        LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_CHUNKS, "Bad state before parse");
-        G_context.state.tx_state = TX_STATE_RECEIVED;
+        case P1_TX_CHUNK_LAST:
+            if (G_context.req_type != REQUEST_SIGN_TRANSACTION) {
+                send_swo_and_reset(SWO_BAD_STATE);
+                return;
+            }
 
-        LEDGER_ASSERT(G_context.tx_info.raw_tx != NULL, "Raw transaction buffer missing");
+            // Final chunk
+            handle_tx_data_chunk(cdata, false);
 
-        buffer_t buf = {
-            .ptr = G_context.tx_info.raw_tx,
-            .size = G_context.tx_info.raw_tx_len,
-            .offset = 0
-        };
+            // Parse and build hash
+            LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_CHUNKS, "Bad state before parse");
+            G_context.state.tx_state = TX_STATE_RECEIVED;
 
-        parser_status_e parse_status = parse_tx(&buf, &G_context.tx_info.transaction);
-        if (parse_status != PARSING_OK) {
-            tx_handle_parse_error(parse_status);
+            LEDGER_ASSERT(G_context.tx_info.raw_tx != NULL, "Raw transaction buffer missing");
+
+            buffer_t buf = {
+                .ptr = G_context.tx_info.raw_tx,
+                .size = G_context.tx_info.raw_tx_len,
+                .offset = 0
+            };
+
+            parser_status_e parse_status = parse_tx(&buf, &G_context.tx_info.transaction);
+            if (parse_status != PARSING_OK) {
+                tx_handle_parse_error(parse_status);
+                return;
+            }
+            G_context.state.tx_state = TX_STATE_PARSED;
+            tx_ui_plan_t ui_plan = {0};
+            // Validate transaction and compute hash. On failure, stop immediately before UI prep.
+            int validation_status = tx_validate_and_compute_hash(&ui_plan);
+            if (validation_status != SWO_SUCCESS) {
+                send_swo_and_reset(validation_status);
+                return;
+            }
+
+            G_context.state.tx_state = TX_STATE_HASHED;
+
+            LEDGER_ASSERT(ui_plan.pair_count > 0, "Invalid UI plan");
+            G_context.tx_info.planned_ui_pairs = ui_plan.pair_count;
+
+            int ui_prep_result = ui_prepare_transaction_review();
+            if (ui_prep_result != SWO_SUCCESS) {
+                tx_review_cleanup();
+                send_swo_and_reset(ui_prep_result);
+                return;
+            }
+
+            G_context.state.tx_state = TX_STATE_UI_PREPARED;
+            ui_display_transaction();
             return;
-        }
-        G_context.state.tx_state = TX_STATE_PARSED;
-        tx_ui_plan_t ui_plan = {0};
-        // Validate transaction and compute hash. On failure, stop immediately before UI prep.
-        int validation_status = tx_validate_and_compute_hash(&ui_plan);
-        if (validation_status != SWO_SUCCESS) {
-            send_swo_and_reset(validation_status);
+
+        default:
+            send_swo_and_reset(SWO_INCORRECT_P1_P2);
             return;
-        }
-
-        G_context.state.tx_state = TX_STATE_HASHED;
-
-        LEDGER_ASSERT(ui_plan.pair_count > 0, "Invalid UI plan");
-        G_context.tx_info.planned_ui_pairs = ui_plan.pair_count;
-
-        int ui_prep_result = ui_prepare_transaction_review();
-        if (ui_prep_result != SWO_SUCCESS) {
-            tx_review_cleanup();
-            send_swo_and_reset(ui_prep_result);
-            return;
-        }
-
-        G_context.state.tx_state = TX_STATE_UI_PREPARED;
-        ui_display_transaction();
     }
 }
 

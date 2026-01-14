@@ -10,6 +10,7 @@
 #include "handler/get_app_name.h"
 #include "handler/get_serial.h"
 #include "handler/get_version.h"
+#include "buffer.h"
 
 static uint8_t g_response_buffer[64];
 static size_t g_response_length;
@@ -40,7 +41,8 @@ static void test_get_version_returns_current_constants(void** state) {
     (void) state;
     reset_response();
 
-    handler_get_version();
+    buffer_t empty_buffer = {.ptr = NULL, .size = 0, .offset = 0};
+    handler_get_version(&empty_buffer);
     assert_int_equal(g_response_sw, SWO_SUCCESS);
     assert_int_equal(g_response_length, APPVERSION_LEN);
 
@@ -54,7 +56,8 @@ static void test_get_app_name_returns_literal(void** state) {
     (void) state;
     reset_response();
 
-    handler_get_app_name();
+    buffer_t empty_buffer = {.ptr = NULL, .size = 0, .offset = 0};
+    handler_get_app_name(&empty_buffer);
     assert_int_equal(g_response_sw, SWO_SUCCESS);
     assert_int_equal(g_response_length, APPNAME_LEN);
     assert_memory_equal(g_response_buffer, APPNAME, APPNAME_LEN);
@@ -64,7 +67,8 @@ static void test_get_serial_returns_os_value(void** state) {
     (void) state;
     reset_response();
 
-    handler_get_serial();
+    buffer_t empty_buffer = {.ptr = NULL, .size = 0, .offset = 0};
+    handler_get_serial(&empty_buffer);
     assert_int_equal(g_response_sw, SWO_SUCCESS);
     const unsigned char expected[] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0x12, 0x34};
     assert_int_equal(g_response_length, sizeof(expected));

@@ -576,19 +576,17 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                     LEDGER_ASSERT(!G_context.tx_info.pool_owner_path_present,
                                   "Multiple pool registrations in owner mode");
                     if (owner_counts.path_owners == 1) {
-                        {
-                            s_flist_node *node2 = certificate->poolRegistration.poolOwners;
-                            while (node2 != NULL) {
-                                tx_certificate_node_t *owner_node = (tx_certificate_node_t *) node2;
-                                const ext_credential_t *owner_credential =
-                                    &owner_node->certificate.stakeCredential;
-                                if (owner_credential->type == EXT_CREDENTIAL_KEY_PATH) {
-                                    G_context.tx_info.pool_owner_path = owner_credential->keyPath;
-                                    G_context.tx_info.pool_owner_path_present = true;
-                                    break;
-                                }
-                                node2 = node2->next;
+                        s_flist_node *node2 = certificate->poolRegistration.poolOwners;
+                        while (node2 != NULL) {
+                            tx_certificate_node_t *owner_node = (tx_certificate_node_t *) node2;
+                            const ext_credential_t *owner_credential =
+                                &owner_node->certificate.stakeCredential;
+                            if (owner_credential->type == EXT_CREDENTIAL_KEY_PATH) {
+                                G_context.tx_info.pool_owner_path = owner_credential->keyPath;
+                                G_context.tx_info.pool_owner_path_present = true;
+                                break;
                             }
+                            node2 = node2->next;
                         }
                         LEDGER_ASSERT(G_context.tx_info.pool_owner_path_present,
                                       "Pool owner path missing");
@@ -1267,17 +1265,15 @@ static int validate_and_hash_mint(tx_hash_builder_t* txHashBuilder, tx_ui_plan_t
                                          MINTING_POLICY_ID_LENGTH,
                                          asset_group->numTokens);
 
-        {
-            s_flist_node *node2 = asset_group->tokens;
-            while (node2 != NULL) {
-                mint_token_node_t *token_node = (mint_token_node_t *) node2;
-                const mint_token_t *token = &token_node->token;
-                txHashBuilder_addMint_token(txHashBuilder,
-                                        token->assetName,
-                                        token->assetNameLen,
-                                        (uint64_t) token->amount);
-                node2 = node2->next;
-            }
+        s_flist_node *node2 = asset_group->tokens;
+        while (node2 != NULL) {
+            mint_token_node_t *token_node = (mint_token_node_t *) node2;
+            const mint_token_t *token = &token_node->token;
+            txHashBuilder_addMint_token(txHashBuilder,
+                                    token->assetName,
+                                    token->assetNameLen,
+                                    (uint64_t) token->amount);
+            node2 = node2->next;
         }
 
         node = node->next;
@@ -1551,17 +1547,15 @@ static int validate_and_hash_collateral_output(tx_hash_builder_t* txHashBuilder,
                                                      MINTING_POLICY_ID_LENGTH,
                                                      asset_group->numTokens);
 
-        {
-            s_flist_node *node3 = asset_group->tokens;
-            while (node3 != NULL) {
-                output_token_node_t *token_node = (output_token_node_t *) node3;
-                const output_token_t *token = &token_node->token_data;
-                txHashBuilder_addCollateralOutput_token(txHashBuilder,
-                                                        token->assetName,
-                                                        token->assetNameLen,
-                                                        (uint64_t) token->amount);
-                node3 = node3->next;
-            }
+        s_flist_node *node3 = asset_group->tokens;
+        while (node3 != NULL) {
+            output_token_node_t *token_node = (output_token_node_t *) node3;
+            const output_token_t *token = &token_node->token_data;
+            txHashBuilder_addCollateralOutput_token(txHashBuilder,
+                                                    token->assetName,
+                                                    token->assetNameLen,
+                                                    (uint64_t) token->amount);
+            node3 = node3->next;
         }
         collateral_group_count++;
         node2 = node2->next;
@@ -1807,6 +1801,14 @@ static int validate_and_hash_donation(tx_hash_builder_t* txHashBuilder, tx_ui_pl
     return SWO_SUCCESS;
 }
 
+// NOTE: Validation consists of
+// (1) calling security policies,
+// (2) checking canonical ordering of CBOR map keys.
+// It is not possible to check (2) without calling tx hash builder,
+// and the tx hash builder has a very tight state machine
+// and cannot be used only partially.
+// UI planning is based on security policies, so if we do not want to call them
+// twice, it also does not make sense to separate it.
 int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
     LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_PARSED, "Validation invoked at wrong state");
     LEDGER_ASSERT(plan != NULL, "NULL plan");
