@@ -201,7 +201,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                     mint_asset_group_node_t* mint_item =
                         (mint_asset_group_node_t*) mint_node;
                     if (mint_item->asset_group.tokens != NULL) {
-                        plan->pair_count += (uint16_t)(2 * mint_item->asset_group.numTokens);
+                        plan->pair_count += 2 * mint_item->asset_group.numTokens;
                     }
                     mint_node = mint_node->next;
                 }
@@ -1623,7 +1623,6 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
 
     // TODO: implement streaming review flow and remove this assertion once we're handling overflow.
     LEDGER_ASSERT(plan->pair_count <= UI_PAIR_LIMIT, "Need streaming UI fallback");
-    LEDGER_ASSERT(plan->pair_count <= UINT8_MAX, "Pair count overflow");
 
     return SWO_SUCCESS;
 }

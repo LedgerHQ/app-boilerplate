@@ -26,7 +26,7 @@
  * and consumed during UI formatting (ui_prepare_transaction_review).
  */
 typedef struct {
-    uint16_t pair_count;  /// Number of nbgl_contentTagValue pairs required for display
+    uint32_t pair_count;  /// Number of nbgl_contentTagValue pairs required for display
 
     // TODO: Detect and track transaction elements with excessive length
     // Some transaction elements are not length-limited by CDDL (e.g., metadata URLs,

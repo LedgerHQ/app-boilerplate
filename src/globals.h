@@ -50,7 +50,7 @@ typedef struct {
     single_account_data_t single_account_data;
 
     warning_bits_t warning_bits;
-    uint16_t planned_ui_pairs;
+    uint32_t planned_ui_pairs;
 } transaction_ctx_t;
 
 /**

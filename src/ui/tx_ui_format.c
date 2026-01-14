@@ -657,8 +657,7 @@ static void add_ui_and_free_withdrawals(transaction_t *tx) {
     s_flist_node *node = tx->withdrawals;
     TRACE("Formatting %u withdrawals", tx->num_withdrawals);
     while (node != NULL) {
-        tx_withdrawal_node_t *withdrawal_node =
-            (tx_withdrawal_node_t *) node;
+        tx_withdrawal_node_t *withdrawal_node = (tx_withdrawal_node_t *) node;
 
         warning_bits_t withdrawal_warnings = 0;
         security_policy_t policy = policyForSignTxWithdrawal(
@@ -1052,7 +1051,7 @@ int ui_prepare_transaction_review(void) {
         return send_swo_and_reset(SWO_BAD_STATE);
     }
     LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_HASHED, "UI prep called too early");
-    uint16_t pair_count = G_context.tx_info.planned_ui_pairs;
+    uint32_t pair_count = G_context.tx_info.planned_ui_pairs;
 
     // pair_count should never be 0 - at minimum we display fee
     LEDGER_ASSERT(pair_count > 0, "UI pair count is zero - at minimum fee must be displayed");
@@ -1077,9 +1076,10 @@ int ui_prepare_transaction_review(void) {
     }
 
     // Validate that the actual number of pairs formatted matches the planned count
-    LEDGER_ASSERT(ui_pairs_get_count() == pair_count,
-                  "UI pair count mismatch: planned %u but formatted %u",
-                  pair_count, ui_pairs_get_count());
+    TRACE("UI pair count mismatch check: planned=%u formatted=%u",
+          (unsigned int) pair_count, ui_pairs_get_count());
+    LEDGER_ASSERT(ui_pairs_get_count() == (uint16_t) pair_count,
+                  "UI pair count mismatch");
 
     return SWO_SUCCESS;
 }
