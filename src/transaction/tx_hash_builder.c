@@ -62,26 +62,22 @@ blake2b_256_append_cbor_tx_body(blake2b_256_context_t* hashCtx, uint8_t type, ui
         BUILDER_APPEND_CBOR(CBOR_TYPE_TAG, CBOR_TAG_SET); \
     }
 
-static bool _append_cbor_token(uint8_t* buffer,
+static void _append_cbor_token(uint8_t* buffer,
                                size_t bufferLen,
                                size_t* offset,
                                uint8_t type,
                                uint64_t value) {
     LEDGER_ASSERT(buffer != NULL, "NULL buffer");
     LEDGER_ASSERT(offset != NULL, "NULL offset");
-    if (*offset >= bufferLen) {
-        return false;
-    }
+    LEDGER_ASSERT(*offset < bufferLen, "CBOR buffer overflow");
 
     size_t tokenSize = 0;
-    if (!cbor_writeToken(type, value, buffer + *offset, bufferLen - *offset, &tokenSize)) {
-        return false;
-    }
+    bool ok = cbor_writeToken(type, value, buffer + *offset, bufferLen - *offset, &tokenSize);
+    LEDGER_ASSERT(ok, "Failed to write CBOR token");
     *offset += tokenSize;
-    return true;
 }
 
-static bool _append_map_key_bytes(uint8_t* buffer,
+static void _append_map_key_bytes(uint8_t* buffer,
                                   size_t bufferLen,
                                   size_t* offset,
                                   const uint8_t* data,
@@ -89,13 +85,10 @@ static bool _append_map_key_bytes(uint8_t* buffer,
     LEDGER_ASSERT(buffer != NULL, "NULL buffer");
     LEDGER_ASSERT(offset != NULL, "NULL offset");
     LEDGER_ASSERT(data != NULL, "NULL data");
+    LEDGER_ASSERT(bufferLen - *offset >= dataLen, "Map bytes overflow");
 
-    if (dataLen > 0 && bufferLen - *offset < dataLen) {
-        return false;
-    }
     memcpy(buffer + *offset, data, dataLen);
     *offset += dataLen;
-    return true;
 }
 
 static const uint8_t* _voter_key_data_with_size(const ext_voter_t* voter, size_t* out_size) {
@@ -117,7 +110,7 @@ static const uint8_t* _voter_key_data_with_size(const ext_voter_t* voter, size_t
     }
 }
 
-bool txHashBuilder_serializeVoterKey(const ext_voter_t* voter,
+void txHashBuilder_serializeVoterKey(const ext_voter_t* voter,
                                      uint8_t* buffer,
                                      size_t bufferLen,
                                      size_t* bytesWritten) {
@@ -127,30 +120,19 @@ bool txHashBuilder_serializeVoterKey(const ext_voter_t* voter,
     *bytesWritten = 0;
 
     size_t offset = 0;
-    if (!_append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_ARRAY, 2) ||
-        !_append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_UNSIGNED, voter->type)) {
-        return false;
-    }
-
     size_t keyLen = 0;
     const uint8_t* keyBytes = _voter_key_data_with_size(voter, &keyLen);
-    if (keyBytes == NULL) {
-        return false;
-    }
+    LEDGER_ASSERT(keyBytes != NULL, "Invalid voter type");
 
-    if (!_append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_BYTES, keyLen)) {
-        return false;
-    }
-
-    if (!_append_map_key_bytes(buffer, bufferLen, &offset, keyBytes, keyLen)) {
-        return false;
-    }
+    _append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_ARRAY, 2);
+    _append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_UNSIGNED, voter->type);
+    _append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_BYTES, keyLen);
+    _append_map_key_bytes(buffer, bufferLen, &offset, keyBytes, keyLen);
 
     *bytesWritten = offset;
-    return true;
 }
 
-bool txHashBuilder_serializeGovActionKey(const gov_action_id_t* govActionId,
+void txHashBuilder_serializeGovActionKey(const gov_action_id_t* govActionId,
                                          uint8_t* buffer,
                                          size_t bufferLen,
                                          size_t* bytesWritten) {
@@ -161,21 +143,12 @@ bool txHashBuilder_serializeGovActionKey(const gov_action_id_t* govActionId,
     *bytesWritten = 0;
 
     size_t offset = 0;
-    if (!_append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_ARRAY, 2) ||
-        !_append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_BYTES, TX_HASH_LENGTH)) {
-        return false;
-    }
-
-    if (!_append_map_key_bytes(buffer, bufferLen, &offset, govActionId->txHash, TX_HASH_LENGTH)) {
-        return false;
-    }
-
-    if (!_append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_UNSIGNED, govActionId->govActionIndex)) {
-        return false;
-    }
+    _append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_ARRAY, 2);
+    _append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_BYTES, TX_HASH_LENGTH);
+    _append_map_key_bytes(buffer, bufferLen, &offset, govActionId->txHash, TX_HASH_LENGTH);
+    _append_cbor_token(buffer, bufferLen, &offset, CBOR_TYPE_UNSIGNED, govActionId->govActionIndex);
 
     *bytesWritten = offset;
-    return true;
 }
 
 /* End of hash computation utilities. */

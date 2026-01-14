@@ -1470,14 +1470,12 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
 
             uint8_t voter_key[MAX_CBOR_VOTER_MAP_KEY_SIZE];
             size_t voter_key_len = 0;
-            if (!txHashBuilder_serializeVoterKey(
-                    &voter_for_hash,
-                    voter_key,
-                    sizeof(voter_key),
-                    &voter_key_len)) {
-                TRACE("Failed to serialize voter key");
-                return send_swo_and_reset(SWO_TX_PARSING_FAIL_VOTING_PROCEDURES);
-            }
+            txHashBuilder_serializeVoterKey(
+                &voter_for_hash,
+                voter_key,
+                sizeof(voter_key),
+                &voter_key_len);
+            // TODO not sure why we use voter_key_len as argument for this
 
             if (has_previous_voter_key &&
                 !cbor_mapKeyFulfillsCanonicalOrdering(
@@ -1508,14 +1506,11 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                 uint8_t gov_action_key[MAX_CBOR_GOV_ACTION_MAP_KEY_SIZE];
                 size_t gov_action_key_len = 0;
 
-                if (!txHashBuilder_serializeGovActionKey(
+                txHashBuilder_serializeGovActionKey(
                         &vote_item->vote_data.govActionId,
                         gov_action_key,
                         sizeof(gov_action_key),
-                        &gov_action_key_len)) {
-                    TRACE("Failed to serialize gov action key");
-                    return send_swo_and_reset(SWO_TX_PARSING_FAIL_VOTING_PROCEDURES);
-                }
+                        &gov_action_key_len);
 
                 if (has_previous_vote_key &&
                     !cbor_mapKeyFulfillsCanonicalOrdering(
