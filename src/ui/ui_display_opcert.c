@@ -150,10 +150,12 @@ void ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings
             break;
         case UI_STATUS_OUT_OF_MEMORY:
             send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
+            return;
         case UI_STATUS_UNINITIALIZED:
         default:
             ASSERT(false);
             send_swo_and_reset(SWO_BAD_STATE);
+            return;
     }
 
     // Build warnings if needed
@@ -164,10 +166,12 @@ void ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings
             break;
         case UI_STATUS_OUT_OF_MEMORY:
             send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
+            return;
         case UI_STATUS_UNINITIALIZED:
         default:
             ASSERT(false);
             send_swo_and_reset(SWO_BAD_STATE);
+            return;
     }
     const nbgl_warning_t* warningPtr = ui_get_warnings();
 

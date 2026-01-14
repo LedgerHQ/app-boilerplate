@@ -60,10 +60,10 @@ set(CARDANO_SOURCE
     ${CARDANO_PATH}/src/transaction/tx_hash_builder.c
     ${CARDANO_PATH}/src/transaction/tx_validate.c
     ${CARDANO_PATH}/src/ui/menu.c
-    ${CARDANO_PATH}/src/ui/nbgl_display_opcert.c
-    ${CARDANO_PATH}/src/ui/nbgl_display_pubkey.c
-    ${CARDANO_PATH}/src/ui/nbgl_display_transaction.c
-    ${CARDANO_PATH}/src/ui/nbgl_display_witness.c
+    ${CARDANO_PATH}/src/ui/ui_display_opcert.c
+    ${CARDANO_PATH}/src/ui/ui_display_pubkey.c
+    ${CARDANO_PATH}/src/ui/ui_display_tx.c
+    ${CARDANO_PATH}/src/ui/ui_display_witness.c
     ${CARDANO_PATH}/src/ui/tx_ui_format.c
     ${CARDANO_PATH}/src/ui/tx_ui_helpers.c
     ${CARDANO_PATH}/src/ui/ui_formatters.c
