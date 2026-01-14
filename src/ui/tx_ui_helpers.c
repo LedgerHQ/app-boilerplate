@@ -411,7 +411,7 @@ void addPaymentInfoUIPairs(const addressParams_t* addressParams) {
 void addStakingInfoUIPairs(const addressParams_t* addressParams) {
     switch (addressParams->stakingDataSource) {
         case NO_STAKING: {
-            UI_ADD_FORMAT1(UI_STATIC_LABEL("Warning:"), MAX_BIP44_PATH_STRING_LENGTH, format_constant_string, "no staking rewards");
+            UI_ADD_STATIC(UI_STATIC_LABEL("Warning:"), UI_STATIC_LABEL("no staking rewards"));
             break;
         }
 

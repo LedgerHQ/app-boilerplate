@@ -195,6 +195,22 @@ void *ui_mem_alloc(size_t size);
 } while(0)
 
 /**
+ * Add a static string value directly to UI pairs without formatting.
+ *
+ * Directly adds a static constant string to the UI pairs list via ui_pairs_add_static_label_impl.
+ * Use this when you have a simple constant string that doesn't need formatting.
+ *
+ * @param label Static label for UI pair (use UI_STATIC_LABEL macro)
+ * @param value Static string value (use UI_STATIC_LABEL macro for compile-time validation)
+ */
+#define UI_ADD_STATIC(label, value) do { \
+    if (!ui_pairs_add_static_label_impl((label), (char *)(value), false)) { \
+        ui_set_error_status(UI_STATUS_OUT_OF_MEMORY); \
+        break; \
+    } \
+} while(0)
+
+/**
  * Format a four-parameter value and add to UI pairs.
  *
  * Allocates buffer, calls formatting function with signature

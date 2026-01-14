@@ -456,9 +456,7 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
     if (pool_owner_counts.total_owners == 0) {
         warning_bits_set(&G_context.tx_info.warning_bits,
                          WARNING_BIT_POOL_REGISTRATION_NO_OWNERS);
-        if (!ui_pairs_add_static_label_impl(UI_STATIC_LABEL("Pool owners"), (char *) UI_STATIC_LABEL("None"), false)) {
-            ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-        }
+        UI_ADD_STATIC(UI_STATIC_LABEL("Pool owners"), UI_STATIC_LABEL("None"));
     }
 
     uint32_t relay_index = 0;
@@ -527,9 +525,7 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
     if (relay_index == 0) {
         warning_bits_set(&G_context.tx_info.warning_bits,
                          WARNING_BIT_POOL_REGISTRATION_NO_RELAYS);
-        if (!ui_pairs_add_static_label_impl(UI_STATIC_LABEL("Pool relays"), (char *) UI_STATIC_LABEL("None"), false)) {
-            ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-        }
+        UI_ADD_STATIC(UI_STATIC_LABEL("Pool relays"), UI_STATIC_LABEL("None"));
     }
 
     if (certificate->poolRegistration.poolMetadataIsNull) {
@@ -537,9 +533,7 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
         LEDGER_ASSERT(no_metadata_policy != POLICY_DENY, "No metadata security policy denied");
 
         if (no_metadata_policy == POLICY_SHOW) {
-            if (!ui_pairs_add_static_label_impl(UI_STATIC_LABEL("Metadata"), (char *) UI_STATIC_LABEL("none (anonymous pool)"), false)) {
-                ui_set_error_status(UI_STATUS_OUT_OF_MEMORY);
-            }
+            UI_ADD_STATIC(UI_STATIC_LABEL("Metadata"), UI_STATIC_LABEL("none (anonymous pool)"));
         }
     } else {
         security_policy_t metadata_policy = policyForSignTxStakePoolRegistrationMetadata();
