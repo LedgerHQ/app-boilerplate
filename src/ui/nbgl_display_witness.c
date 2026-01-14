@@ -44,19 +44,30 @@
  * Cleans up allocated UI resources and processes the witness accordingly
  */
 static void witness_review_choice(bool confirm) {
+    // CLEANUP
     ui_cleanup_tracked_allocations();
 
-    if (!confirm) {
-        // User rejected the witness - abort further witness processing
-        send_swo_and_reset(SWO_CONDITIONS_NOT_SATISFIED);
+    // FINALIZE
+    finalize_witness(confirm);
+
+    // SHOW STATUS
+    if (confirm) {
+        if (G_context.tx_info.current_witness == G_context.tx_info.num_witnesses) {
+            // All witnesses processed - show final success status
+            TRACE("Calling nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main)");
+            nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main);
+        } else {
+            // More witnesses to process - show spinner
+            TRACE("Calling nbgl_useCaseSpinner(\"Processing\")");
+            nbgl_useCaseSpinner("Processing");
+        }
+    } else {
         TRACE("Calling nbgl_useCaseStatus(\"Witness\\ndenied\", true, ui_menu_main)");
         nbgl_useCaseStatus("Witness\ndenied", true, ui_menu_main);
-    } else {
-        finalize_witness();
     }
 }
 
-int ui_display_witness(const bip44_path_t* witnessPath,
+void ui_display_witness(const bip44_path_t* witnessPath,
                        security_policy_t securityPolicy,
                        warning_bits_t warnings) {
     TRACE("=== ui_display_witness START ===");
@@ -64,7 +75,7 @@ int ui_display_witness(const bip44_path_t* witnessPath,
 
     if (G_context.state.tx_state != TX_STATE_APPROVED || G_context.req_type != REQUEST_SIGN_TRANSACTION) {
         TRACE("Bad state detected - returning error");
-        return send_swo_and_reset(SWO_BAD_STATE);
+        send_swo_and_reset(SWO_BAD_STATE);
     }
 
     // Allocate display buffer for witness path using UI tracking system
@@ -73,7 +84,7 @@ int ui_display_witness(const bip44_path_t* witnessPath,
     if (witnessPathStr == NULL) {
         TRACE("Failed to allocate witness path string");
         ui_cleanup_tracked_allocations();
-        return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
+        send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
 
     bool isUnusual = warning_bits_has(warnings, WARNING_BIT_UNUSUAL_KEY_DERIVATION_PATH);
@@ -81,7 +92,7 @@ int ui_display_witness(const bip44_path_t* witnessPath,
     if (securityPolicy != POLICY_SHOW) {
         ASSERT(false);
         ui_cleanup_tracked_allocations();
-        return send_swo_and_reset(SWO_BAD_STATE);
+        send_swo_and_reset(SWO_BAD_STATE);
     }
 
     TRACE("isUnusual: %d", isUnusual);
@@ -116,5 +127,5 @@ int ui_display_witness(const bip44_path_t* witnessPath,
         );
     }
 
-    return 0;
+    return;
 }

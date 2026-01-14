@@ -44,7 +44,7 @@
 
 #define OP_CERT_BODY_LENGTH (KES_PUBLIC_KEY_LENGTH + 8 + 8)
 
-int handler_sign_opcert(buffer_t *cdata) {
+void handler_sign_opcert(buffer_t *cdata) {
     TRACE_BUFFER(cdata->ptr, cdata->size);
 
     G_context.req_type = REQUEST_SIGN_OPCERT;
@@ -52,7 +52,8 @@ int handler_sign_opcert(buffer_t *cdata) {
 
     G_context.opcert_info.raw_opcert_len = cdata->size;
     if (!buffer_move(cdata, G_context.opcert_info.raw_opcert, sizeof(G_context.opcert_info.raw_opcert))) {
-        return send_swo_and_reset(SWO_INVALID_OPCERT_LENGTH);
+        send_swo_and_reset(SWO_INVALID_OPCERT_LENGTH);
+        return;
     }
 
     buffer_t buf = {.ptr = G_context.opcert_info.raw_opcert,
@@ -63,7 +64,8 @@ int handler_sign_opcert(buffer_t *cdata) {
     opcert_parser_status_e status = parse_opcert(&buf, &G_context.opcert_info.opcert);
     TRACE("Opcert parsing status: %d\n", status);
     if (status != PARSING_OK) {
-        return send_swo_and_reset(opcert_map_parser_status_to_swo(status));
+        send_swo_and_reset(opcert_map_parser_status_to_swo(status));
+        return;
     }
     G_context.state.opcert_state = OPCERT_STATE_PARSED;
     const parsed_opcert_t* opcert = &G_context.opcert_info.opcert;
@@ -85,12 +87,11 @@ int handler_sign_opcert(buffer_t *cdata) {
         TRACE("Calling nbgl_useCaseStatus(\"Operational certificate denied\", false, ui_menu_main)");
         nbgl_useCaseStatus("Operational certificate denied", false, ui_menu_main);
         // TODO make sure the constants are defined in a proper place
-        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+        send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+        return;
     }
 
     ui_display_opcert(policy, warnings);
-
-    return 0;
 }
 
 void finalize_sign_opcert(bool confirmed) {

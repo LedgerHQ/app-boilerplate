@@ -38,7 +38,7 @@
  * @return zero or positive integer if success, negative integer otherwise.
  *
  */
-int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more);
+void handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more);
 
 /**
  * Handler for SIGN_TX AUX_DATA (CVote) APDUs.
@@ -51,7 +51,7 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more);
  * @return zero or positive integer if success, negative integer otherwise.
  *
  */
-int handler_sign_tx_aux_data(buffer_t *cdata, uint8_t p2);
+void handler_sign_tx_aux_data(buffer_t *cdata, uint8_t p2);
 
 /**
  * Handler for SIGN_TX_WITNESS command. Signs transaction hash with witness key.
@@ -63,10 +63,10 @@ int handler_sign_tx_aux_data(buffer_t *cdata, uint8_t p2);
  * @return zero or positive integer if success, negative integer otherwise.
  *
  */
-int handler_sign_tx_witness(buffer_t *cdata);
+void handler_sign_tx_witness(buffer_t *cdata);
 
 /**
  * Finalize witness signing. Called after user approves witness signature.
  * Sends the witness signature back to the client.
  */
-void finalize_witness(void);
+void finalize_witness(bool confirm);

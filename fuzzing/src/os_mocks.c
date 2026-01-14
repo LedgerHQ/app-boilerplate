@@ -26,6 +26,7 @@ int io_send_response_pointer(const uint8_t *buffer, size_t bufferLength, uint16_
 
 // Global context for the app
 global_ctx_t G_context;
+uint16_t G_apdu_error = 0;
 
 // Mock storage for fuzzing
 const internal_storage_t N_storage_real = {

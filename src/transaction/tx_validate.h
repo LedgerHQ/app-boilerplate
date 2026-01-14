@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cardano_swo.h"
 #include "transaction/tx_ui_plan.h"
 
 /**
@@ -53,9 +54,9 @@
 
 /**
  * Validate transaction and compute its hash while counting how many UI rows/warnings are needed.
- * Policies run once during this phase; calling code must handle POLICY_DENY responses.
+ * Policies run once during this phase; POLICY_DENY responses call send_swo_and_reset().
  *
  * @param[out] plan Pre-allocated plan structure
- * @return status word (SWO_SUCCESS on success)
+ * @return SWO_SUCCESS if validation passed, otherwise an error status word
  */
 int tx_validate_and_compute_hash(tx_ui_plan_t* plan);

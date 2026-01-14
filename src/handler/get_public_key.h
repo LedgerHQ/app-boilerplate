@@ -21,6 +21,6 @@
  * @return zero or positive integer if success, negative integer otherwise.
  *
  */
-int handler_get_public_key(buffer_t *cdata);
+void handler_get_public_key(buffer_t *cdata);
 
 void finalize_pubkey_export(bool confirmed);

@@ -14,4 +14,4 @@
  * @return zero or positive integer if success, negative integer otherwise.
  *
  */
-int handler_get_app_name(void);
+void handler_get_app_name(void);

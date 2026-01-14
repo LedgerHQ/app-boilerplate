@@ -60,7 +60,7 @@ static command_e req_type_to_instruction(request_type_e req_type) {
     }
 }
 
-int apdu_dispatcher(const command_t *cmd) {
+void apdu_dispatcher(const command_t *cmd) {
     LEDGER_ASSERT(cmd != NULL, "NULL cmd");
     TRACE("G_context.req_type: %d", G_context.req_type);
 
@@ -84,7 +84,8 @@ int apdu_dispatcher(const command_t *cmd) {
         if (cmd->ins != expected_ins) {
             TRACE("Instruction interleaving detected: current=%d (req_type=%d), attempted=%d",
                   expected_ins, G_context.req_type, cmd->ins);
-            return send_swo_and_reset(SWO_COMMAND_NOT_ALLOWED);
+            send_swo_and_reset(SWO_COMMAND_NOT_ALLOWED);
+            return;
         }
         TRACE("Same instruction continuing: ins=%d", cmd->ins);
     } else {
@@ -93,34 +94,42 @@ int apdu_dispatcher(const command_t *cmd) {
     }
 
     if (cmd->cla != CLA) {
-        return send_swo_and_reset(SWO_INVALID_CLA);
+        send_swo_and_reset(SWO_INVALID_CLA);
+        return;
     }
 
     switch (cmd->ins) {
         case INS_GET_SERIAL:
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
-                return send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                return;
             }
 
-            return handler_get_serial();
+            handler_get_serial();
+            return;
 
         case INS_GET_VERSION:
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
-                return send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                return;
             }
 
-            return handler_get_version();
+            handler_get_version();
+            return;
 
         case INS_GET_APP_NAME:
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
-                return send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                return;
             }
 
-            return handler_get_app_name();
+            handler_get_app_name();
+            return;
 
         case INS_GET_PUBLIC_KEY: {
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
-                return send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                return;
             }
 
             buffer_t pubkey_buf = {0};
@@ -128,7 +137,8 @@ int apdu_dispatcher(const command_t *cmd) {
             pubkey_buf.size = cmd->lc;
             pubkey_buf.offset = 0;
 
-            return handler_get_public_key(&pubkey_buf);
+            handler_get_public_key(&pubkey_buf);
+            return;
         }
 
         case INS_SIGN_TX:
@@ -136,11 +146,13 @@ int apdu_dispatcher(const command_t *cmd) {
             if (cmd->p1 == 0x0f) {
                 // Witness signing - P2 must be unused
                 if (cmd->p2 != P2_UNUSED) {
-                    return send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                    send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                    return;
                 }
 
                 if (!cmd->data) {
-                    return send_swo_and_reset(SWO_WRONG_DATA_LENGTH);
+                    send_swo_and_reset(SWO_WRONG_DATA_LENGTH);
+                    return;
                 }
 
                 buffer_t witness_buf = {0};
@@ -148,7 +160,8 @@ int apdu_dispatcher(const command_t *cmd) {
                 witness_buf.size = cmd->lc;
                 witness_buf.offset = 0;
 
-                return handler_sign_tx_witness(&witness_buf);
+                handler_sign_tx_witness(&witness_buf);
+                return;
             }
 
             // Transaction signing with redesigned protocol:
@@ -156,12 +169,14 @@ int apdu_dispatcher(const command_t *cmd) {
             // P1_TX_CHUNK_LAST (0x02), P1_TX_AUX_DATA (0x03)
             if (cmd->p1 == P1_TX_AUX_DATA) {
                 if (cmd->p2 != P2_AUX_DATA_INIT && cmd->p2 != P2_AUX_DATA_DELEGATION) {
-                    return send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                    send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                    return;
                 }
             } else {
                 // P2 must be unused for non-AUX_DATA APDUs
                 if (cmd->p2 != P2_UNUSED) {
-                    return send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                    send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                    return;
                 }
             }
 
@@ -170,11 +185,13 @@ int apdu_dispatcher(const command_t *cmd) {
                 cmd->p1 != P1_TX_DATA_CHUNK &&
                 cmd->p1 != P1_TX_CHUNK_LAST &&
                 cmd->p1 != P1_TX_AUX_DATA) {
-                return send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                return;
             }
 
             if (!cmd->data) {
-                return send_swo_and_reset(SWO_WRONG_DATA_LENGTH);
+                send_swo_and_reset(SWO_WRONG_DATA_LENGTH);
+                return;
             }
 
             buffer_t tx_buf = {0};
@@ -183,31 +200,36 @@ int apdu_dispatcher(const command_t *cmd) {
             tx_buf.offset = 0;
 
             if (cmd->p1 == P1_TX_AUX_DATA) {
-                return handler_sign_tx_aux_data(&tx_buf, cmd->p2);
+                handler_sign_tx_aux_data(&tx_buf, cmd->p2);
+                return;
             }
 
             // Determine if more data follows based on P1
             // P1_TX_CHUNK_LAST signals no more data, all others signal more data to come
             bool more = (cmd->p1 != P1_TX_CHUNK_LAST);
-            return handler_sign_tx(&tx_buf, cmd->p1, more);
+            handler_sign_tx(&tx_buf, cmd->p1, more);
+            return;
 
         case INS_SIGN_OPCERT: {
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
-                return send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                return;
             }
             buffer_t opcert_buf = {0};
             opcert_buf.ptr = cmd->data;
             opcert_buf.size = cmd->lc;
             opcert_buf.offset = 0;
 
-            return handler_sign_opcert(&opcert_buf);
+            handler_sign_opcert(&opcert_buf);
+            return;
         }
 
 #ifdef DEBUG
         case INS_DEBUG_SET_SETTINGS: {
             // Debug-only command to set app settings for testing
             if (cmd->p1 != P1_UNUSED || cmd->p2 != P2_UNUSED) {
-                return send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                send_swo_and_reset(SWO_INCORRECT_P1_P2);
+                return;
             }
 
             buffer_t debug_buf = {0};
@@ -215,11 +237,13 @@ int apdu_dispatcher(const command_t *cmd) {
             debug_buf.size = cmd->lc;
             debug_buf.offset = 0;
 
-            return handler_debug_set_settings(&debug_buf);
+            handler_debug_set_settings(&debug_buf);
+            return;
         }
 #endif
 
         default:
-            return send_swo_and_reset(SWO_INVALID_INS);
+            send_swo_and_reset(SWO_INVALID_INS);
+            return;
     }
 }

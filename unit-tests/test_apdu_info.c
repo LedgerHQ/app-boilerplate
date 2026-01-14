@@ -40,7 +40,7 @@ static void test_get_version_returns_current_constants(void** state) {
     (void) state;
     reset_response();
 
-    assert_int_equal(handler_get_version(), 0);
+    handler_get_version();
     assert_int_equal(g_response_sw, SWO_SUCCESS);
     assert_int_equal(g_response_length, APPVERSION_LEN);
 
@@ -54,7 +54,7 @@ static void test_get_app_name_returns_literal(void** state) {
     (void) state;
     reset_response();
 
-    assert_int_equal(handler_get_app_name(), 0);
+    handler_get_app_name();
     assert_int_equal(g_response_sw, SWO_SUCCESS);
     assert_int_equal(g_response_length, APPNAME_LEN);
     assert_memory_equal(g_response_buffer, APPNAME, APPNAME_LEN);
@@ -64,7 +64,7 @@ static void test_get_serial_returns_os_value(void** state) {
     (void) state;
     reset_response();
 
-    assert_int_equal(handler_get_serial(), 0);
+    handler_get_serial();
     assert_int_equal(g_response_sw, SWO_SUCCESS);
     const unsigned char expected[] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0x12, 0x34};
     assert_int_equal(g_response_length, sizeof(expected));

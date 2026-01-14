@@ -1048,7 +1048,7 @@ static int ui_build_pairs_and_warnings(void) {
 
 int ui_prepare_transaction_review(void) {
     if (G_context.req_type != REQUEST_SIGN_TRANSACTION) {
-        return send_swo_and_reset(SWO_BAD_STATE);
+        send_swo_and_reset(SWO_BAD_STATE);
     }
     LEDGER_ASSERT(G_context.state.tx_state == TX_STATE_HASHED, "UI prep called too early");
     uint32_t pair_count = G_context.tx_info.planned_ui_pairs;
@@ -1058,11 +1058,11 @@ int ui_prepare_transaction_review(void) {
 
     // If pair count exceeds UI capability, reject the transaction
     if (pair_count > MAX_UI_PAIRS) {
-        return send_swo_and_reset(SWO_UI_PAIRS_EXCEED_CAPABILITY);
+        send_swo_and_reset(SWO_UI_PAIRS_EXCEED_CAPABILITY);
     }
 
     if (!ui_pairs_init((uint8_t) pair_count)) {
-        return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
+        send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
 
     int status = ui_build_pairs_and_warnings();

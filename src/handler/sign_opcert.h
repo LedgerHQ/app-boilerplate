@@ -4,7 +4,7 @@
 
 // TODO comments
 
-int handler_sign_opcert(buffer_t *cdata);
+void handler_sign_opcert(buffer_t *cdata);
 
 /**
  * Finalize operational certificate signing after user confirmation/rejection.

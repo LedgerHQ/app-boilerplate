@@ -8,7 +8,7 @@
  * @param swo Status word to return.
  * @return Result of io_send_sw().
  */
-int send_swo_and_reset(uint16_t swo);
+void send_swo_and_reset(uint16_t swo);
 
 /**
  * Centrally reset application state.

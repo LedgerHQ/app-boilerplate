@@ -101,28 +101,29 @@ static ui_status_t format_opcert_fields(const parsed_opcert_t* opcert) {
 
 // called when long press button on 3rd page is long-touched or when reject footer is touched
 static void opcert_review_choice(bool confirm) {
+    // CLEANUP
     opcert_buffer_cleanup();
 
+    // FINALIZE
     finalize_sign_opcert(confirm);
 
+    // SHOW STATUS
     if (confirm) {
-        TRACE("User confirmed - showing signed status");
         TRACE("Calling nbgl_useCaseReviewStatus(STATUS_TYPE_OPERATION_SIGNED, ui_menu_main)");
         nbgl_useCaseReviewStatus(STATUS_TYPE_OPERATION_SIGNED, ui_menu_main);
     } else {
-        TRACE("User rejected - showing rejected status");
         TRACE("Calling nbgl_useCaseReviewStatus(STATUS_TYPE_OPERATION_REJECTED, ui_menu_main)");
         nbgl_useCaseReviewStatus(STATUS_TYPE_OPERATION_REJECTED, ui_menu_main);
     }
 }
 
-int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings) {
+void ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings) {
     TRACE("=== ui_display_opcert START ===");
     TRACE("securityPolicy: %d", securityPolicy);
 
     if (G_context.req_type != REQUEST_SIGN_OPCERT || G_context.state.opcert_state != OPCERT_STATE_PARSED) {
         TRACE("Bad state detected - returning error");
-        return send_swo_and_reset(SWO_BAD_STATE);
+        send_swo_and_reset(SWO_BAD_STATE);
     }
 
     // Handle security policy
@@ -135,11 +136,11 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
             // Silent approval - finalize without showing UI
             TRACE("POLICY_HIDE: silently approving opcert");
             finalize_sign_opcert(true);
-            return 0;
+            return;
 
         default:
             ASSERT(false);
-            return send_swo_and_reset(SWO_BAD_STATE);
+            send_swo_and_reset(SWO_BAD_STATE);
     }
 
     // Format all opcert fields and check for errors
@@ -148,11 +149,11 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
         case UI_STATUS_SUCCESS:
             break;
         case UI_STATUS_OUT_OF_MEMORY:
-            return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
+            send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
         case UI_STATUS_UNINITIALIZED:
         default:
             ASSERT(false);
-            return send_swo_and_reset(SWO_BAD_STATE);
+            send_swo_and_reset(SWO_BAD_STATE);
     }
 
     // Build warnings if needed
@@ -162,11 +163,11 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
         case UI_STATUS_SUCCESS:
             break;
         case UI_STATUS_OUT_OF_MEMORY:
-            return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
+            send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
         case UI_STATUS_UNINITIALIZED:
         default:
             ASSERT(false);
-            return send_swo_and_reset(SWO_BAD_STATE);
+            send_swo_and_reset(SWO_BAD_STATE);
     }
     const nbgl_warning_t* warningPtr = ui_get_warnings();
 
@@ -182,5 +183,5 @@ int ui_display_opcert(security_policy_t securityPolicy, warning_bits_t warnings)
                         opcert_review_choice
     );
 
-    return 0;
+    return;
 }

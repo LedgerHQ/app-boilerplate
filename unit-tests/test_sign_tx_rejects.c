@@ -71,7 +71,7 @@ void ui_menu_main(void) {
     // no-op
 }
 
-int ui_display_transaction(void) {
+void ui_display_transaction(void) {
     // auto-approve to allow witness policies to be exercised
     io_send_response_pointer(G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash), SWO_SUCCESS);
     G_context.state.tx_state = TX_STATE_APPROVED;
@@ -82,16 +82,14 @@ int ui_display_transaction(void) {
         G_context.state.tx_state = TX_STATE_NONE;
         G_context.req_type = REQUEST_NONE;
     }
-    return 0;
 }
 
-int ui_display_witness(const bip44_path_t *path,
+void ui_display_witness(const bip44_path_t *path,
                        security_policy_t policy,
                        warning_bits_t warnings) {
     (void) path;
     (void) policy;
     (void) warnings;
-    return 0;
 }
 
 bool app_mem_init(void) {
@@ -164,17 +162,15 @@ static void run_sign_tx_reject_fixture(const sign_tx_reject_fixture_t *fixture) 
     };
 
     g_last_sw = 0;
-    int init_rc = handler_sign_tx(&init_buf, P1_TX_INIT, false);
+    handler_sign_tx(&init_buf, P1_TX_INIT, false);
 
     if (fixture->expect_init_failure) {
-        assert_int_equal(init_rc, 0);
         assert_int_equal(g_last_sw, fixture->expected_sw);
         assert_int_equal(G_context.req_type, REQUEST_NONE);
         tx_context_cleanup();
         return;
     }
 
-    assert_int_equal(init_rc, 0);
     assert_int_equal(g_last_sw, SWO_SUCCESS);
     assert_int_equal(G_context.req_type, REQUEST_SIGN_TRANSACTION);
     assert_int_equal(G_context.state.tx_state, TX_STATE_CHUNKS);
@@ -190,23 +186,19 @@ static void run_sign_tx_reject_fixture(const sign_tx_reject_fixture_t *fixture) 
             .offset = 0,
         };
         g_last_sw = 0;
-        int chunk_rc = 0;
         if (segment->p1 == P1_TX_WITNESSES) {
-            chunk_rc = handler_sign_tx_witness(&chunk_buf);
+            handler_sign_tx_witness(&chunk_buf);
         } else {
-            chunk_rc = handler_sign_tx(&chunk_buf, segment->p1, segment->more);
+            handler_sign_tx(&chunk_buf, segment->p1, segment->more);
         }
         if (g_last_sw != 0) {
             if (g_last_sw == SWO_SUCCESS) {
-                assert_int_equal(chunk_rc, 0);
                 continue;
             }
             assert_int_equal(g_last_sw, fixture->expected_sw);
-            assert_int_equal(chunk_rc, 0);
             failure_seen = true;
             break;
         }
-        assert_int_equal(chunk_rc, 0);
     }
 
     assert_true(failure_seen);

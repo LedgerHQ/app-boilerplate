@@ -93,9 +93,6 @@ void app_main() {
               cmd.data);
 
         // Dispatch structured APDU command to handler
-        if (apdu_dispatcher(&cmd) < 0) {
-            TRACE("apdu_dispatcher failure");
-            return;
-        }
+        apdu_dispatcher(&cmd);
     }
 }

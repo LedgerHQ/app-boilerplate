@@ -11,10 +11,8 @@
 
 /**
  * Display transaction information on the device and ask confirmation to sign.
- *
- * @return 0 if success, negative integer otherwise.
  */
-int ui_display_transaction(void);
+void ui_display_transaction(void);
 
 /**
  * Build NBGL buffers for transaction review (pairs + warnings).
@@ -50,8 +48,7 @@ void tx_review_cleanup(void);
  * @param witnessPath BIP44 path for the witness
  * @param securityPolicy Security policy result
  * @param warnings Warning bits
- * @return 0 if success, negative integer otherwise
  */
-int ui_display_witness(const bip44_path_t* witnessPath,
-                       security_policy_t securityPolicy,
-                       warning_bits_t warnings);
+void ui_display_witness(const bip44_path_t* witnessPath,
+                        security_policy_t securityPolicy,
+                        warning_bits_t warnings);

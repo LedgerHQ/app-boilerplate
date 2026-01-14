@@ -44,7 +44,7 @@ static inline void run_tx_and_verify(const uint8_t* init_raw,
                                      size_t* response_len,
                                      uint16_t* response_sw) {
     assert_true(init_len > 0);
-    assert_int_equal(handler_sign_tx(&(buffer_t){.ptr = (uint8_t*)init_raw, .size = init_len, .offset = 0}, 0x00, false), 0);
+    handler_sign_tx(&(buffer_t){.ptr = (uint8_t*)init_raw, .size = init_len, .offset = 0}, 0x00, false);
     assert_int_equal(G_context.req_type, REQUEST_SIGN_TRANSACTION);
     if (include_aux_data_hash && aux_data_type == AUX_DATA_TYPE_CVOTE_REGISTRATION) {
         assert_int_equal(G_context.state.tx_state, TX_STATE_AUX_DATA);
@@ -63,7 +63,7 @@ static inline void run_tx_and_verify(const uint8_t* init_raw,
             .size = aux_data_init_payload_len,
             .offset = 0,
         };
-        assert_int_equal(handler_sign_tx_aux_data(&aux_init_buf, P2_AUX_DATA_INIT), 0);
+        handler_sign_tx_aux_data(&aux_init_buf, P2_AUX_DATA_INIT);
 
         for (size_t i = 0; i < aux_data_delegation_count; i++) {
             const aux_data_payload_t* delegation = &aux_data_delegations[i];
@@ -74,7 +74,7 @@ static inline void run_tx_and_verify(const uint8_t* init_raw,
                 .size = delegation->payload_len,
                 .offset = 0,
             };
-            assert_int_equal(handler_sign_tx_aux_data(&aux_reg_buf, P2_AUX_DATA_DELEGATION), 0);
+            handler_sign_tx_aux_data(&aux_reg_buf, P2_AUX_DATA_DELEGATION);
         }
 
         assert_int_equal(G_context.state.tx_state, TX_STATE_CHUNKS);
@@ -85,7 +85,7 @@ static inline void run_tx_and_verify(const uint8_t* init_raw,
         .size = raw_tx_len,
         .offset = 0,
     };
-    assert_int_equal(handler_sign_tx(&tx_buf, 0x02, false), 0);
+    handler_sign_tx(&tx_buf, 0x02, false);
 
     uint8_t expected_cbor[100 * 1024];
     size_t cbor_len = hex_to_bytes(cbor_hex, expected_cbor, sizeof(expected_cbor));

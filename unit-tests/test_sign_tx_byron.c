@@ -78,22 +78,21 @@ void ui_menu_main(void) {
     // no-op
 }
 
-int ui_display_transaction(void) {
+void ui_display_transaction(void) {
     io_send_response_pointer(G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash), SWO_SUCCESS);
     G_context.state.tx_state = TX_STATE_APPROVED;
     G_context.req_type = REQUEST_NONE;
     tx_review_cleanup();
-    return 0;
 }
 
-int ui_display_witness(const bip44_path_t *witnessPath,
+void ui_display_witness(const bip44_path_t *witnessPath,
                        security_policy_t securityPolicy,
                        warning_bits_t warnings) {
     (void) witnessPath;
     (void) securityPolicy;
     (void) warnings;
-    finalize_witness();
-    return SWO_SUCCESS;
+    finalize_witness(true);
+    return;
 }
 
 bool app_mem_init(void) {

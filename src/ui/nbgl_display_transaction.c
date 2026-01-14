@@ -23,33 +23,38 @@ void tx_review_cleanup(void) {
 }
 
 static void tx_review_choice(bool confirm) {
+    // CLEANUP
+    tx_review_cleanup();
+
     if (confirm) {
+        // FINALIZE
         G_context.state.tx_state = TX_STATE_APPROVED;
         G_context.tx_info.current_witness = 0;
         io_send_response_pointer(G_context.tx_info.tx_hash, sizeof(G_context.tx_info.tx_hash), SWO_SUCCESS);
 
+        // SHOW STATUS
         if (G_context.tx_info.num_witnesses > 0) {
-            tx_review_cleanup();
             TRACE("Calling nbgl_useCaseSpinner(\"Processing\")");
             nbgl_useCaseSpinner("Processing");
         } else {
-            tx_review_cleanup();
             reset_app_context();
             TRACE("Calling nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main)");
             nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_SIGNED, ui_menu_main);
         }
     } else {
-        tx_review_cleanup();
+        // FINALIZE
         send_swo_and_reset(SWO_CONDITIONS_NOT_SATISFIED);
+
+        // SHOW STATUS
         TRACE("Calling nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_REJECTED, ui_menu_main)");
         nbgl_useCaseReviewStatus(STATUS_TYPE_TRANSACTION_REJECTED, ui_menu_main);
     }
 }
 
-int ui_display_transaction(void) {
+void ui_display_transaction(void) {
     if (G_context.req_type != REQUEST_SIGN_TRANSACTION || G_context.state.tx_state != TX_STATE_UI_PREPARED) {
         G_context.state.tx_state = TX_STATE_NONE;
-        return send_swo_and_reset(SWO_BAD_STATE);
+        send_swo_and_reset(SWO_BAD_STATE);
     }
 
     const char *review_subtitle = NULL;
@@ -84,5 +89,5 @@ int ui_display_transaction(void) {
                            tx_review_choice);
     }
 
-    return 0;
+    return;
 }

@@ -42,13 +42,16 @@
 static char *pubkeyPathStr = NULL;
 
 static void pubkey_review_choice(bool confirm) {
-    // Cleanup display buffers
+    // CLEANUP
     ui_cleanup_tracked_allocations();
 
-    // Answer, display a status page and go back to main
+    // FINALIZE
     finalize_pubkey_export(confirm);
 
-    if (!G_context.pk_info.silentExport) {
+    // SHOW STATUS
+    if (G_context.pk_info.silentExport) {
+        ui_menu_main();
+    } else {
         if (confirm) {
             TRACE("Calling nbgl_useCaseStatus(\"Public key\\nexported\", true, ui_menu_main)");
             nbgl_useCaseStatus("Public key\nexported", true, ui_menu_main);
@@ -56,18 +59,16 @@ static void pubkey_review_choice(bool confirm) {
             TRACE("Calling nbgl_useCaseStatus(\"Public key\\ndenied\", true, ui_menu_main)");
             nbgl_useCaseStatus("Public key\ndenied", true, ui_menu_main);
         }
-    } else {
-        ui_menu_main();
     }
 }
 
-int ui_display_pubkey(security_policy_t securityPolicy, warning_bits_t warnings) {
+void ui_display_pubkey(security_policy_t securityPolicy, warning_bits_t warnings) {
     TRACE("=== ui_display_pubkey START ===");
     TRACE("securityPolicy: %d", securityPolicy);
 
     if (G_context.req_type != REQUEST_EXPORT_PUBKEY) {
         TRACE("Bad request type detected - returning error");
-        return send_swo_and_reset(SWO_BAD_STATE);
+        send_swo_and_reset(SWO_BAD_STATE);
     }
 
     pubkey_ctx_t* pk = &G_context.pk_info;
@@ -76,7 +77,7 @@ int ui_display_pubkey(security_policy_t securityPolicy, warning_bits_t warnings)
     pubkeyPathStr = (char *) ui_mem_alloc(MAX_BIP44_PATH_STRING_LENGTH + UI_BUFFER_SAFETY_MARGIN);
     if (pubkeyPathStr == NULL) {
         ui_cleanup_tracked_allocations();
-        return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
+        send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
     }
     bool pathFormatted = format_bip44_path(&pk->path, pubkeyPathStr, MAX_BIP44_PATH_STRING_LENGTH + UI_BUFFER_SAFETY_MARGIN);
     LEDGER_ASSERT(pathFormatted, "Unable to format public key path");
@@ -92,12 +93,12 @@ int ui_display_pubkey(security_policy_t securityPolicy, warning_bits_t warnings)
             pk->silentExport = true;
             finalize_pubkey_export(true);
             ui_cleanup_tracked_allocations();
-            return 0;
+            return;
 
         default:
             ASSERT(false);
             ui_cleanup_tracked_allocations();
-            return 0;
+            return;
     }
 
     bool isColdKey = (bip44_classifyPath(&pk->path) == PATH_POOL_COLD_KEY);
@@ -126,5 +127,5 @@ int ui_display_pubkey(security_policy_t securityPolicy, warning_bits_t warnings)
                         pubkey_review_choice
     );
 
-    return 0;
+    return;
 }

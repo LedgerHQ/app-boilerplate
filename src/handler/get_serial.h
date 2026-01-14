@@ -6,4 +6,4 @@
  *
  * @return zero or positive integer if success, negative integer otherwise.
  */
-int handler_get_serial(void);
+void handler_get_serial(void);

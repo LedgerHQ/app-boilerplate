@@ -24,8 +24,8 @@ static void test_compute_tx_hash_and_plan_ui_counts_ttl(void **state) {
     G_context.tx_info.transaction.ttl = 123;
 
     tx_ui_plan_t plan = {0};
-    int rc = tx_validate_and_compute_hash(&plan);
-    assert_int_equal(rc, SWO_SUCCESS);
+    int result = tx_validate_and_compute_hash(&plan);
+    assert_int_equal(result, SWO_SUCCESS);
     assert_int_equal(plan.pair_count, 3);
 }
 

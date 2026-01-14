@@ -11,4 +11,4 @@
  * @return zero or positive integer if success, negative integer otherwise.
  *
  */
-int handler_get_version(void);
+void handler_get_version(void);

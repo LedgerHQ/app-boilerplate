@@ -68,17 +68,30 @@ Generators (run from repo root with the standalone venv):
 
 ```bash
 source tests/standalone/venv/bin/activate
-python3 unit-tests/generate_all_fixtures.py
+python3 unit-tests/generate_all_fixtures.py all
+# or a single era:
+python3 unit-tests/generate_all_fixtures.py <era>
 python3 unit-tests/generate_complete_tests.py
 python3 unit-tests/generate_reject_fixtures.py
 ```
 
 Notes:
-- `unit-tests/generate_all_fixtures.py` produces `unit-tests/test_sign_tx_fixtures_*.h`.
-- `unit-tests/generate_complete_tests.py` emits `unit-tests/generated_complete_tests.h`.
+- `unit-tests/generate_all_fixtures.py` produces `unit-tests/test_sign_tx_fixtures_*.h` from
+  `tests/standalone/input_files/signTx.py` and the shared command builder.
+- `unit-tests/generate_complete_tests.py` rewrites each `unit-tests/test_sign_tx_*.c`
+  with `tx_fixture_t` + `run_fixture_with_expert_mode` cases extracted from the fixture headers.
 - `unit-tests/generate_reject_fixtures.py` emits `unit-tests/generated_sign_tx_rejects.h`.
-- The reject generator runs a Node export in `../ledgerjs-cardano-shelley` and then serializes APDUs via `tests/application_client/command_builder.py`. Keep logic in the generators, not in the generated headers.
-- APDU fixtures use the app’s binary schema (presence flags + length-prefixed ASCII for relays/metadata); they are not CBOR byte dumps from LedgerJS. CBOR fixtures remain the source of truth for tx body/hash validation.
+- `unit-tests/export_sign_tx_rejects.js` runs inside `../ledgerjs-cardano-shelley` (via Node)
+  to export reject fixtures that are then serialized with `tests/application_client/command_builder.py`.
+- APDU fixtures use the app’s binary schema (presence flags + length-prefixed ASCII for relays/metadata);
+  they are not CBOR byte dumps from LedgerJS. CBOR fixtures remain the source of truth for tx body/hash validation.
+
+Suggested improvements:
+- Add a single `unit-tests/generate_fixtures.py` entry point that runs all generators in order
+  (all fixtures, complete tests, rejects, mock data) and verifies a clean diff.
+- Remove the absolute `BASE_PATH` from `generate_complete_tests.py` in favor of repo-relative paths.
+- Extract shared helper code (path setup, base58 shim, command builder utilities) into a small
+  `unit-tests/fixture_utils.py` to reduce duplication across generators.
 
 ### Mock Crypto Fixtures
 

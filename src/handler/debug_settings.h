@@ -17,6 +17,6 @@
  *
  * @return zero or positive integer if success, negative integer otherwise.
  */
-int handler_debug_set_settings(const buffer_t *buf);
+void handler_debug_set_settings(const buffer_t *buf);
 
 #endif  // DEBUG

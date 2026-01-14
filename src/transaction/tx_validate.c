@@ -21,8 +21,6 @@
 #include "securityPolicy/securityWarnings.h"
 #include "utils/assert.h"
 #include "utils/utils.h"
-#include "io.h"
-#include "app_context.h"
 #include "utils/cbor.h"
 
 #define UI_PAIR_LIMIT 250
@@ -149,7 +147,7 @@ static int validate_and_hash_inputs(tx_hash_builder_t* txHashBuilder, tx_ui_plan
         switch (input_policy) {
             case POLICY_DENY:
                 TRACE("Input security policy denied");
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
             case POLICY_SHOW:
                 plan->pair_count++;
                 break;
@@ -157,13 +155,12 @@ static int validate_and_hash_inputs(tx_hash_builder_t* txHashBuilder, tx_ui_plan
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown input policy");
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         }
 
         txHashBuilder_addInput(txHashBuilder, input);
         node = node->next;
     }
-
     return SWO_SUCCESS;
 }
 
@@ -216,7 +213,7 @@ static int validate_and_hash_outputs(tx_hash_builder_t* txHashBuilder, tx_ui_pla
         switch (output_policy) {
             case POLICY_DENY:
                 TRACE("Output security policy denied");
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
             case POLICY_SHOW: {
                 datum_policy = policyForSignTxOutputDatumHash(output_policy);
                 ref_script_policy = policyForSignTxOutputRefScript(output_policy);
@@ -260,7 +257,7 @@ static int validate_and_hash_outputs(tx_hash_builder_t* txHashBuilder, tx_ui_pla
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown output policy");
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         }
 
         if (output_destination->type == DESTINATION_THIRD_PARTY) {
@@ -268,7 +265,7 @@ static int validate_and_hash_outputs(tx_hash_builder_t* txHashBuilder, tx_ui_pla
         } else {
             uint8_t *address_bytes = (uint8_t *) app_mem_alloc(MAX_ADDRESS_LENGTH);
             if (address_bytes == NULL) {
-                return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
+                return SWO_INSUFFICIENT_MEMORY;
             }
 
             size_t address_size = deriveAddress(
@@ -279,7 +276,7 @@ static int validate_and_hash_outputs(tx_hash_builder_t* txHashBuilder, tx_ui_pla
 
             if (address_size == 0 || address_size > MAX_ADDRESS_LENGTH) {
                 app_mem_free(address_bytes);
-                return send_swo_and_reset(SWO_INCORRECT_DATA);
+                return SWO_INCORRECT_DATA;
             }
 
             output_desc.destination.type = DESTINATION_THIRD_PARTY;
@@ -347,7 +344,6 @@ static int validate_and_hash_outputs(tx_hash_builder_t* txHashBuilder, tx_ui_pla
 
         node = node->next;
     }
-
     return SWO_SUCCESS;
 }
 
@@ -360,17 +356,16 @@ static int validate_and_hash_fee(tx_hash_builder_t* txHashBuilder, tx_ui_plan_t*
 
     switch (fee_policy) {
         case POLICY_DENY:
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW:
         case POLICY_HIDE:
             break;
         default:
             LEDGER_ASSERT(false, "Unknown fee policy");
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
     }
 
     txHashBuilder_addFee(txHashBuilder, G_context.tx_info.transaction.fee);
-
     return SWO_SUCCESS;
 }
 
@@ -382,7 +377,7 @@ static int validate_and_hash_ttl(tx_hash_builder_t* txHashBuilder, tx_ui_plan_t*
     security_policy_t ttl_policy = policyForSignTxTtl(G_context.tx_info.transaction.ttl);
     switch (ttl_policy) {
         case POLICY_DENY:
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW:
             plan->pair_count++;
             break;
@@ -390,7 +385,7 @@ static int validate_and_hash_ttl(tx_hash_builder_t* txHashBuilder, tx_ui_plan_t*
             break;
         default:
             LEDGER_ASSERT(false, "Unknown ttl policy");
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
     }
 
     txHashBuilder_addTtl(txHashBuilder, G_context.tx_info.transaction.ttl);
@@ -414,13 +409,13 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
         );
         switch (generic_policy) {
             case POLICY_DENY:
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
             case POLICY_SHOW:
             case POLICY_HIDE:
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown certificate policy");
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         }
 
         security_policy_t cert_policy = POLICY_HIDE;
@@ -436,7 +431,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                 );
                 switch (cert_policy) {
                     case POLICY_DENY:
-                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                     case POLICY_SHOW:
                         if (certificate->type == CERTIFICATE_STAKE_REGISTRATION ||
                             certificate->type == CERTIFICATE_STAKE_DEREGISTRATION) {
@@ -449,7 +444,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         break;
                     default:
                         LEDGER_ASSERT(false, "Unknown staking certificate policy");
-                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                 }
                 break;
             }
@@ -461,7 +456,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                 );
                 switch (cert_policy) {
                     case POLICY_DENY:
-                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                     case POLICY_SHOW:
                         plan->pair_count += 3;
                         break;
@@ -469,7 +464,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         break;
                     default:
                         LEDGER_ASSERT(false, "Unknown stake delegation policy");
-                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                 }
                 break;
             }
@@ -481,7 +476,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                 );
                 switch (cert_policy) {
                     case POLICY_DENY:
-                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                     case POLICY_SHOW:
                         plan->pair_count += 3;
                         break;
@@ -489,7 +484,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         break;
                     default:
                         LEDGER_ASSERT(false, "Unknown vote delegation policy");
-                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                 }
                 break;
             }
@@ -501,7 +496,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                 );
                 switch (cert_policy) {
                     case POLICY_DENY:
-                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                     case POLICY_SHOW:
                         plan->pair_count += 3;
                         break;
@@ -509,7 +504,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         break;
                     default:
                         LEDGER_ASSERT(false, "Unknown committee auth policy");
-                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                 }
                 break;
             }
@@ -520,7 +515,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                 );
                 switch (cert_policy) {
                     case POLICY_DENY:
-                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                     case POLICY_SHOW:
                         plan->pair_count += 2;
                         if (certificate->anchor.isIncluded) {
@@ -531,7 +526,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         break;
                     default:
                         LEDGER_ASSERT(false, "Unknown committee resign policy");
-                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                 }
                 break;
             }
@@ -544,7 +539,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                 );
                 switch (cert_policy) {
                     case POLICY_DENY:
-                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                     case POLICY_SHOW:
                         if (certificate->type == CERTIFICATE_DREP_REGISTRATION) {
                             plan->pair_count += 3;
@@ -564,7 +559,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         break;
                     default:
                         LEDGER_ASSERT(false, "Unknown drep certificate policy");
-                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                 }
                 break;
             }
@@ -601,7 +596,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                 );
                 switch (cert_policy) {
                     case POLICY_DENY:
-                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                     case POLICY_HIDE:
                         break;
                     case POLICY_SHOW: {
@@ -613,7 +608,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         );
                         switch (pool_id_policy) {
                             case POLICY_DENY:
-                                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                             case POLICY_SHOW:
                                 pool_pairs += 1;
                                 break;
@@ -621,7 +616,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                 break;
                             default:
                                 LEDGER_ASSERT(false, "Unknown pool id policy");
-                                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                         }
 
                         security_policy_t vrf_policy = policyForSignTxStakePoolRegistrationVrfKey(
@@ -629,7 +624,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         );
                         switch (vrf_policy) {
                             case POLICY_DENY:
-                                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                             case POLICY_SHOW:
                                 pool_pairs += 1;
                                 break;
@@ -637,7 +632,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                 break;
                             default:
                                 LEDGER_ASSERT(false, "Unknown vrf policy");
-                                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                         }
 
                         pool_pairs += 3;
@@ -649,7 +644,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         );
                         switch (reward_policy) {
                             case POLICY_DENY:
-                                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                             case POLICY_SHOW:
                                 pool_pairs += 1;
                                 break;
@@ -657,7 +652,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                 break;
                             default:
                                 LEDGER_ASSERT(false, "Unknown reward account policy");
-                                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                         }
 
                         {
@@ -673,7 +668,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                 );
                                 switch (owner_policy) {
                                     case POLICY_DENY:
-                                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                                     case POLICY_SHOW:
                                         pool_pairs += 1;
                                         break;
@@ -681,7 +676,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                         break;
                                     default:
                                         LEDGER_ASSERT(false, "Unknown owner policy");
-                                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                                 }
 
                                 node = node->next;
@@ -706,7 +701,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                 );
                                 switch (relay_policy) {
                                     case POLICY_DENY:
-                                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                                     case POLICY_HIDE:
                                         break;
                                     case POLICY_SHOW:
@@ -742,7 +737,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                         break;
                                     default:
                                         LEDGER_ASSERT(false, "Unknown relay policy");
-                                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                                 }
 
                                 node = node->next;
@@ -759,7 +754,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                 policyForSignTxStakePoolRegistrationNoMetadata();
                             switch (no_metadata_policy) {
                                 case POLICY_DENY:
-                                    return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                    return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                                 case POLICY_SHOW:
                                     pool_pairs += 1;
                                     break;
@@ -767,14 +762,14 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                     break;
                                 default:
                                     LEDGER_ASSERT(false, "Unknown metadata policy");
-                                    return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                    return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                             }
                         } else {
                             security_policy_t metadata_policy =
                                 policyForSignTxStakePoolRegistrationMetadata();
                             switch (metadata_policy) {
                                 case POLICY_DENY:
-                                    return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                    return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                                 case POLICY_SHOW:
                                     pool_pairs += 2;
                                     break;
@@ -782,7 +777,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                     break;
                                 default:
                                     LEDGER_ASSERT(false, "Unknown metadata policy");
-                                    return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                                    return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                             }
                         }
 
@@ -791,7 +786,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                     }
                     default:
                         LEDGER_ASSERT(false, "Unknown pool registration policy");
-                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                 }
                 break;
             }
@@ -803,7 +798,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                 );
                 switch (cert_policy) {
                     case POLICY_DENY:
-                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                     case POLICY_SHOW:
                         plan->pair_count += 3;
                         break;
@@ -811,13 +806,13 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         break;
                     default:
                         LEDGER_ASSERT(false, "Unknown pool retirement policy");
-                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                 }
                 break;
             }
             default:
                 LEDGER_ASSERT(false, "Unknown certificate type");
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         }
 
         switch (certificate->type) {
@@ -869,7 +864,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         break;
                     default:
                         LEDGER_ASSERT(false, "Unsupported pool credential type for retirement");
-                        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                 }
                 TRACE("Derived pool key hash first byte = %02x", poolKeyHash[0]);
                 txHashBuilder_addCertificate_poolRetirement(
@@ -1028,7 +1023,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
             }
             default:
                 LEDGER_ASSERT(false, "Unsupported certificate type in tx_prepare");
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         }
 
         node = node->next;
@@ -1062,7 +1057,7 @@ static int validate_and_hash_withdrawals(tx_hash_builder_t* txHashBuilder, tx_ui
         switch (withdrawal_policy) {
             case POLICY_DENY:
                 TRACE("Withdrawal security policy denied");
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
             case POLICY_SHOW:
                 if (withdrawal->stakeCredential.type == EXT_CREDENTIAL_KEY_PATH) {
                     plan->pair_count += 3;
@@ -1074,7 +1069,7 @@ static int validate_and_hash_withdrawals(tx_hash_builder_t* txHashBuilder, tx_ui
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown withdrawal policy");
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         }
 
         uint8_t reward_address[REWARD_ACCOUNT_LENGTH];
@@ -1110,7 +1105,7 @@ static int validate_and_hash_withdrawals(tx_hash_builder_t* txHashBuilder, tx_ui
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown withdrawal credential type");
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         }
 
         LEDGER_ASSERT(reward_addr_len == REWARD_ACCOUNT_LENGTH, "Invalid reward address length");
@@ -1122,7 +1117,7 @@ static int validate_and_hash_withdrawals(tx_hash_builder_t* txHashBuilder, tx_ui
                     reward_address,
                     reward_addr_len)) {
                 TRACE("Withdrawals not in canonical order");
-                return send_swo_and_reset(SWO_TX_PARSING_FAIL_WITHDRAWALS);
+                return SWO_TX_PARSING_FAIL_WITHDRAWALS;
             }
         }
 
@@ -1149,7 +1144,7 @@ static int validate_and_hash_aux_data_hash(tx_hash_builder_t* txHashBuilder, tx_
         policyForSignTxAuxData(G_context.tx_info.transaction.auxDataType);
     switch (aux_policy) {
         case POLICY_DENY:
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW:
             plan->pair_count++;
             break;
@@ -1157,7 +1152,7 @@ static int validate_and_hash_aux_data_hash(tx_hash_builder_t* txHashBuilder, tx_
             break;
         default:
             LEDGER_ASSERT(false, "Unknown aux data policy");
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
     }
 
     txHashBuilder_addAuxData(txHashBuilder,
@@ -1174,7 +1169,7 @@ static int validate_and_hash_validity_interval_start(tx_hash_builder_t* txHashBu
     security_policy_t validity_interval_start_policy = policyForSignTxValidityIntervalStart();
     switch (validity_interval_start_policy) {
         case POLICY_DENY:
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW:
             plan->pair_count++;
             break;
@@ -1182,7 +1177,7 @@ static int validate_and_hash_validity_interval_start(tx_hash_builder_t* txHashBu
             break;
         default:
             LEDGER_ASSERT(false, "Unknown validity interval start policy");
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
     }
 
     txHashBuilder_addValidityIntervalStart(
@@ -1201,7 +1196,7 @@ static int validate_and_hash_mint(tx_hash_builder_t* txHashBuilder, tx_ui_plan_t
         policyForSignTxMintInit(G_context.tx_info.transaction.txSigningMode);
     switch (mint_policy) {
         case POLICY_DENY:
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW: {
             plan->pair_count++;
             s_flist_node *node = G_context.tx_info.transaction.mint_asset_groups;
@@ -1220,7 +1215,7 @@ static int validate_and_hash_mint(tx_hash_builder_t* txHashBuilder, tx_ui_plan_t
             break;
         default:
             LEDGER_ASSERT(false, "Unknown mint policy");
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
     }
 
     txHashBuilder_enterMint(txHashBuilder);
@@ -1268,7 +1263,7 @@ static int validate_and_hash_script_data_hash(tx_hash_builder_t* txHashBuilder, 
     switch (policy) {
         case POLICY_DENY:
             TRACE("Script data hash security policy denied");
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW:
             plan->pair_count += 1;
             break;
@@ -1276,7 +1271,7 @@ static int validate_and_hash_script_data_hash(tx_hash_builder_t* txHashBuilder, 
             break;
         default:
             LEDGER_ASSERT(false, "Unknown script data hash policy");
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
     }
 
     txHashBuilder_addScriptDataHash(txHashBuilder,
@@ -1305,7 +1300,7 @@ static int validate_and_hash_collateral_inputs(tx_hash_builder_t* txHashBuilder,
         switch (collateral_input_policy) {
             case POLICY_DENY:
                 TRACE("Collateral input security policy denied");
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
             case POLICY_SHOW:
                 plan->pair_count += 1;
                 break;
@@ -1313,7 +1308,7 @@ static int validate_and_hash_collateral_inputs(tx_hash_builder_t* txHashBuilder,
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown collateral input policy");
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         }
 
         txHashBuilder_addCollateralInput(txHashBuilder, input);
@@ -1342,7 +1337,7 @@ static int validate_and_hash_required_signers(tx_hash_builder_t* txHashBuilder, 
         switch (signer_policy) {
             case POLICY_DENY:
                 TRACE("Required signer security policy denied");
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
             case POLICY_SHOW:
                 plan->pair_count += 1;
                 break;
@@ -1350,7 +1345,7 @@ static int validate_and_hash_required_signers(tx_hash_builder_t* txHashBuilder, 
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown required signer policy");
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         }
 
         uint8_t keyHash[ADDRESS_KEY_HASH_LENGTH];
@@ -1439,7 +1434,7 @@ static int validate_and_hash_collateral_output(tx_hash_builder_t* txHashBuilder,
     switch (collateral_policy) {
         case POLICY_DENY:
             TRACE("Collateral output security policy denied");
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW: {
             plan->pair_count += 1;
             if (G_context.tx_info.transaction.collateral_output.destination.type == DESTINATION_DEVICE_OWNED) {
@@ -1477,7 +1472,7 @@ static int validate_and_hash_collateral_output(tx_hash_builder_t* txHashBuilder,
             break;
         default:
             LEDGER_ASSERT(false, "Unknown collateral output policy");
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
     }
 
     if (collateral_desc.destination.type == DESTINATION_THIRD_PARTY) {
@@ -1485,7 +1480,7 @@ static int validate_and_hash_collateral_output(tx_hash_builder_t* txHashBuilder,
     } else {
         uint8_t *address_bytes = (uint8_t *) app_mem_alloc(MAX_ADDRESS_LENGTH);
         if (address_bytes == NULL) {
-            return send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
+            return SWO_INSUFFICIENT_MEMORY;
         }
 
         size_t address_size = deriveAddress(
@@ -1496,7 +1491,7 @@ static int validate_and_hash_collateral_output(tx_hash_builder_t* txHashBuilder,
 
         if (address_size == 0 || address_size > MAX_ADDRESS_LENGTH) {
             app_mem_free(address_bytes);
-            return send_swo_and_reset(SWO_INCORRECT_DATA);
+            return SWO_INCORRECT_DATA;
         }
 
         collateral_desc.destination.type = DESTINATION_THIRD_PARTY;
@@ -1549,7 +1544,7 @@ static int validate_and_hash_total_collateral(tx_hash_builder_t* txHashBuilder, 
     switch (policy) {
         case POLICY_DENY:
             TRACE("Total collateral security policy denied");
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW:
             plan->pair_count += 1;
             break;
@@ -1557,7 +1552,7 @@ static int validate_and_hash_total_collateral(tx_hash_builder_t* txHashBuilder, 
             break;
         default:
             LEDGER_ASSERT(false, "Unknown total collateral policy");
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
     }
 
     txHashBuilder_addTotalCollateral(txHashBuilder, G_context.tx_info.transaction.totalCollateral);
@@ -1583,7 +1578,7 @@ static int validate_and_hash_reference_inputs(tx_hash_builder_t* txHashBuilder, 
         switch (reference_input_policy) {
             case POLICY_DENY:
                 TRACE("Reference input security policy denied");
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
             case POLICY_SHOW:
                 plan->pair_count += 1;
                 break;
@@ -1591,7 +1586,7 @@ static int validate_and_hash_reference_inputs(tx_hash_builder_t* txHashBuilder, 
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown reference input policy");
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         }
 
         txHashBuilder_addReferenceInput(txHashBuilder, input);
@@ -1624,7 +1619,7 @@ static int validate_and_hash_voting_procedures(tx_hash_builder_t* txHashBuilder,
 
         switch (voter_policy) {
             case POLICY_DENY:
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
             case POLICY_SHOW: {
                 plan->pair_count++;
                 s_flist_node *node = voter_votes->votes;
@@ -1643,7 +1638,7 @@ static int validate_and_hash_voting_procedures(tx_hash_builder_t* txHashBuilder,
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown voter policy");
-                return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         }
 
         voter_t voter_for_hash = _voterForTxHash(&voter_votes->voter);
@@ -1661,7 +1656,7 @@ static int validate_and_hash_voting_procedures(tx_hash_builder_t* txHashBuilder,
                 voter_key,
                 voter_key_len)) {
             TRACE("Voting procedures not in canonical order");
-            return send_swo_and_reset(SWO_TX_PARSING_FAIL_VOTING_PROCEDURES);
+            return SWO_TX_PARSING_FAIL_VOTING_PROCEDURES;
         }
 
         memcpy(previous_voter_key, voter_key, voter_key_len);
@@ -1694,7 +1689,7 @@ static int validate_and_hash_voting_procedures(tx_hash_builder_t* txHashBuilder,
                         gov_action_key,
                         gov_action_key_len)) {
                     TRACE("Votes not in canonical order");
-                    return send_swo_and_reset(SWO_TX_PARSING_FAIL_VOTING_PROCEDURES);
+                    return SWO_TX_PARSING_FAIL_VOTING_PROCEDURES;
                 }
 
                 memcpy(previous_vote_key, gov_action_key, gov_action_key_len);
@@ -1732,7 +1727,7 @@ static int validate_and_hash_treasury(tx_hash_builder_t* txHashBuilder, tx_ui_pl
     );
     switch (treasury_policy) {
         case POLICY_DENY:
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW:
             plan->pair_count++;
             break;
@@ -1740,7 +1735,7 @@ static int validate_and_hash_treasury(tx_hash_builder_t* txHashBuilder, tx_ui_pl
             break;
         default:
             LEDGER_ASSERT(false, "Unknown treasury policy");
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
     }
 
     txHashBuilder_addTreasury(txHashBuilder, G_context.tx_info.transaction.treasury);
@@ -1758,7 +1753,7 @@ static int validate_and_hash_donation(tx_hash_builder_t* txHashBuilder, tx_ui_pl
     );
     switch (donation_policy) {
         case POLICY_DENY:
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW:
             plan->pair_count++;
             break;
@@ -1766,7 +1761,7 @@ static int validate_and_hash_donation(tx_hash_builder_t* txHashBuilder, tx_ui_pl
             break;
         default:
             LEDGER_ASSERT(false, "Unknown donation policy");
-            return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
     }
 
     txHashBuilder_addDonation(txHashBuilder, G_context.tx_info.transaction.donation);
@@ -1808,88 +1803,43 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
                       G_context.tx_info.transaction.includeDonation);
 
     int status = validate_and_hash_inputs(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
-
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_outputs(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
-
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_fee(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_ttl(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
-
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_certificates(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_withdrawals(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
-
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_aux_data_hash(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_validity_interval_start(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_mint(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_script_data_hash(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
-
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_collateral_inputs(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_required_signers(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_network_id(&txHashBuilder);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
-
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_collateral_output(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_total_collateral(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
-
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_reference_inputs(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_voting_procedures(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_treasury(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
+    if (status != SWO_SUCCESS) return status;
     status = validate_and_hash_donation(&txHashBuilder, plan);
-    if (status != SWO_SUCCESS) {
-        return status;
-    }
+    if (status != SWO_SUCCESS) return status;
 
     txHashBuilder_finalize(&txHashBuilder,
                           G_context.tx_info.tx_hash,

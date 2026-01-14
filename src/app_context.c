@@ -25,8 +25,8 @@ void reset_app_context(void) {
     G_context.req_type = REQUEST_NONE;
 }
 
-int send_swo_and_reset(uint16_t swo) {
+void send_swo_and_reset(uint16_t swo) {
     TRACE("send_swo_and_reset swo=0x%04x", swo);
     reset_app_context();
-    return io_send_sw(swo);
+    io_send_sw(swo);
 }

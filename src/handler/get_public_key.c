@@ -39,13 +39,14 @@
 #include "nbgl_use_case.h"
 #include "menu.h"
 
-int handler_get_public_key(buffer_t *cdata) {
+void handler_get_public_key(buffer_t *cdata) {
     TRACE();
     G_context.req_type = REQUEST_EXPORT_PUBKEY;
 
     if (!buffer_read_bip44_path(cdata, &G_context.pk_info.path)) {
         TRACE();
-        return send_swo_and_reset(SWO_BIP44_PATH_PARSING_FAIL);
+        send_swo_and_reset(SWO_BIP44_PATH_PARSING_FAIL);
+        return;
     }
 
     // Log the requested path for easier debugging.
@@ -61,17 +62,19 @@ int handler_get_public_key(buffer_t *cdata) {
         TRACE("Security policy DENY - rejecting operation");
         TRACE("Calling nbgl_useCaseStatus(\"Export of public key denied\", false, ui_menu_main)");
         nbgl_useCaseStatus("Export of public key denied", false, ui_menu_main);
-        return send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+        send_swo_and_reset(SWO_SECURITY_CONDITION_NOT_SATISFIED);
+        return;
     }
 
     {
         cx_err_t error = deriveExtendedPublicKey(&G_context.pk_info.path, &G_context.pk_info.extPubKey);
         if (error != CX_OK) {
-            return send_swo_and_reset(error);
+            send_swo_and_reset(error);
+            return;
         }
     }
 
-    return ui_display_pubkey(policy, warnings);
+    ui_display_pubkey(policy, warnings);
 }
 
 void finalize_pubkey_export(bool confirmed) {

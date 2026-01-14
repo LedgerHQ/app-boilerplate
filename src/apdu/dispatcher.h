@@ -43,4 +43,4 @@ enum { P1_UNUSED = 0, P2_UNUSED = 0 };
  * @return zero or positive integer if success, negative integer otherwise.
  *
  */
-int apdu_dispatcher(const command_t *cmd);
+void apdu_dispatcher(const command_t *cmd);

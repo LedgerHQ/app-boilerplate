@@ -30,7 +30,7 @@
  */
 #define SERIAL_LENGTH 7
 
-int handler_get_serial(void) {
+void handler_get_serial(void) {
     uint8_t serial[SERIAL_LENGTH] = {0};
 
     // Get device serial from the system
@@ -39,5 +39,5 @@ int handler_get_serial(void) {
     // Verify we got the expected length
     ASSERT(len == SERIAL_LENGTH);
 
-    return io_send_response_pointer(serial, SERIAL_LENGTH, SWO_SUCCESS);
+    io_send_response_pointer(serial, SERIAL_LENGTH, SWO_SUCCESS);
 }
