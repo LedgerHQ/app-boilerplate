@@ -155,7 +155,6 @@ static int validate_and_hash_inputs(tx_hash_builder_t* txHashBuilder, tx_ui_plan
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown input policy");
-                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         }
 
         txHashBuilder_addInput(txHashBuilder, input);
@@ -164,6 +163,7 @@ static int validate_and_hash_inputs(tx_hash_builder_t* txHashBuilder, tx_ui_plan
     return SWO_SUCCESS;
 }
 
+// TODO clean up needed
 static int validate_and_hash_outputs(tx_hash_builder_t* txHashBuilder, tx_ui_plan_t* plan) {
     txHashBuilder_enterOutputs(txHashBuilder);
     s_flist_node *node = G_context.tx_info.transaction.outputs;
@@ -237,11 +237,15 @@ static int validate_and_hash_outputs(tx_hash_builder_t* txHashBuilder, tx_ui_pla
                             (output_asset_group_node_t *) node2;
                         const output_asset_group_t *asset_group = &asset_group_node->asset_group;
                         {
+                            uint16_t token_count = 0;
                             s_flist_node *node3 = asset_group->tokens;
                             while (node3 != NULL) {
                                 plan->pair_count += 2;
+                                token_count++;
                                 node3 = node3->next;
                             }
+                            LEDGER_ASSERT(token_count == asset_group->numTokens,
+                                          "Output asset group token count mismatch");
                         }
                         asset_group_count++;
                         node2 = node2->next;
@@ -257,7 +261,7 @@ static int validate_and_hash_outputs(tx_hash_builder_t* txHashBuilder, tx_ui_pla
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown output policy");
-                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                break;
         }
 
         if (output_destination->type == DESTINATION_THIRD_PARTY) {
@@ -298,18 +302,17 @@ static int validate_and_hash_outputs(tx_hash_builder_t* txHashBuilder, tx_ui_pla
                                                    MINTING_POLICY_ID_LENGTH,
                                                    asset_group->numTokens);
 
-                {
-                    s_flist_node *node3 = asset_group->tokens;
-                    while (node3 != NULL) {
-                        output_token_node_t *token_node = (output_token_node_t *) node3;
-                        const output_token_t *token = &token_node->token_data;
-                        txHashBuilder_addOutput_token(txHashBuilder,
-                                                      token->assetName,
-                                                      token->assetNameLen,
-                                                      (uint64_t) token->amount);
-                        node3 = node3->next;
-                    }
+                s_flist_node *node3 = asset_group->tokens;
+                while (node3 != NULL) {
+                    output_token_node_t *token_node = (output_token_node_t *) node3;
+                    const output_token_t *token = &token_node->token_data;
+                    txHashBuilder_addOutput_token(txHashBuilder,
+                                                    token->assetName,
+                                                    token->assetNameLen,
+                                                    (uint64_t) token->amount);
+                    node3 = node3->next;
                 }
+
                 asset_group_count++;
                 node2 = node2->next;
             }
@@ -364,7 +367,7 @@ static int validate_and_hash_fee(tx_hash_builder_t* txHashBuilder, tx_ui_plan_t*
             break;
         default:
             LEDGER_ASSERT(false, "Unknown fee policy");
-            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+            break;
     }
 
     txHashBuilder_addFee(txHashBuilder, G_context.tx_info.transaction.fee);
@@ -387,7 +390,7 @@ static int validate_and_hash_ttl(tx_hash_builder_t* txHashBuilder, tx_ui_plan_t*
             break;
         default:
             LEDGER_ASSERT(false, "Unknown ttl policy");
-            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+            break;
     }
 
     txHashBuilder_addTtl(txHashBuilder, G_context.tx_info.transaction.ttl);
@@ -417,7 +420,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown certificate policy");
-                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                break;
         }
 
         security_policy_t cert_policy = POLICY_HIDE;
@@ -446,7 +449,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         break;
                     default:
                         LEDGER_ASSERT(false, "Unknown staking certificate policy");
-                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                        break;
                 }
                 break;
             }
@@ -466,7 +469,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         break;
                     default:
                         LEDGER_ASSERT(false, "Unknown stake delegation policy");
-                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                        break;
                 }
                 break;
             }
@@ -486,7 +489,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         break;
                     default:
                         LEDGER_ASSERT(false, "Unknown vote delegation policy");
-                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                        break;
                 }
                 break;
             }
@@ -506,7 +509,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         break;
                     default:
                         LEDGER_ASSERT(false, "Unknown committee auth policy");
-                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                        break;
                 }
                 break;
             }
@@ -528,7 +531,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         break;
                     default:
                         LEDGER_ASSERT(false, "Unknown committee resign policy");
-                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                        break;
                 }
                 break;
             }
@@ -561,7 +564,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         break;
                     default:
                         LEDGER_ASSERT(false, "Unknown drep certificate policy");
-                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                        break;
                 }
                 break;
             }
@@ -618,7 +621,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                 break;
                             default:
                                 LEDGER_ASSERT(false, "Unknown pool id policy");
-                                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                                break;
                         }
 
                         security_policy_t vrf_policy = policyForSignTxStakePoolRegistrationVrfKey(
@@ -634,7 +637,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                 break;
                             default:
                                 LEDGER_ASSERT(false, "Unknown vrf policy");
-                                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                                break;
                         }
 
                         pool_pairs += 3;
@@ -654,7 +657,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                 break;
                             default:
                                 LEDGER_ASSERT(false, "Unknown reward account policy");
-                                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                                break;
                         }
 
                         {
@@ -678,7 +681,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                         break;
                                     default:
                                         LEDGER_ASSERT(false, "Unknown owner policy");
-                                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                                        break;
                                 }
 
                                 node2 = node2->next;
@@ -739,7 +742,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                         break;
                                     default:
                                         LEDGER_ASSERT(false, "Unknown relay policy");
-                                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                                        break;
                                 }
 
                                 node2 = node2->next;
@@ -764,7 +767,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                     break;
                                 default:
                                     LEDGER_ASSERT(false, "Unknown metadata policy");
-                                    return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                                    break;
                             }
                         } else {
                             security_policy_t metadata_policy =
@@ -779,7 +782,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                     break;
                                 default:
                                     LEDGER_ASSERT(false, "Unknown metadata policy");
-                                    return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                                    break;
                             }
                         }
 
@@ -788,7 +791,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                     }
                     default:
                         LEDGER_ASSERT(false, "Unknown pool registration policy");
-                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                        break;
                 }
                 break;
             }
@@ -808,13 +811,13 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         break;
                     default:
                         LEDGER_ASSERT(false, "Unknown pool retirement policy");
-                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                        break;
                 }
                 break;
             }
             default:
                 LEDGER_ASSERT(false, "Unknown certificate type");
-                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                break;
         }
 
         switch (certificate->type) {
@@ -866,7 +869,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         break;
                     default:
                         LEDGER_ASSERT(false, "Unsupported pool credential type for retirement");
-                        return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                        break;
                 }
                 TRACE("Derived pool key hash first byte = %02x", poolKeyHash[0]);
                 txHashBuilder_addCertificate_poolRetirement(
@@ -1025,7 +1028,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
             }
             default:
                 LEDGER_ASSERT(false, "Unsupported certificate type in tx_prepare");
-                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                break;
         }
 
         node = node->next;
@@ -1071,7 +1074,7 @@ static int validate_and_hash_withdrawals(tx_hash_builder_t* txHashBuilder, tx_ui
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown withdrawal policy");
-                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                break;
         }
 
         uint8_t reward_address[REWARD_ACCOUNT_LENGTH];
@@ -1107,7 +1110,7 @@ static int validate_and_hash_withdrawals(tx_hash_builder_t* txHashBuilder, tx_ui
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown withdrawal credential type");
-                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                break;
         }
 
         LEDGER_ASSERT(reward_addr_len == REWARD_ACCOUNT_LENGTH, "Invalid reward address length");
@@ -1154,7 +1157,7 @@ static int validate_and_hash_aux_data_hash(tx_hash_builder_t* txHashBuilder, tx_
             break;
         default:
             LEDGER_ASSERT(false, "Unknown aux data policy");
-            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+            break;
     }
 
     txHashBuilder_addAuxData(txHashBuilder,
@@ -1179,7 +1182,7 @@ static int validate_and_hash_validity_interval_start(tx_hash_builder_t* txHashBu
             break;
         default:
             LEDGER_ASSERT(false, "Unknown validity interval start policy");
-            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+            break;
     }
 
     txHashBuilder_addValidityIntervalStart(
@@ -1201,23 +1204,35 @@ static int validate_and_hash_mint(tx_hash_builder_t* txHashBuilder, tx_ui_plan_t
             return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW: {
             plan->pair_count++;
+            uint16_t asset_group_count = 0;
             s_flist_node *node = G_context.tx_info.transaction.mint_asset_groups;
             while (node != NULL) {
                 mint_asset_group_node_t *asset_group_node =
                     (mint_asset_group_node_t *) node;
                 const mint_asset_group_t *asset_group = &asset_group_node->asset_group;
                 if (asset_group->tokens != NULL) {
-                    plan->pair_count += 2 * asset_group->numTokens;
+                    uint16_t token_count = 0;
+                    s_flist_node *node2 = asset_group->tokens;
+                    while (node2 != NULL) {
+                        plan->pair_count += 2;
+                        token_count++;
+                        node2 = node2->next;
+                    }
+                    LEDGER_ASSERT(token_count == asset_group->numTokens,
+                                  "Mint asset group token count mismatch");
                 }
+                asset_group_count++;
                 node = node->next;
             }
+            LEDGER_ASSERT(asset_group_count == G_context.tx_info.transaction.num_mint_asset_groups,
+                          "Mint asset group count mismatch");
             break;
         }
         case POLICY_HIDE:
             break;
         default:
             LEDGER_ASSERT(false, "Unknown mint policy");
-            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+            break;
     }
 
     txHashBuilder_enterMint(txHashBuilder);
@@ -1273,7 +1288,7 @@ static int validate_and_hash_script_data_hash(tx_hash_builder_t* txHashBuilder, 
             break;
         default:
             LEDGER_ASSERT(false, "Unknown script data hash policy");
-            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+            break;
     }
 
     txHashBuilder_addScriptDataHash(txHashBuilder,
@@ -1310,7 +1325,7 @@ static int validate_and_hash_collateral_inputs(tx_hash_builder_t* txHashBuilder,
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown collateral input policy");
-                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                break;
         }
 
         txHashBuilder_addCollateralInput(txHashBuilder, input);
@@ -1347,7 +1362,7 @@ static int validate_and_hash_required_signers(tx_hash_builder_t* txHashBuilder, 
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown required signer policy");
-                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                break;
         }
 
         uint8_t keyHash[ADDRESS_KEY_HASH_LENGTH];
@@ -1455,11 +1470,15 @@ static int validate_and_hash_collateral_output(tx_hash_builder_t* txHashBuilder,
                         (output_asset_group_node_t *) node2;
                     const output_asset_group_t *asset_group = &asset_group_node->asset_group;
                     {
+                        uint16_t token_count = 0;
                         s_flist_node *node3 = asset_group->tokens;
                         while (node3 != NULL) {
                             plan->pair_count += 2;
+                            token_count++;
                             node3 = node3->next;
                         }
+                        LEDGER_ASSERT(token_count == asset_group->numTokens,
+                                      "Collateral asset group token count mismatch");
                     }
                     collateral_group_count++;
                     node2 = node2->next;
@@ -1474,7 +1493,7 @@ static int validate_and_hash_collateral_output(tx_hash_builder_t* txHashBuilder,
             break;
         default:
             LEDGER_ASSERT(false, "Unknown collateral output policy");
-            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+            break;
     }
 
     if (collateral_desc.destination.type == DESTINATION_THIRD_PARTY) {
@@ -1554,7 +1573,7 @@ static int validate_and_hash_total_collateral(tx_hash_builder_t* txHashBuilder, 
             break;
         default:
             LEDGER_ASSERT(false, "Unknown total collateral policy");
-            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+            break;
     }
 
     txHashBuilder_addTotalCollateral(txHashBuilder, G_context.tx_info.transaction.totalCollateral);
@@ -1588,7 +1607,7 @@ static int validate_and_hash_reference_inputs(tx_hash_builder_t* txHashBuilder, 
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown reference input policy");
-                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                break;
         }
 
         txHashBuilder_addReferenceInput(txHashBuilder, input);
@@ -1640,7 +1659,7 @@ static int validate_and_hash_voting_procedures(tx_hash_builder_t* txHashBuilder,
                 break;
             default:
                 LEDGER_ASSERT(false, "Unknown voter policy");
-                return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+                break;
         }
 
         voter_t voter_for_hash = _voterForTxHash(&voter_votes->voter);
@@ -1737,7 +1756,7 @@ static int validate_and_hash_treasury(tx_hash_builder_t* txHashBuilder, tx_ui_pl
             break;
         default:
             LEDGER_ASSERT(false, "Unknown treasury policy");
-            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+            break;
     }
 
     txHashBuilder_addTreasury(txHashBuilder, G_context.tx_info.transaction.treasury);
@@ -1763,7 +1782,7 @@ static int validate_and_hash_donation(tx_hash_builder_t* txHashBuilder, tx_ui_pl
             break;
         default:
             LEDGER_ASSERT(false, "Unknown donation policy");
-            return SWO_SECURITY_CONDITION_NOT_SATISFIED;
+            break;
     }
 
     txHashBuilder_addDonation(txHashBuilder, G_context.tx_info.transaction.donation);

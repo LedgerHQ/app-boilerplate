@@ -61,8 +61,8 @@ static bool cvote_aux_data_is_done(void) {
 }
 
 static bool cvote_extract_pubkey(const ext_credential_t *credential, uint8_t *out_pubkey) {
-    ASSERT(credential != NULL);
-    ASSERT(out_pubkey != NULL);
+    LEDGER_ASSERT(credential != NULL, "Credential cannot be null");
+    LEDGER_ASSERT(out_pubkey != NULL, "Output pubkey buffer cannot be null");
 
     switch (credential->type) {
         case EXT_CREDENTIAL_KEY_HASH:
@@ -87,9 +87,9 @@ static bool cvote_extract_pubkey(const ext_credential_t *credential, uint8_t *ou
 static bool cvote_extract_destination_address(const cvote_destination_t *destination,
                                               uint8_t *address_buffer,
                                               size_t *out_len) {
-    ASSERT(destination != NULL);
-    ASSERT(address_buffer != NULL);
-    ASSERT(out_len != NULL);
+    LEDGER_ASSERT(destination != NULL, "Destination cannot be null");
+    LEDGER_ASSERT(address_buffer != NULL, "Address buffer cannot be null");
+    LEDGER_ASSERT(out_len != NULL, "Output length pointer cannot be null");
 
     if (destination->is_third_party) {
         if (destination->third_party.length == 0 || destination->third_party.buffer == NULL) {
@@ -111,7 +111,7 @@ static bool cvote_extract_destination_address(const cvote_destination_t *destina
 }
 
 static void cvote_hash_builder_setup(cvote_aux_data_t *aux_data) {
-    ASSERT(aux_data != NULL);
+    LEDGER_ASSERT(aux_data != NULL, "Auxiliary data cannot be null");
 
     auxDataHashBuilder_init(&aux_data->hash_builder);
     auxDataHashBuilder_cVoteRegistration_enter(&aux_data->hash_builder, aux_data->format);
@@ -123,7 +123,7 @@ static void cvote_hash_builder_setup(cvote_aux_data_t *aux_data) {
 }
 
 static bool cvote_hash_builder_add_vote_key(cvote_aux_data_t *aux_data) {
-    ASSERT(aux_data != NULL);
+    LEDGER_ASSERT(aux_data != NULL, "Auxiliary data cannot be null");
 
     if (aux_data->format == CIP36 && aux_data->delegation_count > 0) {
         return true;
@@ -145,7 +145,7 @@ static bool cvote_hash_builder_add_vote_key(cvote_aux_data_t *aux_data) {
 }
 
 static bool cvote_hash_builder_add_staking_key(cvote_aux_data_t *aux_data) {
-    ASSERT(aux_data != NULL);
+    LEDGER_ASSERT(aux_data != NULL, "Auxiliary data cannot be null");
 
     uint8_t pubkey[PUBLIC_KEY_SIZE] = {0};
     if (!cvote_extract_pubkey(&aux_data->staking_credential, pubkey)) {
@@ -156,7 +156,7 @@ static bool cvote_hash_builder_add_staking_key(cvote_aux_data_t *aux_data) {
 }
 
 static bool cvote_hash_builder_add_payment_address(cvote_aux_data_t *aux_data) {
-    ASSERT(aux_data != NULL);
+    LEDGER_ASSERT(aux_data != NULL, "Auxiliary data cannot be null");
 
     uint8_t address_buffer[MAX_ADDRESS_LENGTH] = {0};
     size_t address_len = 0;
@@ -170,14 +170,14 @@ static bool cvote_hash_builder_add_payment_address(cvote_aux_data_t *aux_data) {
 }
 
 static bool cvote_hash_builder_add_nonce(cvote_aux_data_t *aux_data) {
-    ASSERT(aux_data != NULL);
+    LEDGER_ASSERT(aux_data != NULL, "Auxiliary data cannot be null");
 
     auxDataHashBuilder_cVoteRegistration_addNonce(&aux_data->hash_builder, aux_data->nonce);
     return true;
 }
 
 static bool cvote_hash_builder_add_voting_purpose(cvote_aux_data_t *aux_data) {
-    ASSERT(aux_data != NULL);
+    LEDGER_ASSERT(aux_data != NULL, "Auxiliary data cannot be null");
 
     if (!aux_data->has_voting_purpose) {
         return true;
@@ -187,7 +187,7 @@ static bool cvote_hash_builder_add_voting_purpose(cvote_aux_data_t *aux_data) {
 }
 
 static bool cvote_hash_builder_add_common_fields(cvote_aux_data_t *aux_data) {
-    ASSERT(aux_data != NULL);
+    LEDGER_ASSERT(aux_data != NULL, "Auxiliary data cannot be null");
 
     if (aux_data->final_fields_processed) {
         return true;
@@ -215,7 +215,7 @@ static bool cvote_hash_builder_add_common_fields(cvote_aux_data_t *aux_data) {
 }
 
 static bool cvote_append_registration_signature(cvote_aux_data_t *aux_data) {
-    ASSERT(aux_data != NULL);
+    LEDGER_ASSERT(aux_data != NULL, "Auxiliary data cannot be null");
 
     if (aux_data->staking_credential.type != EXT_CREDENTIAL_KEY_PATH) {
         TRACE("CVote staking credential is not a key path");
@@ -256,8 +256,8 @@ static bool cvote_append_registration_signature(cvote_aux_data_t *aux_data) {
 static bool cvote_hash_builder_add_delegation(cvote_aux_data_t *aux_data,
                                              const ext_credential_t *credential,
                                              uint32_t weight) {
-    ASSERT(aux_data != NULL);
-    ASSERT(credential != NULL);
+    LEDGER_ASSERT(aux_data != NULL, "Auxiliary data cannot be null");
+    LEDGER_ASSERT(credential != NULL, "Credential cannot be null");
 
     uint8_t pubkey[PUBLIC_KEY_SIZE] = {0};
     if (!cvote_extract_pubkey(credential, pubkey)) {
@@ -278,7 +278,7 @@ static int cvote_send_aux_data_hash(void) {
 
 static void cvote_finalize_aux_data(void) {
     cvote_aux_data_t *aux_data = G_context.tx_info.cvote_aux_data;
-    ASSERT(aux_data != NULL);
+    LEDGER_ASSERT(aux_data != NULL, "Auxiliary data must be initialized before finalization");
 
     if (!cvote_hash_builder_add_common_fields(aux_data)) {
         send_swo_and_reset(SWO_WRONG_TX_INIT_APDU_DATA);

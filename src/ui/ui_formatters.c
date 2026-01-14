@@ -58,14 +58,14 @@ bool format_uint64(uint64_t value, char *out, size_t outSize) {
 
 #define WRITE_CHAR(ptr, end, c) \
     {                           \
-        ASSERT(ptr + 1 <= end); \
+        LEDGER_ASSERT(ptr + 1 <= end, "Buffer overflow in char write"); \
         *ptr = (c);             \
         ptr++;                  \
     }
 
 bool format_decimal_amount(uint64_t amount, size_t places, char *out, size_t outSize) {
-    ASSERT(outSize < BUFFER_SIZE_PARANOIA);
-    ASSERT(places <= UINT8_MAX);
+    LEDGER_ASSERT(outSize < BUFFER_SIZE_PARANOIA, "Output buffer size exceeds paranoia limit");
+    LEDGER_ASSERT(places <= UINT8_MAX, "Decimal places exceed maximum value");
 
     explicit_bzero(out, outSize);
 
@@ -99,7 +99,7 @@ bool format_decimal_amount(uint64_t amount, size_t places, char *out, size_t out
     // Size without terminating character
     STATIC_ASSERT(sizeof(ptr - scratchBuffer) == sizeof(size_t), "bad size_t size");
     size_t rawSize = (size_t)(ptr - scratchBuffer);
-    ASSERT(rawSize + 1 <= outSize);
+    LEDGER_ASSERT(rawSize + 1 <= outSize, "Formatted string does not fit in output buffer");
 
     // Copy reversed & append terminator
     for (size_t i = 0; i < rawSize; i++) {
@@ -108,30 +108,30 @@ bool format_decimal_amount(uint64_t amount, size_t places, char *out, size_t out
     out[rawSize] = 0;
 
     // make sure all the information is displayed to the user
-    ASSERT(strlen(out) == rawSize);
+    LEDGER_ASSERT(strlen(out) == rawSize, "Formatted string length mismatch");
 
     return true;
 }
 
 bool format_ada_amount(uint64_t amount, char *out, size_t outSize) {
-    ASSERT(outSize < BUFFER_SIZE_PARANOIA);
+    LEDGER_ASSERT(outSize < BUFFER_SIZE_PARANOIA, "Output buffer size exceeds paranoia limit");
 
     explicit_bzero(out, outSize);
 
     // TODO: Consider using format_fpu64 directly instead of format_decimal_amount
     // for consistency with other formatting code
     bool formatted = format_decimal_amount(amount, 6, out, outSize);
-    ASSERT(formatted);
+    LEDGER_ASSERT(formatted, "Decimal amount formatting failed");
     const size_t rawSize = strlen(out);
 
     const char *suffix = " ADA";
     const size_t suffixLength = strlen(suffix);
 
     // make sure all the information is displayed to the user
-    ASSERT(rawSize + suffixLength + 1 < outSize);
+    LEDGER_ASSERT(rawSize + suffixLength + 1 < outSize, "ADA suffix does not fit in output buffer");
 
     snprintf(out + rawSize, outSize - rawSize, "%s", suffix);
-    ASSERT(strlen(out) == rawSize + suffixLength);
+    LEDGER_ASSERT(strlen(out) == rawSize + suffixLength, "ADA suffix length mismatch");
 
     return true;
 }
@@ -144,17 +144,17 @@ static struct {
 } EPOCH_SLOTS_CONFIG[] = {{4492800, 208, 432000}, {0, 0, 21600}};
 
 static bool format_validity_boundary_mainnet(uint64_t slotNumber, char *out, size_t outSize) {
-    ASSERT(outSize < BUFFER_SIZE_PARANOIA);
+    LEDGER_ASSERT(outSize < BUFFER_SIZE_PARANOIA, "Output buffer size exceeds paranoia limit");
 
     explicit_bzero(out, outSize);
 
     unsigned i = 0;
     while (slotNumber < EPOCH_SLOTS_CONFIG[i].startSlotNumber) {
         i++;
-        ASSERT(i < ARRAY_LEN(EPOCH_SLOTS_CONFIG));
+        LEDGER_ASSERT(i < ARRAY_LEN(EPOCH_SLOTS_CONFIG), "Slot number exceeds configured epoch boundaries");
     }
 
-    ASSERT(slotNumber >= EPOCH_SLOTS_CONFIG[i].startSlotNumber);
+    LEDGER_ASSERT(slotNumber >= EPOCH_SLOTS_CONFIG[i].startSlotNumber, "Invalid slot number for epoch");
 
     uint64_t startSlotNumber = EPOCH_SLOTS_CONFIG[i].startSlotNumber;
     uint64_t startEpoch = EPOCH_SLOTS_CONFIG[i].startEpoch;
@@ -165,7 +165,7 @@ static bool format_validity_boundary_mainnet(uint64_t slotNumber, char *out, siz
 
     STATIC_ASSERT(sizeof(int) >= sizeof(uint32_t), "wrong int size");
 
-    ASSERT(outSize > 0);  // so we can write null terminator
+    LEDGER_ASSERT(outSize > 0, "Output buffer must not be empty");  // so we can write null terminator
     if (epoch > 1000000) {
         // thousands of years
         snprintf(out, outSize, "epoch more than 1000000");
@@ -176,7 +176,7 @@ static bool format_validity_boundary_mainnet(uint64_t slotNumber, char *out, siz
     // snprintf does not return length written
     size_t len = strlen(out);
     // make sure we did not truncate
-    ASSERT(len + 1 < outSize);
+    LEDGER_ASSERT(len + 1 < outSize, "Epoch/slot string does not fit in output buffer");
 
     return true;
 }
@@ -186,7 +186,7 @@ bool format_validity_boundary(uint64_t slotNumber,
                               uint32_t protocolMagic,
                               char *out,
                               size_t outSize) {
-    ASSERT(outSize < BUFFER_SIZE_PARANOIA);
+    LEDGER_ASSERT(outSize < BUFFER_SIZE_PARANOIA, "Output buffer size exceeds paranoia limit");
 
     explicit_bzero(out, outSize);
 
@@ -200,9 +200,9 @@ bool format_validity_boundary(uint64_t slotNumber,
 
     // Use simple uint64 formatting for non-mainnet
     bool success = format_u64(out, outSize, slotNumber);
-    ASSERT(success);
+    LEDGER_ASSERT(success, "uint64 formatting failed");
     size_t len = strlen(out);
-    ASSERT(len + 1 < outSize);
+    LEDGER_ASSERT(len + 1 < outSize, "Formatted slot number does not fit in output buffer");
     return true;
 }
 
@@ -241,21 +241,21 @@ bool format_index_with_prefix(uint32_t value, char *out, size_t outSize) {
  * Format IPv4 address from byte array
  */
 bool format_ipv4(const ipv4_t *ipv4, char *out, size_t outSize) {
-    ASSERT(outSize < BUFFER_SIZE_PARANOIA);
-    ASSERT(out != NULL);
-    ASSERT(ipv4 != NULL);
+    LEDGER_ASSERT(outSize < BUFFER_SIZE_PARANOIA, "Output buffer size exceeds paranoia limit");
+    LEDGER_ASSERT(out != NULL, "Output buffer cannot be null");
+    LEDGER_ASSERT(ipv4 != NULL, "IPv4 structure cannot be null");
 
     explicit_bzero(out, outSize);
 
     if (ipv4->isNull) {
         snprintf(out, outSize, "(none)");
     } else {
-        ASSERT(ipv4->ip != NULL);
+        LEDGER_ASSERT(ipv4->ip != NULL, "IPv4 address buffer cannot be null when not null flag");
         inet_ntop4(ipv4->ip, out, outSize);
     }
 
     // make sure all the information is displayed to the user
-    ASSERT(strlen(out) + 1 < outSize);
+    LEDGER_ASSERT(strlen(out) + 1 < outSize, "Formatted IPv4 address does not fit in output buffer");
 
     return true;
 }
@@ -264,21 +264,21 @@ bool format_ipv4(const ipv4_t *ipv4, char *out, size_t outSize) {
  * Format IPv6 address from byte array
  */
 bool format_ipv6(const ipv6_t *ipv6, char *out, size_t outSize) {
-    ASSERT(outSize < BUFFER_SIZE_PARANOIA);
-    ASSERT(out != NULL);
-    ASSERT(ipv6 != NULL);
+    LEDGER_ASSERT(outSize < BUFFER_SIZE_PARANOIA, "Output buffer size exceeds paranoia limit");
+    LEDGER_ASSERT(out != NULL, "Output buffer cannot be null");
+    LEDGER_ASSERT(ipv6 != NULL, "IPv6 structure cannot be null");
 
     explicit_bzero(out, outSize);
 
     if (ipv6->isNull) {
         snprintf(out, outSize, "(none)");
     } else {
-        ASSERT(ipv6->ip != NULL);
+        LEDGER_ASSERT(ipv6->ip != NULL, "IPv6 address buffer cannot be null when not null flag");
         inet_ntop6(ipv6->ip, out, outSize);
     }
 
     // make sure all the information is displayed to the user
-    ASSERT(strlen(out) + 1 < outSize);
+    LEDGER_ASSERT(strlen(out) + 1 < outSize, "Formatted IPv6 address does not fit in output buffer");
 
     return true;
 }
@@ -354,8 +354,8 @@ bool format_url(const uint8_t *url, size_t urlLength, char *out, size_t outSize)
         return false;
     }
     STATIC_ASSERT(MAX_ANCHOR_URL_LENGTH == MAX_POOL_METADATA_URL_LENGTH, "URL length limits must match");
-    ASSERT(urlLength <= MAX_ANCHOR_URL_LENGTH);
-    ASSERT(str_isPrintableAsciiWithoutSpaces(url, urlLength));
+    LEDGER_ASSERT(urlLength <= MAX_ANCHOR_URL_LENGTH, "URL length exceeds maximum limit");
+    LEDGER_ASSERT(str_isPrintableAsciiWithoutSpaces(url, urlLength), "URL contains non-printable or space characters");
     memcpy(out, url, urlLength);
     out[urlLength] = '\0';
     return true;
@@ -365,8 +365,8 @@ bool format_dns_name(const uint8_t *dnsName, size_t dnsLength, char *out, size_t
     if (dnsLength >= outSize) {
         return false;
     }
-    ASSERT(dnsLength <= MAX_DNS_NAME_LENGTH);
-    ASSERT(str_isUnambiguousAscii(dnsName, dnsLength));
+    LEDGER_ASSERT(dnsLength <= MAX_DNS_NAME_LENGTH, "DNS name length exceeds maximum limit");
+    LEDGER_ASSERT(str_isUnambiguousAscii(dnsName, dnsLength), "DNS name contains invalid ASCII characters");
     memcpy(out, dnsName, dnsLength);
     out[dnsLength] = '\0';
     return true;

@@ -828,7 +828,6 @@ static const uint8_t* _getCredentialHashBuffer(const ext_credential_t* credentia
             return credential->scriptHash;
         default:
             ASSERT(false);
-            __builtin_unreachable();
     }
 }
 
@@ -840,7 +839,6 @@ static size_t _getCredentialHashSize(const ext_credential_t* credential) {
             return SIZEOF(credential->scriptHash);
         default:
             ASSERT(false);
-            __builtin_unreachable();
     }
 }
 
