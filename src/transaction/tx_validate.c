@@ -605,8 +605,11 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                     case POLICY_HIDE:
                         break;
                     case POLICY_SHOW: {
-                        uint16_t pool_pairs = 1;
+                        // Calculate UI pairs for pool registration certificate display
+                        // Each policy decision determines which fields are shown to the user
+                        uint16_t pool_pairs = 1;  // Base: certificate type label
 
+                        // Pool ID (bech32 encoded pool keyhash)
                         security_policy_t pool_id_policy = policyForSignTxStakePoolRegistrationPoolId(
                             G_context.tx_info.transaction.txSigningMode,
                             &certificate->poolId
@@ -615,7 +618,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                             case POLICY_DENY:
                                 return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                             case POLICY_SHOW:
-                                pool_pairs += 1;
+                                pool_pairs += 1;  // Add: pool ID display
                                 break;
                             case POLICY_HIDE:
                                 break;
@@ -624,6 +627,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                 break;
                         }
 
+                        // VRF Key Hash (verification key for pool's VRF)
                         security_policy_t vrf_policy = policyForSignTxStakePoolRegistrationVrfKey(
                             G_context.tx_info.transaction.txSigningMode
                         );
@@ -631,7 +635,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                             case POLICY_DENY:
                                 return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                             case POLICY_SHOW:
-                                pool_pairs += 1;
+                                pool_pairs += 1;  // Add: VRF key display
                                 break;
                             case POLICY_HIDE:
                                 break;
@@ -640,8 +644,10 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                 break;
                         }
 
+                        // Fixed pool fields: pledge (lovelace), cost (lovelace), margin (fraction)
                         pool_pairs += 3;
 
+                        // Reward Account (where pool rewards are distributed to)
                         security_policy_t reward_policy = policyForSignTxStakePoolRegistrationRewardAccount(
                             G_context.tx_info.transaction.txSigningMode,
                             G_context.tx_info.transaction.networkId,
@@ -651,7 +657,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                             case POLICY_DENY:
                                 return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                             case POLICY_SHOW:
-                                pool_pairs += 1;
+                                pool_pairs += 1;  // Add: reward account display
                                 break;
                             case POLICY_HIDE:
                                 break;
@@ -660,6 +666,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                 break;
                         }
 
+                        // Pool Owners (variable count: each owner gets 1 pair if SHOW policy)
                         {
                             s_flist_node *node2 = certificate->poolRegistration.poolOwners;
                             while (node2 != NULL) {
@@ -675,7 +682,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                     case POLICY_DENY:
                                         return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                                     case POLICY_SHOW:
-                                        pool_pairs += 1;
+                                        pool_pairs += 1;  // Add: owner credential display
                                         break;
                                     case POLICY_HIDE:
                                         break;
@@ -689,10 +696,14 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         }
                         ASSERT(owner_counts.total_owners ==
                                certificate->poolRegistration.numPoolOwners);
+                        // If no owners present, add placeholder pair to indicate "no owners"
                         if (owner_counts.total_owners == 0) {
                             pool_pairs += 1;
                         }
 
+                        // Pool Relays (variable count: each relay can have multiple fields)
+                        // Relay types: single host IPv4/IPv6, single host by DNS, multi-host by DNS
+                        // Each relay itself is 1 pair, plus additional pairs for its endpoints
                         uint32_t relay_count = 0;
                         {
                             s_flist_node *node2 = certificate->poolRegistration.relays;
@@ -710,30 +721,33 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                     case POLICY_HIDE:
                                         break;
                                     case POLICY_SHOW:
-                                        pool_pairs += 1;
+                                        pool_pairs += 1;  // Add: relay header pair
                                         switch (relay->format) {
                                             case RELAY_SINGLE_HOST_IP:
+                                                // Single host IP relay: can have IPv4, IPv6, and port
                                                 if (!relay->ipv4.isNull) {
-                                                    pool_pairs += 1;
+                                                    pool_pairs += 1;  // Add: IPv4 address
                                                 }
                                                 if (!relay->ipv6.isNull) {
-                                                    pool_pairs += 1;
+                                                    pool_pairs += 1;  // Add: IPv6 address
                                                 }
                                                 if (!relay->port.isNull) {
-                                                    pool_pairs += 1;
+                                                    pool_pairs += 1;  // Add: port number
                                                 }
                                                 break;
                                             case RELAY_SINGLE_HOST_NAME:
+                                                // Single host DNS relay: can have DNS name and port
                                                 if (relay->dnsNameSize > 0) {
-                                                    pool_pairs += 1;
+                                                    pool_pairs += 1;  // Add: DNS name
                                                 }
                                                 if (!relay->port.isNull) {
-                                                    pool_pairs += 1;
+                                                    pool_pairs += 1;  // Add: port number
                                                 }
                                                 break;
                                             case RELAY_MULTIPLE_HOST_NAME:
+                                                // Multi-host DNS relay: only DNS name (no port)
                                                 if (relay->dnsNameSize > 0) {
-                                                    pool_pairs += 1;
+                                                    pool_pairs += 1;  // Add: DNS name
                                                 }
                                                 break;
                                             default:
@@ -750,18 +764,21 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                             }
                         }
                         ASSERT(relay_count == certificate->poolRegistration.numRelays);
+                        // If no relays present, add placeholder pair to indicate "no relays"
                         if (relay_count == 0) {
                             pool_pairs += 1;
                         }
 
+                        // Pool Metadata (optional: URL and hash)
                         if (certificate->poolRegistration.poolMetadataIsNull) {
+                            // No metadata case
                             security_policy_t no_metadata_policy =
                                 policyForSignTxStakePoolRegistrationNoMetadata();
                             switch (no_metadata_policy) {
                                 case POLICY_DENY:
                                     return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                                 case POLICY_SHOW:
-                                    pool_pairs += 1;
+                                    pool_pairs += 1;  // Add: "no metadata" indicator
                                     break;
                                 case POLICY_HIDE:
                                     break;
@@ -770,13 +787,14 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                     break;
                             }
                         } else {
+                            // Metadata present case: URL + hash
                             security_policy_t metadata_policy =
                                 policyForSignTxStakePoolRegistrationMetadata();
                             switch (metadata_policy) {
                                 case POLICY_DENY:
                                     return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                                 case POLICY_SHOW:
-                                    pool_pairs += 2;
+                                    pool_pairs += 2;  // Add: metadata URL + hash
                                     break;
                                 case POLICY_HIDE:
                                     break;
