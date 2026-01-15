@@ -8,11 +8,11 @@
 #include "addressUtils/bip44.h"
 #include "format.h"
 
-#include "display.h"
+#include "ui/ui_icons.h"
 #include "cardano_constants.h"
 #include "globals.h"
 #include "utils/utils.h"
-#include "utils/cardano_os_utils.h"
+#include "app_context.h"
 #include "cardano_swo.h"
 #include "opcert_types.h"
 #include "menu.h"
@@ -22,7 +22,7 @@
 #include "memory/mem_utils.h"
 #include "ui_utils.h"
 #include "handler/derive_address.h"
-
+#include "ui_display_address_derivation.h"
 /**
  * Cleanup dynamically allocated buffers
  */
@@ -86,7 +86,7 @@ void respond_with_user_reject() {
 /* ========================== RETURN ADDRESS ========================== */
 
 static int prepare_address_info_pairs(const ins_derive_address_ctx_t *ctx) {
-#define PAYMENT_INFO_SIZE MAX(BECH32_STRING_SIZE_MAX, BIP44_PATH_STRING_SIZE_MAX)
+#define PAYMENT_INFO_SIZE MAX(MAX_BECH32_STRING_LENGTH, MAX_BIP44_PATH_STRING_LENGTH)
 
     static char line1[30] = {0};
     static char paymentInfo[PAYMENT_INFO_SIZE] = {0};
@@ -131,7 +131,7 @@ static int prepare_address_info_pairs(const ins_derive_address_ctx_t *ctx) {
 }
 
 static int ui_displayExportAddress() {
-#define PAYMENT_INFO_SIZE MAX(BECH32_STRING_SIZE_MAX, BIP44_PATH_STRING_SIZE_MAX)
+#define PAYMENT_INFO_SIZE MAX(MAX_BECH32_STRING_LENGTH, MAX_BIP44_PATH_STRING_LENGTH)
 
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
     static char humanAddress[MAX_HUMAN_ADDRESS_SIZE] = {0};
@@ -140,8 +140,8 @@ static int ui_displayExportAddress() {
     if (prepare_address_info_pairs(ctx) != 0) {
         TRACE("Failed to initialize pairs");
         derive_address_buffer_cleanup();
-        send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
-        return -1;
+        // TODO: check if code is appropriate here
+        send_swo_and_reset(SWO_BAD_STATE);
     }
     /*nbgl_useCaseReviewLight(TYPE_OPERATION,
                             g_pairsList,
@@ -160,7 +160,7 @@ static int ui_displayExportAddress() {
 }
 
 static int ui_returnExportAddress() {
-#define PAYMENT_INFO_SIZE MAX(BECH32_STRING_SIZE_MAX, BIP44_PATH_STRING_SIZE_MAX)
+#define PAYMENT_INFO_SIZE MAX(MAX_BECH32_STRING_LENGTH, MAX_BIP44_PATH_STRING_LENGTH)
 
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
     static char humanAddress[MAX_HUMAN_ADDRESS_SIZE] = {0};
@@ -169,8 +169,7 @@ static int ui_returnExportAddress() {
     if (prepare_address_info_pairs(ctx) != 0) {
         TRACE("Failed to initialize pairs");
         derive_address_buffer_cleanup();
-        send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
-        return -1;
+        send_swo_and_reset(SWO_BAD_STATE);
     }
 
     nbgl_useCaseAddressReview(humanAddress,
@@ -207,9 +206,8 @@ int deriveAddress_return_ui_runStep(void) {
             break;
 
         default:
-            // TODO: check
-            // ASSERT(false);
-            send_error_and_reset(SWO_DISPLAY_ADDRESS_FAIL);
+            // TODO: check if status is appropiate
+            send_swo_and_reset(SWO_BAD_STATE);
             return -1;
             break;
     }
@@ -238,9 +236,8 @@ int deriveAddress_display_ui_runStep(void) {
             break;
 
         default:
-            // TODO: check
-            // ASSERT(false);
-            send_error_and_reset(SWO_DISPLAY_ADDRESS_FAIL);
+            // TODO: check if status is appropiate
+            send_swo_and_reset(SWO_BAD_STATE);
             return -1;
             break;
     }

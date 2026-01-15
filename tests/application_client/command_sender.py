@@ -191,7 +191,7 @@ class CommandSender:
         """
         return self._exchange(self._cmd_builder.sign_tx_witness(path))
 
-<<<<<<< HEAD
+
     def set_debug_settings(self, expert_mode: bool, silent_export: bool) -> RAPDU:
         """Set app settings via debug APDU (only works with DEBUG builds).
 
@@ -231,7 +231,7 @@ class CommandSender:
             )
 
         return response
-=======
+
     @contextmanager
     def derive_address_async(self, p1: P1Type, testCase: DeriveAddressTestCase) -> Generator[None, None, None]:
         """APDU Derive Address
@@ -259,10 +259,7 @@ class CommandSender:
         """
 
         return self._exchange(self._cmd_builder.derive_address(p1, testCase))
-<<<<<<< HEAD
->>>>>>> 1f05ffa (derive address tests)
-=======
-    
+
     @contextmanager
     def derive_script_add_simple(self, script: NativeScript) -> Generator[None, None, None]:
         """APDU NATIVE SCRIPT HASH - SIMPLE SCRIPT step
@@ -306,6 +303,3 @@ class CommandSender:
 
         with self._exchange_async(self._cmd_builder.derive_script_finish(displayFormat)):
             yield
-
-    
->>>>>>> d027bc3 (derive native script hash added with ragger tests)

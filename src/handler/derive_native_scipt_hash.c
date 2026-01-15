@@ -10,8 +10,8 @@
 
 #include "ux.h"
 #include "utils.h"
-#include "utils/cardano_os_utils.h"
-#include "display.h"
+#include "app_context.h"
+#include "ui_display_native_script_hash.h"
 #include "deriveNativeScriptHash/deriveNativeScriptHash_types.h"
 #include "deriveNativeScriptHash/derive_native_script_hash_builder.h"
 #include "cbor.h"

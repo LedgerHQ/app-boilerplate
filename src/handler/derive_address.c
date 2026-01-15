@@ -13,7 +13,7 @@
 #include "ux.h"
 #include "utils.h"
 #include "os_io_seproxyhal.h"
-#include "display.h"
+#include "ui_display_address_derivation.h"
 
 static void prepareResponse() {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;

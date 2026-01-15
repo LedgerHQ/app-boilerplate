@@ -151,16 +151,19 @@ void apdu_dispatcher(const command_t *cmd) {
         case INS_DERIVE_ADDRESS:
             // P2 must be unused for all transaction APDU types
             if (cmd->p2 != P2_UNUSED) {
-                return io_send_sw(SWO_INCORRECT_P1_P2);
+                io_send_sw(SWO_INCORRECT_P1_P2);
+                return;
             }
 
             // Validate P1 value
             if (cmd->p1 != P1_RETURN && cmd->p1 != P1_DISPLAY) {
-                return io_send_sw(SWO_INCORRECT_P1_P2);
+                io_send_sw(SWO_INCORRECT_P1_P2);
+                return;
             }
 
             if (!cmd->data) {
-                return io_send_sw(SWO_WRONG_DATA_LENGTH);
+                io_send_sw(SWO_WRONG_DATA_LENGTH);
+                return;
             }
             
             buffer_t deriveaddress_buf = {0};
@@ -169,28 +172,32 @@ void apdu_dispatcher(const command_t *cmd) {
             deriveaddress_buf.offset = 0;
             
             handler_derive_address(&deriveaddress_buf, cmd->p1);
-            return ;
+            return;
 
         case INS_DERIVE_NATIVE_SCRIPT_HASH:
             // P2 must be unused for all transaction APDU types
             if (cmd->p2 != P2_UNUSED) {
-                return io_send_sw(SWO_INCORRECT_P1_P2);
+                io_send_sw(SWO_INCORRECT_P1_P2);
+                return;
             }
             // Validate P1 value
             if(cmd->p1 != STAGE_COMPLEX_SCRIPT_START &&
                cmd->p1 != STAGE_ADD_SIMPLE_SCRIPT &&
                cmd->p1 != STAGE_WHOLE_NATIVE_SCRIPT_FINISH) {
-                return io_send_sw(SWO_INCORRECT_P1_P2);
+                io_send_sw(SWO_INCORRECT_P1_P2);
+                return;
             }
 
             if (!cmd->data) {
-                return io_send_sw(SWO_WRONG_DATA_LENGTH);
+                io_send_sw(SWO_WRONG_DATA_LENGTH);
+                return;
             }
-
-            buf.ptr = cmd->data;
-            buf.size = cmd->lc;
-            buf.offset = 0;
-            return handler_derive_native_script_hash(&buf, cmd->p1);
+            buffer_t derivescript_buf = {0};
+            derivescript_buf.ptr = cmd->data;
+            derivescript_buf.size = cmd->lc;
+            derivescript_buf.offset = 0;
+            handler_derive_native_script_hash(&derivescript_buf, cmd->p1);
+            return;
 
         case INS_SIGN_TX:
             // Check if this is a witness APDU

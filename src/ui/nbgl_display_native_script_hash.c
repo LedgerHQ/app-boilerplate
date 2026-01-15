@@ -8,11 +8,11 @@
 #include "addressUtils/bip44.h"
 #include "format.h"
 
-#include "display.h"
+#include "ui/ui_icons.h"
 #include "cardano_constants.h"
 #include "globals.h"
 #include "utils/utils.h"
-#include "utils/cardano_os_utils.h"
+#include "app_context.h"
 #include "cardano_swo.h"
 #include "menu.h"
 #include "securityPolicy.h"
@@ -22,6 +22,7 @@
 #include "handler/derive_native_script_hash.h"
 #include "bech32.h"
 #include "textUtils.h"
+#include "ui_display_native_script_hash.h"
 
 /**
  * Cleanup dynamically allocated buffers
@@ -41,7 +42,7 @@ static void derive_native_script_hash_review_continue(bool confirm) {
     } else {
         TRACE("User rejected");
         nbgl_useCaseStatus("Native script hash\nrejected", false, ui_menu_main);
-        send_error_and_reset(SWO_CONDITIONS_NOT_SATISFIED);
+        send_swo_and_reset(SWO_CONDITIONS_NOT_SATISFIED);
     }
 }
 
@@ -55,7 +56,7 @@ static void derive_native_script_hash_review_confirm(bool confirm) {
     } else {
         TRACE("User rejected");
         nbgl_useCaseStatus("Native script hash\nrejected", false, ui_menu_main);
-        send_error_and_reset(SWO_CONDITIONS_NOT_SATISFIED);
+        send_swo_and_reset(SWO_CONDITIONS_NOT_SATISFIED);
     }
 }
 
@@ -67,7 +68,7 @@ static void derive_native_script_hash_review_continue_last(bool confirm) {
     } else {
         TRACE("User rejected");
         nbgl_useCaseStatus("Native script hash\nrejected", false, ui_menu_main);
-        send_error_and_reset(SWO_CONDITIONS_NOT_SATISFIED);
+        send_swo_and_reset(SWO_CONDITIONS_NOT_SATISFIED);
     }
 }
 
@@ -77,7 +78,7 @@ int ui_display_native_script_hash(security_policy_t securityPolicy) {
 
     if(securityPolicy == POLICY_DENY) {
         // TODO: chose appropriate error code
-        send_error_and_reset(SWO_BAD_STATE);
+        send_swo_and_reset(SWO_BAD_STATE);
         return -1;
     }
 
@@ -101,7 +102,7 @@ int ui_display_native_script_hash(security_policy_t securityPolicy) {
             if (!ui_pairs_init(2)) {
                 TRACE("Failed to initialize pairs");
                 derive_native_script_hash_buffer_cleanup();
-                return send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
+                return UI_STATUS_OUT_OF_MEMORY;
             }
             g_pairs[0].item = "Script type";
             g_pairs[0].value = "ALL";
@@ -130,7 +131,8 @@ int ui_display_native_script_hash(security_policy_t securityPolicy) {
             if (!ui_pairs_init(3)) {
                 TRACE("Failed to initialize pairs");
                 derive_native_script_hash_buffer_cleanup();
-                return send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
+                // TODO: chose appropriate error code
+                send_swo_and_reset(SWO_BAD_STATE);
             }
             g_pairs[0].item = "Script type";
             g_pairs[0].value = "N out K";
@@ -152,7 +154,8 @@ int ui_display_native_script_hash(security_policy_t securityPolicy) {
             if (!ui_pairs_init(2)) {
                 TRACE("Failed to initialize pairs");
                 derive_native_script_hash_buffer_cleanup();
-                return send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
+                // TODO: chose appropriate error code
+                send_swo_and_reset(SWO_BAD_STATE);
             }
             g_pairs[0].item = "Script type";
             g_pairs[0].value = "ANY";
@@ -164,12 +167,12 @@ int ui_display_native_script_hash(security_policy_t securityPolicy) {
         }
         case UI_SCRIPT_PUBKEY_PATH: {
             static char *pathStr = NULL;
-            const size_t pathStrSize = BIP44_PATH_STRING_SIZE_MAX + 1;
+            const size_t pathStrSize = MAX_BIP44_PATH_STRING_LENGTH + 1;
             pathStr = (char *) ui_mem_alloc(pathStrSize);
             if (pathStr == NULL) {
                 TRACE("Failed to allocate pathStr");
                 derive_native_script_hash_buffer_cleanup();
-                return send_error_and_reset(SWO_INSUFFICIENT_MEMORY);
+                send_swo_and_reset(SWO_INSUFFICIENT_MEMORY);
             }
             explicit_bzero(pathStr, pathStrSize);
             bool poolPathFormatted =
@@ -180,7 +183,8 @@ int ui_display_native_script_hash(security_policy_t securityPolicy) {
             if (!ui_pairs_init(2)) {
                 TRACE("Failed to initialize pairs");
                 derive_native_script_hash_buffer_cleanup();
-                return send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
+                // TODO: chose appropriate error code
+                send_swo_and_reset(SWO_BAD_STATE);
             }
             g_pairs[0].item = "Script type";
             g_pairs[0].value = "Pubkey path";
@@ -191,7 +195,7 @@ int ui_display_native_script_hash(security_policy_t securityPolicy) {
             break;
         }
         case UI_SCRIPT_PUBKEY_HASH: {
-            static char encodedStr[BECH32_STRING_SIZE_MAX] = {0};
+            static char encodedStr[MAX_BECH32_STRING_LENGTH] = {0};
             explicit_bzero(encodedStr, SIZEOF(encodedStr));
             format_bech32("addr_shared_vkh",
                         ctx->scriptContent.pubkeyHash,
@@ -202,7 +206,8 @@ int ui_display_native_script_hash(security_policy_t securityPolicy) {
             if (!ui_pairs_init(2)) {
                 TRACE("Failed to initialize pairs");
                 derive_native_script_hash_buffer_cleanup();
-                return send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
+                // TODO: chose appropriate error code
+                send_swo_and_reset(SWO_BAD_STATE);
             }
             g_pairs[0].item = "Script type";
             g_pairs[0].value = "Pubkey hash";
@@ -214,12 +219,13 @@ int ui_display_native_script_hash(security_policy_t securityPolicy) {
         }
         case UI_SCRIPT_INVALID_BEFORE: {
             char tmp[100] = {0};
-            str_formatDecimalAmount(ctx->scriptContent.timelock, 0, tmp, sizeof(tmp));
+            format_decimal_amount(ctx->scriptContent.timelock, 0, tmp, sizeof(tmp));
 
             if (!ui_pairs_init(2)) {
                 TRACE("Failed to initialize pairs");
                 derive_native_script_hash_buffer_cleanup();
-                return send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
+                // TODO: chose appropriate error code
+                send_swo_and_reset(SWO_BAD_STATE);
             }
             g_pairs[0].item = "Script type";
             g_pairs[0].value = "Invalid before";
@@ -231,12 +237,13 @@ int ui_display_native_script_hash(security_policy_t securityPolicy) {
         }
         case UI_SCRIPT_INVALID_HEREAFTER: {
             char tmp[100] = {0};
-            str_formatDecimalAmount(ctx->scriptContent.timelock, 0, tmp, sizeof(tmp));
+            format_decimal_amount(ctx->scriptContent.timelock, 0, tmp, sizeof(tmp));
 
             if (!ui_pairs_init(2)) {
                 TRACE("Failed to initialize pairs");
                 derive_native_script_hash_buffer_cleanup();
-                return send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
+                // TODO: chose appropriate error code
+                send_swo_and_reset(SWO_BAD_STATE);
             }
             g_pairs[0].item = "Script type";
             g_pairs[0].value = "Invalid hereafter";
@@ -246,7 +253,7 @@ int ui_display_native_script_hash(security_policy_t securityPolicy) {
             break;
         }
         case UI_SCRIPT_DISPLAY_BECH32: {
-            static char encodedStr[BECH32_STRING_SIZE_MAX] = {0};
+            static char encodedStr[MAX_BECH32_STRING_LENGTH] = {0};
             explicit_bzero(encodedStr, SIZEOF(encodedStr));
             format_bech32("script",
                         ctx->scriptHashBuffer,
@@ -257,7 +264,8 @@ int ui_display_native_script_hash(security_policy_t securityPolicy) {
             if (!ui_pairs_init(1)) {
                 TRACE("Failed to initialize pairs");
                 derive_native_script_hash_buffer_cleanup();
-                return send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
+                // TODO: chose appropriate error code
+                send_swo_and_reset(SWO_BAD_STATE);
             }
             g_pairs[0].item = "Script hash";
             g_pairs[0].value = encodedStr;
@@ -275,7 +283,8 @@ int ui_display_native_script_hash(security_policy_t securityPolicy) {
             if (!ui_pairs_init(1)) {
                 TRACE("Failed to initialize pairs");
                 derive_native_script_hash_buffer_cleanup();
-                return send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
+                // TODO: chose appropriate error code
+                send_swo_and_reset(SWO_BAD_STATE);
             }
             g_pairs[0].item = "Policy ID";
             g_pairs[0].value = bufferHex;
@@ -287,7 +296,8 @@ int ui_display_native_script_hash(security_policy_t securityPolicy) {
         default: {
             TRACE("Invalid UI step");
             derive_native_script_hash_buffer_cleanup();
-            send_error_and_reset(SWO_DISPLAY_AMOUNT_FAIL);
+            // TODO: chose appropriate error code
+            send_swo_and_reset(SWO_BAD_STATE);
             return -1;
         }
     }

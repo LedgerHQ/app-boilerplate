@@ -148,7 +148,7 @@ static void test_bip44_buffer_size(void **state) {
 
     char result[256] = {0};
 
-    // Test with proper minimum buffer size (BIP44_PATH_STRING_SIZE_MAX + 1)
+    // Test with proper minimum buffer size (MAX_BIP44_PATH_STRING_LENGTH + 1)
     // The function requires at least this much space
     const char* expected = "m/44'/1815'/0'/0/0";
     bool success = format_bip44_path(&pathSpec, result, 256);

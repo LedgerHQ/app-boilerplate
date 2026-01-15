@@ -18,7 +18,6 @@ from application_client.app_def import (
     FakeNet,
 )
 
-
 @dataclass
 class DeriveAddressTestCase:
     name: str

@@ -19,6 +19,10 @@ from ragger.bip import pack_derivation_path
 
 from application_client.app_def import AddressType, StakingDataSourceType
 from standalone.input_files.signOpCert import OpCertTestCase
+from standalone.input_files.derive_address import DeriveAddressTestCase
+from standalone.input_files.derive_native_script import NativeScript, NativeScriptType, NativeScriptHashDisplayFormat
+from standalone.input_files.derive_native_script import NativeScriptParamsPubkey, NativeScriptParamsInvalid
+from standalone.input_files.derive_native_script import NativeScriptParamsScripts, NativeScriptParamsNofK
 from standalone.input_files.signTx import (
     AnchorParams,
     AuthorizeCommitteeParams,
@@ -72,6 +76,8 @@ class InsType(IntEnum):
     INS_GET_APP_NAME = 0x04
     INS_GET_SERIAL = 0x01
     INS_GET_PUBLIC_KEY = 0x10
+    INS_DERIVE_ADDRESS = 0x11
+    INS_DERIVE_NATIVE_SCRIPT_HASH = 0x12
     INS_SIGN_TX = 0x21
     INS_SIGN_OPCERT = 0x22
     INS_DEBUG_SET_SETTINGS = 0xF0  # Debug-only command
@@ -86,7 +92,9 @@ class P1Type(IntEnum):
     P1_TX_CHUNK_LAST = 0x02
     P1_TX_AUX_DATA = 0x03
     P1_TX_WITNESSES = 0x0F
-
+    P1_COMPLEX_SCRIPT_START = 0x01
+    P1_ADD_SIMPLE_SCRIPT = 0x02
+    P1_WHOLE_NATIVE_SCRIPT_FINISH = 0x03
 
 class P2Type(IntEnum):
     P2_UNUSED = 0x00
@@ -268,6 +276,44 @@ class CommandBuilder:
     def get_serial(self) -> bytes:
         return self._serialize(InsType.INS_GET_SERIAL)
 
+    def derive_address(self, p1: P1Type, testCase: DeriveAddressTestCase) -> bytes:
+        data = bytes()
+        data += testCase.addrType.to_bytes(1, "big")
+        if testCase.addrType == AddressType.BYRON:
+            data += testCase.netDesc.protocol.to_bytes(4, "big")
+        else:
+            data += testCase.netDesc.networkId.to_bytes(1, "big")
+
+        if not testCase.spendingValue.startswith("m/"):
+            data += bytes.fromhex(testCase.spendingValue)
+        elif testCase.spendingValue:
+            data += pack_derivation_path(testCase.spendingValue)
+
+        if testCase.addrType in (AddressType.BYRON, AddressType.ENTERPRISE_KEY,
+                        AddressType.ENTERPRISE_SCRIPT):
+            staking = StakingDataSourceType.NONE
+        elif testCase.addrType in (AddressType.BASE_PAYMENT_KEY_STAKE_SCRIPT,
+                          AddressType.BASE_PAYMENT_SCRIPT_STAKE_SCRIPT,
+                          AddressType.REWARD_SCRIPT):
+            staking = StakingDataSourceType.SCRIPT_HASH
+        elif testCase.addrType in (AddressType.POINTER_KEY, AddressType.POINTER_SCRIPT):
+            staking = StakingDataSourceType.BLOCKCHAIN_POINTER
+        elif not testCase.stakingValue.startswith("m/"):
+            staking = StakingDataSourceType.KEY_HASH
+        else:
+            staking = StakingDataSourceType.KEY_PATH
+        data += staking.to_bytes(1, "big")
+
+        if staking == StakingDataSourceType.KEY_PATH:
+            data += pack_derivation_path(testCase.stakingValue)
+        elif staking in (StakingDataSourceType.KEY_HASH,
+                         StakingDataSourceType.SCRIPT_HASH,
+                         StakingDataSourceType.BLOCKCHAIN_POINTER):
+            data += bytes.fromhex(testCase.stakingValue)
+        elif staking != StakingDataSourceType.NONE:
+            raise NotImplementedError("Not implemented yet")
+        return self._serialize(InsType.INS_DERIVE_ADDRESS, p1, 0x00, data)
+
     def get_pubkey_path(self, path: str) -> bytes:
         data = pack_derivation_path(path)
         return self._serialize(InsType.INS_GET_PUBLIC_KEY, P1Type.P1_UNUSED, P2Type.P2_UNUSED, data)
@@ -315,6 +361,51 @@ class CommandBuilder:
         data.append(0x02 if params.include_donation else 0x01)
         data.extend(params.num_witnesses.to_bytes(2, "big"))
         return self._serialize(InsType.INS_SIGN_TX, P1Type.P1_TX_INIT, P2Type.P2_UNUSED, bytes(data))
+
+    def derive_script_add_simple(self, script: NativeScript) -> bytes:
+        data = bytes()
+        scriptType = 0 if script.type == NativeScriptType.PUBKEY_THIRD_PARTY else script.type
+        data += scriptType.to_bytes(1, "big")
+        if script.type in (NativeScriptType.PUBKEY_DEVICE_OWNED, NativeScriptType.PUBKEY_THIRD_PARTY):
+            assert isinstance(script.params, NativeScriptParamsPubkey)
+            data += self._derive_script_pubkey(script.type)
+            if script.params.key.startswith("m/"):
+                data += pack_derivation_path(script.params.key)
+            else:
+                data += bytes.fromhex(script.params.key)
+        elif script.type in (NativeScriptType.INVALID_BEFORE, NativeScriptType.INVALID_HEREAFTER):
+            assert isinstance(script.params, NativeScriptParamsInvalid)
+            data += script.params.slot.to_bytes(8, "big")
+        return self._serialize(InsType.INS_DERIVE_NATIVE_SCRIPT_HASH, P1Type.P1_ADD_SIMPLE_SCRIPT, 0x00, data)
+
+
+    def derive_script_add_complex(self, script: NativeScript) -> bytes:
+        data = bytes()
+        data += script.type.to_bytes(1, "big")
+        if script.type in (NativeScriptType.ALL, NativeScriptType.ANY):
+            assert isinstance(script.params, NativeScriptParamsScripts)
+            data += len(script.params.scripts).to_bytes(4, "big")
+        elif script.type == NativeScriptType.N_OF_K:
+            assert isinstance(script.params, NativeScriptParamsNofK)
+            data += len(script.params.scripts).to_bytes(4, "big")
+            data += script.params.requiredCount.to_bytes(4, "big")
+        return self._serialize(InsType.INS_DERIVE_NATIVE_SCRIPT_HASH, P1Type.P1_COMPLEX_SCRIPT_START, 0x00, data)
+
+
+    def derive_script_finish(self, disp: NativeScriptHashDisplayFormat) -> bytes:
+        data = disp.to_bytes(1, "big")
+        return self._serialize(InsType.INS_DERIVE_NATIVE_SCRIPT_HASH, P1Type.P1_WHOLE_NATIVE_SCRIPT_FINISH, 0x00, data)
+    
+    
+    def _derive_script_pubkey(self, scriptType: NativeScriptType) -> bytes:
+        if scriptType == NativeScriptType.PUBKEY_DEVICE_OWNED:
+            encoding = 1
+        elif scriptType == NativeScriptType.PUBKEY_THIRD_PARTY:
+            encoding = 2
+        else:
+            encoding = 0
+
+        return encoding.to_bytes(1, "big")
 
     def build_tx_init_params(self,
                              tx: Transaction,

@@ -158,7 +158,6 @@ ValidNativeScriptTestCases = [
                                              NativeScript(NativeScriptType.INVALID_HEREAFTER, NativeScriptParamsInvalid(200))])),
                               SignedData("0d63e8d2c5a00cbcffbdf9112487c443466e1ea7d8c834df5ac5c425"),
                               nano_skip=True),
-
     ValidNativeScriptTestCase("Nested native scripts #2",
                               NativeScript(NativeScriptType.ALL,
                                            NativeScriptParamsScripts(

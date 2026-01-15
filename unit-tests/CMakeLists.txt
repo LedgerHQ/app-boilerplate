@@ -553,7 +553,7 @@ add_executable(test_opcert
     ../src/transaction/tx_parse.c
     ../src/transaction/tx_utils.c
     ../src/keyDerivation/keyDerivation.c
-    ../src/utils/cardano_os_utils.c
+
 )
 
 target_link_libraries(test_opcert 
@@ -588,7 +588,6 @@ add_executable(test_derive_address_rejects
     ../src/securityPolicy/securityPolicy.c
     ../src/securityPolicy/securityPolicy_privkey.c
     ../src/messageSigning/messageSigning
-    ../src/utils/cardano_os_utils.c
     ../src/addressUtils/addressUtilsShelley.c
     ../src/addressUtils/addressUtilsByron.c
     ../src/transaction/tx_utils.c
