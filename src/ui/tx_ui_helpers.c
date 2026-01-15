@@ -23,6 +23,7 @@
 #include "ui_constants.h"
 #include "ui_formatters.h"
 #include "cardano_swo.h"
+#include "transaction/tx_ui_plan.h"
 #include "addressUtils/addressUtilsShelley.h"
 #include "addressUtils/bip44.h"
 #include "addressUtils/bech32.h"
@@ -52,6 +53,7 @@ void addCredentialUIPairs(const ext_credential_t *credential,
     LEDGER_ASSERT(scriptHashLabel[0] != '\0', "Empty scriptHashLabel");
     LEDGER_ASSERT(scriptHashPrefix[0] != '\0', "Empty scriptHashPrefix");
 
+    START_COUNT();
     switch (credential->type) {
         case EXT_CREDENTIAL_KEY_PATH: {
             UI_ADD_FORMAT1(keyPathLabel, MAX_BIP44_PATH_STRING_LENGTH, format_bip44_path, &credential->keyPath);
@@ -68,11 +70,13 @@ void addCredentialUIPairs(const ext_credential_t *credential,
         default:
             LEDGER_ASSERT(false, "Unknown credential type");
     }
+    CHECK_COUNT(1);
 }
 
 void addVoterUIPairs(const ext_voter_t *voter) {
     LEDGER_ASSERT(voter != NULL, "NULL voter");
 
+    START_COUNT();
     switch (voter->type) {
         case EXT_VOTER_COMMITTEE_HOT_KEY_PATH:
             UI_ADD_FORMAT1(UI_STATIC_LABEL("Committee hot key"),
@@ -141,6 +145,7 @@ void addVoterUIPairs(const ext_voter_t *voter) {
             LEDGER_ASSERT(false, "Unknown voter type");
             break;
     }
+    CHECK_COUNT(UI_PAIRS_VOTER);
 }
 
 void addDRepUIPairs(const ext_drep_t *drep, const char *label) {
@@ -265,13 +270,16 @@ void addAnchorUIPairs(const anchor_t *anchor) {
         return;
     }
 
+    START_COUNT();
     UI_ADD_FORMAT2(UI_STATIC_LABEL("Anchor URL"), MAX_ANCHOR_URL_LENGTH, format_url, anchor->url, anchor->urlLength);
     UI_ADD_FORMAT3(UI_STATIC_LABEL("Anchor hash"), MAX_BECH32_STRING_LENGTH, format_bech32, "anchor", anchor->hash, ANCHOR_HASH_LENGTH);
+    CHECK_COUNT(UI_PAIRS_ANCHOR);
 }
 
 void addWithdrawalUIPairs(uint8_t networkId, const withdrawal_t *withdrawal) {
     LEDGER_ASSERT(withdrawal != NULL, "NULL withdrawal");
 
+    START_COUNT();
     UI_ADD_FORMAT1(UI_STATIC_LABEL("Withdrawal"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, withdrawal->amount);
 
     const ext_credential_t *credential = &withdrawal->stakeCredential;
@@ -294,21 +302,30 @@ void addWithdrawalUIPairs(uint8_t networkId, const withdrawal_t *withdrawal) {
                    format_reward_account_from_credential,
                    networkId,
                    credential);
+
+    CHECK_COUNT(credential->type == EXT_CREDENTIAL_KEY_PATH ? UI_PAIRS_WITHDRAWAL_KEY_PATH : UI_PAIRS_WITHDRAWAL_OTHER);
 }
 
 void addCertificateUIPairs(const certificate_data_t* certificate_data) {
     LEDGER_ASSERT(certificate_data != NULL, "NULL certificate data");
 
     TRACE("Formatting certificate type=%u", certificate_data->type);
+    START_COUNT();
     UI_ADD_FORMAT1(UI_STATIC_LABEL("Certificate"),
                    MAX_CERTIFICATE_TYPE_LENGTH,
                    format_certificate_type,
                    certificate_data->type);
 
     switch (certificate_data->type) {
-        case CERTIFICATE_STAKE_REGISTRATION:
+        case CERTIFICATE_STAKE_REGISTRATION: {
+            addStakeCredentialUIPairs(&certificate_data->stakeCredential);
+            CHECK_COUNT(UI_PAIRS_CERTIFICATE_STAKE_REGISTRATION);
+            break;
+        }
+
         case CERTIFICATE_STAKE_DEREGISTRATION: {
             addStakeCredentialUIPairs(&certificate_data->stakeCredential);
+            CHECK_COUNT(UI_PAIRS_CERTIFICATE_STAKE_DEREGISTRATION);
             break;
         }
 
@@ -320,38 +337,53 @@ void addCertificateUIPairs(const certificate_data_t* certificate_data) {
                            "pool",
                            certificate_data->poolKeyHash,
                            POOL_KEY_HASH_LENGTH);
+            CHECK_COUNT(UI_PAIRS_CERTIFICATE_STAKE_DELEGATION);
             break;
         }
 
-        case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
+        case CERTIFICATE_STAKE_REGISTRATION_CONWAY: {
+            addStakeCredentialUIPairs(&certificate_data->stakeCredential);
+            UI_ADD_FORMAT1(UI_STATIC_LABEL("Deposit"),
+                           MAX_ADA_AMOUNT_STRING_LENGTH,
+                           format_ada_amount,
+                           certificate_data->deposit);
+            CHECK_COUNT(UI_PAIRS_CERTIFICATE_STAKE_REGISTRATION_CONWAY);
+            break;
+        }
+
         case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY: {
             addStakeCredentialUIPairs(&certificate_data->stakeCredential);
             UI_ADD_FORMAT1(UI_STATIC_LABEL("Deposit"),
                            MAX_ADA_AMOUNT_STRING_LENGTH,
                            format_ada_amount,
                            certificate_data->deposit);
+            CHECK_COUNT(UI_PAIRS_CERTIFICATE_STAKE_DEREGISTRATION_CONWAY);
             break;
         }
 
         case CERTIFICATE_STAKE_POOL_RETIREMENT: {
             addPoolRetirementUIPairs(certificate_data);
+            CHECK_COUNT(UI_PAIRS_CERTIFICATE_POOL_RETIREMENT);
             break;
         }
 
         case CERTIFICATE_VOTE_DELEGATION: {
             addVoterCredentialUIPairs(&certificate_data->stakeCredential);
             addDRepUIPairs(&certificate_data->drep, UI_STATIC_LABEL("DRep"));
+            CHECK_COUNT(UI_PAIRS_CERTIFICATE_VOTE_DELEGATION);
             break;
         }
 
         case CERTIFICATE_AUTHORIZE_COMMITTEE_HOT: {
             addCommitteeColdCredentialUIPairs(&certificate_data->coldCredential);
             addCommitteeHotCredentialUIPairs(&certificate_data->hotCredential);
+            CHECK_COUNT(UI_PAIRS_CERTIFICATE_AUTHORIZE_COMMITTEE_HOT);
             break;
         }
 
         case CERTIFICATE_RESIGN_COMMITTEE_COLD: {
             addCommitteeColdCredentialUIPairs(&certificate_data->coldCredential);
+            CHECK_COUNT(UI_PAIRS_CERTIFICATE_RESIGN_COMMITTEE_COLD);
             addAnchorUIPairs(&certificate_data->anchor);
             break;
         }
@@ -362,6 +394,7 @@ void addCertificateUIPairs(const certificate_data_t* certificate_data) {
                            MAX_ADA_AMOUNT_STRING_LENGTH,
                            format_ada_amount,
                            certificate_data->deposit);
+            CHECK_COUNT(UI_PAIRS_CERTIFICATE_DREP_REGISTRATION);
             addAnchorUIPairs(&certificate_data->anchor);
             break;
         }
@@ -372,11 +405,13 @@ void addCertificateUIPairs(const certificate_data_t* certificate_data) {
                            MAX_ADA_AMOUNT_STRING_LENGTH,
                            format_ada_amount,
                            certificate_data->deposit);
+            CHECK_COUNT(UI_PAIRS_CERTIFICATE_DREP_DEREGISTRATION);
             break;
         }
 
         case CERTIFICATE_DREP_UPDATE: {
             addDRepCredentialUIPairs(&certificate_data->dRepCredential);
+            CHECK_COUNT(UI_PAIRS_CERTIFICATE_DREP_UPDATE);
             addAnchorUIPairs(&certificate_data->anchor);
             break;
         }

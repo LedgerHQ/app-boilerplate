@@ -68,6 +68,7 @@
 #include "ui/ui_constants.h"
 #include "tx_output_types.h"
 #include "transaction/tx.h"
+#include "transaction/tx_ui_plan.h"
 #include "addressUtils/addressUtilsShelley.h"
 #include "addressUtils/bip44.h"
 #include "memory/mem.h"
@@ -115,7 +116,9 @@ static void add_ui_and_free_inputs(transaction_t *tx) {
         LEDGER_ASSERT(input_policy != POLICY_DENY, "Input denied during UI");
 
         if (input_policy == POLICY_SHOW) {
+            START_COUNT();
             UI_ADD_FORMAT1(UI_STATIC_LABEL("Input"), MAX_INPUT_DISPLAY_STRING_LENGTH, format_input_with_index, &input_node->input);
+            CHECK_COUNT(UI_PAIRS_INPUT);
         }
 
         node = node->next;
@@ -124,6 +127,17 @@ static void add_ui_and_free_inputs(transaction_t *tx) {
     tx->inputs = NULL;
 }
 
+
+static uint16_t count_output_tokens(s_flist_node* asset_group_nodes) {
+    uint16_t total_tokens = 0;
+    s_flist_node *node = asset_group_nodes;
+    while (node != NULL) {
+        output_asset_group_node_t *group_node = (output_asset_group_node_t *) node;
+        total_tokens += group_node->asset_group.numTokens;
+        node = node->next;
+    }
+    return total_tokens;
+}
 
 static void add_ui_and_free_output_tokens(const output_asset_group_t *group,
                                                s_flist_node *token_nodes,
@@ -233,7 +247,9 @@ static void add_ui_and_free_outputs(transaction_t *tx) {
         LEDGER_ASSERT(policy != POLICY_DENY, "Output denied during UI");
         if (policy == POLICY_SHOW) {
             TRACE("Formatting output #%u", output_num);
-            UI_ADD_FORMAT1(UI_STATIC_LABEL("Output"), MAX_UINT64_STRING_LENGTH, format_index_with_prefix, output_num);
+            {
+                START_COUNT();
+                UI_ADD_FORMAT1(UI_STATIC_LABEL("Output"), MAX_UINT64_STRING_LENGTH, format_index_with_prefix, output_num);
                 UI_ADD_FORMAT1(UI_STATIC_LABEL("Address"), MAX_HUMAN_ADDRESS_LENGTH, format_output_address, &output_desc);
 
                 // For device-owned addresses, show payment and staking details
@@ -243,35 +259,46 @@ static void add_ui_and_free_outputs(transaction_t *tx) {
                 }
 
                 UI_ADD_FORMAT1(UI_STATIC_LABEL("Amount"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, output_node->output_data.adaAmount);
+                CHECK_COUNT(UI_PAIRS_OUTPUT_BASE +
+                            (output_node->output_data.destination.type == DESTINATION_DEVICE_OWNED ? UI_PAIRS_OUTPUT_DEVICE_OWNED : 0));
+            }
 
-                if (output_node->output_data.datum.hasDatum) {
-                    security_policy_t datum_policy = policyForSignTxOutputDatumHash(policy);
-                    LEDGER_ASSERT(datum_policy != POLICY_DENY, "Output datum policy denied during UI");
-                    if (datum_policy == POLICY_SHOW) {
-                        if (output_node->output_data.datum.type == DATUM_HASH) {
-                            UI_ADD_FORMAT2(UI_STATIC_LABEL("Datum hash"), MAX_DATUM_HASH_STRING_LENGTH, format_hex_bytes, output_node->output_data.datum.hash, OUTPUT_DATUM_HASH_LENGTH);
-                        } else {
-                            // TODO: Inline datum size is not bounded by protocol; handle large values more robustly.
-                            UI_ADD_FORMAT2(UI_STATIC_LABEL("Inline datum"), MAX_INLINE_DATUM_STRING_LENGTH, format_hex_bytes, output_node->output_data.datum.inline_data.data, output_node->output_data.datum.inline_data.size);
-                        }
+            if (output_node->output_data.datum.hasDatum) {
+                security_policy_t datum_policy = policyForSignTxOutputDatumHash(policy);
+                LEDGER_ASSERT(datum_policy != POLICY_DENY, "Output datum policy denied during UI");
+                if (datum_policy == POLICY_SHOW) {
+                    START_COUNT();
+                    if (output_node->output_data.datum.type == DATUM_HASH) {
+                        UI_ADD_FORMAT2(UI_STATIC_LABEL("Datum hash"), MAX_DATUM_HASH_STRING_LENGTH, format_hex_bytes, output_node->output_data.datum.hash, OUTPUT_DATUM_HASH_LENGTH);
+                    } else {
+                        // TODO: Inline datum size is not bounded by protocol; handle large values more robustly.
+                        UI_ADD_FORMAT2(UI_STATIC_LABEL("Inline datum"), MAX_INLINE_DATUM_STRING_LENGTH, format_hex_bytes, output_node->output_data.datum.inline_data.data, output_node->output_data.datum.inline_data.size);
                     }
+                    CHECK_COUNT(UI_PAIRS_OUTPUT_DATUM);
                 }
+            }
 
-                if (output_node->output_data.refScript.hasRefScript) {
-                    security_policy_t ref_script_policy = policyForSignTxOutputRefScript(policy);
-                    LEDGER_ASSERT(ref_script_policy != POLICY_DENY, "Output ref script policy denied during UI");
-                    if (ref_script_policy == POLICY_SHOW) {
-                        // TODO: Reference script size is not bounded by protocol; handle large values more robustly.
-                        UI_ADD_FORMAT2(UI_STATIC_LABEL("Reference script"), MAX_REFERENCE_SCRIPT_STRING_LENGTH, format_hex_bytes, output_node->output_data.refScript.data, output_node->output_data.refScript.size);
-                    }
+            if (output_node->output_data.refScript.hasRefScript) {
+                security_policy_t ref_script_policy = policyForSignTxOutputRefScript(policy);
+                LEDGER_ASSERT(ref_script_policy != POLICY_DENY, "Output ref script policy denied during UI");
+                if (ref_script_policy == POLICY_SHOW) {
+                    START_COUNT();
+                    // TODO: Reference script size is not bounded by protocol; handle large values more robustly.
+                    UI_ADD_FORMAT2(UI_STATIC_LABEL("Reference script"), MAX_REFERENCE_SCRIPT_STRING_LENGTH, format_hex_bytes, output_node->output_data.refScript.data, output_node->output_data.refScript.size);
+                    CHECK_COUNT(UI_PAIRS_OUTPUT_REF_SCRIPT);
                 }
+            }
 
                 if (output_node->output_data.assetGroups != NULL) {
+                    uint16_t token_count = count_output_tokens(
+                        output_node->output_data.assetGroups);
+                    START_COUNT();
                     add_ui_and_free_output_asset_groups(
                         output_node->output_data.assetGroups,
                         output_node->output_data.numAssetGroups,
                         true
                     );
+                    CHECK_COUNT(UI_PAIRS_TOKEN * token_count);
                     output_node->output_data.assetGroups = NULL;
                 }
 
@@ -302,7 +329,9 @@ static void add_ui_and_free_fee(transaction_t *tx) {
     LEDGER_ASSERT((fee_warnings & ~G_context.tx_info.warning_bits) == 0,
                   "Fee warnings mismatch between validation and UI");
     if (fee_policy == POLICY_SHOW) {
+        START_COUNT();
         UI_ADD_FORMAT1(UI_STATIC_LABEL("Fee"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, tx->fee);
+        CHECK_COUNT(UI_PAIRS_FEE);
     }
 }
 
@@ -313,7 +342,9 @@ static void add_ui_and_free_ttl(transaction_t *tx) {
     security_policy_t ttl_policy = policyForSignTxTtl(tx->ttl);
     LEDGER_ASSERT(ttl_policy != POLICY_DENY, "TTL denied during UI");
     if (ttl_policy == POLICY_SHOW) {
+        START_COUNT();
         UI_ADD_FORMAT3(UI_STATIC_LABEL("TTL"), MAX_VALIDITY_BOUNDARY_STRING_LENGTH, format_validity_boundary, tx->ttl, tx->networkId, tx->protocolMagic);
+        CHECK_COUNT(UI_PAIRS_TTL);
     }
 }
 
@@ -350,10 +381,14 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
     }
 
     TRACE("Formatting certificate type=%u", certificate->type);
-    UI_ADD_FORMAT1(UI_STATIC_LABEL("Certificate"),
-                   MAX_CERTIFICATE_TYPE_LENGTH,
-                   format_certificate_type,
-                   certificate->type);
+    {
+        START_COUNT();
+        UI_ADD_FORMAT1(UI_STATIC_LABEL("Certificate"),
+                       MAX_CERTIFICATE_TYPE_LENGTH,
+                       format_certificate_type,
+                       certificate->type);
+        CHECK_COUNT(UI_PAIRS_CERTIFICATE_POOL_REGISTRATION_BASE);
+    }
 
     security_policy_t pool_id_policy = policyForSignTxStakePoolRegistrationPoolId(
         txSigningMode,
@@ -362,6 +397,7 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
     LEDGER_ASSERT(pool_id_policy != POLICY_DENY, "Pool ID security policy denied");
 
     if (pool_id_policy == POLICY_SHOW) {
+        START_COUNT();
         const pool_id_t *pool_id = &certificate->poolId;
         uint8_t pool_key_hash[POOL_KEY_HASH_LENGTH];
 
@@ -383,35 +419,42 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
                        "pool",
                        pool_key_hash,
                        POOL_KEY_HASH_LENGTH);
+        CHECK_COUNT(UI_PAIRS_POOL_ID);
     }
 
     security_policy_t vrf_policy = policyForSignTxStakePoolRegistrationVrfKey(txSigningMode);
     LEDGER_ASSERT(vrf_policy != POLICY_DENY, "VRF key security policy denied");
 
     if (vrf_policy == POLICY_SHOW) {
+        START_COUNT();
         UI_ADD_FORMAT3(UI_STATIC_LABEL("VRF key hash"),
                        MAX_BECH32_STRING_LENGTH,
                        format_bech32,
                        "vrf_vk",
                        certificate->vrfKeyHash,
                        VRF_KEY_HASH_LENGTH);
+        CHECK_COUNT(UI_PAIRS_POOL_VRF_KEY);
     }
 
-    UI_ADD_FORMAT1(UI_STATIC_LABEL("Pledge"),
-                   MAX_ADA_AMOUNT_STRING_LENGTH,
-                   format_ada_amount,
-                   certificate->poolRegistration.pledge);
+    {
+        START_COUNT();
+        UI_ADD_FORMAT1(UI_STATIC_LABEL("Pledge"),
+                       MAX_ADA_AMOUNT_STRING_LENGTH,
+                       format_ada_amount,
+                       certificate->poolRegistration.pledge);
 
-    UI_ADD_FORMAT1(UI_STATIC_LABEL("Cost"),
-                   MAX_ADA_AMOUNT_STRING_LENGTH,
-                   format_ada_amount,
-                   certificate->poolRegistration.cost);
+        UI_ADD_FORMAT1(UI_STATIC_LABEL("Cost"),
+                       MAX_ADA_AMOUNT_STRING_LENGTH,
+                       format_ada_amount,
+                       certificate->poolRegistration.cost);
 
-    UI_ADD_FORMAT2(UI_STATIC_LABEL("Profit margin"),
-                   MAX_PROFIT_MARGIN_STRING_LENGTH,
-                   format_pool_margin,
-                   certificate->poolRegistration.marginNumerator,
-                   certificate->poolRegistration.marginDenominator);
+        UI_ADD_FORMAT2(UI_STATIC_LABEL("Profit margin"),
+                       MAX_PROFIT_MARGIN_STRING_LENGTH,
+                       format_pool_margin,
+                       certificate->poolRegistration.marginNumerator,
+                       certificate->poolRegistration.marginDenominator);
+        CHECK_COUNT(UI_PAIRS_POOL_FIXED);
+    }
 
     security_policy_t reward_policy = policyForSignTxStakePoolRegistrationRewardAccount(
         txSigningMode,
@@ -421,11 +464,13 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
     LEDGER_ASSERT(reward_policy != POLICY_DENY, "Reward account security policy denied");
 
     if (reward_policy == POLICY_SHOW) {
+        START_COUNT();
         UI_ADD_FORMAT2(UI_STATIC_LABEL("Pool reward address"),
                        MAX_HUMAN_ADDRESS_LENGTH,
                        format_pool_reward_account,
                        G_context.tx_info.transaction.networkId,
                        &certificate->poolRegistration.rewardAccount);
+        CHECK_COUNT(UI_PAIRS_POOL_REWARD_ACCOUNT);
     }
 
     uint32_t owner_index = 0;
@@ -441,11 +486,13 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
         LEDGER_ASSERT(owner_policy != POLICY_DENY, "Pool owner security policy denied");
 
         if (owner_policy == POLICY_SHOW) {
+            START_COUNT();
             UI_ADD_FORMAT2(UI_STATIC_LABEL("Owner reward address"),
                            MAX_HUMAN_ADDRESS_LENGTH,
                            format_reward_account_from_credential,
                            G_context.tx_info.transaction.networkId,
                            owner_credential);
+            CHECK_COUNT(UI_PAIRS_POOL_OWNER);
         }
 
         owner_node = owner_node->next;
@@ -456,7 +503,11 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
     if (pool_owner_counts.total_owners == 0) {
         warning_bits_set(&G_context.tx_info.warning_bits,
                          WARNING_BIT_POOL_REGISTRATION_NO_OWNERS);
-        UI_ADD_STATIC(UI_STATIC_LABEL("Pool owners"), UI_STATIC_LABEL("None"));
+        {
+            START_COUNT();
+            UI_ADD_STATIC(UI_STATIC_LABEL("Pool owners"), UI_STATIC_LABEL("None"));
+            CHECK_COUNT(UI_PAIRS_POOL_NO_OWNERS);
+        }
     }
 
     uint32_t relay_index = 0;
@@ -471,13 +522,18 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
         );
         LEDGER_ASSERT(relay_policy != POLICY_DENY, "Relay security policy denied");
         if (relay_policy == POLICY_SHOW) {
-            UI_ADD_FORMAT1(UI_STATIC_LABEL("Relay"),
-                           MAX_RELAY_INDEX_STRING_LENGTH,
-                           format_index_with_prefix,
-                           relay_index + 1);
+            {
+                START_COUNT();
+                UI_ADD_FORMAT1(UI_STATIC_LABEL("Relay"),
+                               MAX_RELAY_INDEX_STRING_LENGTH,
+                               format_index_with_prefix,
+                               relay_index + 1);
+                CHECK_COUNT(UI_PAIRS_POOL_RELAY_HEADER);
+            }
 
             switch (relay->format) {
-                case RELAY_SINGLE_HOST_IP:
+                case RELAY_SINGLE_HOST_IP: {
+                    START_COUNT();
                     if (!relay->ipv4.isNull) {
                         UI_ADD_FORMAT1(UI_STATIC_LABEL("IPv4"), MAX_IPV4_STR_LENGTH, format_ipv4, &relay->ipv4);
                     }
@@ -487,9 +543,14 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
                     if (!relay->port.isNull) {
                         UI_ADD_FORMAT1(UI_STATIC_LABEL("Port"), MAX_UINT64_STRING_LENGTH, format_uint16, relay->port.number);
                     }
+                    CHECK_COUNT((!relay->ipv4.isNull ? UI_PAIRS_POOL_RELAY_IPV4 : 0) +
+                                (!relay->ipv6.isNull ? UI_PAIRS_POOL_RELAY_IPV6 : 0) +
+                                (!relay->port.isNull ? UI_PAIRS_POOL_RELAY_PORT : 0));
                     break;
+                }
 
-                case RELAY_SINGLE_HOST_NAME:
+                case RELAY_SINGLE_HOST_NAME: {
+                    START_COUNT();
                     if (relay->dnsNameSize > 0) {
                         UI_ADD_FORMAT2(UI_STATIC_LABEL("DNS name"),
                                        MAX_DNS_NAME_LENGTH,
@@ -500,9 +561,13 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
                     if (!relay->port.isNull) {
                         UI_ADD_FORMAT1(UI_STATIC_LABEL("Port"), MAX_UINT64_STRING_LENGTH, format_uint16, relay->port.number);
                     }
+                    CHECK_COUNT((relay->dnsNameSize > 0 ? UI_PAIRS_POOL_RELAY_DNS : 0) +
+                                (!relay->port.isNull ? UI_PAIRS_POOL_RELAY_PORT : 0));
                     break;
+                }
 
-                case RELAY_MULTIPLE_HOST_NAME:
+                case RELAY_MULTIPLE_HOST_NAME: {
+                    START_COUNT();
                     if (relay->dnsNameSize > 0) {
                         UI_ADD_FORMAT2(UI_STATIC_LABEL("SRV DNS"),
                                        MAX_DNS_NAME_LENGTH,
@@ -510,7 +575,9 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
                                        relay->dnsName,
                                        relay->dnsNameSize);
                     }
+                    CHECK_COUNT(relay->dnsNameSize > 0 ? UI_PAIRS_POOL_RELAY_DNS : 0);
                     break;
+                }
 
                 default:
                     LEDGER_ASSERT(false, "Unknown relay type");
@@ -525,7 +592,11 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
     if (relay_index == 0) {
         warning_bits_set(&G_context.tx_info.warning_bits,
                          WARNING_BIT_POOL_REGISTRATION_NO_RELAYS);
-        UI_ADD_STATIC(UI_STATIC_LABEL("Pool relays"), UI_STATIC_LABEL("None"));
+        {
+            START_COUNT();
+            UI_ADD_STATIC(UI_STATIC_LABEL("Pool relays"), UI_STATIC_LABEL("None"));
+            CHECK_COUNT(UI_PAIRS_POOL_NO_RELAYS);
+        }
     }
 
     if (certificate->poolRegistration.poolMetadataIsNull) {
@@ -533,23 +604,29 @@ static void add_ui_and_free_certificate_pool_registration(const certificate_data
         LEDGER_ASSERT(no_metadata_policy != POLICY_DENY, "No metadata security policy denied");
 
         if (no_metadata_policy == POLICY_SHOW) {
+            START_COUNT();
             UI_ADD_STATIC(UI_STATIC_LABEL("Metadata"), UI_STATIC_LABEL("none (anonymous pool)"));
+            CHECK_COUNT(UI_PAIRS_POOL_NO_METADATA);
         }
     } else {
         security_policy_t metadata_policy = policyForSignTxStakePoolRegistrationMetadata();
         LEDGER_ASSERT(metadata_policy != POLICY_DENY, "Metadata security policy denied");
 
         if (metadata_policy == POLICY_SHOW) {
-            UI_ADD_FORMAT2(UI_STATIC_LABEL("Pool metadata url"),
-                           MAX_POOL_METADATA_URL_LENGTH,
-                           format_url,
-                           certificate->poolRegistration.poolMetadata.url,
-                           certificate->poolRegistration.poolMetadata.urlSize);
-            UI_ADD_FORMAT2(UI_STATIC_LABEL("Pool metadata hash"),
-                           MAX_POOL_METADATA_HASH_STRING_LENGTH,
-                           format_hex_bytes,
-                           certificate->poolRegistration.poolMetadata.hash,
-                           POOL_METADATA_HASH_LENGTH);
+            {
+                START_COUNT();
+                UI_ADD_FORMAT2(UI_STATIC_LABEL("Pool metadata url"),
+                               MAX_POOL_METADATA_URL_LENGTH,
+                               format_url,
+                               certificate->poolRegistration.poolMetadata.url,
+                               certificate->poolRegistration.poolMetadata.urlSize);
+                UI_ADD_FORMAT2(UI_STATIC_LABEL("Pool metadata hash"),
+                               MAX_POOL_METADATA_HASH_STRING_LENGTH,
+                               format_hex_bytes,
+                               certificate->poolRegistration.poolMetadata.hash,
+                               POOL_METADATA_HASH_LENGTH);
+                CHECK_COUNT(UI_PAIRS_POOL_METADATA);
+            }
         }
     }
 }
@@ -691,7 +768,9 @@ static void add_ui_and_free_aux_data_hash(transaction_t *tx) {
     security_policy_t policy = policyForSignTxAuxData(tx->auxDataType);
     LEDGER_ASSERT(policy != POLICY_DENY, "Aux data denied during UI");
     if (policy == POLICY_SHOW) {
+        START_COUNT();
         UI_ADD_FORMAT2(UI_STATIC_LABEL("Auxiliary data hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_bytes, tx->auxDataHash, AUX_DATA_HASH_LENGTH);
+        CHECK_COUNT(UI_PAIRS_AUXILIARY_DATA_HASH);
     }
 }
 
@@ -702,7 +781,9 @@ static void add_ui_and_free_validity_interval_start(transaction_t *tx) {
     security_policy_t validity_interval_start_policy = policyForSignTxValidityIntervalStart();
     LEDGER_ASSERT(validity_interval_start_policy != POLICY_DENY, "Validity interval start denied during UI");
     if (validity_interval_start_policy == POLICY_SHOW) {
+        START_COUNT();
         UI_ADD_FORMAT3(UI_STATIC_LABEL("Validity interval start"), MAX_VALIDITY_BOUNDARY_STRING_LENGTH, format_validity_boundary, tx->validityIntervalStart, tx->networkId, tx->protocolMagic);
+        CHECK_COUNT(UI_PAIRS_VALIDITY_INTERVAL_START);
     }
 }
 
@@ -722,10 +803,12 @@ static void add_ui_and_free_mint(transaction_t *tx) {
     LEDGER_ASSERT(mint_policy != POLICY_DENY, "Mint denied during UI");
     const bool show_mint = (mint_policy == POLICY_SHOW);
 
+    START_COUNT();
     if (show_mint) {
         UI_ADD_FORMAT1(UI_STATIC_LABEL("Mint"), MAX_MINT_SUMMARY_STRING_LENGTH, format_mint_summary, tx->num_mint_asset_groups);
     }
 
+    uint16_t token_count = 0;
     s_flist_node *node = tx->mint_asset_groups;
     while (node != NULL) {
         mint_asset_group_node_t *asset_group_node = (mint_asset_group_node_t *) node;
@@ -740,6 +823,7 @@ static void add_ui_and_free_mint(transaction_t *tx) {
             if (show_mint) {
                 UI_ADD_FORMAT3(UI_STATIC_LABEL("Mint fingerprint"), MAX_TOKEN_FINGERPRINT_STRING_LENGTH, format_asset_fingerprint_bech32, asset_group->policyId, token->assetName, token->assetNameLen);
                 UI_ADD_FORMAT4(UI_STATIC_LABEL("Mint amount"), MAX_MINT_AMOUNT_STRING_LENGTH, format_token_amount_mint, asset_group->policyId, token->assetName, token->assetNameLen, token->amount);
+                token_count++;
             }
 
             node2 = node2->next;
@@ -752,6 +836,12 @@ static void add_ui_and_free_mint(transaction_t *tx) {
     }
 
     tx->mint_asset_groups = NULL;
+
+    if (show_mint) {
+        // Count: 1 summary + (2 * num_tokens)
+        uint16_t expected = UI_PAIRS_MINT_SUMMARY + (UI_PAIRS_TOKEN * token_count);
+        CHECK_COUNT(expected);
+    }
 }
 
 static void add_ui_and_free_script_data_hash(transaction_t *tx) {
@@ -761,7 +851,9 @@ static void add_ui_and_free_script_data_hash(transaction_t *tx) {
     security_policy_t policy = policyForSignTxScriptDataHash(tx->txSigningMode);
     LEDGER_ASSERT(policy != POLICY_DENY, "Script data hash denied during UI");
     if (policy == POLICY_SHOW) {
+        START_COUNT();
         UI_ADD_FORMAT2(UI_STATIC_LABEL("Script data hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_bytes, tx->scriptDataHash, SCRIPT_DATA_HASH_LENGTH);
+        CHECK_COUNT(UI_PAIRS_SCRIPT_DATA_HASH);
     }
 }
 
@@ -777,7 +869,9 @@ static void add_ui_and_free_collateral_inputs(transaction_t *tx) {
         LEDGER_ASSERT(collateral_input_policy != POLICY_DENY, "Collateral input policy denied during UI");
 
         if (collateral_input_policy == POLICY_SHOW) {
+            START_COUNT();
             UI_ADD_FORMAT1(UI_STATIC_LABEL("Coll input"), MAX_INPUT_DISPLAY_STRING_LENGTH, format_input_with_index, &collateral_input_node->input);
+            CHECK_COUNT(UI_PAIRS_COLLATERAL_INPUT);
         }
 
         node = node->next;
@@ -796,6 +890,7 @@ static void add_ui_and_free_required_signers(transaction_t *tx) {
         LEDGER_ASSERT(policy != POLICY_DENY, "Required signer denied during UI");
 
         if (policy == POLICY_SHOW) {
+            START_COUNT();
             switch (required_signer->type) {
                 case REQUIRED_SIGNER_WITH_HASH: {
                     UI_ADD_FORMAT3(UI_STATIC_LABEL("Required signer"), MAX_BECH32_STRING_LENGTH, format_bech32, "vkh", required_signer->keyHash, ADDRESS_KEY_HASH_LENGTH);
@@ -808,6 +903,7 @@ static void add_ui_and_free_required_signers(transaction_t *tx) {
                 default:
                     LEDGER_ASSERT(false, "Unknown required signer type");
             }
+            CHECK_COUNT(UI_PAIRS_REQUIRED_SIGNER);
         }
 
         node = node->next;
@@ -868,6 +964,7 @@ static void add_ui_and_free_collateral_output(transaction_t *tx) {
           (unsigned int)tx->collateral_output.numAssetGroups);
 
     if (collateral_policy == POLICY_SHOW) {
+        START_COUNT();
         UI_ADD_FORMAT1(UI_STATIC_LABEL("Collateral address"), MAX_HUMAN_ADDRESS_LENGTH, format_output_address, &collateral_desc);
 
         // For device-owned collateral addresses, show payment and staking details
@@ -880,12 +977,29 @@ static void add_ui_and_free_collateral_output(transaction_t *tx) {
             UI_ADD_FORMAT1(UI_STATIC_LABEL("Collateral amount"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, collateral_desc.amount);
         }
 
+        uint16_t expected = UI_PAIRS_COLLATERAL_OUTPUT_ADDRESS;
+        if (collateral_desc.destination.type == DESTINATION_DEVICE_OWNED) {
+            expected += UI_PAIRS_COLLATERAL_OUTPUT_DEVICE_OWNED;
+        }
+        if (collateral_ada_policy == POLICY_SHOW) {
+            expected += UI_PAIRS_COLLATERAL_OUTPUT_AMOUNT;
+        }
+        CHECK_COUNT(expected);
     }
 
+    uint16_t token_count = (show_collateral_tokens && tx->collateral_output.assetGroups != NULL)
+        ? count_output_tokens(tx->collateral_output.assetGroups)
+        : 0;
+
+    START_COUNT();
     add_ui_and_free_output_asset_groups(
         tx->collateral_output.assetGroups,
         tx->collateral_output.numAssetGroups,
         show_collateral_tokens);
+
+    if (token_count > 0) {
+        CHECK_COUNT(UI_PAIRS_TOKEN * token_count);
+    }
 
     tx->collateral_output.assetGroups = NULL;
 }
@@ -897,7 +1011,9 @@ static void add_ui_and_free_total_collateral(transaction_t *tx) {
     security_policy_t policy = policyForSignTxTotalCollateral();
     LEDGER_ASSERT(policy != POLICY_DENY, "Total collateral denied during UI");
     if (policy == POLICY_SHOW) {
+        START_COUNT();
         UI_ADD_FORMAT1(UI_STATIC_LABEL("Total collateral"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, tx->totalCollateral);
+        CHECK_COUNT(UI_PAIRS_TOTAL_COLLATERAL);
     }
 }
 
@@ -912,7 +1028,9 @@ static void add_ui_and_free_reference_inputs(transaction_t *tx) {
         LEDGER_ASSERT(reference_input_policy != POLICY_DENY, "Reference input denied during UI");
 
         if (reference_input_policy == POLICY_SHOW) {
+            START_COUNT();
             UI_ADD_FORMAT1(UI_STATIC_LABEL("Ref input"), MAX_INPUT_DISPLAY_STRING_LENGTH, format_input_with_index, &ref_input_node->input);
+            CHECK_COUNT(UI_PAIRS_REFERENCE_INPUT);
         }
 
         node = node->next;
@@ -932,15 +1050,19 @@ static void add_ui_and_free_voting_procedures(transaction_t *tx) {
         if (policy == POLICY_SHOW) {
             addVoterUIPairs(&voter_node->voter_votes_data.voter);
         }
+
         s_flist_node *vote_node = voter_node->voter_votes_data.votes;
         while (vote_node != NULL) {
             vote_node_t *vote_node_data = (vote_node_t *) vote_node;
             vote_item_t *vote_data = &vote_node_data->vote_data;
 
             if (policy == POLICY_SHOW) {
+                START_COUNT();
                 UI_ADD_FORMAT2(UI_STATIC_LABEL("Gov action tx hash"), MAX_TX_HASH_DISPLAY_LENGTH, format_hex_bytes, vote_data->govActionId.txHash, TX_HASH_LENGTH);
                 UI_ADD_FORMAT1(UI_STATIC_LABEL("Gov action index"), MAX_UINT64_STRING_LENGTH, format_uint64, vote_data->govActionId.govActionIndex);
                 UI_ADD_FORMAT1(UI_STATIC_LABEL("Vote"), MAX_VOTE_OPTION_LENGTH, format_vote_option, vote_data->voteOption);
+                CHECK_COUNT(UI_PAIRS_VOTE);
+
                 addAnchorUIPairs(&vote_data->anchor);
             }
 
@@ -963,7 +1085,9 @@ static void add_ui_and_free_treasury(transaction_t *tx) {
     LEDGER_ASSERT(policy != POLICY_DENY, "Treasury denied during UI");
 
     if (policy == POLICY_SHOW) {
+        START_COUNT();
         UI_ADD_FORMAT1(UI_STATIC_LABEL("Treasury"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, tx->treasury);
+        CHECK_COUNT(UI_PAIRS_TREASURY);
     }
 }
 
@@ -975,7 +1099,9 @@ static void add_ui_and_free_donation(transaction_t *tx) {
     LEDGER_ASSERT(policy != POLICY_DENY, "Donation denied during UI");
 
     if (policy == POLICY_SHOW) {
+        START_COUNT();
         UI_ADD_FORMAT1(UI_STATIC_LABEL("Donation"), MAX_ADA_AMOUNT_STRING_LENGTH, format_ada_amount, tx->donation);
+        CHECK_COUNT(UI_PAIRS_DONATION);
     }
 }
 
@@ -983,11 +1109,13 @@ static void add_ui_and_free_tx_hash(void) {
     security_policy_t policy = policyForSignTxDisplayTxHash(G_context.tx_info.transaction.txSigningMode);
     LEDGER_ASSERT(policy != POLICY_DENY, "Transaction hash display denied during UI");
     if (policy == POLICY_SHOW) {
+        START_COUNT();
         UI_ADD_FORMAT2(UI_STATIC_LABEL("Transaction hash"),
                        MAX_TX_HASH_DISPLAY_LENGTH,
                        format_hex_bytes,
                        G_context.tx_info.tx_hash,
                        sizeof(G_context.tx_info.tx_hash));
+        CHECK_COUNT(UI_PAIRS_TX_HASH);
     }
 }
 

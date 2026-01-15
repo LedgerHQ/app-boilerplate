@@ -56,6 +56,14 @@ void ui_set_error_status(ui_status_t status);
 bool ui_pairs_init(uint8_t nbPairs);
 void ui_pairs_cleanup(void);
 uint16_t ui_pairs_get_count(void);
+
+// UI pair count verification macros for transaction formatting
+#define START_COUNT() uint16_t _pairs_before = ui_pairs_get_count()
+#define CHECK_COUNT(expected) \
+    LEDGER_ASSERT(ui_pairs_get_count() - _pairs_before == (expected), \
+                  "UI pairs mismatch: expected %d, actual %d", \
+                  (expected), ui_pairs_get_count() - _pairs_before)
+
 #ifdef __GNUC__
 #define UI_STATIC_LABEL(label) ((void)sizeof(char[__builtin_constant_p(label) ? 1 : -1]), (label))
 #else

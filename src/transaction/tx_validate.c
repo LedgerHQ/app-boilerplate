@@ -149,7 +149,7 @@ static int validate_and_hash_inputs(tx_hash_builder_t* txHashBuilder, tx_ui_plan
                 TRACE("Input security policy denied");
                 return SWO_SECURITY_CONDITION_NOT_SATISFIED;
             case POLICY_SHOW:
-                plan->pair_count++;
+                plan->pair_count += UI_PAIRS_INPUT;
                 break;
             case POLICY_HIDE:
                 break;
@@ -218,15 +218,15 @@ static int validate_and_hash_outputs(tx_hash_builder_t* txHashBuilder, tx_ui_pla
                 datum_policy = policyForSignTxOutputDatumHash(output_policy);
                 ref_script_policy = policyForSignTxOutputRefScript(output_policy);
 
-                plan->pair_count += 3;
+                plan->pair_count += UI_PAIRS_OUTPUT_BASE;
                 if (output_destination->type == DESTINATION_DEVICE_OWNED) {
-                    plan->pair_count += 2;
+                    plan->pair_count += UI_PAIRS_OUTPUT_DEVICE_OWNED;
                 }
                 if (datum_policy == POLICY_SHOW && output_datum->hasDatum) {
-                    plan->pair_count++;
+                    plan->pair_count += UI_PAIRS_OUTPUT_DATUM;
                 }
                 if (ref_script_policy == POLICY_SHOW && output_ref_script->hasRefScript) {
-                    plan->pair_count++;
+                    plan->pair_count += UI_PAIRS_OUTPUT_REF_SCRIPT;
                 }
 
                 if (output_node->output_data.assetGroups != NULL) {
@@ -240,7 +240,7 @@ static int validate_and_hash_outputs(tx_hash_builder_t* txHashBuilder, tx_ui_pla
                             uint16_t token_count = 0;
                             s_flist_node *node3 = asset_group->tokens;
                             while (node3 != NULL) {
-                                plan->pair_count += 2;
+                                plan->pair_count += UI_PAIRS_TOKEN;
                                 token_count++;
                                 node3 = node3->next;
                             }
@@ -361,7 +361,7 @@ static int validate_and_hash_fee(tx_hash_builder_t* txHashBuilder, tx_ui_plan_t*
         case POLICY_DENY:
             return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW:
-            plan->pair_count++;
+            plan->pair_count += UI_PAIRS_FEE;
             break;
         case POLICY_HIDE:
             break;
@@ -384,7 +384,7 @@ static int validate_and_hash_ttl(tx_hash_builder_t* txHashBuilder, tx_ui_plan_t*
         case POLICY_DENY:
             return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW:
-            plan->pair_count++;
+            plan->pair_count += UI_PAIRS_TTL;
             break;
         case POLICY_HIDE:
             break;
@@ -438,11 +438,22 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                     case POLICY_DENY:
                         return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                     case POLICY_SHOW:
-                        if (certificate->type == CERTIFICATE_STAKE_REGISTRATION ||
-                            certificate->type == CERTIFICATE_STAKE_DEREGISTRATION) {
-                            plan->pair_count += 2;
-                        } else {
-                            plan->pair_count += 3;
+                        switch (certificate->type) {
+                            case CERTIFICATE_STAKE_REGISTRATION:
+                                plan->pair_count += UI_PAIRS_CERTIFICATE_STAKE_REGISTRATION;
+                                break;
+                            case CERTIFICATE_STAKE_DEREGISTRATION:
+                                plan->pair_count += UI_PAIRS_CERTIFICATE_STAKE_DEREGISTRATION;
+                                break;
+                            case CERTIFICATE_STAKE_REGISTRATION_CONWAY:
+                                plan->pair_count += UI_PAIRS_CERTIFICATE_STAKE_REGISTRATION_CONWAY;
+                                break;
+                            case CERTIFICATE_STAKE_DEREGISTRATION_CONWAY:
+                                plan->pair_count += UI_PAIRS_CERTIFICATE_STAKE_DEREGISTRATION_CONWAY;
+                                break;
+                            default:
+                                LEDGER_ASSERT(false, "Unknown staking certificate type");
+                                break;
                         }
                         break;
                     case POLICY_HIDE:
@@ -463,7 +474,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                     case POLICY_DENY:
                         return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                     case POLICY_SHOW:
-                        plan->pair_count += 3;
+                        plan->pair_count += UI_PAIRS_CERTIFICATE_STAKE_DELEGATION;
                         break;
                     case POLICY_HIDE:
                         break;
@@ -483,7 +494,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                     case POLICY_DENY:
                         return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                     case POLICY_SHOW:
-                        plan->pair_count += 3;
+                        plan->pair_count += UI_PAIRS_CERTIFICATE_VOTE_DELEGATION;
                         break;
                     case POLICY_HIDE:
                         break;
@@ -503,7 +514,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                     case POLICY_DENY:
                         return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                     case POLICY_SHOW:
-                        plan->pair_count += 3;
+                        plan->pair_count += UI_PAIRS_CERTIFICATE_AUTHORIZE_COMMITTEE_HOT;
                         break;
                     case POLICY_HIDE:
                         break;
@@ -522,9 +533,9 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                     case POLICY_DENY:
                         return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                     case POLICY_SHOW:
-                        plan->pair_count += 2;
+                        plan->pair_count += UI_PAIRS_CERTIFICATE_RESIGN_COMMITTEE_COLD;
                         if (certificate->anchor.isIncluded) {
-                            plan->pair_count += 2;
+                            plan->pair_count += UI_PAIRS_ANCHOR;
                         }
                         break;
                     case POLICY_HIDE:
@@ -547,16 +558,16 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                     case POLICY_SHOW:
                         if (certificate->type == CERTIFICATE_DREP_REGISTRATION) {
-                            plan->pair_count += 3;
+                            plan->pair_count += UI_PAIRS_CERTIFICATE_DREP_REGISTRATION;
                             if (certificate->anchor.isIncluded) {
-                                plan->pair_count += 2;
+                                plan->pair_count += UI_PAIRS_ANCHOR;
                             }
                         } else if (certificate->type == CERTIFICATE_DREP_DEREGISTRATION) {
-                            plan->pair_count += 3;
+                            plan->pair_count += UI_PAIRS_CERTIFICATE_DREP_DEREGISTRATION;
                         } else {
-                            plan->pair_count += 2;
+                            plan->pair_count += UI_PAIRS_CERTIFICATE_DREP_UPDATE;
                             if (certificate->anchor.isIncluded) {
-                                plan->pair_count += 2;
+                                plan->pair_count += UI_PAIRS_ANCHOR;
                             }
                         }
                         break;
@@ -605,7 +616,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                     case POLICY_SHOW: {
                         // Calculate UI pairs for pool registration certificate display
                         // Each policy decision determines which fields are shown to the user
-                        uint16_t pool_pairs = 1;  // Base: certificate type label
+                        uint16_t pool_pairs = UI_PAIRS_CERTIFICATE_POOL_REGISTRATION_BASE;
 
                         // Pool ID (bech32 encoded pool keyhash)
                         security_policy_t pool_id_policy = policyForSignTxStakePoolRegistrationPoolId(
@@ -616,7 +627,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                             case POLICY_DENY:
                                 return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                             case POLICY_SHOW:
-                                pool_pairs += 1;  // Add: pool ID display
+                                pool_pairs += UI_PAIRS_POOL_ID;
                                 break;
                             case POLICY_HIDE:
                                 break;
@@ -633,7 +644,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                             case POLICY_DENY:
                                 return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                             case POLICY_SHOW:
-                                pool_pairs += 1;  // Add: VRF key display
+                                pool_pairs += UI_PAIRS_POOL_VRF_KEY;
                                 break;
                             case POLICY_HIDE:
                                 break;
@@ -643,7 +654,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         }
 
                         // Fixed pool fields: pledge (lovelace), cost (lovelace), margin (fraction)
-                        pool_pairs += 3;
+                        pool_pairs += UI_PAIRS_POOL_FIXED;
 
                         // Reward Account (where pool rewards are distributed to)
                         security_policy_t reward_policy = policyForSignTxStakePoolRegistrationRewardAccount(
@@ -655,7 +666,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                             case POLICY_DENY:
                                 return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                             case POLICY_SHOW:
-                                pool_pairs += 1;  // Add: reward account display
+                                pool_pairs += UI_PAIRS_POOL_REWARD_ACCOUNT;
                                 break;
                             case POLICY_HIDE:
                                 break;
@@ -680,7 +691,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                     case POLICY_DENY:
                                         return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                                     case POLICY_SHOW:
-                                        pool_pairs += 1;  // Add: owner credential display
+                                        pool_pairs += UI_PAIRS_POOL_OWNER;
                                         break;
                                     case POLICY_HIDE:
                                         break;
@@ -696,7 +707,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                certificate->poolRegistration.numPoolOwners);
                         // If no owners present, add placeholder pair to indicate "no owners"
                         if (owner_counts.total_owners == 0) {
-                            pool_pairs += 1;
+                            pool_pairs += UI_PAIRS_POOL_NO_OWNERS;
                         }
 
                         // Pool Relays (variable count: each relay can have multiple fields)
@@ -719,33 +730,33 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                     case POLICY_HIDE:
                                         break;
                                     case POLICY_SHOW:
-                                        pool_pairs += 1;  // Add: relay header pair
+                                        pool_pairs += UI_PAIRS_POOL_RELAY_HEADER;
                                         switch (relay->format) {
                                             case RELAY_SINGLE_HOST_IP:
                                                 // Single host IP relay: can have IPv4, IPv6, and port
                                                 if (!relay->ipv4.isNull) {
-                                                    pool_pairs += 1;  // Add: IPv4 address
+                                                    pool_pairs += UI_PAIRS_POOL_RELAY_IPV4;
                                                 }
                                                 if (!relay->ipv6.isNull) {
-                                                    pool_pairs += 1;  // Add: IPv6 address
+                                                    pool_pairs += UI_PAIRS_POOL_RELAY_IPV6;
                                                 }
                                                 if (!relay->port.isNull) {
-                                                    pool_pairs += 1;  // Add: port number
+                                                    pool_pairs += UI_PAIRS_POOL_RELAY_PORT;
                                                 }
                                                 break;
                                             case RELAY_SINGLE_HOST_NAME:
                                                 // Single host DNS relay: can have DNS name and port
                                                 if (relay->dnsNameSize > 0) {
-                                                    pool_pairs += 1;  // Add: DNS name
+                                                    pool_pairs += UI_PAIRS_POOL_RELAY_DNS;
                                                 }
                                                 if (!relay->port.isNull) {
-                                                    pool_pairs += 1;  // Add: port number
+                                                    pool_pairs += UI_PAIRS_POOL_RELAY_PORT;
                                                 }
                                                 break;
                                             case RELAY_MULTIPLE_HOST_NAME:
                                                 // Multi-host DNS relay: only DNS name (no port)
                                                 if (relay->dnsNameSize > 0) {
-                                                    pool_pairs += 1;  // Add: DNS name
+                                                    pool_pairs += UI_PAIRS_POOL_RELAY_DNS;
                                                 }
                                                 break;
                                             default:
@@ -764,7 +775,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                         ASSERT(relay_count == certificate->poolRegistration.numRelays);
                         // If no relays present, add placeholder pair to indicate "no relays"
                         if (relay_count == 0) {
-                            pool_pairs += 1;
+                            pool_pairs += UI_PAIRS_POOL_NO_RELAYS;
                         }
 
                         // Pool Metadata (optional: URL and hash)
@@ -776,7 +787,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                 case POLICY_DENY:
                                     return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                                 case POLICY_SHOW:
-                                    pool_pairs += 1;  // Add: "no metadata" indicator
+                                    pool_pairs += UI_PAIRS_POOL_NO_METADATA;
                                     break;
                                 case POLICY_HIDE:
                                     break;
@@ -792,7 +803,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                                 case POLICY_DENY:
                                     return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                                 case POLICY_SHOW:
-                                    pool_pairs += 2;  // Add: metadata URL + hash
+                                    pool_pairs += UI_PAIRS_POOL_METADATA;
                                     break;
                                 case POLICY_HIDE:
                                     break;
@@ -821,7 +832,7 @@ static int validate_and_hash_certificates(tx_hash_builder_t* txHashBuilder, tx_u
                     case POLICY_DENY:
                         return SWO_SECURITY_CONDITION_NOT_SATISFIED;
                     case POLICY_SHOW:
-                        plan->pair_count += 3;
+                        plan->pair_count += UI_PAIRS_CERTIFICATE_POOL_RETIREMENT;
                         break;
                     case POLICY_HIDE:
                         break;
@@ -1081,9 +1092,9 @@ static int validate_and_hash_withdrawals(tx_hash_builder_t* txHashBuilder, tx_ui
                 return SWO_SECURITY_CONDITION_NOT_SATISFIED;
             case POLICY_SHOW:
                 if (withdrawal->stakeCredential.type == EXT_CREDENTIAL_KEY_PATH) {
-                    plan->pair_count += 3;
+                    plan->pair_count += UI_PAIRS_WITHDRAWAL_KEY_PATH;
                 } else {
-                    plan->pair_count += 2;
+                    plan->pair_count += UI_PAIRS_WITHDRAWAL_OTHER;
                 }
                 break;
             case POLICY_HIDE:
@@ -1167,7 +1178,7 @@ static int validate_and_hash_aux_data_hash(tx_hash_builder_t* txHashBuilder, tx_
         case POLICY_DENY:
             return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW:
-            plan->pair_count++;
+            plan->pair_count += UI_PAIRS_AUXILIARY_DATA_HASH;
             break;
         case POLICY_HIDE:
             break;
@@ -1192,7 +1203,7 @@ static int validate_and_hash_validity_interval_start(tx_hash_builder_t* txHashBu
         case POLICY_DENY:
             return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW:
-            plan->pair_count++;
+            plan->pair_count += UI_PAIRS_VALIDITY_INTERVAL_START;
             break;
         case POLICY_HIDE:
             break;
@@ -1219,7 +1230,7 @@ static int validate_and_hash_mint(tx_hash_builder_t* txHashBuilder, tx_ui_plan_t
         case POLICY_DENY:
             return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW: {
-            plan->pair_count++;
+            plan->pair_count += UI_PAIRS_MINT_SUMMARY;
             uint16_t asset_group_count = 0;
             s_flist_node *node = G_context.tx_info.transaction.mint_asset_groups;
             while (node != NULL) {
@@ -1230,7 +1241,7 @@ static int validate_and_hash_mint(tx_hash_builder_t* txHashBuilder, tx_ui_plan_t
                     uint16_t token_count = 0;
                     s_flist_node *node2 = asset_group->tokens;
                     while (node2 != NULL) {
-                        plan->pair_count += 2;
+                        plan->pair_count += UI_PAIRS_TOKEN;
                         token_count++;
                         node2 = node2->next;
                     }
@@ -1296,7 +1307,7 @@ static int validate_and_hash_script_data_hash(tx_hash_builder_t* txHashBuilder, 
             TRACE("Script data hash security policy denied");
             return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW:
-            plan->pair_count += 1;
+            plan->pair_count += UI_PAIRS_SCRIPT_DATA_HASH;
             break;
         case POLICY_HIDE:
             break;
@@ -1333,7 +1344,7 @@ static int validate_and_hash_collateral_inputs(tx_hash_builder_t* txHashBuilder,
                 TRACE("Collateral input security policy denied");
                 return SWO_SECURITY_CONDITION_NOT_SATISFIED;
             case POLICY_SHOW:
-                plan->pair_count += 1;
+                plan->pair_count += UI_PAIRS_COLLATERAL_INPUT;
                 break;
             case POLICY_HIDE:
                 break;
@@ -1370,7 +1381,7 @@ static int validate_and_hash_required_signers(tx_hash_builder_t* txHashBuilder, 
                 TRACE("Required signer security policy denied");
                 return SWO_SECURITY_CONDITION_NOT_SATISFIED;
             case POLICY_SHOW:
-                plan->pair_count += 1;
+                plan->pair_count += UI_PAIRS_REQUIRED_SIGNER;
                 break;
             case POLICY_HIDE:
                 break;
@@ -1467,12 +1478,12 @@ static int validate_and_hash_collateral_output(tx_hash_builder_t* txHashBuilder,
             TRACE("Collateral output security policy denied");
             return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW: {
-            plan->pair_count += 1;
+            plan->pair_count += UI_PAIRS_COLLATERAL_OUTPUT_ADDRESS;
             if (G_context.tx_info.transaction.collateral_output.destination.type == DESTINATION_DEVICE_OWNED) {
-                plan->pair_count += 2;
+                plan->pair_count += UI_PAIRS_COLLATERAL_OUTPUT_DEVICE_OWNED;
             }
             if (collateral_ada_policy == POLICY_SHOW) {
-                plan->pair_count += 1;
+                plan->pair_count += UI_PAIRS_COLLATERAL_OUTPUT_AMOUNT;
             }
             if (collateral_tokens_policy == POLICY_SHOW &&
                 G_context.tx_info.transaction.collateral_output.assetGroups != NULL) {
@@ -1487,7 +1498,7 @@ static int validate_and_hash_collateral_output(tx_hash_builder_t* txHashBuilder,
                         uint16_t token_count = 0;
                         s_flist_node *node3 = asset_group->tokens;
                         while (node3 != NULL) {
-                            plan->pair_count += 2;
+                            plan->pair_count += UI_PAIRS_TOKEN;
                             token_count++;
                             node3 = node3->next;
                         }
@@ -1579,7 +1590,7 @@ static int validate_and_hash_total_collateral(tx_hash_builder_t* txHashBuilder, 
             TRACE("Total collateral security policy denied");
             return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW:
-            plan->pair_count += 1;
+            plan->pair_count += UI_PAIRS_TOTAL_COLLATERAL;
             break;
         case POLICY_HIDE:
             break;
@@ -1613,7 +1624,7 @@ static int validate_and_hash_reference_inputs(tx_hash_builder_t* txHashBuilder, 
                 TRACE("Reference input security policy denied");
                 return SWO_SECURITY_CONDITION_NOT_SATISFIED;
             case POLICY_SHOW:
-                plan->pair_count += 1;
+                plan->pair_count += UI_PAIRS_REFERENCE_INPUT;
                 break;
             case POLICY_HIDE:
                 break;
@@ -1654,14 +1665,14 @@ static int validate_and_hash_voting_procedures(tx_hash_builder_t* txHashBuilder,
             case POLICY_DENY:
                 return SWO_SECURITY_CONDITION_NOT_SATISFIED;
             case POLICY_SHOW: {
-                plan->pair_count++;
+                plan->pair_count += UI_PAIRS_VOTER;
                 s_flist_node *node2 = voter_votes->votes;
                 while (node2 != NULL) {
                     vote_node_t *vote_node = (vote_node_t *) node2;
                     const vote_item_t *vote_data = &vote_node->vote_data;
-                    plan->pair_count += 3;
+                    plan->pair_count += UI_PAIRS_VOTE;
                     if (vote_data->anchor.isIncluded) {
-                        plan->pair_count += 2;
+                        plan->pair_count += UI_PAIRS_ANCHOR;
                     }
                     node2 = node2->next;
                 }
@@ -1762,7 +1773,7 @@ static int validate_and_hash_treasury(tx_hash_builder_t* txHashBuilder, tx_ui_pl
         case POLICY_DENY:
             return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW:
-            plan->pair_count++;
+            plan->pair_count += UI_PAIRS_TREASURY;
             break;
         case POLICY_HIDE:
             break;
@@ -1788,7 +1799,7 @@ static int validate_and_hash_donation(tx_hash_builder_t* txHashBuilder, tx_ui_pl
         case POLICY_DENY:
             return SWO_SECURITY_CONDITION_NOT_SATISFIED;
         case POLICY_SHOW:
-            plan->pair_count++;
+            plan->pair_count += UI_PAIRS_DONATION;
             break;
         case POLICY_HIDE:
             break;
@@ -1892,7 +1903,7 @@ int tx_validate_and_compute_hash(tx_ui_plan_t* plan) {
         policyForSignTxDisplayTxHash(G_context.tx_info.transaction.txSigningMode);
     switch (tx_hash_policy) {
         case POLICY_SHOW:
-            plan->pair_count++;
+            plan->pair_count += UI_PAIRS_TX_HASH;
             break;
         case POLICY_HIDE:
             break;
