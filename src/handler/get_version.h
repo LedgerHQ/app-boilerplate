@@ -4,6 +4,7 @@
 
 #define APPVERSION_LEN 3
 
+//TODO: modify return in comment
 /**
  * Handler gor INS_GET_VERSION command. Send APDU response with version
  * of the application.

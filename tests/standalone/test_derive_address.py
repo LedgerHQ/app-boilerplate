@@ -40,6 +40,7 @@ def test_derive_address_byron(
     # Use the app interface instead of raw interface
     client = CommandSender(backend)
     
+    # TODO: check navigation instructions
     nav_inst = []
     valid_instr = []
     if device.is_nano:
@@ -84,6 +85,7 @@ def test_derive_address_byron_show(
 
     # Use the app interface instead of raw interface
     client = CommandSender(backend)
+    # TODO: check navigation instructions
     if device.is_nano:
         moves = []
         moves += [NavInsID.BOTH_CLICK] * 3

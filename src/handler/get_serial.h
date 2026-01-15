@@ -2,6 +2,7 @@
 
 #include "buffer.h"
 
+//TODO: modify return in comment
 /**
  * Handler for INS_GET_SERIAL command. Send APDU response with the device
  * serial number as provided by the BOLOS system call os_serial().

@@ -449,7 +449,7 @@ shelleyTestCasesWithConfirm = [
         AddressType.POINTER_KEY,
         "m/1852'/1815'/0'/0/1'",
         pointer_to_str(0, 7, 0),
-        nano_nav_confirm=nav_review_short,
+        nano_nav_confirm=nav_review,
         nano_nav_show=nav_review_short,
     ),
     DeriveAddressTestCase(
@@ -458,7 +458,7 @@ shelleyTestCasesWithConfirm = [
         AddressType.REWARD_KEY,
         "",
         "m/1852'/1815'/101'/2/1",
-        nano_nav_confirm=nav_review_short,
+        nano_nav_confirm=nav_review,
         nano_nav_show=nav_review_short,
     ),
     DeriveAddressTestCase(
@@ -467,7 +467,7 @@ shelleyTestCasesWithConfirm = [
         AddressType.REWARD_KEY,
         "",
         "m/1852'/1815'/0'/2/20000000",
-        nano_nav_confirm=nav_review_short,
+        nano_nav_confirm=nav_review,
         nano_nav_show=nav_review_short,
     ),
     DeriveAddressTestCase(
@@ -476,7 +476,7 @@ shelleyTestCasesWithConfirm = [
         AddressType.REWARD_KEY,
         "",
         "m/1852'/1815'/300'/2/0",
-        nano_nav_confirm=nav_review_short,
+        nano_nav_confirm=nav_review,
         nano_nav_show=nav_review_short,
     ),
 

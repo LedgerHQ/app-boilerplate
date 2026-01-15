@@ -1,3 +1,20 @@
+/*****************************************************************************
+ *   Ledger App Cardano.
+ *   (c) 2025 Vacuumlabs
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *****************************************************************************/
+
 #include <stdbool.h>  // bool
 #include <string.h>   // memset
 
@@ -17,12 +34,12 @@
 #include "opcert_types.h"
 #include "menu.h"
 #include "securityPolicy.h"
-#include "nbgl_screens.h"
 #include "derive_address.h"
 #include "memory/mem_utils.h"
 #include "ui_utils.h"
 #include "handler/derive_address.h"
 #include "ui_display_address_derivation.h"
+#include "tx_ui_helpers.h"
 /**
  * Cleanup dynamically allocated buffers
  */
@@ -49,13 +66,8 @@ static void derive_address_review_choice(bool confirm) {
 }
 
 static void respond_with_address_success(ins_derive_address_ctx_t *ctx) {
-    TRACE("respond_with_address_success");
-
     ctx->responseReadyMagic = 0;
-
-    // If buffer is used as a C-string elsewhere, consider '<' instead of '<='
     ASSERT(ctx->address.size <= sizeof(ctx->address.buffer));
-
     io_send_response_pointer(ctx->address.buffer, ctx->address.size, SWO_SUCCESS);
 }
 
@@ -72,163 +84,107 @@ static void derive_address_return_review_choice(bool confirm) {
     derive_address_buffer_cleanup();
 }
 
-typedef void ui_callback_fn_t();
-
-/* ========================== DISPLAY ADDRESS ========================== */
-// TODO: uncomment
-void respond_with_user_reject() {
-    // io_send_buf(ERR_REJECTED_BY_USER, NULL, 0);
-    //  Change to user reject
-    io_send_response_pointer(NULL, 0, SWO_UNKNOWN);
-    // ui_idle();
-}
-
-/* ========================== RETURN ADDRESS ========================== */
-
-static int prepare_address_info_pairs(const ins_derive_address_ctx_t *ctx) {
+static int prepare_address_ui_pairs(const addressParams_t *params) {
 #define PAYMENT_INFO_SIZE MAX(MAX_BECH32_STRING_LENGTH, MAX_BIP44_PATH_STRING_LENGTH)
+    ui_reset_error_status();
 
-    static char line1[30] = {0};
-    static char paymentInfo[PAYMENT_INFO_SIZE] = {0};
-    static char line2[30] = {0};
-    static char stakingInfo[120] = {0};
+    const bool isRewardAddress = (params->type == REWARD_KEY || params->type == REWARD_SCRIPT);
 
-    TRACE("type: %d\n", ctx->addressParams.type);
+    const bool isEnterpriseAddress =
+        (params->type == ENTERPRISE_KEY || params->type == ENTERPRISE_SCRIPT);
 
-    if (ctx->addressParams.type != REWARD_KEY && ctx->addressParams.type != REWARD_SCRIPT) {
-        ui_getPaymentInfoScreen(line1,
-                                SIZEOF(line1),
-                                paymentInfo,
-                                SIZEOF(paymentInfo),
-                                &ctx->addressParams);
-    }
-
-    ui_getStakingInfoScreen(line2,
-                            SIZEOF(line2),
-                            stakingInfo,
-                            SIZEOF(stakingInfo),
-                            &ctx->addressParams);
-
-    if (ctx->addressParams.type == REWARD_KEY || ctx->addressParams.type == REWARD_SCRIPT) {
+    if (isRewardAddress) {
         if (!ui_pairs_init(1)) {
             return -1;
         }
-
-        g_pairs[0].item = line2;
-        g_pairs[0].value = stakingInfo;
+        addStakingInfoUIPairs(params);
+    } else if (isEnterpriseAddress) {
+        if (!ui_pairs_init(1)) {
+            return -1;
+        }
+        addPaymentInfoUIPairs(params);
     } else {
+        TRACE("Adding both payment and staking info");
         if (!ui_pairs_init(2)) {
             return -1;
         }
-
-        g_pairs[0].item = line1;
-        g_pairs[0].value = paymentInfo;
-        g_pairs[1].item = line2;
-        g_pairs[1].value = stakingInfo;
+        addPaymentInfoUIPairs(params);
+        addStakingInfoUIPairs(params);
     }
 
     return 0;
 }
 
-static int ui_displayExportAddress() {
-#define PAYMENT_INFO_SIZE MAX(MAX_BECH32_STRING_LENGTH, MAX_BIP44_PATH_STRING_LENGTH)
-
+static void ui_displayExportAddress() {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
-    static char humanAddress[MAX_HUMAN_ADDRESS_SIZE] = {0};
-    ui_getAddressScreen(humanAddress, SIZEOF(humanAddress), ctx->address.buffer, ctx->address.size);
+    prepare_address_ui_pairs(&ctx->addressParams);
 
-    if (prepare_address_info_pairs(ctx) != 0) {
-        TRACE("Failed to initialize pairs");
-        derive_address_buffer_cleanup();
-        // TODO: check if code is appropriate here
-        send_swo_and_reset(SWO_BAD_STATE);
-    }
-    /*nbgl_useCaseReviewLight(TYPE_OPERATION,
-                            g_pairsList,
-                            &ICON_APP_CARDANO,
-                            "Derive address",
-                            NULL,
-                            "Address",
-                            derive_address_review_choice);*/
+    static char humanAddress[MAX_HUMAN_ADDRESS_SIZE] = {0};
+    format_address_human_readable(ctx->address.buffer,
+                                  ctx->address.size,
+                                  humanAddress,
+                                  SIZEOF(humanAddress));
+    // TODO: mismatch with old app
+    //- no warning banner for byron addresses
     nbgl_useCaseAddressReview(humanAddress,
                               g_pairsList,
                               &ICON_APP_CARDANO,
-                              "Confirm address",
+                              "Verify Cardano address",
                               NULL,
                               derive_address_review_choice);
-    return 0;
+    return;
 }
 
-static int ui_returnExportAddress() {
-#define PAYMENT_INFO_SIZE MAX(MAX_BECH32_STRING_LENGTH, MAX_BIP44_PATH_STRING_LENGTH)
-
+static void ui_returnExportAddress() {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
-    static char humanAddress[MAX_HUMAN_ADDRESS_SIZE] = {0};
-    ui_getAddressScreen(humanAddress, SIZEOF(humanAddress), ctx->address.buffer, ctx->address.size);
+    prepare_address_ui_pairs(&ctx->addressParams);
 
-    if (prepare_address_info_pairs(ctx) != 0) {
-        TRACE("Failed to initialize pairs");
-        derive_address_buffer_cleanup();
-        send_swo_and_reset(SWO_BAD_STATE);
-    }
-
-    nbgl_useCaseAddressReview(humanAddress,
-                              g_pairsList,
-                              &ICON_APP_CARDANO,
-                              "Confirm\n address export",
-                              NULL,
-                              derive_address_return_review_choice);
-    return 0;
+    // TODO: mismatch with old app
+    //- no warning banner for byron addresses
+    nbgl_useCaseReviewLight(TYPE_OPERATION,
+                            g_pairsList,
+                            &ICON_APP_CARDANO,
+                            "Export address",
+                            NULL,
+                            "Confirm\n address export",
+                            derive_address_return_review_choice);
+    return;
 }
 
-int deriveAddress_return_ui_runStep(void) {
+void deriveAddress_return_ui_runStep(void) {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
 
     TRACE("step %d", ctx->ui_step);
     ASSERT(ctx->responseReadyMagic == RESPONSE_READY_MAGIC);
 
     switch (ctx->ui_step) {
-        /*case RETURN_UI_STEP_WARNING:
-            ctx->ui_step = RETURN_UI_STEP_BEGIN;
-            ui_displayUnusualWarning(returnCallback);
-            // ui_displayUnusualWarning(returnCallback);
-            break;
-        */
-
         case RETURN_UI_STEP_BEGIN:
             ctx->ui_step = RETURN_UI_STEP_RESPOND;
-            return ui_returnExportAddress();
+            ui_returnExportAddress();
             break;
 
         case RETURN_UI_STEP_RESPOND:
-            TRACE("DIRECT RESPOND");
             respond_with_address_success(ctx);
             break;
 
         default:
             // TODO: check if status is appropiate
             send_swo_and_reset(SWO_BAD_STATE);
-            return -1;
             break;
     }
 
-    return 0;
+    return;
 }
 
-int deriveAddress_display_ui_runStep(void) {
+void deriveAddress_display_ui_runStep(void) {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
 
     ASSERT(ctx->responseReadyMagic == RESPONSE_READY_MAGIC);
 
     switch (ctx->ui_step) {
-        /*case DISPLAY_UI_STEP_WARNING:
-            ctx->ui_step = DISPLAY_UI_STEP_PAYMENT_INFO;
-            ui_displayUnusualWarning(displayCallback);
-            break;*/
-
         case DISPLAY_UI_STEP_BEGIN:
             ctx->ui_step = DISPLAY_UI_STEP_RESPOND;
-            return ui_displayExportAddress();
+            ui_displayExportAddress();
             break;
 
         case DISPLAY_UI_STEP_RESPOND:
@@ -238,39 +194,37 @@ int deriveAddress_display_ui_runStep(void) {
         default:
             // TODO: check if status is appropiate
             send_swo_and_reset(SWO_BAD_STATE);
-            return -1;
             break;
     }
 
-    return 0;
+    return;
 }
 
-int ui_deriveAddress_handleReturn(security_policy_t policy) {
+void ui_deriveAddress_handleReturn(security_policy_t policy) {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
     switch (policy) {
         case POLICY_SHOW:
             ctx->ui_step = RETURN_UI_STEP_BEGIN;
             break;
-
         case POLICY_HIDE:
             ctx->ui_step = RETURN_UI_STEP_RESPOND;
             break;
-
         default:
-            return -1;
+            break;
     }
-    return deriveAddress_return_ui_runStep();
+    deriveAddress_return_ui_runStep();
+    return;
 }
 
-int ui_deriveAddress_handleDisplay(security_policy_t policy) {
+void ui_deriveAddress_handleDisplay(security_policy_t policy) {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
     switch (policy) {
         case POLICY_SHOW:
             ctx->ui_step = DISPLAY_UI_STEP_BEGIN;
             break;
-
         default:
-            return -1;
+            break;
     }
-    return deriveAddress_display_ui_runStep();
+    deriveAddress_display_ui_runStep();
+    return;
 }

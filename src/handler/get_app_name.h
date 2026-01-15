@@ -6,6 +6,7 @@
 #define APPNAME_LEN (sizeof(APPNAME) - 1)
 #define MAX_APP_NAME_LENGTH 64
 
+//TODO: modify return in comment
 /**
  * Handler for INS_GET_APP_NAME command. Send APDU response with ASCII
  * encoded name of the application.

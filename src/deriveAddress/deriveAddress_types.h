@@ -11,9 +11,6 @@
 #define MAX_ADDRESS_SIZE              128
 #define MAX_HUMAN_ADDRESS_SIZE        150
 
-
-bool isValidStakingChoice(staking_data_source_t stakingDataSource);
-
 /**
  * Structure for derive address information context.
  */

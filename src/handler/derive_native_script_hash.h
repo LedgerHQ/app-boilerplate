@@ -26,6 +26,7 @@ typedef enum {
     UI_SCRIPT_FINISHED
 } ui_native_script_type;
 
+//TODO: comments
 /**
  * Handler for INS_DERIVE_NATIVE_SCRIPT_HASH command. Send APDU response with ASCII
  * encoded name of the application.

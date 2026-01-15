@@ -6,6 +6,7 @@
 
 #include "buffer.h"
 
+//TODO: modify return in comment
 /**
  * Handler for INS_GET_PUBLIC_KEY command. If successfully parse BIP32 path,
  * derive public key/chain code and send APDU response.

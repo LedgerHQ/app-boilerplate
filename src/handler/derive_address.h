@@ -24,15 +24,14 @@ enum {
     RETURN_BAD_PARSE = -2,
 };
 
-
+//TODO: comments
 /**
  * Handler for INS_DERIVE_ADDRESS command. Send APDU response with ASCII
  * encoded name of the application.
  *
  * @see variable APPNAME in Makefile.
- *
- * @return zero or positive integer if success, negative integer otherwise.
+ * @param cdata
  *
  */
-int handler_derive_address(buffer_t *cdata, uint8_t display_type);
+void handler_derive_address(buffer_t *cdata, uint8_t display_type);
 
