@@ -46,4 +46,7 @@ typedef enum {
     SWO_TX_PARSING_FAIL_INCLUSION_FLAG = 0x6B39,      // optional field flag error
     SWO_TX_PARSING_FAIL_BUFFER_NOT_FULLY_CONSUMED = 0x6B3A,  // extra data in buffer
     SWO_TX_PARSING_FAIL_CANONICAL_ORDER = 0x6B3B,     // CBOR canonical ordering
+    // TODO we might want to support non-canonical ordering,
+    // TODO but checking for uniqueness is somewhat hard
+    // TODO a quadratic algorithm with cbor serialization computed on demand is doable
 } cardano_status_word_t;

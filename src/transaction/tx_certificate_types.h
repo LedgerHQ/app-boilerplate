@@ -23,6 +23,7 @@ typedef enum {
     CERTIFICATE_DREP_REGISTRATION = 16,
     CERTIFICATE_DREP_DEREGISTRATION = 17,
     CERTIFICATE_DREP_UPDATE = 18,
+    // TODO possibly add support for combined certificates?
 } certificate_type_t;
 
 // Relay definitions used by pool registration certificates

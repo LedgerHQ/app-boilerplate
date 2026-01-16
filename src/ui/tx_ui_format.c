@@ -1208,6 +1208,8 @@ int ui_prepare_transaction_review(void) {
         ui_pairs_cleanup();
         ui_clear_warnings();
         if (status_requires_streaming(status)) {
+            // TODO we can add range to ui_build_pairs_and_warnings, but then maybe deallocation should be done more carefully
+            // TODO so that the range can be applied on subsequent runs of ui_build_pairs_and_warnings
             LEDGER_ASSERT(false, "Need streaming UI but not implemented (status=0x%04x)", status);
         }
         return status;

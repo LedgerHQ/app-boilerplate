@@ -75,7 +75,6 @@ static address_type_t getDestinationAddressType(const tx_output_destination_t* d
 
 
 
-// Get extended public key and return it to the host within bulk key export
 static inline void mark_unusual_key_derivation(warning_bits_t* warnings, const bip44_path_t* path) {
     LEDGER_ASSERT(warnings != NULL, "NULL warnings pointer");
     LEDGER_ASSERT(path != NULL, "NULL path");
