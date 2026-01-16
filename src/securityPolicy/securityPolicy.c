@@ -178,12 +178,15 @@ security_policy_t policyForGetExtendedPublicKey(const bip44_path_t* path, warnin
 // common policy for DENY and WARN cases in returnDeriveAddress and showDeriveAddress
 // successPolicy is returned if no DENY or WARN applies
 static security_policy_t _policyForDeriveAddress(const addressParams_t* addressParams,
-                                                 security_policy_t successPolicy) {
+                                                 security_policy_t successPolicy, warning_bits_t* warnings) {
     DENY_UNLESS(isValidAddressParams(addressParams));
 
     switch (addressParams->type) {
         case BASE_PAYMENT_KEY_STAKE_KEY:
             // unusual path
+            if (!bip44_isPathReasonable(&addressParams->paymentKeyPath)) {
+                mark_unusual_key_derivation(warnings, &addressParams->paymentKeyPath);
+            }
             SHOW_UNLESS(bip44_isPathReasonable(&addressParams->paymentKeyPath));
             SHOW_IF(addressParams->stakingDataSource == STAKING_KEY_PATH &&
                     !bip44_isPathReasonable(&addressParams->stakingKeyPath));
@@ -194,6 +197,9 @@ static security_policy_t _policyForDeriveAddress(const addressParams_t* addressP
         case ENTERPRISE_KEY:
         case BYRON:
             // unusual path
+            if (!bip44_isPathReasonable(&addressParams->paymentKeyPath)) {
+                mark_unusual_key_derivation(warnings, &addressParams->paymentKeyPath);
+            }
             SHOW_UNLESS(bip44_isPathReasonable(&addressParams->paymentKeyPath));
             break;
 
@@ -222,15 +228,15 @@ static security_policy_t _policyForDeriveAddress(const addressParams_t* addressP
 }
 
 // Derive address and return it to the host
-security_policy_t policyForReturnDeriveAddress(const addressParams_t* addressParams) {
+security_policy_t policyForReturnDeriveAddress(const addressParams_t* addressParams, warning_bits_t* warnings) {
     // in expert mode, do not export addresses without permission
     security_policy_t policy =
         is_expert_mode() ? POLICY_SHOW : POLICY_HIDE;
 
-    return _policyForDeriveAddress(addressParams, policy);
+    return _policyForDeriveAddress(addressParams, policy, warnings);
 }
 
-security_policy_t policyForDeriveNativeScriptHashDevicePubkey(const bip44_path_t *path) {
+security_policy_t policyForDeriveNativeScriptHashDevicePubkey(const bip44_path_t *path, warning_bits_t* warnings) {
     // TODO: expert mode check ok?
     // in expert mode, do not derive script hash without permission
     security_policy_t policy =
@@ -241,8 +247,8 @@ security_policy_t policyForDeriveNativeScriptHashDevicePubkey(const bip44_path_t
 }
 
 // Derive address and show it to the user
-security_policy_t policyForShowDeriveAddress(const addressParams_t* addressParams) {
-    return _policyForDeriveAddress(addressParams, POLICY_SHOW);
+security_policy_t policyForShowDeriveAddress(const addressParams_t* addressParams, warning_bits_t* warnings) {
+    return _policyForDeriveAddress(addressParams, POLICY_SHOW, warnings);
 }
 
 // true iff network is the standard mainnet or testnet

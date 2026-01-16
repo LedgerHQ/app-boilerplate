@@ -29,10 +29,10 @@ security_policy_t policyForDerivePrivateKey(const bip44_path_t* path);
 
 security_policy_t policyForGetExtendedPublicKey(const bip44_path_t* path, warning_bits_t* warnings);
 
-security_policy_t policyForShowDeriveAddress(const addressParams_t* addressParams);
-security_policy_t policyForReturnDeriveAddress(const addressParams_t* addressParams);
+security_policy_t policyForShowDeriveAddress(const addressParams_t* addressParams, warning_bits_t* warnings);
+security_policy_t policyForReturnDeriveAddress(const addressParams_t* addressParams, warning_bits_t* warnings);
 
-security_policy_t policyForDeriveNativeScriptHashDevicePubkey(const bip44_path_t *path);
+security_policy_t policyForDeriveNativeScriptHashDevicePubkey(const bip44_path_t *path, warning_bits_t* warnings);
 
 security_policy_t policyForSignTxFee(sign_tx_signingmode_t txSigningMode,
                                      uint64_t fee,
