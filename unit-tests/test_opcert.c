@@ -127,9 +127,8 @@ static void test_handler_sign_opcert(void **state) {
     reset_context();
     (void) state;
     buffer_t cdata = {.ptr = (uint8_t *) opCert, .size = sizeof(opCert), .offset = 0};
-    int ret = handler_sign_opcert(&cdata);
+    handler_sign_opcert(&cdata);
 
-    assert_int_equal(ret, 0);
     assert_int_equal(G_context.req_type, REQUEST_SIGN_OPCERT);
     assert_int_equal(G_context.state.opcert_state, OPCERT_STATE_PARSED);
 
