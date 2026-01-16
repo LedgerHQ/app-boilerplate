@@ -37,7 +37,6 @@
 #include "sign_tx.h"
 #include "sign_opcert.h"
 #include "derive_address.h"
-#include "derive_native_script_hash.h"
 
 #ifdef DEBUG
 #include "debug_settings.h"
@@ -57,8 +56,6 @@ static command_e req_type_to_instruction(request_type_e req_type) {
             return INS_SIGN_TX;
         case REQUEST_SIGN_OPCERT:
             return INS_SIGN_OPCERT;
-        case REQUEST_DERIVE_NATIVE_SCRIPT_HASH:
-            return INS_DERIVE_NATIVE_SCRIPT_HASH;
         default:
             LEDGER_ASSERT(false, "Unknown request type");
             return INS_GET_VERSION;  // Unreachable
@@ -172,32 +169,6 @@ void apdu_dispatcher(const command_t *cmd) {
             deriveaddress_buf.offset = 0;
             
             handler_derive_address(&deriveaddress_buf, cmd->p1);
-            return;
-
-        case INS_DERIVE_NATIVE_SCRIPT_HASH:
-            // P2 must be unused for all transaction APDU types
-            if (cmd->p2 != P2_UNUSED) {
-                io_send_sw(SWO_INCORRECT_P1_P2);
-                return;
-            }
-            //TODO: validate P1
-            // Validate P1 value
-            /*if(cmd->p1 != STAGE_COMPLEX_SCRIPT_START &&
-               cmd->p1 != STAGE_ADD_SIMPLE_SCRIPT &&
-               cmd->p1 != STAGE_WHOLE_NATIVE_SCRIPT_FINISH) {
-                io_send_sw(SWO_INCORRECT_P1_P2);
-                return;
-            }*/
-
-            if (!cmd->data) {
-                io_send_sw(SWO_WRONG_DATA_LENGTH);
-                return;
-            }
-            buffer_t derivescript_buf = {0};
-            derivescript_buf.ptr = cmd->data;
-            derivescript_buf.size = cmd->lc;
-            derivescript_buf.offset = 0;
-            handler_derive_native_script_hash(&derivescript_buf, cmd->p1);
             return;
 
         case INS_SIGN_TX:
