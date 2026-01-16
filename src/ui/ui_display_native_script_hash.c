@@ -40,9 +40,10 @@
 #include "textUtils.h"
 #include "ui_display_native_script_hash.h"
 
-/**
- * Cleanup dynamically allocated buffers
- */
+/*
+//
+// Cleanup dynamically allocated buffers
+//
 static void derive_native_script_hash_buffer_cleanup(void) {
     // Cleanup all tracked allocations (all string buffers and warning structure)
     ui_cleanup_tracked_allocations();
@@ -86,6 +87,13 @@ static void derive_native_script_hash_review_continue_last(bool confirm) {
         nbgl_useCaseStatus("Native script hash\nrejected", false, ui_menu_main);
         send_swo_and_reset(SWO_CONDITIONS_NOT_SATISFIED);
     }
+}
+
+void ui_check_position(){
+    ins_derive_native_script_hash_ctx_t *ctx = &G_context.derive_native_script_hash_info;
+    uint32_t position =
+            ctx->complexScripts[ctx->level].totalScripts - ctx->complexScripts[ctx->level].remainingScripts + 1;
+    TRACE("Script position: %d ", position);
 }
 
 int ui_display_native_script_hash(security_policy_t securityPolicy) {
@@ -318,4 +326,4 @@ int ui_display_native_script_hash(security_policy_t securityPolicy) {
         }
     }
     return 0;
-}
+}*/

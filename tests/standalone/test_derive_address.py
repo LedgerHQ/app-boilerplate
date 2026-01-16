@@ -20,7 +20,7 @@ from application_client.command_sender import CommandSender
 from application_client.command_builder import P1Type
 
 from standalone.input_files.derive_address import DeriveAddressTestCase
-from standalone.input_files.derive_address import byronTestCases, rejectTestCases
+from standalone.input_files.derive_address import byronTestCases
 from standalone.input_files.derive_address import (
     shelleyTestCasesNoConfirm,
     shelleyTestCasesWithConfirm,

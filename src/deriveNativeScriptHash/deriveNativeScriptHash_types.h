@@ -15,6 +15,12 @@ typedef enum {
     NATIVE_SCRIPT_INVALID_HEREAFTER = 5,
 } native_script_type;
 
+typedef struct {
+    uint32_t totalScripts;
+    uint32_t remainingScripts;
+} complex_native_script_t;
+
+
 typedef enum {
     NATIVE_SCRIPT_HASH_BUILDER_SCRIPT = 100,
     NATIVE_SCRIPT_HASH_BUILDER_FINISHED = 200,
@@ -26,11 +32,6 @@ typedef struct {
     native_script_hash_builder_state_t state;
     blake2b_224_context_t nativeScriptHash;
 } native_script_hash_builder_t;
-
-typedef struct {
-    uint32_t totalScripts;
-    uint32_t remainingScripts;
-} complex_native_script_t;
 
 typedef union {
     uint32_t requiredScripts;

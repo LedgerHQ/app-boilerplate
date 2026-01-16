@@ -32,38 +32,48 @@ void handler_derive_address(buffer_t *cdata, uint8_t display_type) {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
     ctx->responseReadyMagic = 0;
     bool is_parsed = buffer_parseAddressParams(cdata, &ctx->addressParams);
+    TRACE("Parsed address params: %d", is_parsed);
     if (!is_parsed) {
         send_swo_and_reset(SWO_BAD_STATE);
         return;
     }
 
+    TRACE("CHECK DISPLAY TYPE: %d", display_type);
     switch (display_type) {
         case P1_RETURN: {
-            security_policy_t policy = policyForReturnDeriveAddress(&ctx->addressParams);
             TRACE("RETURN");
+            warning_bits_t warnings = 0;
+            warning_bits_init(&warnings);
+            security_policy_t policy = policyForReturnDeriveAddress(&ctx->addressParams, &warnings);
             TRACE("Policy: %d", (int) policy);
             if (policy == POLICY_DENY){
+                TRACE("Policy denied");
                 LEDGER_ASSERT(false, "POLICY_DENY");
                 return;
             }
             prepareResponse();
-            ui_deriveAddress_handleReturn(policy);
-            return;
+            ui_deriveAddress_handleReturn(policy, warnings);
+            break;
         }
         case P1_DISPLAY: {
-            security_policy_t policy = policyForShowDeriveAddress(&ctx->addressParams);
             TRACE("DISPLAY");
+            warning_bits_t warnings = 0;
+            warning_bits_init(&warnings);
+            security_policy_t policy = policyForShowDeriveAddress(&ctx->addressParams, &warnings);
             TRACE("Policy: %d", (int) policy);
             if (policy == POLICY_DENY){
+                TRACE("Policy denied");
                 LEDGER_ASSERT(false, "POLICY_DENY");
                 return;
             }
             prepareResponse();
-            ui_deriveAddress_handleDisplay(policy);
-            return;
+            ui_deriveAddress_handleDisplay(policy, warnings);
+            break;
         }    
         default:
+            TRACE("Bad display type");
             LEDGER_ASSERT(false, "display type should be handled before");
-            return;
+            break;
     }
+    return;
 }

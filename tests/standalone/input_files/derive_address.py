@@ -141,11 +141,15 @@ rejectTestCases = [
 
 ]
 
-nav_review = [NavInsID.USE_CASE_REVIEW_TAP] * 2 + [
+nav_review_2 = [NavInsID.USE_CASE_REVIEW_TAP] * 2 + [
     NavInsID.USE_CASE_ADDRESS_CONFIRMATION_TAP
 ]
 
-nav_review_short = [NavInsID.USE_CASE_REVIEW_TAP] + [
+nav_review_3 = [NavInsID.USE_CASE_REVIEW_TAP] * 3 + [
+    NavInsID.USE_CASE_ADDRESS_CONFIRMATION_TAP
+]
+
+nav_review_1 = [NavInsID.USE_CASE_REVIEW_TAP] + [
     NavInsID.USE_CASE_ADDRESS_CONFIRMATION_TAP
 ]
 
@@ -157,7 +161,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.BASE_PAYMENT_KEY_STAKE_KEY,
         "m/1852'/1815'/0'/0/1",
         "m/1852'/1815'/0'/2/0",
-        nano_nav_show=nav_review,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "base address path/path 2",
@@ -165,7 +169,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.BASE_PAYMENT_KEY_STAKE_KEY,
         "m/1852'/1815'/0'/0/1",
         "m/1852'/1815'/0'/2/0",
-        nano_nav_show=nav_review,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "base address path/path multidelegation stake key usual",
@@ -173,7 +177,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.BASE_PAYMENT_KEY_STAKE_KEY,
         "m/1852'/1815'/0'/0/1",
         "m/1852'/1815'/0'/2/60",
-        nano_nav_show=nav_review,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "base address path/keyHash 1",
@@ -181,7 +185,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.BASE_PAYMENT_KEY_STAKE_KEY,
         "m/1852'/1815'/0'/0/1",
         "1d227aefa4b773149170885aadba30aab3127cc611ddbc4999def61c",
-        nano_nav_show=nav_review,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "base address path/keyHash 2",
@@ -189,7 +193,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.BASE_PAYMENT_KEY_STAKE_KEY,
         "m/1852'/1815'/0'/0/1",
         "122a946b9ad3d2ddf029d3a828f0468aece76895f15c9efbd69b4277",
-        nano_nav_show=nav_review,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "base address scriptHash/path",
@@ -197,7 +201,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.BASE_PAYMENT_SCRIPT_STAKE_KEY,
         "122a946b9ad3d2ddf029d3a828f0468aece76895f15c9efbd69b4277",
         "m/1852'/1815'/0'/2/0",
-        nano_nav_show=nav_review,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "base address scriptHash/path multidelegation",
@@ -205,7 +209,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.BASE_PAYMENT_SCRIPT_STAKE_KEY,
         "122a946b9ad3d2ddf029d3a828f0468aece76895f15c9efbd69b4277",
         "m/1852'/1815'/0'/2/3",
-        nano_nav_show=nav_review,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "base address path/scriptHash",
@@ -213,7 +217,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.BASE_PAYMENT_KEY_STAKE_SCRIPT,
         "m/1852'/1815'/0'/0/1",
         "122a946b9ad3d2ddf029d3a828f0468aece76895f15c9efbd69b4277",
-        nano_nav_show=nav_review,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "base address scriptHash/scriptHash",
@@ -221,35 +225,35 @@ shelleyTestCasesNoConfirm = [
         AddressType.BASE_PAYMENT_SCRIPT_STAKE_SCRIPT,
         "122a946b9ad3d2ddf029d3a828f0468aece76895f15c9efbd69b4277",
         "122a946b9ad3d2ddf029d3a828f0468aece76895f15c9efbd69b4277",
-        nano_nav_show=nav_review,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "enterprise path 1",
         Testnet,
         AddressType.ENTERPRISE_KEY,
         "m/1852'/1815'/0'/0/1",
-        nano_nav_show=nav_review_short,
+        nano_nav_show=nav_review_1,
     ),
     DeriveAddressTestCase(
         "enterprise path 2",
         FakeNet,
         AddressType.ENTERPRISE_KEY,
         "m/1852'/1815'/0'/0/1",
-        nano_nav_show=nav_review_short,
+        nano_nav_show=nav_review_1,
     ),
     DeriveAddressTestCase(
         "enterprise script 1",
         Testnet,
         AddressType.ENTERPRISE_SCRIPT,
         "122a946b9ad3d2ddf029d3a828f0468aece76895f15c9efbd69b4277",
-        nano_nav_show=nav_review,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "enterprise script 2",
         FakeNet,
         AddressType.ENTERPRISE_SCRIPT,
         "122a946b9ad3d2ddf029d3a828f0468aece76895f15c9efbd69b4277",
-        nano_nav_show=nav_review,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "pointer path 1",
@@ -257,7 +261,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.POINTER_KEY,
         "m/1852'/1815'/0'/0/1",
         pointer_to_str(1, 2, 3),
-        nano_nav_show=nav_review_short,
+        nano_nav_show=nav_review_1,
     ),
     DeriveAddressTestCase(
         "pointer path 2",
@@ -265,7 +269,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.POINTER_KEY,
         "m/1852'/1815'/0'/0/1",
         pointer_to_str(24157, 177, 42),
-        nano_nav_show=nav_review_short,
+        nano_nav_show=nav_review_1,
     ),
     DeriveAddressTestCase(
         "pointer path 3",
@@ -273,7 +277,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.POINTER_KEY,
         "m/1852'/1815'/0'/0/1",
         pointer_to_str(0, 0, 0),
-        nano_nav_show=nav_review_short,
+        nano_nav_show=nav_review_1,
     ),
     DeriveAddressTestCase(
         "pointer script 1",
@@ -281,7 +285,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.POINTER_SCRIPT,
         "122a946b9ad3d2ddf029d3a828f0468aece76895f15c9efbd69b4277",
         pointer_to_str(1, 2, 3),
-        nano_nav_show=nav_review,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "pointer script 2",
@@ -289,7 +293,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.POINTER_SCRIPT,
         "122a946b9ad3d2ddf029d3a828f0468aece76895f15c9efbd69b4277",
         pointer_to_str(24157, 177, 42),
-        nano_nav_show=nav_review,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "pointer script 3",
@@ -297,7 +301,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.POINTER_SCRIPT,
         "122a946b9ad3d2ddf029d3a828f0468aece76895f15c9efbd69b4277",
         pointer_to_str(0, 0, 0),
-        nano_nav_show=nav_review,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "reward path 1",
@@ -305,7 +309,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.REWARD_KEY,
         "",
         "m/1852'/1815'/0'/2/0",
-        nano_nav_show=nav_review_short,
+        nano_nav_show=nav_review_1,
     ),
     DeriveAddressTestCase(
         "reward path 2",
@@ -313,7 +317,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.REWARD_KEY,
         "",
         "m/1852'/1815'/0'/2/0",
-        nano_nav_show=nav_review_short,
+        nano_nav_show=nav_review_1,
     ),
     DeriveAddressTestCase(
         "reward multidelegation usual",
@@ -321,7 +325,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.REWARD_KEY,
         "",
         "m/1852'/1815'/0'/2/1",
-        nano_nav_show=nav_review_short,
+        nano_nav_show=nav_review_1,
     ),
     DeriveAddressTestCase(
         "reward script 1",
@@ -329,7 +333,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.REWARD_SCRIPT,
         "",
         "122a946b9ad3d2ddf029d3a828f0468aece76895f15c9efbd69b4277",
-        nano_nav_show=nav_review_short,
+        nano_nav_show=nav_review_1,
     ),
     DeriveAddressTestCase(
         "reward script 2",
@@ -337,7 +341,7 @@ shelleyTestCasesNoConfirm = [
         AddressType.REWARD_SCRIPT,
         "",
         "122a946b9ad3d2ddf029d3a828f0468aece76895f15c9efbd69b4277",
-        nano_nav_show=nav_review_short,
+        nano_nav_show=nav_review_1,
     ),
 
 ]
@@ -350,8 +354,8 @@ shelleyTestCasesWithConfirm = [
         AddressType.BASE_PAYMENT_KEY_STAKE_KEY,
         "m/1852'/1815'/101'/0/1",
         "m/1852'/1815'/0'/2/0",
-        nano_nav_confirm=nav_review,
-        nano_nav_show=nav_review,
+        nano_nav_confirm=nav_review_2,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "base address path/path unusual spending path address index",
@@ -359,8 +363,8 @@ shelleyTestCasesWithConfirm = [
         AddressType.BASE_PAYMENT_KEY_STAKE_KEY,
         "m/1852'/1815'/1'/0/1000001",
         "m/1852'/1815'/0'/2/0",
-        nano_nav_confirm=nav_review,
-        nano_nav_show=nav_review,
+        nano_nav_confirm=nav_review_2,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "base address path/path unusual staking path account",
@@ -368,8 +372,8 @@ shelleyTestCasesWithConfirm = [
         AddressType.BASE_PAYMENT_KEY_STAKE_KEY,
         "m/1852'/1815'/10'/0/4",
         "m/1852'/1815'/101'/2/0",
-        nano_nav_confirm=nav_review,
-        nano_nav_show=nav_review,
+        nano_nav_confirm=nav_review_2,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "base address path/path multidelegation stake key unusual account",
@@ -377,8 +381,8 @@ shelleyTestCasesWithConfirm = [
         AddressType.BASE_PAYMENT_KEY_STAKE_KEY,
         "m/1852'/1815'/0'/0/1",
         "m/1852'/1815'/101'/2/60",
-        nano_nav_confirm=nav_review,
-        nano_nav_show=nav_review,
+        nano_nav_confirm=nav_review_2,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "base address path/path multidelegation stake key unusual index",
@@ -386,8 +390,8 @@ shelleyTestCasesWithConfirm = [
         AddressType.BASE_PAYMENT_KEY_STAKE_KEY,
         "m/1852'/1815'/0'/0/1",
         "m/1852'/1815'/0'/2/1000001",
-        nano_nav_confirm=nav_review,
-        nano_nav_show=nav_review,
+        nano_nav_confirm=nav_review_2,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "base address path/keyHash unusual account",
@@ -395,8 +399,8 @@ shelleyTestCasesWithConfirm = [
         AddressType.BASE_PAYMENT_KEY_STAKE_KEY,
         "m/1852'/1815'/101'/0/1",
         "1d227aefa4b773149170885aadba30aab3127cc611ddbc4999def61c",
-        nano_nav_confirm=nav_review,
-        nano_nav_show=nav_review,
+        nano_nav_confirm=nav_review_2,
+        nano_nav_show=nav_review_3,
     ),
     DeriveAddressTestCase(
         "base address path/keyHash unusual address index",
@@ -404,8 +408,8 @@ shelleyTestCasesWithConfirm = [
         AddressType.BASE_PAYMENT_KEY_STAKE_KEY,
         "m/1852'/1815'/0'/0/1'",
         "1d227aefa4b773149170885aadba30aab3127cc611ddbc4999def61c",
-        nano_nav_confirm=nav_review,
-        nano_nav_show=nav_review,
+        nano_nav_confirm=nav_review_2,
+        nano_nav_show=nav_review_3,
     ),
     DeriveAddressTestCase(
         "base address scriptHash/path unusual account",
@@ -413,8 +417,8 @@ shelleyTestCasesWithConfirm = [
         AddressType.BASE_PAYMENT_SCRIPT_STAKE_KEY,
         "122a946b9ad3d2ddf029d3a828f0468aece76895f15c9efbd69b4277",
         "m/1852'/1815'/200'/2/0",
-        nano_nav_confirm=nav_review,
-        nano_nav_show=nav_review,
+        nano_nav_confirm=nav_review_2,
+        nano_nav_show=nav_review_3,
     ),
     DeriveAddressTestCase(
         "base address path/scriptHash unusual account",
@@ -422,8 +426,8 @@ shelleyTestCasesWithConfirm = [
         AddressType.BASE_PAYMENT_KEY_STAKE_SCRIPT,
         "m/1852'/1815'/101'/0/1",
         "122a946b9ad3d2ddf029d3a828f0468aece76895f15c9efbd69b4277",
-        nano_nav_confirm=nav_review,
-        nano_nav_show=nav_review,
+        nano_nav_confirm=nav_review_2,
+        nano_nav_show=nav_review_3,
     ),
     DeriveAddressTestCase(
         "base address path/scriptHash unusual address index",
@@ -431,8 +435,8 @@ shelleyTestCasesWithConfirm = [
         AddressType.BASE_PAYMENT_KEY_STAKE_SCRIPT,
         "m/1852'/1815'/0'/0/1'",
         "122a946b9ad3d2ddf029d3a828f0468aece76895f15c9efbd69b4277",
-        nano_nav_confirm=nav_review,
-        nano_nav_show=nav_review,
+        nano_nav_confirm=nav_review_2,
+        nano_nav_show=nav_review_3,
     ),
     DeriveAddressTestCase(
         "pointer address unusual account",
@@ -440,8 +444,8 @@ shelleyTestCasesWithConfirm = [
         AddressType.POINTER_KEY,
         "m/1852'/1815'/1000'/0/1",
         pointer_to_str(1, 0, 0),
-        nano_nav_confirm=nav_review,
-        nano_nav_show=nav_review,
+        nano_nav_confirm=nav_review_2,
+        nano_nav_show=nav_review_3,
     ),
     DeriveAddressTestCase(
         "pointer address unusual address index",
@@ -449,8 +453,8 @@ shelleyTestCasesWithConfirm = [
         AddressType.POINTER_KEY,
         "m/1852'/1815'/0'/0/1'",
         pointer_to_str(0, 7, 0),
-        nano_nav_confirm=nav_review,
-        nano_nav_show=nav_review_short,
+        nano_nav_confirm=nav_review_2,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "reward multidelegation unusual account",
@@ -458,8 +462,8 @@ shelleyTestCasesWithConfirm = [
         AddressType.REWARD_KEY,
         "",
         "m/1852'/1815'/101'/2/1",
-        nano_nav_confirm=nav_review,
-        nano_nav_show=nav_review_short,
+        nano_nav_confirm=nav_review_2,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "reward multidelegation unusual index",
@@ -467,8 +471,8 @@ shelleyTestCasesWithConfirm = [
         AddressType.REWARD_KEY,
         "",
         "m/1852'/1815'/0'/2/20000000",
-        nano_nav_confirm=nav_review,
-        nano_nav_show=nav_review_short,
+        nano_nav_confirm=nav_review_2,
+        nano_nav_show=nav_review_2,
     ),
     DeriveAddressTestCase(
         "reward path unusual account",
@@ -476,8 +480,8 @@ shelleyTestCasesWithConfirm = [
         AddressType.REWARD_KEY,
         "",
         "m/1852'/1815'/300'/2/0",
-        nano_nav_confirm=nav_review,
-        nano_nav_show=nav_review_short,
+        nano_nav_confirm=nav_review_2,
+        nano_nav_show=nav_review_2,
     ),
 
 ]

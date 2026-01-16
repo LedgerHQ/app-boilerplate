@@ -1,5 +1,16 @@
 #pragma once
 
+typedef enum {
+    UI_SCRIPT_PUBKEY_PATH = 0,  // aka DEVICE_OWNED
+    UI_SCRIPT_PUBKEY_HASH,      // aka THIRD_PARTY
+    UI_SCRIPT_ALL,
+    UI_SCRIPT_ANY,
+    UI_SCRIPT_N_OF_K,
+    UI_SCRIPT_INVALID_BEFORE,
+    UI_SCRIPT_INVALID_HEREAFTER,
+} ui_native_script_type;
+
+
 #include "securityPolicy.h"
 //TODO: add warning bits
 /**

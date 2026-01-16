@@ -84,40 +84,64 @@ static void derive_address_return_review_choice(bool confirm) {
     derive_address_buffer_cleanup();
 }
 
-static int prepare_address_ui_pairs(const addressParams_t *params) {
+// TODO: verify that warning_bits_t requires one extra UI pair
+static bool prepare_address_ui_pairs(
+    const addressParams_t *params,
+    warning_bits_t warnings
+) {
+    const bool hasWarning = (warnings != 0);
+
 #define PAYMENT_INFO_SIZE MAX(MAX_BECH32_STRING_LENGTH, MAX_BIP44_PATH_STRING_LENGTH)
+
     ui_reset_error_status();
 
-    const bool isRewardAddress = (params->type == REWARD_KEY || params->type == REWARD_SCRIPT);
+    const bool isRewardAddress =
+        (params->type == REWARD_KEY || params->type == REWARD_SCRIPT);
 
     const bool isEnterpriseAddress =
         (params->type == ENTERPRISE_KEY || params->type == ENTERPRISE_SCRIPT);
 
+    // Calculate number of UI pairs
+    int pairCount = isRewardAddress ? 1 : 2;
+    if (hasWarning) {
+        pairCount += 1;
+    }
+
+    if (!ui_pairs_init(pairCount)) {
+        return false;
+    }
+
+    // Add warning banner first, if needed
+    if (hasWarning) {
+        TRACE("Adding warning banner");
+        UI_ADD_STATIC(
+            UI_STATIC_LABEL("Warning:"),
+            UI_STATIC_LABEL("Unusual request\nProceed with care")
+        );
+    }
+
+    // Add address-specific UI pairs
     if (isRewardAddress) {
-        if (!ui_pairs_init(1)) {
-            return -1;
-        }
         addStakingInfoUIPairs(params);
     } else if (isEnterpriseAddress) {
-        if (!ui_pairs_init(1)) {
-            return -1;
-        }
         addPaymentInfoUIPairs(params);
+        UI_ADD_STATIC(
+            UI_STATIC_LABEL("Warning:"),
+            UI_STATIC_LABEL("No staking rewards")
+        );
     } else {
         TRACE("Adding both payment and staking info");
-        if (!ui_pairs_init(2)) {
-            return -1;
-        }
         addPaymentInfoUIPairs(params);
         addStakingInfoUIPairs(params);
     }
 
-    return 0;
+    return true;
 }
 
-static void ui_displayExportAddress() {
+
+static void ui_displayExportAddress(warning_bits_t warnings) {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
-    prepare_address_ui_pairs(&ctx->addressParams);
+    prepare_address_ui_pairs(&ctx->addressParams, warnings);
 
     static char humanAddress[MAX_HUMAN_ADDRESS_SIZE] = {0};
     format_address_human_readable(ctx->address.buffer,
@@ -135,9 +159,9 @@ static void ui_displayExportAddress() {
     return;
 }
 
-static void ui_returnExportAddress() {
+static void ui_returnExportAddress(warning_bits_t warnings) {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
-    prepare_address_ui_pairs(&ctx->addressParams);
+    prepare_address_ui_pairs(&ctx->addressParams, warnings);
 
     // TODO: mismatch with old app
     //- no warning banner for byron addresses
@@ -151,7 +175,7 @@ static void ui_returnExportAddress() {
     return;
 }
 
-void deriveAddress_return_ui_runStep(void) {
+void deriveAddress_return_ui_runStep(warning_bits_t warnings) {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
 
     TRACE("step %d", ctx->ui_step);
@@ -160,7 +184,7 @@ void deriveAddress_return_ui_runStep(void) {
     switch (ctx->ui_step) {
         case RETURN_UI_STEP_BEGIN:
             ctx->ui_step = RETURN_UI_STEP_RESPOND;
-            ui_returnExportAddress();
+            ui_returnExportAddress(warnings);
             break;
 
         case RETURN_UI_STEP_RESPOND:
@@ -176,7 +200,7 @@ void deriveAddress_return_ui_runStep(void) {
     return;
 }
 
-void deriveAddress_display_ui_runStep(void) {
+void deriveAddress_display_ui_runStep(warning_bits_t warnings) {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
 
     ASSERT(ctx->responseReadyMagic == RESPONSE_READY_MAGIC);
@@ -184,7 +208,7 @@ void deriveAddress_display_ui_runStep(void) {
     switch (ctx->ui_step) {
         case DISPLAY_UI_STEP_BEGIN:
             ctx->ui_step = DISPLAY_UI_STEP_RESPOND;
-            ui_displayExportAddress();
+            ui_displayExportAddress(warnings);
             break;
 
         case DISPLAY_UI_STEP_RESPOND:
@@ -200,7 +224,7 @@ void deriveAddress_display_ui_runStep(void) {
     return;
 }
 
-void ui_deriveAddress_handleReturn(security_policy_t policy) {
+void ui_deriveAddress_handleReturn(security_policy_t policy, warning_bits_t warnings) {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
     switch (policy) {
         case POLICY_SHOW:
@@ -212,11 +236,11 @@ void ui_deriveAddress_handleReturn(security_policy_t policy) {
         default:
             break;
     }
-    deriveAddress_return_ui_runStep();
+    deriveAddress_return_ui_runStep(warnings);
     return;
 }
 
-void ui_deriveAddress_handleDisplay(security_policy_t policy) {
+void ui_deriveAddress_handleDisplay(security_policy_t policy, warning_bits_t warnings) {
     ins_derive_address_ctx_t *ctx = &G_context.derive_address_info;
     switch (policy) {
         case POLICY_SHOW:
@@ -225,6 +249,6 @@ void ui_deriveAddress_handleDisplay(security_policy_t policy) {
         default:
             break;
     }
-    deriveAddress_display_ui_runStep();
+    deriveAddress_display_ui_runStep(warnings);
     return;
 }

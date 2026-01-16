@@ -14,6 +14,7 @@
 #include "transaction/tx_state.h"
 #include "opcert/opcert_types.h"
 #include "deriveAddress/deriveAddress_types.h"
+#include "derive_native_script_hash.h"
 #include "deriveNativeScriptHash/deriveNativeScriptHash_types.h"
 #include "apdu/apdu_constants.h"
 #include "keyDerivation.h"

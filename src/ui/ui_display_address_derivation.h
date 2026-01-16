@@ -9,7 +9,7 @@
  * @param warnings Warning bits
  * @return 0 if success, negative integer otherwise
  */
-void ui_deriveAddress_handleDisplay(security_policy_t securityPolicy);
+void ui_deriveAddress_handleDisplay(security_policy_t securityPolicy, warning_bits_t warnings);
 
 /**
  * Return address derivation
@@ -18,4 +18,4 @@ void ui_deriveAddress_handleDisplay(security_policy_t securityPolicy);
  * @param warnings Warning bits
  * @return 0 if success, negative integer otherwise
  */
-void ui_deriveAddress_handleReturn(security_policy_t securityPolicy); 
+void ui_deriveAddress_handleReturn(security_policy_t securityPolicy, warning_bits_t warnings);

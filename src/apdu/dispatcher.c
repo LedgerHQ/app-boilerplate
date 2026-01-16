@@ -180,13 +180,14 @@ void apdu_dispatcher(const command_t *cmd) {
                 io_send_sw(SWO_INCORRECT_P1_P2);
                 return;
             }
+            //TODO: validate P1
             // Validate P1 value
-            if(cmd->p1 != STAGE_COMPLEX_SCRIPT_START &&
+            /*if(cmd->p1 != STAGE_COMPLEX_SCRIPT_START &&
                cmd->p1 != STAGE_ADD_SIMPLE_SCRIPT &&
                cmd->p1 != STAGE_WHOLE_NATIVE_SCRIPT_FINISH) {
                 io_send_sw(SWO_INCORRECT_P1_P2);
                 return;
-            }
+            }*/
 
             if (!cmd->data) {
                 io_send_sw(SWO_WRONG_DATA_LENGTH);

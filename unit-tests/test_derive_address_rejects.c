@@ -331,11 +331,11 @@ static void reset_context(void) {
     memset(&G_context, 0, sizeof(G_context));
 }
 
-void ui_deriveAddress_handleReturn(security_policy_t policy) {
+void ui_deriveAddress_handleReturn(security_policy_t policy, warning_bits_t warnings) {
     (void) policy;
 }
 
-void ui_deriveAddress_handleDisplay(security_policy_t policy) {
+void ui_deriveAddress_handleDisplay(security_policy_t policy, warning_bits_t warnings) {
     (void) policy;
 }
 
