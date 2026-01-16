@@ -39,7 +39,8 @@ def test_pubkey_confirm(device: Device,
                 # For Nano devices: navigate to "Export" and click it
                 navigator.navigate_until_text(NavInsID.RIGHT_CLICK, [NavInsID.BOTH_CLICK], "Export")
             else:
-                navigator.navigate_until_text(NavInsID.RIGHT_CLICK, [NavInsID.USE_CASE_CHOICE_CONFIRM], "Export")
+                test_name = testCase.name if hasattr(testCase, 'name') else ""
+                scenario_navigator.address_review_approve(test_name=test_name, custom_screen_text="Export")
         else:
             pass
     # Check the status (Asynchronous)

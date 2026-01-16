@@ -54,7 +54,7 @@ def _run_sign_tx_test(device: Device,
         testCase: The test case to run
         expert_mode: Whether expert mode is enabled for this run
     """
-    mode_str = "expert" if expert_mode else "non-expert"
+    mode_str = "expert" if expert_mode else "non_expert"
     print(f"\n{'='*60}")
     print(f"Running test in {mode_str} mode: {testCase.name}")
     print(f"{'='*60}")
@@ -72,10 +72,12 @@ def _run_sign_tx_test(device: Device,
             # TODO: Add proper navigation for nano devices
             navigator.navigate_until_text(NavInsID.RIGHT_CLICK, [NavInsID.BOTH_CLICK], "Sign transaction")
         else:
+            # Append expert mode to test name for separate snapshot directories
+            test_name = f"{testCase.name}-{mode_str}/review"
             if testCase.has_warning:
-                scenario_navigator.review_approve_with_warning(do_comparison=False)
+                scenario_navigator.review_approve_with_warning(test_name=test_name)
             else:
-                scenario_navigator.review_approve(do_comparison=False)
+                scenario_navigator.review_approve(test_name=test_name)
 
     tx_hash, witness_paths = client.sign_tx(
         tx=tx,
@@ -141,7 +143,9 @@ def _run_sign_tx_test(device: Device,
                 else:
                     # Stax/Flex: Each witness gets a confirmation choice screen
                     # The scenario_navigator.address_review_approve handles the Confirm button
-                    scenario_navigator.address_review_approve(do_comparison=False)
+                    # Append expert mode to test name for separate snapshot directories
+                    test_name = f"{testCase.name}-{mode_str}/witness_{path_idx}"
+                    scenario_navigator.address_review_approve(test_name=test_name)
             else:
                 pass
 
