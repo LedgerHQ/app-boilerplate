@@ -126,8 +126,49 @@ static void controls_callback(int token, uint8_t index, int page) {
     }
 }
 
+static void bug_callback(bool confirm) {
+    if (!confirm) {
+        os_sched_exit(0);
+    }
+    ui_menu_main();
+}
+
+static nbgl_contentValueExt_t extension;
+
+#define PAIR_COUNT 1
+
+static nbgl_contentTagValue_t pairs[PAIR_COUNT];
+static nbgl_contentTagValueList_t pairList;
+
+static nbgl_contentTagValueList_t pairListExt;
+
 // home page definition
 void ui_menu_main(void) {
+    explicit_bzero(&pairListExt, sizeof(pairListExt));
+
+    explicit_bzero(&extension, sizeof(extension));
+    extension.aliasType = TAG_VALUE_LIST_ALIAS;
+    extension.tagValuelist = &pairListExt;
+    extension.title = "";
+
+    explicit_bzero(&pairs[0], sizeof(pairs));
+    pairs[0].item = "NFTs";
+    pairs[0].value = "OpenSea Shared Storefront #4294967295";
+    pairs[0].extension = &extension;
+    pairs[0].aliasValue = true;
+
+    explicit_bzero(&pairList, sizeof(pairList));
+    pairList.nbPairs = PAIR_COUNT;
+    pairList.pairs = (nbgl_contentTagValue_t *) pairs;
+
+    nbgl_useCaseReview(TYPE_TRANSACTION,
+                       &pairList,
+                       &ICON_APP_BOILERPLATE,
+                       "Review bug",
+                       NULL,
+                       "Sign bug",
+                       bug_callback);
+    return;
     // Initialize switches data
     switches[DUMMY_SWITCH_1_ID].initState = (nbgl_state_t) N_storage.dummy1_allowed;
     switches[DUMMY_SWITCH_1_ID].text = "Dummy 1";
