@@ -25,12 +25,12 @@ include $(BOLOS_SDK)/Makefile.target
 #        Mandatory configuration       #
 ########################################
 # Application name
-APPNAME = "Boilerplate"
+APPNAME = "Boilerplate_Test"
 
 # Application version
-APPVERSION_M = 2
-APPVERSION_N = 3
-APPVERSION_P = 1
+APPVERSION_M = 9
+APPVERSION_N = 9
+APPVERSION_P = 9
 APPVERSION = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 
 # Application source files
@@ -74,7 +74,7 @@ PATH_APP_LOAD_PARAMS = "44'/1'"   # purpose=coin(44) / coin_type=Testnet(1)
 #   * It must at least contains one value.
 #   * Values can be the app ticker or anything else but should be unique.
 VARIANT_PARAM = COIN
-VARIANT_VALUES = BOL
+VARIANT_VALUES = BOLOL
 
 # Enabling DEBUG flag will enable PRINTF for speculos
 #DEBUG = 1
