@@ -6,6 +6,7 @@
 
 This is a boilerplate application which can be forked to start a new project for the Ledger devices.
 
+
 ## Quick start guide
 
 ### With VSCode
