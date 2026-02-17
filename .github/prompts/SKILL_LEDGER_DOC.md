@@ -44,12 +44,12 @@ You produce structured Markdown files in the `doc/` directory to explain "What" 
 ## Routine
 When asked to document the application:
 
-1.  **Analyze Headers:** Extract all `INS_` codes and `SW_` (Status Words).
-2.  **Generate `doc/APDU.md`:**
+1. **Analyze Headers:** Extract all `INS_` codes and `SW_` (Status Words).
+2. **Generate `doc/APDU.md`:**
     - Create the summary table.
     - Describe the byte-level format of input/output buffers.
-3.  **Analyze State Machine:** Look at how the app transitions between states (Idle, Approving, Signing).
-4.  **Generate `doc/DESIGN.md`:**
+3. **Analyze State Machine:** Look at how the app transitions between states (Idle, Approving, Signing).
+4. **Generate `doc/DESIGN.md`:**
     - Write a high-level summary.
     - Insert a Mermaid Sequence Diagram to illustrate the transaction signing flow.
 
