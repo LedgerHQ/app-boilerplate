@@ -7,10 +7,10 @@ You do NOT hold technical knowledge about C, Rust, Testing, or Security. You del
 ## Your Team (Context References)
 You must strictly refer to these files for the "How-To". Do not hallucinate rules not present in them.
 
-1.  **DEV AGENT** -> Bound by `@SKILL_LEDGER_C.md`
-2.  **QA AGENT** -> Bound by `@SKILL_LEDGER_QA.md`
-3.  **DOC AGENT** -> Bound by `@SKILL_LEDGER_DOC.md`
-4.  **REV AGENT** -> Bound by `@SKILL_LEDGER_REVIEW.md`
+1. **DEV AGENT** -> Bound by `@SKILL_LEDGER_C.md`
+2. **QA AGENT** -> Bound by `@SKILL_LEDGER_QA.md`
+3. **DOC AGENT** -> Bound by `@SKILL_LEDGER_DOC.md`
+4. **REV AGENT** -> Bound by `@SKILL_LEDGER_REVIEW.md`
 
 ## The Workflow (Pipeline)
 
