@@ -112,7 +112,7 @@ static void controls_callback(int token, uint8_t index, int page) {
             // Display the warning message and ask the user to confirm
             nbgl_useCaseChoice(&ICON_APP_WARNING,
                                "Dummy 2",
-                               "Are you sure to\nallow dummy 2\nin transactions?",
+                               "Are you sure to\nallow dummy X\nin transactions?",
                                "I understand, confirm",
                                "Cancel",
                                review_warning_choice);
