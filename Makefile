@@ -29,7 +29,7 @@ APPNAME = "Boilerplate"
 APPVERSION_M = 2
 APPVERSION_N = 2
 APPVERSION_P = 0
-APPVERSION = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
+APPVERSION = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)-dev"
 
 # Application source files
 APP_SOURCE_PATH += src
@@ -97,6 +97,8 @@ ENABLE_APP_STORAGE = 1
 # and its properties
 ENABLE_APP_STORAGE_PROP_SETTINGS = 1
 ENABLE_APP_STORAGE_PROP_DATA = 1
+
+APP_STORAGE_SIZE = 1200
 
 ########################################
 #          Features disablers          #

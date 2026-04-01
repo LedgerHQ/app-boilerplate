@@ -46,7 +46,7 @@ typedef struct app_storage_data_s {
     uint32_t version;
     uint8_t dummy1_allowed;
     uint8_t dummy2_allowed;
-    char string[30];
+    char string[1000];
 } app_storage_data_t;
 _Static_assert(sizeof(app_storage_data_t) <= APP_STORAGE_SIZE,
                "The application storage size requested in Makefile is not sufficient");
