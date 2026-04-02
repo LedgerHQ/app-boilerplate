@@ -4,7 +4,7 @@
     },
     "ledgerDevTools.appSettings": {
         "selectedUseCase": "release",
-        "selectedDevice": "Nano X",
+        "selectedDevice": "Flex",
         "selectedVariant": "BOL",
         "testsList": [
             "test_app_mainmenu",

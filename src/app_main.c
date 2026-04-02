@@ -34,10 +34,110 @@ global_ctx_t G_context;
 
 const internal_storage_t N_storage_real;
 
+uint8_t topkek_bss[100] __attribute__((used));
+uint8_t topkek_bss2[256] __attribute__((used));
+static volatile uint32_t topkek_text_sink;
+
+__attribute__((used)) static void topkek_dummy_function(uint8_t *buffer, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        buffer[i] = (uint8_t) ((i * 7 + 13) % 256);
+    }
+    volatile uint32_t sum = 0;
+    for (size_t i = 0; i < len; i++) {
+        sum += buffer[i] * (i + 1);
+    }
+    buffer[0] = (uint8_t) (sum & 0xFF);
+}
+
+__attribute__((noinline, used)) static uint32_t topkek_mix_round(uint32_t value, uint32_t round) {
+    value ^= 0x9E3779B9u + (round * 0x45D9F3Bu);
+    value = (value << 7) | (value >> 25);
+    value += 0x7F4A7C15u ^ (round << 11);
+    value ^= value >> 13;
+    value *= 0x85EBCA6Bu;
+    value ^= value >> 16;
+    return value;
+}
+
+__attribute__((noinline, used)) static uint32_t topkek_expand_text_a(uint32_t seed) {
+    uint32_t acc = seed ^ 0xA5A5A5A5u;
+
+    for (uint32_t round = 0; round < 24; round++) {
+        acc = topkek_mix_round(acc + round, round);
+        switch ((acc >> (round & 7)) & 0x7u) {
+            case 0:
+                acc ^= 0x13579BDFu;
+                break;
+            case 1:
+                acc += 0x2468ACE0u;
+                break;
+            case 2:
+                acc = (acc << 3) | (acc >> 29);
+                break;
+            case 3:
+                acc ^= (round * 17u) + 0x10203040u;
+                break;
+            case 4:
+                acc += (acc >> 5) ^ 0x55AA55AAu;
+                break;
+            case 5:
+                acc ^= (acc << 9) + 0xCAFEBABEu;
+                break;
+            case 6:
+                acc += (round << 19) ^ 0x0F1E2D3Cu;
+                break;
+            default:
+                acc ^= (acc >> 11) + 0x11223344u;
+                break;
+        }
+    }
+
+    return acc;
+}
+
+__attribute__((noinline, used)) static uint32_t topkek_expand_text_b(uint32_t seed) {
+    uint32_t acc = seed + 0x31415926u;
+
+    for (uint32_t block = 0; block < 18; block++) {
+        uint32_t lane = acc ^ (block * 0x01010101u);
+
+        lane = topkek_mix_round(lane, block + 31u);
+        lane ^= ((lane << 13) | (lane >> 19));
+        lane += 0x3C6EF372u;
+        lane ^= ((lane << 11) | (lane >> 21));
+        lane += 0xBB67AE85u ^ (block << 7);
+
+        acc ^= lane;
+        acc = (acc << 5) | (acc >> 27);
+        acc += 0x1F83D9ABu + block;
+    }
+
+    return acc;
+}
+
+__attribute__((noinline, used)) static void topkek_expand_text(uint32_t seed) {
+    uint32_t value = topkek_expand_text_a(seed);
+    value ^= topkek_expand_text_b(seed ^ 0xDEADBEEFu);
+    topkek_text_sink ^= value;
+}
+
 /**
  * Handle APDU command received and send back APDU response using handlers.
  */
 void app_main() {
+    volatile uint8_t topkek_stack[307];
+    memset((void *) topkek_stack, 0x00, sizeof(topkek_stack));
+
+    // Force l'utilisation des variables BSS pour empêcher l'optimisation
+    topkek_bss[0] = 0x01;
+    topkek_bss2[0] = 0x02;
+    if (topkek_bss[0] == 0xFF) {  // Condition jamais vraie
+        topkek_dummy_function(topkek_bss2, sizeof(topkek_bss2));
+    }
+    if ((((uintptr_t) topkek_stack) & 0x7u) == 0x3u) {
+        topkek_expand_text((uint32_t) (uintptr_t) topkek_stack);
+    }
+
     // Length of APDU command received in G_io_apdu_buffer
     int input_len = 0;
     // Structured APDU command
