@@ -51,7 +51,8 @@ int handler_get_public_key(buffer_t *cdata, bool display) {
                                                  CX_SHA512);
 
     if (error != CX_OK) {
-        return io_send_sw(error);
+        // cx_err_t is uint32_t; truncating it into the uint16_t SW yields bogus codes.
+        return io_send_sw(SWO_SECURITY_ISSUE);
     }
 
     if (display) {
