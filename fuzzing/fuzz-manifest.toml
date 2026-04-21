@@ -1,0 +1,60 @@
+# Boilerplate app fuzz manifest.
+#
+# State-level model: Absolution controls global state (G_context.state,
+# G_context.req_type, BIP32 paths, etc.) via invariant domains.
+# The harness dispatches one APDU per iteration.
+#
+# See $BOLOS_SDK/fuzzing/docs/APP_CONTRACT.md for the full schema.
+
+[target]
+fuzzer = "fuzz_globals"
+harness_version = "6"
+
+[coverage]
+key_files = [
+    "src/apdu/dispatcher.c",
+    "src/handler/get_public_key.c",
+    "src/handler/sign_tx.c",
+    "src/transaction/deserialize.c",
+    "src/swap/handle_check_address.c",
+    "src/swap/handle_get_printable_amount.c",
+    "src/swap/handle_swap_sign_transaction.c",
+]
+exclude_regexes = [
+    '.*ledger-secure-sdk.*',
+    '.*fuzz_dispatcher\.c',
+    '.*fuzzer\.c',
+    '.*fuzzing/mock/.*',
+    '.*src/app_main\.c',
+    '.*src/ui/menu_nbgl\.c',
+]
+
+[dictionary]
+tokens = [
+    { name = "cla_app", value = "\\xE0" },
+    { name = "get_version", value = "\\xE0\\x03\\x00\\x00" },
+    { name = "get_app_name", value = "\\xE0\\x04\\x00\\x00" },
+    { name = "get_public_key", value = "\\xE0\\x05\\x00\\x00" },
+    { name = "get_public_key_confirm", value = "\\xE0\\x05\\x01\\x00" },
+    { name = "sign_tx_p1_0", value = "\\xE0\\x06\\x00\\x00" },
+    { name = "sign_tx_p1_1", value = "\\xE0\\x06\\x01\\x00" },
+    { name = "sign_tx_p1_2", value = "\\xE0\\x06\\x02\\x00" },
+    { name = "sign_token_tx_p1_0", value = "\\xE0\\x07\\x00\\x00" },
+    { name = "sign_token_tx_p1_1", value = "\\xE0\\x07\\x01\\x00" },
+    { name = "sign_token_tx_p1_2", value = "\\xE0\\x07\\x02\\x00" },
+    { name = "provide_token_info", value = "\\xE0\\x22\\x00\\x00" },
+    { name = "blind_sign_memo", value = "Blind-sign" },
+]
+
+[seeds]
+cla = 0xE0
+ins = [0x03, 0x04, 0x05, 0x06, 0x07, 0x22]
+
+[seeds.generic]
+enabled = true
+
+[seeds.custom]
+enabled = false
+
+[mocks]
+override_sources = []

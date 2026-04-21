@@ -1,86 +1,72 @@
-# Fuzzing on transaction parser
+# Boilerplate Fuzzing
 
-## Fuzzing
+Coverage-guided fuzzing for the boilerplate app. Two tools do the heavy lifting:
 
-Fuzzing allows us to test how a program behaves when provided with invalid, unexpected, or random data as input.
+- **Ledger Secure SDK — fuzzing framework**: builds a sanitizer-instrumented
+  LibFuzzer binary from the app sources and runs campaigns with a standard
+  layout (warmup + main + coverage replay).
+- **Absolution**: turns the first bytes of each input into app globals
+  (state, BIP32 path, swap mode, …) so the fuzzer explores meaningful
+  combinations of state instead of random garbage.
 
-In the case of `app-boilerplate` we want to test the code that is responsible for parsing the transaction data,
-which is `transaction_deserialize()`.
-To test `transaction_deserialize()`, our fuzz target, `fuzz_tx_parser.c`,
-needs to implement `int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)`,
-which provides an array of random bytes that can be used to simulate a serialized transaction.
-If the application crashes, or a [sanitizer](https://github.com/google/sanitizers) detects any kind of
-access violation, the fuzzing process is stopped, a report regarding the vulnerability is shown,
-and the input that triggered the bug is written to disk under the name `crash-*`.
-The vulnerable input file created can be passed as an argument to the fuzzer to triage the issue.
+Everything app-specific lives in this folder; the framework does the rest.
 
-> **Note**: Usually we want to write a separate fuzz target for each functionality.
+## Prerequisites
 
-## Manual usage based on Ledger container
+- `BOLOS_SDK` set to a checkout of the Ledger Secure SDK that contains the
+  fuzzing framework.
+- Absolution installed (see `$BOLOS_SDK/fuzzing/README.md`).
+- Clang ≥ 14 with `llvm-profdata` and `llvm-cov` for coverage reports.
 
-### Preparation
+## Run a campaign
 
-The fuzzer can run from the docker `ledger-app-builder-legacy`. You can download it from the `ghcr.io` docker repository:
-
-```console
-sudo docker pull ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-legacy:latest
+```bash
+WARMUP_SEC=30 MAIN_SEC=60 \
+  "$BOLOS_SDK"/fuzzing/scripts/app-campaign.sh \
+  --app-dir app-boilerplate quick-sanity
 ```
 
-You can then enter this development environment by executing the following command from the repository root directory:
+- The trailing positional argument (`quick-sanity`) is the campaign name and
+  becomes the output directory. Omit it to default to a UTC timestamp.
+- The command builds, syncs the invariant, generates seeds, runs a short
+  **warmup** (wide coverage fast), a longer **main** phase (depth-first
+  exploration from the warmup corpus), and replays the final corpus against
+  a coverage build.
 
-```console
-sudo docker run --rm -ti --user "$(id -u):$(id -g)" -v "$(realpath .):/app" ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-legacy:latest
-```
+### Useful overrides
 
-### Compilation
+| Variable / flag    | Default | Meaning                                             |
+|--------------------|---------|-----------------------------------------------------|
+| `WARMUP_SEC`       | 120     | warmup phase duration per worker                    |
+| `MAIN_SEC`         | 900     | main phase duration per worker                      |
+| `WORKERS`          | `nproc` | parallel LibFuzzer workers                          |
+| `OVERWRITE=1`      | unset   | reuse an existing campaign directory                |
+| `--target NAME`    | all     | restrict to one fuzzer (here `fuzz_globals`)        |
+| `--clean`          | off     | wipe `build/` before configuring                    |
 
-Once in the container, go into the `fuzzing` folder to compile the fuzzer:
+## What you get
 
-```console
-cd fuzzing
+Each run writes to `.fuzz-artifacts/<campaign-name>/` (gitignored):
 
-# cmake initialization
-cmake -DBOLOS_SDK=/opt/ledger-secure-sdk -DCMAKE_C_COMPILER=/usr/bin/clang -Bbuild -H.
+- `targets/fuzz_globals/bootstrap-base/` — seed corpus from dictionary + manifest
+- `targets/fuzz_globals/warmup/`, `warmup-merged/`, `main/` — per-worker corpora
+- `targets/fuzz_globals/meta.env`, `fuzz_globals.dict` — run metadata
+- `report/index.html` — LLVM source-level coverage report
 
-# Fuzzer compilation
-make -C build
-```
+Crashes, if any, land as `crash-*` files under the worker directories and
+are summarised at the end of the run.
 
-### Run
+## Files in this folder
 
-```console
-./build/fuzz_tx_parser
-```
-
-## Full usage based on `clusterfuzzlite` container
-
-Exactly the same context as the CI, directly using the `clusterfuzzlite` environment.
-
-More info can be found here:
-<https://google.github.io/clusterfuzzlite/>
-
-### Preparation
-
-The principle is to build the container, and run it to perform the fuzzing.
-
-> **Note**: The container contains a copy of the sources (they are not cloned),
-> which means the `docker build` command must be re-executed after each code modification.
-
-```console
-# Prepare directory tree
-mkdir fuzzing/{corpus,out}
-# Container generation
-docker build -t app-boilerplate --file .clusterfuzzlite/Dockerfile .
-```
-
-### Compilation
-
-```console
-docker run --rm --privileged -e FUZZING_LANGUAGE=c -v "$(realpath .)/fuzzing/out:/out" -ti app-boilerplate
-```
-
-### Run
-
-```console
-docker run --rm --privileged -e FUZZING_ENGINE=libfuzzer -e RUN_FUZZER_MODE=interactive -v "$(realpath .)/fuzzing/corpus:/tmp/fuzz_corpus" -v "$(realpath .)/fuzzing/out:/out" -ti gcr.io/oss-fuzz-base/base-runner run_fuzzer fuzz_tx_parser
-```
+| Path                              | Purpose                                                                 |
+|-----------------------------------|-------------------------------------------------------------------------|
+| `CMakeLists.txt`                  | `ledger_fuzz_setup()` + `ledger_fuzz_add_app_target(fuzz_globals)`      |
+| `fuzz-manifest.toml`              | coverage key files, dictionary, seed strategy                           |
+| `harness/fuzz_dispatcher.c`       | APDU dispatcher on top of `fuzz_harness_entry()` + swap callback lane   |
+| `mock/mocks.c` / `mock/mocks.h`   | app-side framework globals and the BSS-zero no-op                       |
+| `mock/scenario_layout.h`          | prefix offsets, auto-synced by the framework                            |
+| `invariants/fuzz_globals.zon`     | Absolution invariant (app state model, auto-synced)                     |
+| `invariants/zero-symbols.txt`     | app globals stripped from the prefix                                    |
+| `invariants/domain-overrides.txt` | enum/state constraints that improve convergence                         |
+| `macros/add_macros.txt`           | extra compile definitions added on top of the app `Makefile` defines    |
+| `macros/exclude_macros.txt`       | compile definitions removed from the fuzz build                         |

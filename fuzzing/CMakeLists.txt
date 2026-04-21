@@ -1,48 +1,47 @@
-cmake_minimum_required(VERSION 3.10)
+include_guard()
+cmake_minimum_required(VERSION 3.14)
 
-if(${CMAKE_VERSION} VERSION_LESS 3.10)
-    cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
+if(${CMAKE_VERSION} VERSION_LESS 3.14)
+  cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
 endif()
 
-# project information
-project(FuzzTxParser
-        VERSION 1.0
-	      DESCRIPTION "Fuzzing of transaction parser"
-        LANGUAGES C)
+project(
+  BoilerPlateFuzzer
+  VERSION 1.0
+  DESCRIPTION "Ledger App Boilerplate Fuzzer"
+  LANGUAGES C)
 
-# guard against bad build-type strings
-if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Debug")
+if(NOT DEFINED BOLOS_SDK)
+  message(FATAL_ERROR "BOLOS_SDK must be defined, CMake will exit.")
+  return()
 endif()
 
-if (NOT CMAKE_C_COMPILER_ID MATCHES "Clang")
-    message(FATAL_ERROR "Fuzzer needs to be built with Clang")
-endif()
+include(${BOLOS_SDK}/fuzzing/cmake/LedgerAppFuzz.cmake)
+ledger_fuzz_setup()
 
-if (NOT DEFINED BOLOS_SDK)
-  message(FATAL_ERROR "BOLOS_SDK environment variable not found.")
-endif()
+set(APP_SOURCE_DIR ${CMAKE_SOURCE_DIR}/..)
+file(GLOB_RECURSE C_SOURCES
+  "${APP_SOURCE_DIR}/src/*.c"
+  "${CMAKE_SOURCE_DIR}/mock/*.c"
+)
+list(REMOVE_ITEM C_SOURCES "${APP_SOURCE_DIR}/src/app_main.c")
 
-# guard against in-source builds
-if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
-  message(FATAL_ERROR "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there. You may need to remove CMakeCache.txt. ")
-endif()
-
-# compatible with ClusterFuzzLite
-if (NOT DEFINED ENV{LIB_FUZZING_ENGINE})
-	set(COMPILATION_FLAGS_ "-g -Wall -fsanitize=fuzzer,address,undefined")
-else()
-	set(COMPILATION_FLAGS_ "$ENV{LIB_FUZZING_ENGINE} $ENV{CXXFLAGS}")
-endif()
-
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-string(REPLACE " " ";" COMPILATION_FLAGS ${COMPILATION_FLAGS_})
-
-include(extra/TxParser.cmake)
-
-add_executable(fuzz_tx_parser fuzz_tx_parser.c)
-
-target_compile_options(fuzz_tx_parser PUBLIC ${COMPILATION_FLAGS})
-target_link_options(fuzz_tx_parser PUBLIC ${COMPILATION_FLAGS})
-target_link_libraries(fuzz_tx_parser PUBLIC txparser)
+ledger_fuzz_add_app_target(
+    SOURCES
+        ${C_SOURCES}
+    INCLUDE_DIRECTORIES
+        ${APP_SOURCE_DIR}/src/
+        ${APP_SOURCE_DIR}/src/apdu/
+        ${APP_SOURCE_DIR}/src/swap/
+        ${APP_SOURCE_DIR}/src/handler/
+        ${APP_SOURCE_DIR}/src/helper/
+        ${APP_SOURCE_DIR}/src/token/
+        ${APP_SOURCE_DIR}/src/transaction/
+        ${APP_SOURCE_DIR}/src/ui/
+        ${APP_SOURCE_DIR}/src/ui/action/
+        ${BOLOS_SDK}/lib_tlv/use_cases/
+        ${CMAKE_SOURCE_DIR}/mock/
+        ${CMAKE_SOURCE_DIR}/
+    COMPILE_DEFINITIONS
+        HAVE_SWAP
+)

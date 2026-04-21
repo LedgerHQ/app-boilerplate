@@ -1,0 +1,36 @@
+# Domain overrides for Boilerplate fuzzer.
+#
+# Constrain enum/state fields to valid values and unlock swap globals
+# that Absolution discovers as zero-initialized (BSS default).
+#
+# Format:
+#   GLOBAL.field = values \xHH [\xHH ...]   (enumerated values)
+#   GLOBAL.field = top                        (fully fuzzable)
+#   GLOBAL. = values ...                      (flat globals with unnamed field)
+
+# ── G_context enums ──────────────────────────────────────────────────────
+# state_e: STATE_NONE=0, STATE_PARSED=1, STATE_APPROVED=2
+G_context.state = values \x00 \x01 \x02
+
+# request_type_e: CONFIRM_ADDRESS=0, CONFIRM_TRANSACTION=1, CONFIRM_TOKEN_TRANSACTION=2
+G_context.req_type = values \x00 \x01 \x02
+
+# bip32_path_len: valid lengths for BIP32 derivation paths (0, 3, 5)
+G_context.bip32_path_len = values \x00 \x03 \x05
+
+# ── Swap flags (flat globals, BSS-zeroed by default) ─────────────────────
+# Unlock these so Absolution explores swap code paths in APDU mode.
+G_called_from_swap. = values \x00 \x01
+G_swap_response_ready. = values \x00 \x01
+
+# ── Mock toggles (BSS-zeroed by default, SDK-level globals) ──────────────
+# Absolution explores both success and failure paths in mocks.
+fuzz_mock_nbgl_reject. = values \x00 \x01
+fuzz_mock_crypto_fail. = values \x00 \x01
+
+# ── G_swap_validated (static, BSS-zeroed by default) ─────────────────────
+# Unlock fields so swap_check_validity() comparison branches are reachable.
+G_swap_validated.initialized = values \x00 \x01
+G_swap_validated.amount = top
+G_swap_validated.fee = top
+G_swap_validated.recipient = top
