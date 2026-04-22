@@ -20,29 +20,54 @@ Everything app-specific lives in this folder; the framework does the rest.
 
 ## Run a campaign
 
+From the workspace root (or use an absolute `--app-dir`):
+
 ```bash
-WARMUP_SEC=30 MAIN_SEC=60 \
+BOLOS_SDK=/path/to/ledger-secure-sdk \
   "$BOLOS_SDK"/fuzzing/scripts/app-campaign.sh \
-  --app-dir app-boilerplate quick-sanity
+  --app-dir /path/to/app-boilerplate quick-sanity
 ```
 
-- The trailing positional argument (`quick-sanity`) is the campaign name and
-  becomes the output directory. Omit it to default to a UTC timestamp.
-- The command builds, syncs the invariant, generates seeds, runs a short
-  **warmup** (wide coverage fast), a longer **main** phase (depth-first
-  exploration from the warmup corpus), and replays the final corpus against
-  a coverage build.
+- **`quick-sanity`** is the **campaign name** (last positional argument, optional).
+  Artefacts land in `.fuzz-artifacts/quick-sanity/`. Omit it to use a UTC
+  timestamp.
+- Default timings are **`WARMUP_SEC=30`** and **`MAIN_SEC=60`** per worker;
+  default parallelism is **`WORKERS=min(2, nproc)`** (lightweight for laptops).
+- The command builds, syncs the invariant, generates seeds, runs **warmup**
+  (broad exploration from bootstrap), then **main** (deeper mutations from the
+  merged warmup corpus), and replays the final corpus against a coverage build.
+
+Longer run example:
+
+```bash
+WARMUP_SEC=300 MAIN_SEC=3300 WORKERS=4 \
+  "$BOLOS_SDK"/fuzzing/scripts/app-campaign.sh \
+  --app-dir /path/to/app-boilerplate nightly
+```
+
+Chain a prior merged corpus (colon-separated for multiple dirs; each must
+match `.compat-key` when that file exists):
+
+```bash
+EXTRA_CORPUS=/path/to/app-boilerplate/.fuzz-artifacts/prior/targets/fuzz_globals/corpus \
+  "$BOLOS_SDK"/fuzzing/scripts/app-campaign.sh \
+  --app-dir /path/to/app-boilerplate follow-up
+```
 
 ### Useful overrides
 
-| Variable / flag    | Default | Meaning                                             |
-|--------------------|---------|-----------------------------------------------------|
-| `WARMUP_SEC`       | 120     | warmup phase duration per worker                    |
-| `MAIN_SEC`         | 900     | main phase duration per worker                      |
-| `WORKERS`          | `nproc` | parallel LibFuzzer workers                          |
-| `OVERWRITE=1`      | unset   | reuse an existing campaign directory                |
-| `--target NAME`    | all     | restrict to one fuzzer (here `fuzz_globals`)        |
-| `--clean`          | off     | wipe `build/` before configuring                    |
+| Variable / flag    | Default | Meaning |
+|--------------------|---------|---------|
+| `WARMUP_SEC`       | `30`    | Warmup seconds **per worker** |
+| `MAIN_SEC`         | `60`    | Main phase seconds **per worker** |
+| `WORKERS`          | `min(2, nproc)` | Parallel LibFuzzer workers (`1` = minimal CPU) |
+| `FUZZ_DEFAULT_WORKERS` | `2` | Cap used when `WORKERS` is unset |
+| `EXTRA_CORPUS`     | unset   | Colon-separated extra corpus dirs (bootstrap); see SDK `APP_CONTRACT.md` |
+| `BASE_CORPUS_DIR`  | `fuzzing/base-corpus` if present | Promoted seeds; `BASE_CORPUS_DIR=` skips |
+| `BUILD_JOBS`       | CPU-based | Parallel compile jobs |
+| `OVERWRITE=1`      | unset   | Replace an existing `.fuzz-artifacts/<name>/` |
+| `--target NAME`    | all     | Restrict to one fuzzer (here `fuzz_globals`) |
+| `--clean`          | off     | Wipe build dirs before configure |
 
 ## What you get
 
