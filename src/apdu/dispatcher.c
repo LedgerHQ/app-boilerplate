@@ -56,6 +56,22 @@ int apdu_dispatcher(const command_t *cmd) {
             bench_fibonacci(read_u32_be(cmd->data, 0));
             return io_send_sw(SWO_SUCCESS);
 
+        case BENCH_BW:
+            switch (cmd->p1) {
+                case BW_TYPE_IN:
+                    // nothing to do here
+                    return io_send_sw(SWO_SUCCESS);
+
+                case BW_TYPE_OUT:
+                case BW_TYPE_BIDIR:
+                    write_u16_be(G_io_tx_buffer, 0xff, SWO_SUCCESS);
+                    return io_legacy_apdu_tx(G_io_tx_buffer, 0xff + 2);
+
+                default:
+                    return io_send_sw(SWO_WRONG_P1_P2);
+            }
+            break;
+
         default:
             return io_send_sw(SWO_INVALID_INS);
     }
