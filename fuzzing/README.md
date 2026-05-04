@@ -15,8 +15,10 @@ Everything app-specific lives in this folder; the framework does the rest.
 
 - `BOLOS_SDK` set to a checkout of the Ledger Secure SDK that contains the
   fuzzing framework.
-- Absolution installed (see `$BOLOS_SDK/fuzzing/README.md`).
 - Clang ≥ 14 with `llvm-profdata` and `llvm-cov` for coverage reports.
+- The SDK's `ledger_fuzz_setup()` step fetches Absolution automatically on the
+  first configure. Set `LEDGER_FUZZ_ABSOLUTION_LOCAL_DIR` if you want to point
+  the build at a local Absolution install instead.
 
 ## Run a campaign
 
@@ -93,5 +95,5 @@ are summarised at the end of the run.
 | `invariants/fuzz_globals.zon`     | Absolution invariant (app state model, auto-synced)                     |
 | `invariants/zero-symbols.txt`     | app globals stripped from the prefix                                    |
 | `invariants/domain-overrides.txt` | enum/state constraints that improve convergence                         |
-| `macros/add_macros.txt`           | extra compile definitions added on top of the app `Makefile` defines    |
+| `base-corpus/`                    | promoted corpus snapshot checked into the app                           |
 | `macros/exclude_macros.txt`       | compile definitions removed from the fuzz build                         |
