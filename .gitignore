@@ -22,6 +22,9 @@ fuzzing/corpus/
 fuzzing/out/
 .fuzz-artifacts/
 
+# LSP
+compile_commands.json
+
 # Python
 *.pyc[cod]
 *.egg
