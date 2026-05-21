@@ -266,7 +266,7 @@ def test_provide_dynamic_token_missing_tuid(backend: BackendInterface) -> None:
     # We need to manually craft a TLV without TUID tag (0x07)
     # This requires accessing backend.exchange directly
     from application_client.tlv import format_tlv
-    from application_client.boilerplate_keychain import sign_data, Key
+    from application_client.signing_partners import DYNAMIC_TOKEN_PARTNER
     from application_client.boilerplate_command_sender import CLA, InsType
 
     # Build TLV without TUID tag (skip tag 0x07)
@@ -280,7 +280,7 @@ def test_provide_dynamic_token_missing_tuid(backend: BackendInterface) -> None:
     app_data = b"\x04USDT\x06"  # 4-char ticker + 1 byte decimals
     tlv_without_sig += format_tlv(0x08, app_data)  # APP_DATA
 
-    signature = sign_data(tlv_without_sig, key=Key.DYNAMIC_TOKEN)
+    signature = DYNAMIC_TOKEN_PARTNER.sign(tlv_without_sig)
 
     # Insert signature
     tlv_with_sig = b""
@@ -307,7 +307,7 @@ def test_provide_dynamic_token_missing_tuid(backend: BackendInterface) -> None:
 def test_provide_dynamic_token_unknown_tuid_tag(backend: BackendInterface) -> None:
     """Test that TUID with unknown sub-tags is rejected (strict validation)."""
     from application_client.tlv import format_tlv
-    from application_client.boilerplate_keychain import sign_data, Key
+    from application_client.signing_partners import DYNAMIC_TOKEN_PARTNER
     from application_client.boilerplate_command_sender import CLA, InsType
 
     # Build TUID with unknown tag 0x99 instead of 0x10
@@ -324,7 +324,7 @@ def test_provide_dynamic_token_unknown_tuid_tag(backend: BackendInterface) -> No
     app_data = b"\x04USDT\x06"
     tlv_without_sig += format_tlv(0x08, app_data)
 
-    signature = sign_data(tlv_without_sig, key=Key.DYNAMIC_TOKEN)
+    signature = DYNAMIC_TOKEN_PARTNER.sign(tlv_without_sig)
 
     tlv_with_sig = b""
     tlv_with_sig += format_tlv(0x01, 0x90)
@@ -534,7 +534,7 @@ def test_provide_dynamic_token_zero_decimals(backend: BackendInterface,
 def test_provide_dynamic_token_wrong_tuid_size(backend: BackendInterface) -> None:
     """Test that TUID with wrong address size is rejected."""
     from application_client.tlv import format_tlv
-    from application_client.boilerplate_keychain import sign_data, Key
+    from application_client.signing_partners import DYNAMIC_TOKEN_PARTNER
     from application_client.boilerplate_command_sender import CLA, InsType
 
     # Build TUID with 20-byte address instead of 32 bytes
@@ -549,7 +549,7 @@ def test_provide_dynamic_token_wrong_tuid_size(backend: BackendInterface) -> Non
     payload += format_tlv(0x06, 6)  # MAGNITUDE
     payload += format_tlv(0x07, tuid_tlv)  # TUID with wrong size
 
-    signature = sign_data(payload, key=Key.DYNAMIC_TOKEN)
+    signature = DYNAMIC_TOKEN_PARTNER.sign(payload)
     payload += format_tlv(0x08, signature)  # SIGNATURE
 
     with pytest.raises(ExceptionRAPDU) as e:

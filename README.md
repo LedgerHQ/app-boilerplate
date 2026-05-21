@@ -1,10 +1,15 @@
+> [!CAUTION]
+> This boilerplate must not be used to develop new applications for Ledger devices.
+> It is kept as a reference for maintaining existing C apps. For any new application,
+> use the [Rust boilerplate](https://github.com/LedgerHQ/app-boilerplate-rust) instead.
+
 [![Ensure compliance with Ledger guidelines](https://github.com/LedgerHQ/app-boilerplate/actions/workflows/guidelines_enforcer.yml/badge.svg)](https://github.com/LedgerHQ/app-boilerplate/actions/workflows/guidelines_enforcer.yml)
 
 [![Build and run functional tests using ragger through reusable workflow](https://github.com/LedgerHQ/app-boilerplate/actions/workflows/build_and_functional_tests.yml/badge.svg?branch=master)](https://github.com/LedgerHQ/app-boilerplate/actions/workflows/build_and_functional_tests.yml)
 
 # Ledger Boilerplate Application
 
-This is a boilerplate application which can be forked to start a new project for the Ledger devices.
+Boilerplate C application kept as a maintenance reference for existing Ledger device apps written in C.
 
 ## Quick start guide
 
@@ -239,9 +244,9 @@ It outputs 3 artifacts:
 * `code-coverage` within HTML details of code coverage
 * `documentation` within HTML auto-generated documentation
 
-## Are you developing an application for Ledger devices?
+## Are you developing a new application for Ledger devices?
 
-If so, This boilerplate will help you get started.
+Use the [Rust boilerplate](https://github.com/LedgerHQ/app-boilerplate-rust) to get started.
 
 For a smooth and quick integration:
 

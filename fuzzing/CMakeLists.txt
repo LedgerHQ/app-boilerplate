@@ -26,6 +26,15 @@ file(GLOB_RECURSE C_SOURCES
 )
 list(REMOVE_ITEM C_SOURCES "${APP_SOURCE_DIR}/src/app_main.c")
 
+# Legacy parser fuzzer kept for backwards compatibility with the pre-Absolution
+# fuzzing entry point.
+include(extra/TxParser.cmake)
+
+target_link_libraries(txparser PUBLIC secure_sdk)
+
+add_executable(fuzz_tx_parser fuzz_tx_parser.c)
+target_link_libraries(fuzz_tx_parser PUBLIC txparser)
+
 ledger_fuzz_add_app_target(
     SOURCES
         ${C_SOURCES}

@@ -7,12 +7,7 @@ from ragger.bip import pack_derivation_path
 from ragger.error import StatusWords
 
 from .tlv import format_tlv
-from .boilerplate_keychain import sign_data, Key
-from .pki_client import (
-    PKIClient,
-    PKI_CERTIFICATES,
-    CertificatePubKeyUsage
-)
+from .signing_partners import DYNAMIC_TOKEN_PARTNER
 
 
 MAX_APDU_LEN: int = 255
@@ -197,15 +192,10 @@ class BoilerplateCommandSender:
         payload += format_tlv(0x07, tuid)  # TUID
 
         # Sign the crafted payload and append the signature to it
-        payload += format_tlv(0x08, sign_data(payload, key=Key.DYNAMIC_TOKEN))  # SIGNATURE
+        payload += format_tlv(0x08, DYNAMIC_TOKEN_PARTNER.sign(payload))  # SIGNATURE
 
         # Before sending the mock CAL descriptor, we need to onboard our mock CAL using a PKI certificate
-        cert_apdu = PKI_CERTIFICATES.get(self.backend.device.type)
-        if cert_apdu:
-            PKIClient(self.backend).send_certificate(
-                CertificatePubKeyUsage.CERTIFICATE_PUBLIC_KEY_USAGE_COIN_META,
-                bytes.fromhex(cert_apdu)
-                )
+        self.backend.exchange_raw(DYNAMIC_TOKEN_PARTNER.get_certificate_payload(self.backend.device.type))
 
         # Send APDU with P1=0, P2=0 (no chunking for token descriptors)
         return self.backend.exchange(cla=CLA,
