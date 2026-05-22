@@ -69,48 +69,6 @@ static int check_and_sign_swap_tx(transaction_ctx_t *tx_ctx) {
 #endif  // HAVE_SWAP
 // --8<-- [end:ui_bypass]
 
-/**
- * Initialize transaction context for chunk 0
- *
- * @param[in] cdata Buffer containing BIP32 path
- * @param[in] req_type Request type (CONFIRM_TRANSACTION or CONFIRM_TOKEN_TRANSACTION)
- * @return SWO_SUCCESS on success, error code otherwise
- */
-static int init_transaction_context(buffer_t *cdata, uint8_t req_type) {
-    explicit_bzero(&G_context, sizeof(G_context));
-    G_context.req_type = req_type;
-    G_context.state = STATE_NONE;
-
-    if (!buffer_read_u8(cdata, &G_context.bip32_path_len) ||
-        !buffer_read_bip32_path(cdata, G_context.bip32_path, (size_t) G_context.bip32_path_len)) {
-        return io_send_sw(SWO_WRONG_DATA_LENGTH);
-    }
-
-    return io_send_sw(SWO_SUCCESS);
-}
-
-/**
- * Accumulate transaction data from APDU chunks
- * TODO: This should NOT be handled in each handler but at the dispatcher level
- *
- * @param[in] cdata Buffer containing transaction chunk
- * @param[in] req_type Expected request type for validation
- * @return SWO_SUCCESS on success, error code otherwise
- */
-static uint16_t accumulate_transaction_data(buffer_t *cdata, uint8_t req_type) {
-    if (G_context.req_type != req_type) {
-        return SWO_CONDITIONS_NOT_SATISFIED;
-    }
-    if (G_context.tx_info.raw_tx_len + cdata->size > sizeof(G_context.tx_info.raw_tx)) {
-        return SWO_WRONG_DATA_LENGTH;
-    }
-    if (!buffer_move(cdata, G_context.tx_info.raw_tx + G_context.tx_info.raw_tx_len, cdata->size)) {
-        return SWO_INCORRECT_DATA;
-    }
-    G_context.tx_info.raw_tx_len += cdata->size;
-    return SWO_SUCCESS;
-}
-
 static uint16_t process_transaction(bool is_token_tx) {
     // last APDU for this transaction, let's parse, display and request a sign confirmation
     buffer_t buf = {.ptr = G_context.tx_info.raw_tx,
@@ -149,58 +107,38 @@ static uint16_t process_transaction(bool is_token_tx) {
     return SWO_SUCCESS;
 }
 
-int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more, bool is_token_tx) {
-    uint8_t req_type = is_token_tx ? CONFIRM_TOKEN_TRANSACTION : CONFIRM_TRANSACTION;
-    if (chunk == 0) {
-        // first APDU, parse BIP32 path and return
-        return init_transaction_context(cdata, req_type);
-    } else {
-        // parse transaction
-        uint16_t err = accumulate_transaction_data(cdata, req_type);
-        if (err != SWO_SUCCESS) {
+int handler_sign_tx(bool is_token_tx) {
+    uint16_t err = process_transaction(is_token_tx);
+    if (err != SWO_SUCCESS) {
+#ifdef HAVE_SWAP
+        if (G_called_from_swap) {
+            PRINTF("Error during transaction processing in swap context: %u\n", err);
+            // Suspicious error, Return to Exchange instead of simply return an error APDU
+            send_swap_error_simple(SW_SWAP_FAIL, SWAP_EC_ERROR_GENERIC, SWAP_ERROR_CODE);
+        } else {
             return io_send_sw(err);
         }
-        if (more) {
-            // more APDUs with transaction part are expected.
-            // Send a SWO_SUCCESS to signal that we have received the chunk
-            return io_send_sw(SWO_SUCCESS);
-
-        } else {
-            // last APDU for this transaction, let's parse, display and request a sign confirmation
-            err = process_transaction(is_token_tx);
-            if (err != SWO_SUCCESS) {
-#ifdef HAVE_SWAP
-                if (G_called_from_swap) {
-                    PRINTF("Error during transaction processing in swap context: %u\n", err);
-                    // Suspicious error, Return to Exchange instead of simply return an error APDU
-                    send_swap_error_simple(SW_SWAP_FAIL, SWAP_EC_ERROR_GENERIC, SWAP_ERROR_CODE);
-                } else {
-                    return io_send_sw(err);
-                }
 #else
-                return io_send_sw(err);
+        return io_send_sw(err);
 #endif
-            }
+    }
 
 #ifdef HAVE_SWAP
-            // If we are in swap context, do not redisplay the message data
-            // Instead, ensure they are identical with what was previously displayed
-            if (G_called_from_swap) {
-                check_and_sign_swap_tx(&G_context.tx_info);
-                // Unreachable
-                return 0;
-            }
+    // If we are in swap context, do not redisplay the message data
+    // Instead, ensure they are identical with what was previously displayed
+    if (G_called_from_swap) {
+        check_and_sign_swap_tx(&G_context.tx_info);
+        // Unreachable
+        return 0;
+    }
 #endif  // HAVE_SWAP
 
-            // Example to trig a blind-sign flow
-            if (strcmp((char *) G_context.tx_info.transaction.memo, "Blind-sign") == 0) {
-                return ui_display_blind_signed_transaction();
-            } else if (is_token_tx) {
-                return ui_display_token_transaction();
-            } else {
-                return ui_display_transaction();
-            }
-        }
+    // Example to trig a blind-sign flow
+    if (strcmp((char *) G_context.tx_info.transaction.memo, "Blind-sign") == 0) {
+        return ui_display_blind_signed_transaction();
+    } else if (is_token_tx) {
+        return ui_display_token_transaction();
+    } else {
+        return ui_display_transaction();
     }
-    return 0;
 }
