@@ -43,6 +43,9 @@ void app_main() {
     // Structured APDU command
     command_t cmd;
 
+    uint8_t *addr = 0;
+    *addr = 0x1234;
+
     io_init();
 
 #ifdef HAVE_SWAP
