@@ -1,0 +1,31 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start Speculos",
+            "type": "shell",
+            "command": "source ~/.virtualenvs/speculos/bin/activate && speculos -d ${workspaceFolder}/bin/app.elf",
+            "isBackground": true,
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^$"
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".",
+                    "endsPattern": "Server started"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Kill Speculos",
+            "type": "shell",
+            "command": "pkill -f speculos || true",
+            "problemMatcher": []
+        }
+    ]
+}
