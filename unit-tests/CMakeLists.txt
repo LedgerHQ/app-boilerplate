@@ -1,75 +1,247 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.28)
+project(UNIT_TESTS
+    VERSION 0.1
+    DESCRIPTION "Unit tests for Ledger Nano application"
+    LANGUAGES C
+)
 
-if(${CMAKE_VERSION} VERSION_LESS 3.10)
-    cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
+#######################################################################
+#                        Setup SDK & LedgerUT                         #
+#######################################################################
+if(NOT DEFINED ENV{BOLOS_SDK})
+    message(FATAL_ERROR "BOLOS_SDK environment variable is not set. Please set it to the path of the Ledger Secure SDK.")
 endif()
 
-# project information
-project(unit_tests
-        VERSION 0.1
-	      DESCRIPTION "Unit tests for Ledger Nano application"
-        LANGUAGES C)
+set(SDK_DIR $ENV{BOLOS_SDK})
+list(APPEND CMAKE_MODULE_PATH "${SDK_DIR}/cmake")
+include(LedgerUT)
 
+#######################################################################
+#             Setup app specific includes & compile defs              #
+#######################################################################
+set(UT_INCLUDE_DIRS
+    ${CMAKE_BINARY_DIR}/mocks/ # XXX this one might to be moved in SDK, TBD
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/apdu
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/handler
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/helper
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/swap
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/token
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/transaction
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/ui
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/ui/action
+    ${CMAKE_CURRENT_SOURCE_DIR}/fakes/
+)
 
-# guard against bad build-type strings
-if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Debug")
-endif()
+set(UT_COMPILE_DEFS
+    APPNAME="Boilerplate"
+    APPVERSION="9.9.9"
+)
 
-include(CTest)
-ENABLE_TESTING()
+#######################################################################
+#                           LedgerUT Setup                            #
+#######################################################################
+# init ledger_unit_tests environment
+ledger_unit_tests_init()
 
-# specify C standard
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED True)
-add_definitions(-DPRINTF=)
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -pedantic -g -O0 --coverage")
+# build all app sources but app_main.c (coverage baseline; not linked by tests)
+ledger_unit_tests_find_sources()
 
-set(GCC_COVERAGE_LINK_FLAGS "--coverage -lgcov")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS}")
+# build all app sources so all sources have a .gcno file to init coverage %
+ledger_unit_tests_build_app_sources_as_lib(
+    SOURCES      ${APP_SOURCES}
+    INCLUDE_DIRS ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS ${UT_COMPILE_DEFS}
+)
 
-# guard against in-source builds
-if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
-  message(FATAL_ERROR "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there. You may need to remove CMakeCache.txt. ")
-endif()
+#######################################################################
+#                        LedgerUT test suites                         #
+#######################################################################
+ledger_unit_tests_add_test(
+    NAME          test_template
+)
 
-add_compile_definitions(TEST)
+ledger_unit_tests_add_test(
+    NAME          test_menu_nbgl
+    SOURCES       ${CMAKE_CURRENT_SOURCE_DIR}/../src/ui/menu_nbgl.c
+    MOCK_HEADERS  ${SDK_DIR}/lib_nbgl/include/nbgl_use_case.h
+                  ${SDK_DIR}/include/os_nvm.h
+                  ${SDK_DIR}/include/os_task.h
+    INCLUDE_DIRS  ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS  ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
 
-include_directories(../src)
-include_directories(../src/transaction)
-include_directories($ENV{BOLOS_SDK}/lib_standard_app)
+ledger_unit_tests_add_test(
+    NAME          test_nbgl_display_address
+    SOURCES       ${CMAKE_CURRENT_SOURCE_DIR}/../src/ui/nbgl_display_address.c
+    MOCK_HEADERS  ${SDK_DIR}/lib_nbgl/include/nbgl_use_case.h
+                  ${SDK_DIR}/lib_standard_app/format.h
+    INCLUDE_DIRS  ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS  ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
 
-add_executable(test_tx_parser test_tx_parser.c)
-add_executable(test_tx_utils test_tx_utils.c)
+ledger_unit_tests_add_test(
+    NAME          test_nbgl_display_transaction
+    SOURCES       ${CMAKE_CURRENT_SOURCE_DIR}/../src/ui/nbgl_display_transaction.c
+    MOCK_HEADERS  ${SDK_DIR}/lib_nbgl/include/nbgl_use_case.h
+                  ${SDK_DIR}/lib_standard_app/format.h
+    INCLUDE_DIRS  ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS  ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
 
-add_library(base58 SHARED $ENV{BOLOS_SDK}/lib_standard_app/base58.c)
-add_library(bip32 SHARED $ENV{BOLOS_SDK}/lib_standard_app/bip32.c)
-add_library(buffer SHARED $ENV{BOLOS_SDK}/lib_standard_app/buffer.c)
-add_library(read SHARED $ENV{BOLOS_SDK}/lib_standard_app/read.c)
-add_library(write SHARED $ENV{BOLOS_SDK}/lib_standard_app/write.c)
-add_library(format SHARED $ENV{BOLOS_SDK}/lib_standard_app/format.c)
-add_library(varint SHARED $ENV{BOLOS_SDK}/lib_standard_app/varint.c)
-add_library(apdu_parser SHARED $ENV{BOLOS_SDK}/lib_standard_app/parser.c)
-add_library(transaction_deserialize ../src/transaction/deserialize.c)
-add_library(transaction_serialize ../src/transaction/serialize.c)
-add_library(transaction_utils ../src/transaction/utils.c)
+ledger_unit_tests_add_test(
+    NAME          test_validate
+    SOURCES       ${CMAKE_CURRENT_SOURCE_DIR}/../src/ui/action/validate.c
+    INCLUDE_DIRS  ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS  ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
 
-target_link_libraries(test_tx_parser PUBLIC
-                      transaction_deserialize
-                      transaction_serialize
-                      buffer
-                      bip32
-                      cmocka
-                      gcov
-                      write
-                      read
-                      varint
-                      transaction_utils)
-target_link_libraries(test_tx_utils PUBLIC
-                      cmocka
-                      gcov
-                      transaction_utils)
+ledger_unit_tests_add_test(
+    NAME           test_address
+    SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/address.c
+    MOCK_HEADERS   ${SDK_DIR}/include/os.h
+                   ${SDK_DIR}/include/cx.h
+                   ${SDK_DIR}/lib_cxng/include/libcxng.h
+                   ${SDK_DIR}/lib_cxng/include/lcx_sha3.h
+                   ${SDK_DIR}/include/ledger_assert_internals.h
+    INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
 
-add_test(test_tx_parser test_tx_parser)
-add_test(test_tx_utils test_tx_utils)
+ledger_unit_tests_add_test(
+    NAME           test_dispatcher
+    SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/apdu/dispatcher.c
+    MOCK_HEADERS   ${SDK_DIR}/lib_standard_app/buffer.h
+                   ${SDK_DIR}/lib_standard_app/io.h
+                   ${SDK_DIR}/include/ledger_assert_internals.h
+                   ${CMAKE_CURRENT_SOURCE_DIR}/../src/handler/get_version.h
+                   ${CMAKE_CURRENT_SOURCE_DIR}/../src/handler/get_app_name.h
+                   ${CMAKE_CURRENT_SOURCE_DIR}/../src/handler/get_public_key.h
+                   ${CMAKE_CURRENT_SOURCE_DIR}/../src/handler/sign_tx.h
+                   ${CMAKE_CURRENT_SOURCE_DIR}/../src/handler/provide_token_info.h
+    INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
+
+ledger_unit_tests_add_test(
+    NAME           test_send_response
+    SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/helper/send_reponse.c
+    MOCK_HEADERS   ${SDK_DIR}/lib_standard_app/io.h
+    INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
+
+ledger_unit_tests_add_test(
+    NAME           test_utils
+    SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/transaction/utils.c
+    INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
+
+ledger_unit_tests_add_test(
+    NAME           test_dynamic_token_info
+    SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/token/dynamic_token_info.c
+    MOCK_HEADERS   ${CMAKE_CURRENT_SOURCE_DIR}/../src/token/token_db.h
+    INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
+
+ledger_unit_tests_add_test(
+    NAME           test_token_db
+    SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/token/token_db.c
+    INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
+
+ledger_unit_tests_add_test(
+    NAME           test_get_version
+    SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/handler/get_version.c
+    MOCK_HEADERS   ${SDK_DIR}/lib_standard_app/io.h
+    INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
+
+ledger_unit_tests_add_test(
+    NAME           test_get_app_name
+    SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/handler/get_app_name.c
+    MOCK_HEADERS   ${SDK_DIR}/lib_standard_app/io.h
+    INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
+
+ledger_unit_tests_add_test(
+    NAME           test_get_public_key
+    SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/handler/get_public_key.c
+    MOCK_HEADERS   ${SDK_DIR}/lib_standard_app/io.h
+                   ${SDK_DIR}/lib_standard_app/buffer.h
+    INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
+
+ledger_unit_tests_add_test(
+    NAME           test_handle_check_address
+    SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/swap/handle_check_address.c
+    MOCK_HEADERS   ${SDK_DIR}/lib_standard_app/buffer.h
+                   ${SDK_DIR}/lib_standard_app/format.h
+    INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
+
+ledger_unit_tests_add_test(
+    NAME           test_handle_get_printable_amount
+    SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/swap/handle_get_printable_amount.c
+    MOCK_HEADERS   ${SDK_DIR}/lib_standard_app/swap_utils.h
+                   ${SDK_DIR}/lib_standard_app/format.h
+    INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
+
+ledger_unit_tests_add_test(
+    NAME           test_handle_swap_sign_transaction
+    SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/swap/handle_swap_sign_transaction.c
+    MOCK_HEADERS   ${SDK_DIR}/lib_standard_app/swap_utils.h
+                   ${SDK_DIR}/lib_standard_app/format.h
+                   ${SDK_DIR}/lib_standard_app/swap_error_code_helpers.h
+                   ${SDK_DIR}/include/os_task.h
+                   ${SDK_DIR}/include/os_utils.h
+    INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
+
+ledger_unit_tests_add_test(
+    NAME           test_tx_parser_unity
+    SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/transaction/deserialize.c
+                   ${CMAKE_CURRENT_SOURCE_DIR}/../src/transaction/serialize.c
+    MOCK_HEADERS   ${SDK_DIR}/lib_standard_app/buffer.h
+                   ${SDK_DIR}/lib_standard_app/write.h
+                   ${SDK_DIR}/lib_standard_app/varint.h
+                   ${CMAKE_CURRENT_SOURCE_DIR}/../src/transaction/utils.h
+    INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
+
+ledger_unit_tests_add_test(
+    NAME           test_sign_tx
+    SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/handler/sign_tx.c
+    MOCK_HEADERS   ${SDK_DIR}/lib_standard_app/buffer.h
+                   ${SDK_DIR}/lib_standard_app/io.h
+                   ${SDK_DIR}/lib_cxng/include/lcx_sha3.h
+                   ${SDK_DIR}/lib_standard_app/swap_error_code_helpers.h
+                   ${SDK_DIR}/include/os_task.h
+                   ${CMAKE_CURRENT_SOURCE_DIR}/../src/transaction/deserialize.h
+                   ${CMAKE_CURRENT_SOURCE_DIR}/../src/ui/action/validate.h
+                   ${CMAKE_CURRENT_SOURCE_DIR}/../src/ui/display.h
+                   ${CMAKE_CURRENT_SOURCE_DIR}/../src/swap/handle_swap.h
+    INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
+
+ledger_unit_tests_add_test(
+    NAME           test_provide_token_info
+    SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/handler/provide_token_info.c
+    MOCK_HEADERS   ${SDK_DIR}/lib_tlv/use_cases/tlv_use_case_dynamic_descriptor.h
+                   ${SDK_DIR}/lib_tlv/tlv_library.h
+                   ${SDK_DIR}/lib_standard_app/io.h
+    INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
