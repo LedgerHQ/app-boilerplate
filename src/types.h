@@ -17,7 +17,13 @@ typedef enum {
     GET_PUBLIC_KEY = 0x05,     /// public key of corresponding BIP32 path
     SIGN_TX = 0x06,            /// sign transaction with BIP32 path
     SIGN_TOKEN_TX = 0x07,      /// sign token transaction with BIP32 path and token address
-    PROVIDE_TOKEN_INFO = 0x22  /// provide dynamic token info via CAL TLV descriptor
+    PROVIDE_TOKEN_INFO = 0x22, /// provide dynamic token info via CAL TLV descriptor
+    MLKEM_KEYGEN = 0x30,       /// ML-KEM key generation from coins
+    MLKEM_ENCAPSULATE = 0x31,  /// ML-KEM encapsulation
+    MLKEM_DECAPSULATE = 0x32,  /// ML-KEM decapsulation
+    MLDSA_KEYGEN = 0x40,       /// ML-DSA key generation from seed
+    MLDSA_SIGN = 0x41,         /// ML-DSA signature generation (sign_mu)
+    MLDSA_VERIFY = 0x42        /// ML-DSA signature verification (verify_mu)
 } command_e;
 /**
  * Enumeration with parsing state.

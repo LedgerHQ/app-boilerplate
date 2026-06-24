@@ -32,6 +32,12 @@
 #include "get_public_key.h"
 #include "sign_tx.h"
 #include "provide_token_info.h"
+#ifdef HAVE_MLDSA
+#include "mldsa.h"
+#endif
+#ifdef HAVE_MLKEM
+#include "mlkem.h"
+#endif
 
 int apdu_dispatcher(const command_t *cmd) {
     LEDGER_ASSERT(cmd != NULL, "NULL cmd");
@@ -111,6 +117,46 @@ int apdu_dispatcher(const command_t *cmd) {
             buf.offset = 0;
 
             return handler_provide_token_info(&buf);
+
+#ifdef HAVE_MLKEM
+        case MLKEM_KEYGEN:
+        case MLKEM_ENCAPSULATE:
+        case MLKEM_DECAPSULATE:
+            // Validate P2 reserved bits (bits 2-6 must be zero)
+            if ((cmd->p2 & 0x7C) != 0) {
+                return io_send_sw(SWO_INCORRECT_P1_P2);
+            }
+
+            if (!cmd->data && cmd->lc > 0) {
+                return io_send_sw(SWO_WRONG_DATA_LENGTH);
+            }
+
+            buf.ptr = cmd->data;
+            buf.size = cmd->lc;
+            buf.offset = 0;
+
+            return handler_mlkem(&buf, cmd->ins, cmd->p1, cmd->p2);
+#endif /* HAVE_MLKEM */
+
+#ifdef HAVE_MLDSA
+        case MLDSA_KEYGEN:
+        case MLDSA_SIGN:
+        case MLDSA_VERIFY:
+            // Validate P2 reserved bits (bits 2-6 must be zero)
+            if ((cmd->p2 & 0x7C) != 0) {
+                return io_send_sw(SWO_INCORRECT_P1_P2);
+            }
+
+            if (!cmd->data && cmd->lc > 0) {
+                return io_send_sw(SWO_WRONG_DATA_LENGTH);
+            }
+
+            buf.ptr = cmd->data;
+            buf.size = cmd->lc;
+            buf.offset = 0;
+
+            return handler_mldsa(&buf, cmd->ins, cmd->p1, cmd->p2);
+#endif /* HAVE_MLDSA */
 
         default:
             return io_send_sw(SWO_INVALID_INS);

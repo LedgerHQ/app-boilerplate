@@ -149,4 +149,49 @@ ENABLE_PKI_LIBRARY = 1
 #DISABLE_DEBUG_LEDGER_ASSERT = 1
 #DISABLE_DEBUG_THROW = 1
 
+########################################
+#        Post-Quantum Cryptography      #
+########################################
+# Select which post-quantum algorithms to embed in the application.
+# Set a flag to 0 to exclude that algorithm from the build.
+# At least one of HAVE_MLDSA / HAVE_MLKEM must be enabled.
+HAVE_MLDSA ?= 1
+HAVE_MLKEM ?= 1
+
+ifeq ($(HAVE_MLDSA),0)
+  ifeq ($(HAVE_MLKEM),0)
+    $(error At least one of HAVE_MLDSA or HAVE_MLKEM must be enabled)
+  endif
+endif
+
+INCLUDES_PATH += $(BOLOS_SDK)/lib_cxng/src
+
+ifneq ($(HAVE_MLDSA),0)
+DEFINES += HAVE_MLDSA HAVE_MLDSA_87 HAVE_MLDSA_OPTIMIZATION
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mldsa.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mldsa_packing.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mldsa_polyvec.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mldsa_poly.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mldsa_polymat.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mldsa_rounding.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mldsa_sample.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mldsa_util.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mldsa_internal.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mldsa_lowram.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mldsa_smallpoly.c
+endif
+
+ifneq ($(HAVE_MLKEM),0)
+DEFINES += HAVE_MLKEM
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mlkem.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mlkem_indcpa.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mlkem_poly.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mlkem_polymat.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mlkem_polyvec.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mlkem_sample.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mlkem_util.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mlkem_internal.c
+endif
+
+
 include $(BOLOS_SDK)/Makefile.standard_app
