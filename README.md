@@ -1,4 +1,5 @@
 > [!CAUTION]
+test
 > This boilerplate must not be used to develop new applications for Ledger devices.
 > It is kept as a reference for maintaining existing C apps. For any new application,
 > use the [Rust boilerplate](https://github.com/LedgerHQ/app-boilerplate-rust) instead.
