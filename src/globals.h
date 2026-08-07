@@ -8,6 +8,8 @@
 #include "types.h"
 #include "constants.h"
 
+#include "os_pic.h"
+
 /**
  * Global context for user requests.
  */
@@ -22,5 +24,9 @@ typedef struct internal_storage_t {
     uint8_t initialized;
 } internal_storage_t;
 
+#ifdef TEST
+extern internal_storage_t N_storage_real;
+#else
 extern const internal_storage_t N_storage_real;
+#endif
 #define N_storage (*(volatile internal_storage_t *) PIC(&N_storage_real))

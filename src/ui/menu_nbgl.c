@@ -19,6 +19,8 @@
 #include "os.h"
 #include "glyphs.h"
 #include "nbgl_use_case.h"
+#include "os_nvm.h"
+#include "os_helpers.h"
 
 #include "globals.h"
 #include "menu.h"

@@ -16,3 +16,4 @@ jobs:
     secrets: inherit
     with:
       test_directory: unit-tests
+      use_cmake_ut_framework: true
