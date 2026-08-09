@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "buffer.h"
 #include "io.h"
@@ -32,6 +33,50 @@
 #include "get_public_key.h"
 #include "sign_tx.h"
 #include "provide_token_info.h"
+
+/**
+ * Initialize transaction context for the first APDU chunk (P1_START).
+ * Clears global context, sets request type, and parses BIP32 path.
+ *
+ * @param[in] cdata    Buffer containing BIP32 path
+ * @param[in] req_type Request type (CONFIRM_TRANSACTION or CONFIRM_TOKEN_TRANSACTION)
+ *
+ * @return zero or positive integer if success, negative integer otherwise.
+ */
+static int init_transaction_context(buffer_t *cdata, uint8_t req_type) {
+    explicit_bzero(&G_context, sizeof(G_context));
+    G_context.req_type = req_type;
+    G_context.state = STATE_NONE;
+
+    if (!buffer_read_u8(cdata, &G_context.bip32_path_len) ||
+        !buffer_read_bip32_path(cdata, G_context.bip32_path, (size_t) G_context.bip32_path_len)) {
+        return io_send_sw(SWO_WRONG_DATA_LENGTH);
+    }
+
+    return io_send_sw(SWO_SUCCESS);
+}
+
+/**
+ * Accumulate transaction data from an APDU chunk into the global raw_tx buffer.
+ *
+ * @param[in] cdata    Buffer containing transaction data chunk
+ * @param[in] req_type Expected request type for validation
+ *
+ * @return SWO_SUCCESS on success, error status word otherwise.
+ */
+static uint16_t accumulate_transaction_data(buffer_t *cdata, uint8_t req_type) {
+    if (G_context.req_type != req_type) {
+        return SWO_CONDITIONS_NOT_SATISFIED;
+    }
+    if (G_context.tx_info.raw_tx_len + cdata->size > sizeof(G_context.tx_info.raw_tx)) {
+        return SWO_WRONG_DATA_LENGTH;
+    }
+    if (!buffer_move(cdata, G_context.tx_info.raw_tx + G_context.tx_info.raw_tx_len, cdata->size)) {
+        return SWO_INCORRECT_DATA;
+    }
+    G_context.tx_info.raw_tx_len += cdata->size;
+    return SWO_SUCCESS;
+}
 
 int apdu_dispatcher(const command_t *cmd) {
     LEDGER_ASSERT(cmd != NULL, "NULL cmd");
@@ -73,7 +118,7 @@ int apdu_dispatcher(const command_t *cmd) {
             return handler_get_public_key(&buf, (bool) cmd->p1);
 
         case SIGN_TX:
-        case SIGN_TOKEN_TX:
+        case SIGN_TOKEN_TX: {
             // Common handler for both SIGN_TX and SIGN_TOKEN_TX, the content is very similar
             PRINTF("APDU_DISPATCHER: %d\n", cmd->ins);
             if ((cmd->p1 == P1_START && cmd->p2 != P2_MORE) ||  //
@@ -90,12 +135,28 @@ int apdu_dispatcher(const command_t *cmd) {
             buf.size = cmd->lc;
             buf.offset = 0;
 
-            // We could have written a handler_sign_token_tx but in our example token TX are very
-            // simple so we just reuse handler_sign_tx + a boolean.
-            return handler_sign_tx(&buf,
-                                   cmd->p1,
-                                   (bool) (cmd->p2 & P2_MORE),
-                                   cmd->ins == SIGN_TOKEN_TX);
+            bool is_token_tx = (cmd->ins == SIGN_TOKEN_TX);
+            uint8_t req_type = is_token_tx ? CONFIRM_TOKEN_TRANSACTION : CONFIRM_TRANSACTION;
+
+            if (cmd->p1 == P1_START) {
+                // First APDU chunk: initialize context and parse BIP32 path
+                return init_transaction_context(&buf, req_type);
+            }
+
+            // Subsequent chunks: accumulate transaction data
+            uint16_t err = accumulate_transaction_data(&buf, req_type);
+            if (err != SWO_SUCCESS) {
+                return io_send_sw(err);
+            }
+
+            if (cmd->p2 & P2_MORE) {
+                // More chunks expected, acknowledge reception
+                return io_send_sw(SWO_SUCCESS);
+            }
+
+            // Last chunk received: all transaction data is reassembled, call the handler
+            return handler_sign_tx(is_token_tx);
+        }
 
         case PROVIDE_TOKEN_INFO:
             if (cmd->p1 != 0 || cmd->p2 != 0) {

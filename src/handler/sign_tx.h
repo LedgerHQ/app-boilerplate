@@ -3,25 +3,18 @@
 #include <stdint.h>   // uint*_t
 #include <stdbool.h>  // bool
 
-#include "buffer.h"
-
 /**
- * Handler for SIGN_TX command. If successfully parse BIP32 path
- * and transaction, sign transaction and send APDU response.
+ * Handler for SIGN_TX command. Called once all APDU chunks have been
+ * reassembled by the dispatcher. Deserializes, hashes, and displays
+ * the transaction for user confirmation.
  *
  * @see G_context.bip32_path, G_context.tx_info.raw_transaction,
  * G_context.tx_info.signature and G_context.tx_info.v.
  *
- * @param[in,out] cdata
- *   Command data with BIP32 path and raw transaction serialized.
- * @param[in]     chunk
- *   Index number of the APDU chunk.
- * @param[in]       more
- *   Whether more APDU chunk to be received or not.
  * @param[in]   is_token_tx
  *  Whether the transaction to sign is a token transaction or not.
  *
  * @return zero or positive integer if success, negative integer otherwise.
  *
  */
-int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more, bool is_token_tx);
+int handler_sign_tx(bool is_token_tx);
