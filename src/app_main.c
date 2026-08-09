@@ -30,7 +30,12 @@
 #include "dispatcher.h"
 #include "dynamic_token_info.h"
 
-global_ctx_t G_context;
+// Trick
+#if CX_APILEVEL >= 9
+    global_ctx_t G_context;
+#else
+    global_ctx_t G_context;
+#endif
 
 const internal_storage_t N_storage_real;
 
