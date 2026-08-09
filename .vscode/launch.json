@@ -1,26 +1,48 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "gdb",
-            "request": "attach",
-            "name": "Attach to gdbserver",
-            "executable": "${workspaceFolder}/bin/app.elf",
-            "target": ":1234",
-            "remote": true,
+            "type": "cppdbg",
+            "request": "launch",
+            "name": "Debug on Speculos",
+            "program": "${workspaceFolder}/bin/app.elf",
             "cwd": "${workspaceFolder}",
-            "valuesFormatting": "parseText",
-            "gdbpath": "gdb-multiarch",
-            "autorun": [
-                "set architecture arm",
-                "handle SIGILL nostop pass noprint",
-                "add-symbol-file ${workspaceFolder}/bin/app.elf 0x40000000",
-                "b *0x40000000",
-                "c"
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb-multiarch",
+            "miDebuggerServerAddress": "127.0.0.1:1234",
+            "launchCompleteCommand": "exec-continue",
+            "preLaunchTask": "Start Speculos",
+            "setupCommands": [
+                { "text": "set confirm off", "ignoreFailures": false },
+                { "text": "set architecture arm", "ignoreFailures": false },
+                { "text": "set osabi GNU/Linux", "ignoreFailures": false },
+                { "text": "handle SIGILL nostop pass noprint", "ignoreFailures": true },
+                { "text": "set substitute-path /opt/ledger-secure-sdk ${input:sdkPath}", "ignoreFailures": true },
+                { "text": "set substitute-path /opt/apex-secure-sdk ${input:sdkPath}", "ignoreFailures": true },
+                { "text": "set substitute-path /opt/flex-secure-sdk ${input:sdkPath}", "ignoreFailures": true },
+                { "text": "set substitute-path /opt/nanosplus-secure-sdk ${input:sdkPath}", "ignoreFailures": true },
+                { "text": "set substitute-path /opt/nanos-secure-sdk ${input:sdkPath}", "ignoreFailures": true },
+                { "text": "set substitute-path /opt/nanox-secure-sdk ${input:sdkPath}", "ignoreFailures": true },
+                { "text": "set substitute-path /opt/stax-secure-sdk ${input:sdkPath}", "ignoreFailures": true },
+                { "text": "set substitute-path /app/ ${workspaceFolder}", "ignoreFailures": true },
+                { "text": "add-symbol-file ${input:speculosPath}/resources/launcher 0xf00001c0", "ignoreFailures": true },
+                { "text": "add-symbol-file ${workspaceFolder}/bin/app.elf 0x40000000", "ignoreFailures": false },
+                { "text": "b *0x40000000", "ignoreFailures": false }
             ]
         }
+    ],
+    "inputs": [
+        {
+            "id": "sdkPath",
+            "type": "promptString",
+            "description": "Path to local ledger-secure-sdk sources",
+            "default": "${userHome}/ledger/ledger-secure-sdk"
+        },
+        {
+            "id": "speculosPath",
+            "type": "promptString",
+            "description": "Path to local speculos sources",
+            "default": "${userHome}/ledger/speculos"
+        },
     ]
 }
