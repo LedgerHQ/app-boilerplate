@@ -21,3 +21,6 @@ jobs:
   guidelines_enforcer:
     name: Call Ledger guidelines_enforcer
     uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_guidelines_enforcer.yml@v1
+    with:
+      use_cmake: true
+      sdk_reference: "origin/mbr/cmake2"

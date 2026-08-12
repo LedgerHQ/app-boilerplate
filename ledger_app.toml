@@ -3,6 +3,12 @@ build_directory = "./"
 sdk = "C"
 devices = ["nanox", "nanos+", "stax", "flex", "apex_p"]
 
+[metadata]
+author = "Ledger"
+contact = "support@ledger.com"
+support_url = "https://support.ledger.com"
+compatible_wallets = ["Ledger Wallet"]
+
 # use_cases are named sets of compilation flags that Ledger tools can branch on to ease developer experience
 # - The application makefile allows `make <use_case_name>`
 # - The Ledger VSCode extension offers use_cases compilation in the UI

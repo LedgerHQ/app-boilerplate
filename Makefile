@@ -1,6 +1,6 @@
 # ****************************************************************************
 #    Ledger App Boilerplate
-#    (c) 2023 Ledger SAS.
+#    (c) 2026 Ledger SAS.
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -29,9 +29,13 @@ APPNAME = "Boilerplate"
 
 # Application version
 APPVERSION_M = 2
-APPVERSION_N = 3
-APPVERSION_P = 2
+APPVERSION_N = 4
+APPVERSION_P = 0
 APPVERSION = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
+
+# Application metadata, displayed in the settings
+DEFINES += APP_METADATA_AUTHOR=\"Ledger\"
+DEFINES += APP_METADATA_COPYRIGHT=\"\(c\)\\0402026\\040Ledger\\040SAS\"
 
 # Application source files
 APP_SOURCE_PATH += src
@@ -138,6 +142,11 @@ ENABLE_PKI_LIBRARY = 1
 #        Stack protection features     #
 ########################################
 ENABLE_STACK_PROTECTOR = 1
+
+########################################
+#                  LTO                 #
+########################################
+ENABLE_LINK_TIME_OPTIMIZATION = 1
 
 ########################################
 #          Features disablers          #

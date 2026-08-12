@@ -1,0 +1,6 @@
+{
+  "version": 7,
+  "include": [
+    "$penv{BOLOS_SDK}/cmake/presets/LedgerAppPresets.json"
+  ]
+}

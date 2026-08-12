@@ -22,6 +22,7 @@ def test_app_mainmenu(device: Device, navigator: Navigator, test_name: str, defa
             NavInsID.BOTH_CLICK,
             NavInsID.RIGHT_CLICK,
             NavInsID.RIGHT_CLICK,
+            NavInsID.RIGHT_CLICK,
             NavInsID.BOTH_CLICK,
             NavInsID.RIGHT_CLICK,
         ]
@@ -43,6 +44,7 @@ def test_app_mainmenu(device: Device, navigator: Navigator, test_name: str, defa
             NavInsID.USE_CASE_CHOICE_CONFIRM,
             NavIns(NavInsID.TOUCH, (200, 300)),
             NavInsID.USE_CASE_SETTINGS_NEXT,
+            NavInsID.USE_CASE_SETTINGS_NEXT,
             NavInsID.USE_CASE_SETTINGS_MULTI_PAGE_EXIT,
         ]
     elif device.type is DeviceType.APEX_P:
@@ -52,6 +54,7 @@ def test_app_mainmenu(device: Device, navigator: Navigator, test_name: str, defa
             NavIns(NavInsID.TOUCH, (243, 211)),
             NavInsID.USE_CASE_CHOICE_CONFIRM,
             NavIns(NavInsID.TOUCH, (243, 211)),
+            NavInsID.USE_CASE_SETTINGS_NEXT,
             NavInsID.USE_CASE_SETTINGS_NEXT,
             NavInsID.USE_CASE_SETTINGS_MULTI_PAGE_EXIT,
         ]
