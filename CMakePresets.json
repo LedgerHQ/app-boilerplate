@@ -1,0 +1,33 @@
+{
+  "version": 7,
+  "include": [
+    "$penv{BOLOS_SDK}/cmake/presets/LedgerPresets.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "unit-tests",
+      "inherits": "ledger-ut",
+      "displayName": "Boilerplate unit tests (host GCC)"
+    },
+    { "name": "flex",   "inherits": "ledger-flex" },
+    { "name": "stax",   "inherits": "ledger-stax" },
+    { "name": "nanos2", "inherits": "ledger-nanos2" },
+    { "name": "nanox",  "inherits": "ledger-nanox" },
+    { "name": "apex_p", "inherits": "ledger-apex_p" }
+  ],
+  "buildPresets": [
+    { "name": "unit-tests", "configurePreset": "unit-tests" },
+    { "name": "flex",   "configurePreset": "flex" },
+    { "name": "stax",   "configurePreset": "stax" },
+    { "name": "nanos2", "configurePreset": "nanos2" },
+    { "name": "nanox",  "configurePreset": "nanox" },
+    { "name": "apex_p", "configurePreset": "apex_p" }
+  ],
+  "testPresets": [
+    {
+      "name": "unit-tests",
+      "inherits": "ledger-ut",
+      "configurePreset": "unit-tests"
+    }
+  ]
+}
