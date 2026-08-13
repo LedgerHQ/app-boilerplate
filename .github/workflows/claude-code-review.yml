@@ -43,4 +43,3 @@ jobs:
           claude_args: '--model claude-opus-4-6'
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
-
