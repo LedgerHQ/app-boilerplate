@@ -1,9 +1,5 @@
 #!/bin/bash -eu
-
-# build fuzzers
-
-pushd fuzzing
-cmake -DBOLOS_SDK=../BOLOS_SDK -Bbuild -H.
-make -C build
-mv ./build/fuzz_tx_parser "${OUT}"
-popd
+# ClusterFuzzLite build: delegate to the shared SDK script.
+export BOLOS_SDK=/ledger-secure-sdk
+export APP_DIR=/app
+exec "${BOLOS_SDK}/fuzzing/scripts/cfl-build.sh"
