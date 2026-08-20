@@ -1,0 +1,2 @@
+# SDK macros to exclude from the fuzz build.
+# One macro per line.  Lines starting with # are ignored.

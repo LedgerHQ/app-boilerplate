@@ -1,0 +1,40 @@
+# Boilerplate app fuzz manifest. Schema: $BOLOS_SDK/fuzzing/doc/manifest.dox.
+
+[target]
+fuzzer = "fuzz_app"
+harness_version = "6"
+
+[coverage]
+key_files = [
+    "src/apdu/dispatcher.c",
+    "src/handler/get_public_key.c",
+    "src/handler/sign_tx.c",
+    "src/transaction/deserialize.c",
+    "src/swap/handle_check_address.c",
+    "src/swap/handle_get_printable_amount.c",
+    "src/swap/handle_swap_sign_transaction.c",
+]
+exclude_regexes = [
+    '.*ledger-secure-sdk.*',
+    '.*fuzz_dispatcher\.c',
+    '.*fuzzer\.c',
+    '.*src/app_main\.c',
+    '.*src/ui/menu_nbgl\.c',
+]
+
+# Only bytes the fuzzer cannot reach on its own belong here. CLA, INS, P1 and P2
+# never appear in the tail: fuzz_app_dispatch() takes them from
+# fuzz_commands[], so tokens for them can never match.
+[dictionary]
+tokens = [
+    { name = "blind_sign_memo", value = "Blind-sign" },
+]
+
+[seeds]
+ins = [0x03, 0x04, 0x05, 0x06, 0x07, 0x22]
+
+[seeds.generic]
+enabled = true
+
+[seeds.custom]
+enabled = false
