@@ -109,6 +109,10 @@ endif()
 #                          Device binary                              #
 #######################################################################
 if(LEDGER_DEVICE_BUILD)
+    # ragger resolves the app binary as <repo>/build/<device>/bin/app.elf and offers
+    # no way to override it (ragger/utils/misc.py:93), so pytest needs no flag.
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
     # The SDK's own find_package(Python3) happens in lib_nbgl's scope, not here.
     find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
@@ -137,15 +141,15 @@ if(LEDGER_DEVICE_BUILD)
         # print sections sizes
         COMMAND size -A $<TARGET_FILE:app.elf>
         # generate hex
-        COMMAND llvm-objcopy -O ihex -S $<TARGET_FILE:app.elf> ${CMAKE_BINARY_DIR}/app.hex
+        COMMAND llvm-objcopy -O ihex -S $<TARGET_FILE:app.elf> ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/app.hex
         # generate map
         COMMAND llvm-objdump -h -t $<TARGET_FILE:app.elf> > ${CMAKE_BINARY_DIR}/app.map
         # generate apdu
         # former Makefile command : ${Python3_EXECUTABLE} -m ledgerblue.loadApp $(APP_LOAD_PARAMS) --offline $(BIN_DIR)/app.apdu
         # XXX to be factorized and moved in SDK.
         COMMAND ${Python3_EXECUTABLE} -m ledgerblue.loadApp
-                --offline ${CMAKE_BINARY_DIR}/app.apdu
-                --fileName ${CMAKE_BINARY_DIR}/app.hex
+                --offline ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/app.apdu
+                --fileName ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/app.hex
                 --appFlags 0x200
                 --curve secp256k1
                 --path "44'/1'"
