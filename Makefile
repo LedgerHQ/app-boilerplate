@@ -179,6 +179,7 @@ APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mldsa_util.c
 APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mldsa_internal.c
 APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mldsa_lowram.c
 APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mldsa_smallpoly.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mldsa_params.c
 endif
 
 ifneq ($(HAVE_MLKEM),0)
@@ -191,6 +192,7 @@ APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mlkem_polyvec.c
 APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mlkem_sample.c
 APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mlkem_util.c
 APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mlkem_internal.c
+APP_SOURCE_FILES   += $(BOLOS_SDK)/lib_cxng/src/cx_mlkem_params.c
 endif
 
 
