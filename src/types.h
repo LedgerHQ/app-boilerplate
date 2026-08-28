@@ -23,7 +23,8 @@ typedef enum {
     MLKEM_DECAPSULATE = 0x32,  /// ML-KEM decapsulation
     MLDSA_KEYGEN = 0x40,       /// ML-DSA key generation from seed
     MLDSA_SIGN = 0x41,         /// ML-DSA signature generation (sign_mu)
-    MLDSA_VERIFY = 0x42        /// ML-DSA signature verification (verify_mu)
+    MLDSA_VERIFY = 0x42,       /// ML-DSA signature verification (verify_mu)
+    NOOP = 0x50                /// no-op: ignore input and return SWO_SUCCESS
 } command_e;
 /**
  * Enumeration with parsing state.

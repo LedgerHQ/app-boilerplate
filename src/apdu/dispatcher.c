@@ -32,6 +32,7 @@
 #include "get_public_key.h"
 #include "sign_tx.h"
 #include "provide_token_info.h"
+#include "noop.h"
 #ifdef HAVE_MLDSA
 #include "mldsa.h"
 #endif
@@ -157,6 +158,9 @@ int apdu_dispatcher(const command_t *cmd) {
 
             return handler_mldsa(&buf, cmd->ins, cmd->p1, cmd->p2);
 #endif /* HAVE_MLDSA */
+
+        case NOOP:
+            return handler_noop();
 
         default:
             return io_send_sw(SWO_INVALID_INS);
