@@ -19,8 +19,6 @@ swap/
 |── cal_helper.py                     # A fake CAL configuration for the BOL currency
 ├── conftest.py                       # Pytest fixtures and device setup
 ├── test_boilerplate.py               # Functional test cases
-├── helper_tool_build_dependencies.py # A helper script to pull Exchange and Ethereum applications (needed for Speculos to emulate a swap)
-├── helper_tool_clone_dependencies.py # A helper script to compile pulled Exchange and Ethereum applications (run after helper_tool_build_dependencies.py INSIDE the Docker)
 ├── snapshots/                        # Ragger UI snapshots
 ├── snapshots-tmp/                    # Temporary snapshot diffs (not tracked in git)
 ├── requirements.txt                  # Python dependencies
@@ -30,26 +28,17 @@ swap/
 
 Build your application in the **Ledger docker** environment.
 
-### Compile the Exchange and Ethereum applications
+### Fetch the Exchange and Ethereum applications
 
-First, install helper python dependencies in your **native** (host) environment
-
-```sh
-pip install -U GitPython
-```
-
-Then, execute the clone script in your **native** (host) environment
+Execute the fetch script in your **native** (host) environment or in the **Ledger docker** environment.
+It downloads the prebuilt test binaries of the applications listed in `ledger_app.toml` (`[pytest.swap.dependencies]`)
+and puts them in `.test_dependencies/`. Nothing is compiled.
 
 ```sh
-python helper_tool_clone_dependencies.py
+python helper_tool_fetch_dependencies.py
 ```
 
-Then, execute the build script in the **Ledger docker** environment.
-You can use the following command when located in the `tests/swap` directory.
-
-```sh
-docker run --user "$(id -u)":"$(id -g)" --rm -ti -v "$(realpath .):/app" "ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest" python3 helper_tool_build_dependencies.py
-```
+For private repositories, set `GH_TOKEN` or log in with `gh auth login`.
 
 ## Running a first Exchange test
 
