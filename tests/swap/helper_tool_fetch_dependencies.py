@@ -18,12 +18,14 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import tomllib
 import urllib.error
+import urllib.parse
 import urllib.request
 import zipfile
 from io import BytesIO
 from pathlib import Path
+
+import tomllib
 
 RELEASE_TAG = "test-binaries"
 MAIN_APP_REPO = re.compile(r"^app-exchange(-dev)?$")
@@ -45,12 +47,25 @@ def get_token() -> str | None:
         return None
 
 
+class _DropAuthOnRedirect(urllib.request.HTTPRedirectHandler):
+    """Do not send the GitHub token to another host (release assets are served from a CDN)."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        new = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new is not None and urllib.parse.urlparse(newurl).netloc != urllib.parse.urlparse(req.full_url).netloc:
+            new.headers.pop("Authorization", None)
+        return new
+
+
+_OPENER = urllib.request.build_opener(_DropAuthOnRedirect)
+
+
 def github(api_path: str, token: str | None, accept: str = "application/vnd.github+json") -> bytes:
     headers = {"Accept": accept}
     if token:
         headers["Authorization"] = f"Bearer {token}"
     request = urllib.request.Request(f"https://api.github.com/{api_path}", headers=headers)
-    with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
+    with _OPENER.open(request, timeout=TIMEOUT_SECONDS) as response:
         return response.read()
 
 
