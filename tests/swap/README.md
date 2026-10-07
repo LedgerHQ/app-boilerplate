@@ -35,7 +35,7 @@ It downloads the prebuilt test binaries of the applications listed in `ledger_ap
 and puts them in `.test_dependencies/`. Nothing is compiled.
 
 ```sh
-python helper_tool_fetch_dependencies.py
+python tests/swap/helper_tool_fetch_dependencies.py
 ```
 
 For private repositories, set `GH_TOKEN` or log in with `gh auth login`.
