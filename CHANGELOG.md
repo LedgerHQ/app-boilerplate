@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-10-06
+
+### Added
+
+- CMake build system: `CMakeLists.txt` and `CMakePresets.json`, built on the SDK `ledger_app()` CMake module
+- `[metadata]` section in `ledger_app.toml`, the single source of truth of the application metadata
+- Copyright line in the settings info list
+
+### Changed
+
+- The settings "Developer" line comes from the `ledger_app.toml` `[metadata]` `author`
+- CI builds and unit tests use the CMake build system
+
 ## [2.1.0] - 2023-10-06
 
 ### Changed

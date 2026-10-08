@@ -38,9 +38,11 @@ void app_quit(void) {
 //  -----------------------------------------------------------
 //  --------------------- SETTINGS MENU -----------------------
 //  -----------------------------------------------------------
-#define SETTING_INFO_NB 2
-static const char *const INFO_TYPES[SETTING_INFO_NB] = {"Version", "Developer"};
-static const char *const INFO_CONTENTS[SETTING_INFO_NB] = {APPVERSION, "Ledger"};
+#define SETTING_INFO_NB 3
+static const char *const INFO_TYPES[SETTING_INFO_NB] = {"Version", "Developer", "Copyright"};
+static const char *const INFO_CONTENTS[SETTING_INFO_NB] = {APPVERSION,
+                                                           APP_METADATA_AUTHOR,
+                                                           APP_METADATA_COPYRIGHT};
 
 // settings switches definitions
 enum { DUMMY_SWITCH_1_TOKEN = FIRST_USER_TOKEN, DUMMY_SWITCH_2_TOKEN };
