@@ -1,0 +1,37 @@
+# Domain overrides applied after invariant sync. Selectors are GLOBAL.FIELD,
+# with a trailing dot for a flat global (SYMBOL. = ...). Syntax and semantics:
+# $BOLOS_SDK/fuzzing/doc/invariants.dox.
+#
+# A prefix byte selects by index into the value list, so the first value is what
+# a zero prefix restores. Put the productive value first when a zero would make
+# the app reject before reaching anything.
+
+# state_e: STATE_NONE, STATE_PARSED, STATE_APPROVED.
+G_context.state = values \x00 \x01 \x02
+
+# request_type_e: CONFIRM_ADDRESS, CONFIRM_TRANSACTION, CONFIRM_TOKEN_TRANSACTION.
+G_context.req_type = values \x00 \x01 \x02
+
+# Valid BIP32 derivation path lengths.
+G_context.bip32_path_len = values \x00 \x03 \x05
+
+# Swap entry flag.
+G_called_from_swap. = values \x00 \x01
+
+# Pinned false. lib_standard_app/main.c clears it at startup and is excluded
+# here, so a restored true would present a state production cannot: the app
+# exits after a swap reply rather than accepting another command, and
+# check_and_sign_swap_tx() treats it as a broken invariant. The true branch is
+# still reached within an iteration, since sign_tx.c sets it itself.
+G_swap_response_ready. = values \x00
+
+# SDK mock toggles, so both the success and failure paths are reachable.
+fuzz_mock_nbgl_reject. = values \x00 \x01
+fuzz_mock_crypto_fail. = values \x00 \x01
+
+# Left unconstrained: swap_check_validity() compares these against the parsed
+# transaction, and the mismatch branches are the point.
+G_swap_validated.initialized = values \x00 \x01
+G_swap_validated.amount = top
+G_swap_validated.fee = top
+G_swap_validated.recipient = top

@@ -20,6 +20,13 @@ unit-tests/coverage.info
 fuzzing/build/
 fuzzing/corpus/
 fuzzing/out/
+.fuzz-artifacts/
+# Per-build Absolution invariant snapshot — see ledger-secure-sdk
+# fuzzing/doc/invariants.dox ("fuzz_globals.zon is a machine-local artefact").
+fuzzing/invariants/fuzz_globals.zon
+
+# LSP
+compile_commands.json
 
 # Python
 *.pyc[cod]

@@ -1,48 +1,30 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.20)
 
-if(${CMAKE_VERSION} VERSION_LESS 3.10)
-    cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
-endif()
-
-# project information
-project(FuzzTxParser
+project(BoilerPlateFuzzer
         VERSION 1.0
-	      DESCRIPTION "Fuzzing of transaction parser"
+        DESCRIPTION "Ledger App Boilerplate Fuzzer"
         LANGUAGES C)
 
-# guard against bad build-type strings
-if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Debug")
+if(NOT DEFINED BOLOS_SDK)
+  message(FATAL_ERROR "BOLOS_SDK must be defined")
 endif()
 
-if (NOT CMAKE_C_COMPILER_ID MATCHES "Clang")
-    message(FATAL_ERROR "Fuzzer needs to be built with Clang")
-endif()
+# Exports the `secure_sdk` target and ledger_fuzz_add_app_target().
+include(${BOLOS_SDK}/fuzzing/cmake/LedgerAppFuzz.cmake)
+ledger_fuzz_setup()
 
-if (NOT DEFINED BOLOS_SDK)
-  message(FATAL_ERROR "BOLOS_SDK environment variable not found.")
-endif()
+set(APP_SOURCE_DIR ${CMAKE_SOURCE_DIR}/..)
 
-# guard against in-source builds
-if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
-  message(FATAL_ERROR "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there. You may need to remove CMakeCache.txt. ")
-endif()
+# The whole app minus its hardware entry point, which the harness replaces.
+file(GLOB_RECURSE C_SOURCES CONFIGURE_DEPENDS ${APP_SOURCE_DIR}/src/*.c)
+list(REMOVE_ITEM C_SOURCES ${APP_SOURCE_DIR}/src/app_main.c)
 
-# compatible with ClusterFuzzLite
-if (NOT DEFINED ENV{LIB_FUZZING_ENGINE})
-	set(COMPILATION_FLAGS_ "-g -Wall -fsanitize=fuzzer,address,undefined")
-else()
-	set(COMPILATION_FLAGS_ "$ENV{LIB_FUZZING_ENGINE} $ENV{CXXFLAGS}")
-endif()
+ledger_fuzz_collect_include_dirs(APP_INCLUDE_DIRS ${APP_SOURCE_DIR}/src)
+list(APPEND APP_INCLUDE_DIRS ${BOLOS_SDK}/lib_tlv/use_cases ${CMAKE_SOURCE_DIR})
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-string(REPLACE " " ";" COMPILATION_FLAGS ${COMPILATION_FLAGS_})
-
-include(extra/TxParser.cmake)
-
-add_executable(fuzz_tx_parser fuzz_tx_parser.c)
-
-target_compile_options(fuzz_tx_parser PUBLIC ${COMPILATION_FLAGS})
-target_link_options(fuzz_tx_parser PUBLIC ${COMPILATION_FLAGS})
-target_link_libraries(fuzz_tx_parser PUBLIC txparser)
+# HAVE_* / APPNAME / ... arrive transitively from secure_sdk
+# (make list-defines + macros/add_macros.txt).
+ledger_fuzz_add_app_target(
+    NAME fuzz_app
+    SOURCES ${C_SOURCES}
+    INCLUDE_DIRECTORIES ${APP_INCLUDE_DIRS})
