@@ -264,7 +264,7 @@ sequenceDiagram
     H->>E: CHECK_PAYOUT_ADDRESS
     Note over E: Payout address and amount checked by the TO application
     E-->>H: 9000
-    H->>E: CHECK_REFUND_ADDRESS
+    H->>E: CHECK_REFUND_ADDRESS_NO_DISPLAY (0x0C)
     E->>A: os_lib_call CHECK_ADDRESS (BIP32 path, refund address)
     A-->>E: Address derived from the device seed or not
     E->>A: os_lib_call GET_PRINTABLE_AMOUNT (amount)
