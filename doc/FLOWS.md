@@ -298,7 +298,7 @@ sequenceDiagram
     E->>U: Display the signing status
 ```
 
-The application signs at most one transaction per swap, and exits after the first response.
+The application signs at most one transaction per swap, and exits after returning the final transaction result.
 
 On failure, the response data holds 2 bytes before the `C000` status word:
 
