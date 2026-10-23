@@ -41,7 +41,11 @@ static bool parse_config_cb(const uint8_t *config,
 }
 
 // format_fpu64 mock: always produce FORMATTED.
-static bool fpu64_cb(char *dst, size_t dst_len, uint64_t value, uint8_t decimals, int cmock_num_calls) {
+static bool fpu64_cb(char *dst,
+                     size_t dst_len,
+                     uint64_t value,
+                     uint8_t decimals,
+                     int cmock_num_calls) {
     (void) value;
     (void) decimals;
     (void) cmock_num_calls;
@@ -140,6 +144,65 @@ void test_config_parse_failure(void) {
     TEST_ASSERT_EQUAL_STRING("", params.printable_amount);
 }
 
+// Ticker length produced by parse_sized_ticker_cb.
+static size_t g_ticker_len;
+
+// swap_parse_config mock: yield a ticker of g_ticker_len characters.
+static bool parse_sized_ticker_cb(const uint8_t *config,
+                                  uint8_t config_len,
+                                  char *ticker,
+                                  uint8_t ticker_buf_len,
+                                  uint8_t *decimals,
+                                  int cmock_num_calls) {
+    (void) config;
+    (void) config_len;
+    (void) cmock_num_calls;
+    TEST_ASSERT_TRUE(g_ticker_len < ticker_buf_len);
+    memset(ticker, 'A', g_ticker_len);
+    ticker[g_ticker_len] = '\0';
+    *decimals = 6;
+    return true;
+}
+
+static void run_with_ticker_len(get_printable_amount_parameters_t *params, size_t ticker_len) {
+    params->amount = g_amount;
+    params->amount_length = sizeof(g_amount);
+    params->is_fee = false;
+    params->coin_configuration = g_config;
+    params->coin_configuration_length = sizeof(g_config);
+    g_ticker_len = ticker_len;
+
+    swap_str_to_u64_ExpectAnyArgsAndReturn(true);
+    swap_parse_config_AddCallback(parse_sized_ticker_cb);
+    swap_parse_config_ExpectAnyArgsAndReturn(true);
+    format_fpu64_AddCallback(fpu64_cb);
+    format_fpu64_ExpectAnyArgsAndReturn(true);
+
+    swap_handle_get_printable_amount(params);
+}
+
+// Longest ticker such that "<FORMATTED> <ticker>" and its terminator fill the buffer.
+#define MAX_FITTING_TICKER_LEN (MAX_PRINTABLE_AMOUNT_SIZE - sizeof(FORMATTED " "))
+
+void test_printable_amount_max_length(void) {
+    get_printable_amount_parameters_t params = {0};
+
+    run_with_ticker_len(&params, MAX_FITTING_TICKER_LEN);
+
+    TEST_ASSERT_EQUAL_size_t(MAX_PRINTABLE_AMOUNT_SIZE - 1, strlen(params.printable_amount));
+    TEST_ASSERT_EQUAL_STRING_LEN(FORMATTED " AAA",
+                                 params.printable_amount,
+                                 sizeof(FORMATTED " AAA") - 1);
+}
+
+void test_printable_amount_too_long(void) {
+    get_printable_amount_parameters_t params = {0};
+
+    run_with_ticker_len(&params, MAX_FITTING_TICKER_LEN + 1);
+
+    TEST_ASSERT_EQUAL_STRING("", params.printable_amount);
+}
+
 int main(void) {
     UNITY_BEGIN();
 
@@ -148,6 +211,8 @@ int main(void) {
     RUN_TEST(test_native_amount_without_config);
     RUN_TEST(test_token_amount_with_config);
     RUN_TEST(test_config_parse_failure);
+    RUN_TEST(test_printable_amount_max_length);
+    RUN_TEST(test_printable_amount_too_long);
 
     return UNITY_END();
 }
