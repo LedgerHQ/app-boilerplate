@@ -34,7 +34,9 @@ void tearDown(void) {
 static void provide_dynamic(const uint8_t *address, const char *tk, uint8_t decimals) {
     char ticker[MAX_TICKER_SIZE + 1] = {0};
     strncpy(ticker, tk, MAX_TICKER_SIZE);
-    buffer_t buf = {.ptr = address, .size = TOKEN_ADDRESS_LEN, .offset = 0};
+    uint8_t addr[TOKEN_ADDRESS_LEN];
+    memcpy(addr, address, sizeof(addr));
+    buffer_t buf = {.ptr = addr, .size = sizeof(addr), .offset = 0};
     set_token_info(decimals, &ticker, &buf);
 }
 

@@ -20,7 +20,6 @@ include(LedgerUT)
 #             Setup app specific includes & compile defs              #
 #######################################################################
 set(UT_INCLUDE_DIRS
-    ${CMAKE_BINARY_DIR}/mocks/ # XXX this one might to be moved in SDK, TBD
     ${CMAKE_CURRENT_SOURCE_DIR}/../src
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/apdu
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/handler
