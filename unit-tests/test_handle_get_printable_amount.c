@@ -144,6 +144,31 @@ void test_config_parse_failure(void) {
     TEST_ASSERT_EQUAL_STRING("", params.printable_amount);
 }
 
+// format_fpu64 mock: write FORMATTED, then report a failure.
+static bool fpu64_fail_cb(char *dst,
+                          size_t dst_len,
+                          uint64_t value,
+                          uint8_t decimals,
+                          int cmock_num_calls) {
+    fpu64_cb(dst, dst_len, value, decimals, cmock_num_calls);
+    return false;
+}
+
+void test_format_failure(void) {
+    get_printable_amount_parameters_t params = {0};
+    params.amount = g_amount;
+    params.amount_length = sizeof(g_amount);
+    params.is_fee = true;
+
+    swap_str_to_u64_ExpectAnyArgsAndReturn(true);
+    format_fpu64_AddCallback(fpu64_fail_cb);
+    format_fpu64_ExpectAnyArgsAndReturn(false);  // formatting fails
+
+    swap_handle_get_printable_amount(&params);
+
+    TEST_ASSERT_EQUAL_STRING("", params.printable_amount);
+}
+
 // Ticker length produced by parse_sized_ticker_cb.
 static size_t g_ticker_len;
 
@@ -211,6 +236,7 @@ int main(void) {
     RUN_TEST(test_native_amount_without_config);
     RUN_TEST(test_token_amount_with_config);
     RUN_TEST(test_config_parse_failure);
+    RUN_TEST(test_format_failure);
     RUN_TEST(test_printable_amount_max_length);
     RUN_TEST(test_printable_amount_too_long);
 

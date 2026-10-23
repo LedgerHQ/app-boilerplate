@@ -53,7 +53,10 @@ void swap_handle_get_printable_amount(get_printable_amount_parameters_t *params)
         }
     }
     char formatted_amount[30] = {0};
-    format_fpu64(formatted_amount, sizeof(formatted_amount), raw_amount, decimals);
+    if (!format_fpu64(formatted_amount, sizeof(formatted_amount), raw_amount, decimals)) {
+        PRINTF("Fail to format amount\n");
+        return;
+    }
     PRINTF("Formatted amount: %s\n", formatted_amount);
     int len = snprintf(params->printable_amount,
                        sizeof(params->printable_amount),
