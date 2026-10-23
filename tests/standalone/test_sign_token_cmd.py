@@ -177,6 +177,7 @@ def test_sign_token_tx_long_memo(backend: BackendInterface, scenario_navigator: 
 
 
 # Test providing a valid dynamic token via CAL and signing with it
+@pytest.mark.flow("dynamic_token", start="LOAD_CERTIFICATE")
 def test_provide_dynamic_token_valid_new(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
     """Test providing a new CAL-signed token and using it to sign a transaction."""
     client = BoilerplateCommandSender(backend)

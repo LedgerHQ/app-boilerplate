@@ -33,6 +33,7 @@ def test_get_public_key_no_confirm(backend: BackendInterface) -> None:
 
 
 # In this test we check that the GET_PUBLIC_KEY works in confirmation mode
+@pytest.mark.flow("verify_address", variant="User approves")
 def test_get_public_key_confirm_accepted(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
     client = BoilerplateCommandSender(backend)
     path = "m/44'/1'/0'/0/0"
@@ -48,6 +49,7 @@ def test_get_public_key_confirm_accepted(backend: BackendInterface, scenario_nav
 
 
 # In this test we check that the GET_PUBLIC_KEY in confirmation mode replies an error if the user refuses
+@pytest.mark.flow("verify_address", variant="User rejects")
 def test_get_public_key_confirm_refused(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
     client = BoilerplateCommandSender(backend)
     path = "m/44'/1'/0'/0/0"

@@ -30,8 +30,14 @@ The diagrams use the following participants:
 | App | The Boilerplate application |
 | User | The person reviewing the screens and approving or rejecting on the device |
 
-The APDU traces are written as `=>` for a command sent by the host and `<=` for the response of the device.
-They use the path `m/44'/1'/0'/0/0`. Bytes between `<` and `>` depend on the device seed or on a signature.
+The blocks between `<!-- BEGIN GENERATED FLOW -->` and `<!-- END GENERATED FLOW -->` markers must not be edited
+by hand: they are generated from the functional tests tagged with `@pytest.mark.flow`, so the diagram and the
+screens are the ones of a green test. To regenerate them, from `tests/`:
+
+```shell
+pytest standalone --device flex --flows_dir standalone/flows -m flow
+python -m standalone.generate_flows --flows_dir standalone/flows
+```
 
 ## Identify the application
 
@@ -52,15 +58,6 @@ sequenceDiagram
     A-->>H: "Boilerplate", 9000
 ```
 
-```text
-=> b0 01 00 00 00
-<= 01 0b 426f696c6572706c617465 <version length> <version> <flags length> <flags> 9000
-=> e0 03 00 00 00
-<= <major> <minor> <patch> 9000
-=> e0 04 00 00 00
-<= 426f696c6572706c617465 9000
-```
-
 ## Get a public key
 
 The host retrieves the public key silently, for example to build the account and its addresses. No screen is
@@ -76,15 +73,12 @@ sequenceDiagram
     A-->>H: public key, chain code, 9000
 ```
 
-```text
-=> e0 05 00 00 15 058000002c80000001800000000000000000000000
-<= 41 04<64 bytes> 20 <32 bytes> 9000
-```
-
 ## Verify an address on the device
 
 Before receiving funds, the user checks on the device screen that the address shown by the host is really
 derived from their seed.
+
+<!-- BEGIN GENERATED FLOW verify_address -->
 
 ```mermaid
 sequenceDiagram
@@ -92,68 +86,99 @@ sequenceDiagram
     participant A as App
     actor U as User
 
-    H->>A: GET_PUBLIC_KEY (E0 05, P1=01), BIP32 path
-    A->>A: Derive the key, compute the address
-    A->>U: Display the address
+    H->>A: GET_PUBLIC_KEY (E0 05) P1=01 P2=00, 21 bytes
+    A->>U: Address screens
     alt User approves
         U->>A: Approve
-        A-->>H: public key, chain code, 9000
+        A-->>H: 99 bytes, 9000
     else User rejects
         U->>A: Reject
-        A-->>H: 6985
+        A-->>H: 6985 SWO_CONDITIONS_NOT_SATISFIED
     end
 ```
 
-```text
-=> e0 05 01 00 15 058000002c80000001800000000000000000000000
-<= 41 04<64 bytes> 20 <32 bytes> 9000      (approved)
-<= 6985                                     (rejected)
-```
+<details open>
+<summary>User approves: screens on Flex</summary>
+<!-- markdownlint-disable MD013 -->
+<p>
+<a href="../tests/standalone/snapshots/flex/test_get_public_key_confirm_accepted/00000.png"><img src="../tests/standalone/snapshots/flex/test_get_public_key_confirm_accepted/00000.png" alt="Address screen 1" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_get_public_key_confirm_accepted/00001.png"><img src="../tests/standalone/snapshots/flex/test_get_public_key_confirm_accepted/00001.png" alt="Address screen 2" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_get_public_key_confirm_accepted/00002.png"><img src="../tests/standalone/snapshots/flex/test_get_public_key_confirm_accepted/00002.png" alt="Address screen 3" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_get_public_key_confirm_accepted/00003.png"><img src="../tests/standalone/snapshots/flex/test_get_public_key_confirm_accepted/00003.png" alt="Address screen 4" width="120"></a>
+</p>
+<!-- markdownlint-enable MD013 -->
+</details>
+
+<details open>
+<summary>User rejects: screens on Flex</summary>
+<!-- markdownlint-disable MD013 -->
+<p>
+<a href="../tests/standalone/snapshots/flex/test_get_public_key_confirm_refused/00000.png"><img src="../tests/standalone/snapshots/flex/test_get_public_key_confirm_refused/00000.png" alt="Address screen 1" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_get_public_key_confirm_refused/00001.png"><img src="../tests/standalone/snapshots/flex/test_get_public_key_confirm_refused/00001.png" alt="Address screen 2" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_get_public_key_confirm_refused/00002.png"><img src="../tests/standalone/snapshots/flex/test_get_public_key_confirm_refused/00002.png" alt="Address screen 3" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_get_public_key_confirm_refused/00003.png"><img src="../tests/standalone/snapshots/flex/test_get_public_key_confirm_refused/00003.png" alt="Address screen 4" width="120"></a>
+</p>
+<!-- markdownlint-enable MD013 -->
+</details>
+
+<!-- END GENERATED FLOW verify_address -->
 
 ## Sign a transaction
 
 The host sends the BIP32 path first, then the serialized transaction in chunks of at most 255 bytes. The
 review starts when the last chunk is received, and the signature is returned only once the user approves.
 
+<!-- BEGIN GENERATED FLOW sign_tx -->
+
 ```mermaid
 sequenceDiagram
     participant H as Host
     participant A as App
     actor U as User
 
-    H->>A: SIGN_TX (E0 06, P1=00, P2=80), BIP32 path
-    A->>A: Reset the signing context, store the path
+    H->>A: SIGN_TX (E0 06) P1=00 P2=80, 21 bytes
     A-->>H: 9000
-    loop While more than 255 bytes remain
-        H->>A: SIGN_TX (E0 06, P1=index, P2=80), 255 bytes
-        A->>A: Append to the transaction buffer
-        A-->>H: 9000
-    end
-    H->>A: SIGN_TX (E0 06, P1=index, P2=00), last bytes
-    A->>A: Parse the transaction, compute Keccak-256
-    alt Parsing fails
-        A-->>H: 6A80
-    else Parsing succeeds
-        A->>U: Display amount, recipient, memo
-        alt User approves
-            U->>A: Approve
-            A->>A: Sign the hash with ECDSA
-            A-->>H: signature length, DER signature, v, 9000
-        else User rejects
-            U->>A: Reject
-            A-->>H: 6985
-        end
+    alt User approves
+        H->>A: SIGN_TX (E0 06) P1=01 P2=00, 49 bytes
+        A->>U: Review screens
+        U->>A: Approve
+        A-->>H: 72 bytes, 9000
+    else User rejects
+        H->>A: SIGN_TX (E0 06) P1=01 P2=00, 81 bytes
+        A->>U: Review screens
+        U->>A: Reject
+        A-->>H: 6985 SWO_CONDITIONS_NOT_SATISFIED
     end
 ```
 
-Trace for a 49-byte transaction (nonce 1, value 666 mBOL, memo `For u EthDev`), which fits in one chunk:
+<details open>
+<summary>User approves: screens on Flex</summary>
+<!-- markdownlint-disable MD013 -->
+<p>
+<a href="../tests/standalone/snapshots/flex/test_sign_tx_short_tx/00000.png"><img src="../tests/standalone/snapshots/flex/test_sign_tx_short_tx/00000.png" alt="Review screen 1" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_sign_tx_short_tx/00001.png"><img src="../tests/standalone/snapshots/flex/test_sign_tx_short_tx/00001.png" alt="Review screen 2" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_sign_tx_short_tx/00002.png"><img src="../tests/standalone/snapshots/flex/test_sign_tx_short_tx/00002.png" alt="Review screen 3" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_sign_tx_short_tx/00003.png"><img src="../tests/standalone/snapshots/flex/test_sign_tx_short_tx/00003.png" alt="Review screen 4" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_sign_tx_short_tx/00004.png"><img src="../tests/standalone/snapshots/flex/test_sign_tx_short_tx/00004.png" alt="Review screen 5" width="120"></a>
+</p>
+<!-- markdownlint-enable MD013 -->
+</details>
 
-```text
-=> e0 06 00 80 15 058000002c80000001800000000000000000000000
-<= 9000
-=> e0 06 01 00 31 0000000000000001de0b295669a9fd93d5f28d9ec85e40f4cb697bae000000000000029a0c466f72207520457468446576
-<= <signature length> <DER signature> <v> 9000
-```
+<details open>
+<summary>User rejects: screens on Flex</summary>
+<!-- markdownlint-disable MD013 -->
+<p>
+<a href="../tests/standalone/snapshots/flex/test_sign_tx_refused/00000.png"><img src="../tests/standalone/snapshots/flex/test_sign_tx_refused/00000.png" alt="Review screen 1" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_sign_tx_refused/00001.png"><img src="../tests/standalone/snapshots/flex/test_sign_tx_refused/00001.png" alt="Review screen 2" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_sign_tx_refused/00002.png"><img src="../tests/standalone/snapshots/flex/test_sign_tx_refused/00002.png" alt="Review screen 3" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_sign_tx_refused/00003.png"><img src="../tests/standalone/snapshots/flex/test_sign_tx_refused/00003.png" alt="Review screen 4" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_sign_tx_refused/00004.png"><img src="../tests/standalone/snapshots/flex/test_sign_tx_refused/00004.png" alt="Review screen 5" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_sign_tx_refused/00005.png"><img src="../tests/standalone/snapshots/flex/test_sign_tx_refused/00005.png" alt="Review screen 6" width="120"></a>
+</p>
+<!-- markdownlint-enable MD013 -->
+</details>
+
+<!-- END GENERATED FLOW sign_tx -->
 
 A transaction whose memo is exactly `Blind-sign` is displayed with the blind signing flow instead of the
 regular review: this is a demonstration of the blind signing screens of the SDK, the APDUs are the same.
@@ -183,20 +208,13 @@ sequenceDiagram
     end
 ```
 
-Trace for a transfer of 1000000 units of the hardcoded `USDC` token (12 decimals), memo `Token test`:
-
-```text
-=> e0 07 00 80 15 058000002c80000001800000000000000000000000
-<= 9000
-=> e0 07 01 00 4f 0000000000000001de0b295669a9fd93d5f28d9ec85e40f4cb697bae0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef00000000000f42400a546f6b656e2074657374
-<= <signature length> <DER signature> <v> 9000
-```
-
 ## Sign a token transaction with a dynamic token
 
 When the token is not in the hardcoded database, or to override its metadata, the host provides a descriptor
 signed by the Ledger CAL before the transaction. The OS must first know the CAL key: the host loads its
 certificate, then sends the descriptor, then the transaction.
+
+<!-- BEGIN GENERATED FLOW dynamic_token -->
 
 ```mermaid
 sequenceDiagram
@@ -205,37 +223,32 @@ sequenceDiagram
     participant A as App
     actor U as User
 
-    H->>O: LOAD_CERTIFICATE (B0 06, P1=08 COIN_META), CAL certificate
-    O->>O: Verify the certificate chain, store the CAL key
+    H->>O: LOAD_CERTIFICATE (B0 06) P1=08 P2=00, 167 bytes
     O-->>H: 9000
-    H->>A: PROVIDE_TOKEN_INFO (E0 22), signed descriptor
-    A->>A: Erase the previous dynamic token
-    A->>O: os_pki_verify(descriptor, signature)
-    alt Invalid descriptor, signature or coin type
-        A-->>H: B009
-    else Valid descriptor
-        A->>A: Store ticker, decimals, token address in RAM
-        A-->>H: 9000
-        H->>A: SIGN_TOKEN_TX (E0 07, P1=00, P2=80), BIP32 path
-        A-->>H: 9000
-        H->>A: SIGN_TOKEN_TX (E0 07, P1=01, P2=00), token transaction
-        A->>A: Look up the token: dynamic token first, then hardcoded database
-        A->>U: Display amount with the provided ticker and decimals
-        U->>A: Approve
-        A-->>H: signature length, DER signature, v, 9000
-    end
+    H->>A: PROVIDE_TOKEN_INFO (E0 22) P1=00 P2=00, 140 bytes
+    A-->>H: 9000
+    H->>A: SIGN_TOKEN_TX (E0 07) P1=00 P2=80, 21 bytes
+    A-->>H: 9000
+    H->>A: SIGN_TOKEN_TX (E0 07) P1=01 P2=00, 86 bytes
+    A->>U: Review screens
+    U->>A: Approve
+    A-->>H: 72 bytes, 9000
 ```
 
-```text
-=> b0 06 08 00 <length> <CAL certificate>
-<= 9000
-=> e0 22 00 00 <length> 010190 020101 03028001 040b426f696c6572706c617465 050455534454 060106 0722 1020<32 bytes> 08<length><DER signature>
-<= 9000
-=> e0 07 00 80 15 058000002c80000001800000000000000000000000
-<= 9000
-=> e0 07 01 00 4f <token transaction with the same 32-byte token address>
-<= <signature length> <DER signature> <v> 9000
-```
+<details open>
+<summary>Nominal: screens on Flex</summary>
+<!-- markdownlint-disable MD013 -->
+<p>
+<a href="../tests/standalone/snapshots/flex/test_provide_dynamic_token_valid_new/00000.png"><img src="../tests/standalone/snapshots/flex/test_provide_dynamic_token_valid_new/00000.png" alt="Review screen 1" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_provide_dynamic_token_valid_new/00001.png"><img src="../tests/standalone/snapshots/flex/test_provide_dynamic_token_valid_new/00001.png" alt="Review screen 2" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_provide_dynamic_token_valid_new/00002.png"><img src="../tests/standalone/snapshots/flex/test_provide_dynamic_token_valid_new/00002.png" alt="Review screen 3" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_provide_dynamic_token_valid_new/00003.png"><img src="../tests/standalone/snapshots/flex/test_provide_dynamic_token_valid_new/00003.png" alt="Review screen 4" width="120"></a>
+<a href="../tests/standalone/snapshots/flex/test_provide_dynamic_token_valid_new/00004.png"><img src="../tests/standalone/snapshots/flex/test_provide_dynamic_token_valid_new/00004.png" alt="Review screen 5" width="120"></a>
+</p>
+<!-- markdownlint-enable MD013 -->
+</details>
+
+<!-- END GENERATED FLOW dynamic_token -->
 
 The dynamic token stays in RAM until the application exits: the host does not need to resend it for each
 transaction with the same token. Only one token is kept at a time.

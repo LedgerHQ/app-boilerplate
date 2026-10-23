@@ -39,3 +39,6 @@ ledger/
 # Helper script git clone
 tests/swap/.test_dependencies/app-exchange/
 tests/swap/.test_dependencies/app-ethereum/
+
+# Recordings of the tests tagged @pytest.mark.flow
+tests/standalone/flows/

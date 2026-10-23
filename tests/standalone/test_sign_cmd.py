@@ -21,6 +21,7 @@ from .utils import check_signature_validity
 # In this test we send to the device a transaction to sign and validate it on screen
 # The transaction is short and will be sent in one chunk
 # We will ensure that the displayed information is correct by using screenshots comparison
+@pytest.mark.flow("sign_tx", variant="User approves", start="SIGN_TX")
 def test_sign_tx_short_tx(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
     # Use the app interface instead of raw interface
     client = BoilerplateCommandSender(backend)
@@ -119,6 +120,7 @@ def test_sign_tx_long_tx(backend: BackendInterface, scenario_navigator: Navigate
 
 # Transaction signature refused test
 # The test will ask for a transaction signature that will be refused on screen
+@pytest.mark.flow("sign_tx", variant="User rejects", start="SIGN_TX")
 def test_sign_tx_refused(backend: BackendInterface, scenario_navigator: NavigateWithScenario) -> None:
     # Use the app interface instead of raw interface
     client = BoilerplateCommandSender(backend)
