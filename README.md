@@ -211,9 +211,13 @@ Please refer to the tests `README.md` for information on this topic.
 
 ## Documentation
 
-High level documentation such as [application specification](APP_SPECIFICATION.md), [APDU](doc/APDU.md)
-and [transaction serialization](doc/TRANSACTION.md) are included in developer documentation
-which can be generated with [doxygen](https://www.doxygen.nl)
+The [doc/](doc/README.md) folder holds the application interface documentation, with two entry points:
+
+* [APDU reference](doc/APDU.md): the static description of every command, its parameters, its response
+  and its status words, and the format of the transactions it signs
+* [APDU flows](doc/FLOWS.md): the dynamic description of each feature, with the sequence diagrams
+  of the APDUs exchanged between the host, the application and the user
+
 
 ```shell
 doxygen .doxygen/Doxyfile
