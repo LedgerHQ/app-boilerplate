@@ -169,6 +169,27 @@ void test_token_tx_truncated_token_address(void) {
     TEST_ASSERT_EQUAL(TOKEN_ADDRESS_PARSING_ERROR, transaction_deserialize(&buf, &tx, true));
 }
 
+void test_missing_memo_length(void) {
+    uint8_t memo[12];
+    fill_memo(memo, sizeof(memo));
+    build_tx(NONCE, NULL, VALUE, memo, sizeof(memo));
+
+    transaction_t tx;
+    // Stop right after the value field.
+    buffer_t buf = {.ptr = g_raw, .size = 8 + ADDRESS_LEN + 8, .offset = 0};
+    TEST_ASSERT_EQUAL(MEMO_LENGTH_ERROR, transaction_deserialize(&buf, &tx, false));
+}
+
+void test_memo_too_long(void) {
+    uint8_t memo[MAX_MEMO_LEN + 1];
+    fill_memo(memo, sizeof(memo));
+    size_t raw_len = build_tx(NONCE, NULL, VALUE, memo, sizeof(memo));
+
+    transaction_t tx;
+    buffer_t buf = {.ptr = g_raw, .size = raw_len, .offset = 0};
+    TEST_ASSERT_EQUAL(MEMO_LENGTH_ERROR, transaction_deserialize(&buf, &tx, false));
+}
+
 int main(void) {
     UNITY_BEGIN();
 
@@ -177,6 +198,8 @@ int main(void) {
     RUN_TEST(test_roundtrip_three_byte_varint);
     RUN_TEST(test_roundtrip_max_memo);
     RUN_TEST(test_serialize_output_too_small);
+    RUN_TEST(test_missing_memo_length);
+    RUN_TEST(test_memo_too_long);
     RUN_TEST(test_token_tx);
     RUN_TEST(test_token_tx_truncated_token_address);
 

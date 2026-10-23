@@ -73,7 +73,7 @@ parser_status_e transaction_deserialize(buffer_t *buf,
     tx->fee = 0;  // default fee value
 
     // length of memo
-    if (!buffer_read_varint(buf, &tx->memo_len) && tx->memo_len > MAX_MEMO_LEN) {
+    if (!buffer_read_varint(buf, &tx->memo_len) || tx->memo_len > MAX_MEMO_LEN) {
         PRINTF("MEMO_LENGTH_ERROR\n");
         return MEMO_LENGTH_ERROR;
     }

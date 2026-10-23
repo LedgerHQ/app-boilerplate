@@ -27,9 +27,8 @@
 #include "types.h"
 
 // ---- Knobs to drive the error paths from individual tests ----
-static bool g_check_encoding_ret;     // transaction_utils_check_encoding result
-static int g_varint_write_ret;        // varint_write result (<0 => write failure)
-static bool g_varint_read_fail_huge;  // read_varint: fail AND report a huge memo_len
+static bool g_check_encoding_ret;  // transaction_utils_check_encoding result
+static int g_varint_write_ret;     // varint_write result (<0 => write failure)
 
 // ---- Faithful fakes for the mocked dependencies (no SDK code linked) ----
 
@@ -62,10 +61,6 @@ static bool buffer_seek_cur_fake(buffer_t *buffer, size_t offset, int cmock_num_
 
 static bool buffer_read_varint_fake(buffer_t *buffer, uint64_t *value, int cmock_num_calls) {
     (void) cmock_num_calls;
-    if (g_varint_read_fail_huge) {
-        *value = (uint64_t) MAX_MEMO_LEN + 1;  // drive the MEMO_LENGTH_ERROR branch
-        return false;
-    }
     if (buffer->offset >= buffer->size) {
         return false;
     }
@@ -122,7 +117,6 @@ void setUp(void) {
 
     g_check_encoding_ret = true;
     g_varint_write_ret = 1;
-    g_varint_read_fail_huge = false;
 }
 
 void tearDown(void) {
@@ -307,10 +301,7 @@ void test_deserialize_value_error(void) {
 }
 
 void test_deserialize_memo_length_error(void) {
-    // Reachable only because the source uses `&&` (read fails AND memo_len too
-    // big) instead of `||` -- flagged as a likely bug; covered via the knob.
-    g_varint_read_fail_huge = true;
-    TEST_ASSERT_EQUAL(MEMO_LENGTH_ERROR, deserialize_size(8 + ADDRESS_LEN + 8));
+    TEST_ASSERT_EQUAL(MEMO_LENGTH_ERROR, deserialize_size(8 + ADDRESS_LEN + 8));  // no memo_len
 }
 
 void test_deserialize_memo_error(void) {
