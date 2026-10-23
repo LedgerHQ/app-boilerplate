@@ -208,13 +208,27 @@ ledger_unit_tests_add_test(
 )
 
 ledger_unit_tests_add_test(
-    NAME           test_tx_parser_unity
+    NAME           test_tx_parser
     SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/transaction/deserialize.c
                    ${CMAKE_CURRENT_SOURCE_DIR}/../src/transaction/serialize.c
     MOCK_HEADERS   ${SDK_DIR}/lib_standard_app/buffer.h
                    ${SDK_DIR}/lib_standard_app/write.h
                    ${SDK_DIR}/lib_standard_app/varint.h
                    ${CMAKE_CURRENT_SOURCE_DIR}/../src/transaction/utils.h
+    INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
+    COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
+)
+
+ledger_unit_tests_add_test(
+    NAME           test_tx_roundtrip
+    SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/transaction/deserialize.c
+                   ${CMAKE_CURRENT_SOURCE_DIR}/../src/transaction/serialize.c
+                   ${CMAKE_CURRENT_SOURCE_DIR}/../src/transaction/utils.c
+                   ${SDK_DIR}/lib_standard_app/buffer.c
+                   ${SDK_DIR}/lib_standard_app/bip32.c
+                   ${SDK_DIR}/lib_standard_app/read.c
+                   ${SDK_DIR}/lib_standard_app/varint.c
+                   ${SDK_DIR}/lib_standard_app/write.c
     INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
     COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
 )
