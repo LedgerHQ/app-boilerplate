@@ -53,13 +53,21 @@ void swap_handle_get_printable_amount(get_printable_amount_parameters_t *params)
         }
     }
     char formatted_amount[30] = {0};
-    format_fpu64(formatted_amount, sizeof(formatted_amount), raw_amount, decimals);
+    if (!format_fpu64(formatted_amount, sizeof(formatted_amount), raw_amount, decimals)) {
+        PRINTF("Fail to format amount\n");
+        return;
+    }
     PRINTF("Formatted amount: %s\n", formatted_amount);
-    snprintf(params->printable_amount,
-             sizeof(params->printable_amount),
-             "%.*s %s",
-             (int) strlen(formatted_amount),
-             formatted_amount,
-             ticker);
+    int len = snprintf(params->printable_amount,
+                       sizeof(params->printable_amount),
+                       "%.*s %s",
+                       (int) strlen(formatted_amount),
+                       formatted_amount,
+                       ticker);
+    if (len < 0 || (size_t) len >= sizeof(params->printable_amount)) {
+        PRINTF("Printable amount does not fit\n");
+        explicit_bzero(params->printable_amount, sizeof(params->printable_amount));
+        return;
+    }
 }
 #endif  // HAVE_SWAP

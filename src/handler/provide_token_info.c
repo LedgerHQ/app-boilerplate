@@ -107,9 +107,9 @@ static bool handle_tuid_token_address(const tlv_data_t *data, tlv_TUID_data_t *t
 // clang-format off
 #define TUID_TLV_TAGS(X)                                                            \
     X(0x10, TAG_TOKEN_ADDRESS,       handle_tuid_token_address, ENFORCE_UNIQUE_TAG) \
-  //X(0x11, TAG_EXAMPLE_SOMETHING,   handle_xyz,                ENFORCE_UNIQUE_TAG) \
-  //X(0x12, TAG_ANOTHER_ONE,         handle_abc,                ENFORCE_UNIQUE_TAG) \
-  //X(0x13, TAG_ANOTHER_ANOTHER_ONE, handle_abc,                ENFORCE_UNIQUE_TAG) \
+  /*X(0x11, TAG_EXAMPLE_SOMETHING,   handle_xyz,                ENFORCE_UNIQUE_TAG)*/ \
+  /*X(0x12, TAG_ANOTHER_ONE,         handle_abc,                ENFORCE_UNIQUE_TAG)*/ \
+  /*X(0x13, TAG_ANOTHER_ANOTHER_ONE, handle_abc,                ENFORCE_UNIQUE_TAG)*/
 // clang-format on
 
 // Use SDK macro to generate TUID parser function

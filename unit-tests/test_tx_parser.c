@@ -1,152 +1,264 @@
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
+/*
+ * Unit tests for src/transaction/{deserialize,serialize}.c.
+ *
+ * No mock: the transaction code runs against the real SDK buffer, read, write
+ * and varint helpers. Each raw transaction is built field by field, its varint
+ * memo length encoded here independently of the SDK.
+ */
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
 
-#include <cmocka.h>
+#include "unity.h"
 
-#include "transaction/serialize.h"
-#include "transaction/deserialize.h"
+#include "buffer.h"
+#include "deserialize.h"
+#include "serialize.h"
 #include "types.h"
 
-static void test_tx_serialization(void **state) {
-    (void) state;
+#define NONCE       1
+#define VALUE       0x090807
+#define TOKEN_NONCE 2
+#define TOKEN_VALUE 1000
 
-    transaction_t tx;
-    // clang-format off
-    uint8_t raw_tx[] = {
-        // nonce (8)
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
-        // to (20)
-        0x7a, 0xc3, 0x39, 0x97, 0x54, 0x4e, 0x31, 0x75,
-        0xd2, 0x66, 0xbd, 0x02, 0x24, 0x39, 0xb2, 0x2c,
-        0xdb, 0x16, 0x50, 0x8c,
-        // value (8)
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x09, 0x08, 0x07,
-        // memo length (varint: 1-9)
-        0xf1,
-        // memo (var: 241)
-        0x54, 0x68, 0x65, 0x20, 0x54, 0x68, 0x65, 0x6f,
-        0x72, 0x79, 0x20, 0x6f, 0x66, 0x20, 0x47, 0x72,
-        0x6f, 0x75, 0x70, 0x73, 0x20, 0x69, 0x73, 0x20,
-        0x61, 0x20, 0x62, 0x72, 0x61, 0x6e, 0x63, 0x68,
-        0x20, 0x6f, 0x66, 0x20, 0x6d, 0x61, 0x74, 0x68,
-        0x65, 0x6d, 0x61, 0x74, 0x69, 0x63, 0x73, 0x20,
-        0x69, 0x6e, 0x20, 0x77, 0x68, 0x69, 0x63, 0x68,
-        0x20, 0x6f, 0x6e, 0x65, 0x20, 0x64, 0x6f, 0x65,
-        0x73, 0x20, 0x73, 0x6f, 0x6d, 0x65, 0x74, 0x68,
-        0x69, 0x6e, 0x67, 0x20, 0x74, 0x6f, 0x20, 0x73,
-        0x6f, 0x6d, 0x65, 0x74, 0x68, 0x69, 0x6e, 0x67,
-        0x20, 0x61, 0x6e, 0x64, 0x20, 0x74, 0x68, 0x65,
-        0x6e, 0x20, 0x63, 0x6f, 0x6d, 0x70, 0x61, 0x72,
-        0x65, 0x73, 0x20, 0x74, 0x68, 0x65, 0x20, 0x72,
-        0x65, 0x73, 0x75, 0x6c, 0x74, 0x20, 0x77, 0x69,
-        0x74, 0x68, 0x20, 0x74, 0x68, 0x65, 0x20, 0x72,
-        0x65, 0x73, 0x75, 0x6c, 0x74, 0x20, 0x6f, 0x62,
-        0x74, 0x61, 0x69, 0x6e, 0x65, 0x64, 0x20, 0x66,
-        0x72, 0x6f, 0x6d, 0x20, 0x64, 0x6f, 0x69, 0x6e,
-        0x67, 0x20, 0x74, 0x68, 0x65, 0x20, 0x73, 0x61,
-        0x6d, 0x65, 0x20, 0x74, 0x68, 0x69, 0x6e, 0x67,
-        0x20, 0x74, 0x6f, 0x20, 0x73, 0x6f, 0x6d, 0x65,
-        0x74, 0x68, 0x69, 0x6e, 0x67, 0x20, 0x65, 0x6c,
-        0x73, 0x65, 0x2c, 0x20, 0x6f, 0x72, 0x20, 0x73,
-        0x6f, 0x6d, 0x65, 0x74, 0x68, 0x69, 0x6e, 0x67,
-        0x20, 0x65, 0x6c, 0x73, 0x65, 0x20, 0x74, 0x6f,
-        0x20, 0x74, 0x68, 0x65, 0x20, 0x73, 0x61, 0x6d,
-        0x65, 0x20, 0x74, 0x68, 0x69, 0x6e, 0x67, 0x2e,
-        0x20, 0x4e, 0x65, 0x77, 0x6d, 0x61, 0x6e, 0x2c,
-        0x20, 0x4a, 0x61, 0x6d, 0x65, 0x73, 0x20, 0x52,
-        0x2e
-    };
+static const uint8_t TO[ADDRESS_LEN] = {0x7a, 0xc3, 0x39, 0x97, 0x54, 0x4e, 0x31, 0x75, 0xd2, 0x66,
+                                        0xbd, 0x02, 0x24, 0x39, 0xb2, 0x2c, 0xdb, 0x16, 0x50, 0x8c};
 
-    buffer_t buf = {.ptr = raw_tx, .size = sizeof(raw_tx), .offset = 0};
+static const uint8_t TOKEN_ADDRESS[TOKEN_ADDRESS_LEN] = {
+    0xca, 0xfe, 0xba, 0xbe, 0xde, 0xad, 0xbe, 0xef, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+    0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
 
-    parser_status_e status = transaction_deserialize(&buf, &tx, false);
+static uint8_t g_raw[MAX_TX_LEN];
+static uint8_t g_out[MAX_TX_LEN];
 
-    assert_int_equal(status, PARSING_OK);
-
-    uint8_t output[300];
-    int length = transaction_serialize(&tx, output, sizeof(output));
-    assert_int_equal(length, sizeof(raw_tx));
-    assert_memory_equal(raw_tx, output, sizeof(raw_tx));
+void setUp(void) {
+    memset(g_raw, 0, sizeof(g_raw));
+    memset(g_out, 0, sizeof(g_out));
 }
 
-static void test_token_tx_serialization(void **state) {
-    (void) state;
-
-    transaction_t tx;
-    // clang-format off
-    uint8_t raw_token_tx[] = {
-        // nonce (8)
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
-        // to (20)
-        0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x11, 0x22,
-        0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0x00,
-        0x12, 0x34, 0x56, 0x78,
-        // token_address (32)
-        0xca, 0xfe, 0xba, 0xbe, 0xde, 0xad, 0xbe, 0xef,
-        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
-        0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
-        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-        // value (8)
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0xe8,
-        // memo length (varint: 1)
-        0x0c,
-        // memo (12 bytes)
-        0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x20, 0x74, 0x72,
-        0x61, 0x6e, 0x73, 0x66
-    };
-    // clang-format on
-
-    buffer_t buf = {.ptr = raw_token_tx, .size = sizeof(raw_token_tx), .offset = 0};
-
-    parser_status_e status = transaction_deserialize(&buf, &tx, true);
-
-    assert_int_equal(status, PARSING_OK);
-    assert_int_equal(tx.nonce, 2);
-    assert_int_equal(tx.value, 1000);
-    assert_int_equal(tx.memo_len, 12);
-    assert_non_null(tx.token_address);
-
-    // Verify token address was parsed correctly
-    uint8_t expected_token_addr[] = {0xca, 0xfe, 0xba, 0xbe, 0xde, 0xad, 0xbe, 0xef,
-                                     0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
-                                     0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
-                                     0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
-    assert_memory_equal(tx.token_address, expected_token_addr, 32);
+void tearDown(void) {
 }
 
-static void test_token_tx_error_short_buffer(void **state) {
-    (void) state;
-
-    transaction_t tx;
-    // clang-format off
-    uint8_t raw_token_tx[] = {
-        // nonce (8)
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
-        // to (20)
-        0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x11, 0x22,
-        0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0x00,
-        0x12, 0x34, 0x56, 0x78,
-        // token_address (only 10 bytes instead of 32 - truncated)
-        0xca, 0xfe, 0xba, 0xbe, 0xde, 0xad, 0xbe, 0xef,
-        0x00, 0x11
-    };
-    // clang-format on
-
-    buffer_t buf = {.ptr = raw_token_tx, .size = sizeof(raw_token_tx), .offset = 0};
-
-    parser_status_e status = transaction_deserialize(&buf, &tx, true);
-
-    assert_int_equal(status, TOKEN_ADDRESS_PARSING_ERROR);
+static size_t put_u64_be(uint8_t *out, uint64_t value) {
+    for (size_t i = 0; i < sizeof(value); i++) {
+        out[i] = (uint8_t) (value >> (8 * (sizeof(value) - 1 - i)));
+    }
+    return sizeof(value);
 }
 
-int main() {
-    const struct CMUnitTest tests[] = {cmocka_unit_test(test_tx_serialization),
-                                       cmocka_unit_test(test_token_tx_serialization),
-                                       cmocka_unit_test(test_token_tx_error_short_buffer)};
+// Bitcoin-style varint, limited to the 1- and 3-byte forms a memo length needs.
+static size_t put_varint(uint8_t *out, uint16_t value) {
+    if (value < 0xFD) {
+        out[0] = (uint8_t) value;
+        return 1;
+    }
+    out[0] = 0xFD;
+    out[1] = (uint8_t) value;
+    out[2] = (uint8_t) (value >> 8);
+    return 3;
+}
 
-    return cmocka_run_group_tests(tests, NULL, NULL);
+// Fill memo with printable ASCII.
+static void fill_memo(uint8_t *memo, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        memo[i] = (uint8_t) ('a' + i % 26);
+    }
+}
+
+// Build nonce | to | [token address] | value | varint memo length | memo into g_raw.
+static size_t build_tx(uint64_t nonce,
+                       const uint8_t *token_address,
+                       uint64_t value,
+                       const uint8_t *memo,
+                       uint16_t memo_len) {
+    size_t offset = 0;
+    offset += put_u64_be(g_raw + offset, nonce);
+    memcpy(g_raw + offset, TO, sizeof(TO));
+    offset += sizeof(TO);
+    if (token_address != NULL) {
+        memcpy(g_raw + offset, token_address, TOKEN_ADDRESS_LEN);
+        offset += TOKEN_ADDRESS_LEN;
+    }
+    offset += put_u64_be(g_raw + offset, value);
+    offset += put_varint(g_raw + offset, memo_len);
+    memcpy(g_raw + offset, memo, memo_len);
+    offset += memo_len;
+    TEST_ASSERT_TRUE(offset <= sizeof(g_raw));
+    return offset;
+}
+
+// Deserialize a native transaction, check its fields, serialize it back and compare.
+static void check_roundtrip(uint16_t memo_len) {
+    uint8_t memo[MAX_MEMO_LEN];
+    fill_memo(memo, memo_len);
+    size_t raw_len = build_tx(NONCE, NULL, VALUE, memo, memo_len);
+
+    transaction_t tx;
+    buffer_t buf = {.ptr = g_raw, .size = raw_len, .offset = 0};
+    TEST_ASSERT_EQUAL(PARSING_OK, transaction_deserialize(&buf, &tx, false));
+
+    TEST_ASSERT_EQUAL_UINT64(NONCE, tx.nonce);
+    TEST_ASSERT_EQUAL_MEMORY(TO, tx.to, sizeof(TO));
+    TEST_ASSERT_NULL(tx.token_address);
+    TEST_ASSERT_EQUAL_UINT64(VALUE, tx.value);
+    TEST_ASSERT_EQUAL_UINT64(memo_len, tx.memo_len);
+    if (memo_len > 0) {
+        TEST_ASSERT_EQUAL_MEMORY(memo, tx.memo, memo_len);
+    }
+
+    int out_len = transaction_serialize(&tx, g_out, sizeof(g_out));
+    TEST_ASSERT_EQUAL_INT((int) raw_len, out_len);
+    TEST_ASSERT_EQUAL_MEMORY(g_raw, g_out, raw_len);
+}
+
+void test_roundtrip_empty_memo(void) {
+    check_roundtrip(0);
+}
+
+void test_roundtrip_one_byte_varint(void) {
+    check_roundtrip(0xFC);  // largest memo length encoded on 1 byte
+}
+
+void test_roundtrip_three_byte_varint(void) {
+    check_roundtrip(0xFD);  // smallest memo length encoded on 3 bytes
+}
+
+void test_roundtrip_max_memo(void) {
+    check_roundtrip(MAX_MEMO_LEN);
+}
+
+// Build a native transaction with a 12-byte memo and return its length.
+static size_t build_default_tx(void) {
+    uint8_t memo[12];
+    fill_memo(memo, sizeof(memo));
+    return build_tx(NONCE, NULL, VALUE, memo, sizeof(memo));
+}
+
+static parser_status_e deserialize_size(size_t size) {
+    transaction_t tx;
+    buffer_t buf = {.ptr = g_raw, .size = size, .offset = 0};
+    return transaction_deserialize(&buf, &tx, false);
+}
+
+void test_tx_too_long(void) {
+    TEST_ASSERT_EQUAL(WRONG_LENGTH_ERROR, deserialize_size(MAX_TX_LEN + 1));  // checked first
+}
+
+void test_truncated_nonce(void) {
+    build_default_tx();
+    TEST_ASSERT_EQUAL(NONCE_PARSING_ERROR, deserialize_size(8 - 1));
+}
+
+void test_truncated_to(void) {
+    build_default_tx();
+    TEST_ASSERT_EQUAL(TO_PARSING_ERROR, deserialize_size(8 + ADDRESS_LEN - 1));
+}
+
+void test_truncated_value(void) {
+    build_default_tx();
+    TEST_ASSERT_EQUAL(VALUE_PARSING_ERROR, deserialize_size(8 + ADDRESS_LEN + 8 - 1));
+}
+
+void test_truncated_memo(void) {
+    size_t raw_len = build_default_tx();
+    TEST_ASSERT_EQUAL(MEMO_PARSING_ERROR, deserialize_size(raw_len - 1));
+}
+
+void test_memo_not_ascii(void) {
+    uint8_t memo[12];
+    fill_memo(memo, sizeof(memo));
+    memo[5] = 0x80;  // first byte outside 7-bit ASCII
+    size_t raw_len = build_tx(NONCE, NULL, VALUE, memo, sizeof(memo));
+    TEST_ASSERT_EQUAL(MEMO_ENCODING_ERROR, deserialize_size(raw_len));
+}
+
+void test_trailing_bytes(void) {
+    size_t raw_len = build_default_tx();
+    TEST_ASSERT_EQUAL(WRONG_LENGTH_ERROR, deserialize_size(raw_len + 1));
+}
+
+void test_serialize_output_too_small(void) {
+    uint8_t memo[12];
+    fill_memo(memo, sizeof(memo));
+    size_t raw_len = build_tx(NONCE, NULL, VALUE, memo, sizeof(memo));
+
+    transaction_t tx;
+    buffer_t buf = {.ptr = g_raw, .size = raw_len, .offset = 0};
+    TEST_ASSERT_EQUAL(PARSING_OK, transaction_deserialize(&buf, &tx, false));
+
+    TEST_ASSERT_EQUAL_INT(-1, transaction_serialize(&tx, g_out, raw_len - 1));
+}
+
+void test_token_tx(void) {
+    uint8_t memo[12];
+    fill_memo(memo, sizeof(memo));
+    size_t raw_len = build_tx(TOKEN_NONCE, TOKEN_ADDRESS, TOKEN_VALUE, memo, sizeof(memo));
+
+    transaction_t tx;
+    buffer_t buf = {.ptr = g_raw, .size = raw_len, .offset = 0};
+    TEST_ASSERT_EQUAL(PARSING_OK, transaction_deserialize(&buf, &tx, true));
+
+    TEST_ASSERT_EQUAL_UINT64(TOKEN_NONCE, tx.nonce);
+    TEST_ASSERT_EQUAL_MEMORY(TO, tx.to, sizeof(TO));
+    TEST_ASSERT_NOT_NULL(tx.token_address);
+    TEST_ASSERT_EQUAL_MEMORY(TOKEN_ADDRESS, tx.token_address, TOKEN_ADDRESS_LEN);
+    TEST_ASSERT_EQUAL_UINT64(TOKEN_VALUE, tx.value);
+    TEST_ASSERT_EQUAL_UINT64(sizeof(memo), tx.memo_len);
+    TEST_ASSERT_EQUAL_MEMORY(memo, tx.memo, sizeof(memo));
+}
+
+void test_token_tx_truncated_token_address(void) {
+    uint8_t memo[12];
+    fill_memo(memo, sizeof(memo));
+    build_tx(TOKEN_NONCE, TOKEN_ADDRESS, TOKEN_VALUE, memo, sizeof(memo));
+
+    transaction_t tx;
+    // Stop 10 bytes into the token address.
+    buffer_t buf = {.ptr = g_raw, .size = 8 + ADDRESS_LEN + 10, .offset = 0};
+    TEST_ASSERT_EQUAL(TOKEN_ADDRESS_PARSING_ERROR, transaction_deserialize(&buf, &tx, true));
+}
+
+void test_missing_memo_length(void) {
+    uint8_t memo[12];
+    fill_memo(memo, sizeof(memo));
+    build_tx(NONCE, NULL, VALUE, memo, sizeof(memo));
+
+    transaction_t tx;
+    // Stop right after the value field.
+    buffer_t buf = {.ptr = g_raw, .size = 8 + ADDRESS_LEN + 8, .offset = 0};
+    TEST_ASSERT_EQUAL(MEMO_LENGTH_ERROR, transaction_deserialize(&buf, &tx, false));
+}
+
+void test_memo_too_long(void) {
+    uint8_t memo[MAX_MEMO_LEN + 1];
+    fill_memo(memo, sizeof(memo));
+    size_t raw_len = build_tx(NONCE, NULL, VALUE, memo, sizeof(memo));
+
+    transaction_t tx;
+    buffer_t buf = {.ptr = g_raw, .size = raw_len, .offset = 0};
+    TEST_ASSERT_EQUAL(MEMO_LENGTH_ERROR, transaction_deserialize(&buf, &tx, false));
+}
+
+int main(void) {
+    UNITY_BEGIN();
+
+    RUN_TEST(test_roundtrip_empty_memo);
+    RUN_TEST(test_roundtrip_one_byte_varint);
+    RUN_TEST(test_roundtrip_three_byte_varint);
+    RUN_TEST(test_roundtrip_max_memo);
+    RUN_TEST(test_tx_too_long);
+    RUN_TEST(test_truncated_nonce);
+    RUN_TEST(test_truncated_to);
+    RUN_TEST(test_truncated_value);
+    RUN_TEST(test_truncated_memo);
+    RUN_TEST(test_memo_not_ascii);
+    RUN_TEST(test_trailing_bytes);
+    RUN_TEST(test_serialize_output_too_small);
+    RUN_TEST(test_missing_memo_length);
+    RUN_TEST(test_memo_too_long);
+    RUN_TEST(test_token_tx);
+    RUN_TEST(test_token_tx_truncated_token_address);
+
+    return UNITY_END();
 }
