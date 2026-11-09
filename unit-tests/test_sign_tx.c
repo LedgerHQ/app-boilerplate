@@ -57,20 +57,29 @@ static jmp_buf g_exit_jmp;
 
 // ---- mock callbacks ----
 static bool read_u8_cb(buffer_t *b, uint8_t *v, int n) {
-    (void) b; (void) n;
+    (void) b;
+    (void) n;
     *v = 5;  // a plausible bip32 path length
     return g_read_u8_ret;
 }
 static bool read_path_cb(buffer_t *b, uint32_t *o, size_t l, int n) {
-    (void) b; (void) o; (void) l; (void) n;
+    (void) b;
+    (void) o;
+    (void) l;
+    (void) n;
     return g_read_path_ret;
 }
 static bool buffer_move_cb(buffer_t *b, uint8_t *o, size_t l, int n) {
-    (void) b; (void) o; (void) l; (void) n;
+    (void) b;
+    (void) o;
+    (void) l;
+    (void) n;
     return g_buffer_move_ret;
 }
 static parser_status_e deser_cb(buffer_t *b, transaction_t *tx, bool is_token, int n) {
-    (void) b; (void) is_token; (void) n;
+    (void) b;
+    (void) is_token;
+    (void) n;
     tx->memo = (uint8_t *) g_deser_memo;
     return g_deser_status;
 }
@@ -81,7 +90,10 @@ bool get_token_info(const uint8_t *token_address, token_info_t *token_info) {
     return g_get_token_info_ret;
 }
 static cx_err_t keccak_cb(const cx_iovec_t *iv, size_t len, uint8_t *digest, int n) {
-    (void) iv; (void) len; (void) digest; (void) n;
+    (void) iv;
+    (void) len;
+    (void) digest;
+    (void) n;
     return g_keccak_ret;
 }
 static void validate_cb(bool choice, int n) {
@@ -90,26 +102,48 @@ static void validate_cb(bool choice, int n) {
     g_validate_choice = choice;
 }
 static bool swap_check_cb(uint64_t a, uint64_t f, const uint8_t *d, const token_info_t *t, int n) {
-    (void) a; (void) f; (void) d; (void) t; (void) n;
+    (void) a;
+    (void) f;
+    (void) d;
+    (void) t;
+    (void) n;
     return g_swap_check_ret;
 }
 static int io_send_cb(const buffer_t *r, size_t c, uint16_t sw, int n) {
-    (void) r; (void) c; (void) n;
+    (void) r;
+    (void) c;
+    (void) n;
     g_last_sw = sw;
     return (int) sw;
 }
-static int disp_std_cb(int n) { (void) n; g_display = DISP_STD; return 0; }
-static int disp_blind_cb(int n) { (void) n; g_display = DISP_BLIND; return 0; }
-static int disp_token_cb(int n) { (void) n; g_display = DISP_TOKEN; return 0; }
+static int disp_std_cb(int n) {
+    (void) n;
+    g_display = DISP_STD;
+    return 0;
+}
+static int disp_blind_cb(int n) {
+    (void) n;
+    g_display = DISP_BLIND;
+    return 0;
+}
+static int disp_token_cb(int n) {
+    (void) n;
+    g_display = DISP_TOKEN;
+    return 0;
+}
 
 static void swap_error_cb(uint16_t sw, uint8_t c, uint8_t a, int n) {
-    (void) sw; (void) c; (void) a; (void) n;
+    (void) sw;
+    (void) c;
+    (void) a;
+    (void) n;
     g_swap_error_called = true;
     longjmp(g_exit_jmp, 1);
 }
 static bool g_sched_exit_longjmp;
 static void sched_exit_cb(bolos_task_status_t code, int n) {
-    (void) code; (void) n;
+    (void) code;
+    (void) n;
     // When allowed to "return", execution flows through the (normally
     // unreachable) `return 0;` lines after os_sched_exit -> covers them.
     if (g_sched_exit_longjmp) {

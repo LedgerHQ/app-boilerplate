@@ -30,19 +30,19 @@
 #include "Mockos_task.h"
 #include "Mockos_utils.h"
 
-#include "swap.h"        // create_transaction_parameters_t, swap_copy_transaction_parameters
+#include "swap.h"         // create_transaction_parameters_t, swap_copy_transaction_parameters
 #include "handle_swap.h"  // swap_check_validity (app-specific, not in swap.h)
-#include "globals.h"     // G_context
-#include "types.h"       // token_info_t
-#include "tx_types.h"    // ADDRESS_LEN
-#include "constants.h"   // EXPONENT_SMALLEST_UNIT
+#include "globals.h"      // G_context
+#include "types.h"        // token_info_t
+#include "tx_types.h"     // ADDRESS_LEN
+#include "constants.h"    // EXPONENT_SMALLEST_UNIT
 
 global_ctx_t G_context;
 
 // 40 hex chars (digits only -> uppercase-invariant, matches what the SUT stores).
-#define RECIPIENT "0011223344556677889900112233445566778899"
+#define RECIPIENT   "0011223344556677889900112233445566778899"
 #define SWAP_AMOUNT 1000ULL
-#define SWAP_FEE 10ULL
+#define SWAP_FEE    10ULL
 
 // ---- noreturn exits routed back to the test ----
 static jmp_buf g_exit_jmp;
@@ -72,7 +72,10 @@ static void bss_segment_cb(int cmock_num_calls) {
 }
 
 // swap_str_to_u64: 1st call (amount) -> SWAP_AMOUNT, 2nd (fee) -> SWAP_FEE.
-static bool str_to_u64_cb(const uint8_t *src, size_t length, uint64_t *result, int cmock_num_calls) {
+static bool str_to_u64_cb(const uint8_t *src,
+                          size_t length,
+                          uint64_t *result,
+                          int cmock_num_calls) {
     (void) src;
     (void) length;
     *result = (cmock_num_calls % 2 == 0) ? SWAP_AMOUNT : SWAP_FEE;
@@ -90,7 +93,11 @@ static int format_hex_cb(const uint8_t *in, size_t in_len, char *out, size_t out
 }
 
 // format_hex variant producing a different address (for the mismatch case).
-static int format_hex_cb_mismatch(const uint8_t *in, size_t in_len, char *out, size_t out_len, int n) {
+static int format_hex_cb_mismatch(const uint8_t *in,
+                                  size_t in_len,
+                                  char *out,
+                                  size_t out_len,
+                                  int n) {
     (void) in;
     (void) in_len;
     (void) n;
