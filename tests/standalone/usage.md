@@ -19,7 +19,7 @@ You can use for this the container `ghcr.io/ledgerhq/ledger-app-builder/ledger-a
 ```shell
 docker pull ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-lite:latest
 cd <your app repository>                        # replace <appname> with the name of your app, (eg boilerplate)
-docker run --user "$(id -u)":"$(id -g)" --rm -ti -v "$(realpath .):/app" --privileged -v "/dev/bus/usb:/dev/bus/usb" ledger-app-builder-lite:latest
+docker run --user "$(id -u)":"$(id -g)" --rm -ti -v "$(realpath .):/app" ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-lite:latest
 make clean && make BOLOS_SDK=$<device>_SDK      # replace <device> with one of [NANOX, NANOSP, STAX, FLEX, APEX]
 exit
 ```
@@ -37,12 +37,13 @@ Or you can refer to the section `Available pytest options` to configure the opti
 ### Run a simple test using a real device
 
 The application to test must be loaded and started on a Ledger device plugged in USB.
-You can use for this the container `ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-lite`:
+You can use for this the container `ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-lite`.
+Loading needs USB access, hence `--privileged` and the `/dev/bus/usb` mount, not needed to compile:
 
 ```shell
 docker pull ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-lite:latest
 cd app-<appname>/                                   # replace <appname> with the name of your app, (eg boilerplate)
-docker run --user "$(id -u)":"$(id -g)" --rm -ti -v "$(realpath .):/app" --privileged -v "/dev/bus/usb:/dev/bus/usb" ledger-app-builder-lite:latest
+docker run --user "$(id -u)":"$(id -g)" --rm -ti -v "$(realpath .):/app" --privileged -v "/dev/bus/usb:/dev/bus/usb" ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-lite:latest
 make clean && make BOLOS_SDK=$<device>_SDK load     # replace <device> with one of [NANOX, NANOSP, STAX, FLEX, APEX]
 exit
 ```
