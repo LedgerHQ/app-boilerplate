@@ -11,6 +11,10 @@
 #include "tokens.h"
 
 #include <stdint.h>
+#include <string.h>
+
+// Size of the Exchange extra id buffer, NUL terminator included
+#define SWAP_EXTRA_ID_SIZE 20
 
 // This is a smart documentation inclusion. The full documentation is available at
 // https://ledgerhq.github.io/app-exchange/
@@ -24,6 +28,7 @@ typedef struct swap_validated_s {
     char ticker[MAX_TICKER_SIZE];
     bool has_token_address;
     uint8_t token_address[TOKEN_ADDRESS_LEN];
+    char memo[SWAP_EXTRA_ID_SIZE];
 } swap_validated_t;
 
 /* Global variable used to store swap validation status */
@@ -93,6 +98,17 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t *params) {
         }
     }
     PRINTF("Validated recipient: %s\n", swap_validated.recipient);
+
+    // Save the destination extra id, which the transaction memo must match
+    if (params->destination_address_extra_id != NULL) {
+        size_t memo_len = strnlen(params->destination_address_extra_id, SWAP_EXTRA_ID_SIZE);
+        if (memo_len == SWAP_EXTRA_ID_SIZE) {
+            PRINTF("Destination extra id too long\n");
+            return false;
+        }
+        memcpy(swap_validated.memo, params->destination_address_extra_id, memo_len);
+    }
+    PRINTF("Validated memo: %s\n", swap_validated.memo);
 
     // Parse config and save decimals and ticker
     // If there is no coin_configuration, consider that we are doing a SOL swap
@@ -228,6 +244,21 @@ bool swap_check_validity(uint64_t amount,
         os_sched_exit(0);
     } else {
         PRINTF("Destination is valid\n");
+    }
+
+    size_t memo_len = strlen(G_swap_validated.memo);
+    if (G_context.tx_info.transaction.memo_len != memo_len ||
+        (memo_len > 0 &&
+         memcmp(G_context.tx_info.transaction.memo, G_swap_validated.memo, memo_len) != 0)) {
+        PRINTF("Memo does not match\n");
+        PRINTF("Validated: %s\n", G_swap_validated.memo);
+        send_swap_error_simple(SW_SWAP_FAIL,
+                               SWAP_EC_ERROR_WRONG_DESTINATION,
+                               SWAP_ERROR_WRONG_MEMO);
+        // unreachable
+        os_sched_exit(0);
+    } else {
+        PRINTF("Memo is valid\n");
     }
     return true;
 }

@@ -16,4 +16,5 @@
 typedef enum swap_error_application_specific_code_t {
     SWAP_ERROR_CODE = 0x00,
     SWAP_ERROR_WRONG_TOKEN_INFO = 0x01,
+    SWAP_ERROR_WRONG_MEMO = 0x02,
 } swap_error_application_specific_code_t;

@@ -162,6 +162,35 @@ static void stash_valid_swap(void) {
     TEST_ASSERT_TRUE(swap_copy_transaction_parameters(&params));
 }
 
+// Populate G_swap_validated with a native-BOL swap whose destination has an extra id.
+static void stash_swap_with_memo(char *extra_id) {
+    char dest[] = RECIPIENT;
+    create_transaction_parameters_t params = make_create_params(dest);
+    params.destination_address_extra_id = extra_id;
+
+    swap_str_to_u64_AddCallback(str_to_u64_cb);
+    swap_str_to_u64_ExpectAnyArgsAndReturn(true);  // amount
+    swap_str_to_u64_ExpectAnyArgsAndReturn(true);  // fee
+
+    TEST_ASSERT_TRUE(swap_copy_transaction_parameters(&params));
+}
+
+// Run swap_check_validity() on a native tx carrying the given memo.
+static bool check_validity_with_memo(const char *memo, uint64_t memo_len) {
+    uint8_t dest[ADDRESS_LEN] = {0};
+    token_info_t token = {0};
+    G_context.tx_info.transaction.memo = (uint8_t *) memo;
+    G_context.tx_info.transaction.memo_len = memo_len;
+
+    format_hex_AddCallback(format_hex_cb);
+    format_hex_ExpectAnyArgsAndReturn(ADDRESS_LEN * 2);
+
+    if (setjmp(g_exit_jmp) == 0) {
+        return swap_check_validity(SWAP_AMOUNT, SWAP_FEE, dest, &token);
+    }
+    return false;
+}
+
 // swap_parse_config mock: a non-BOL token ("TKN", 6 decimals) so is_token_swap()
 // is true for the stashed swap.
 static uint8_t g_coin_config[] = {3, 'T', 'K', 'N', 6};
@@ -326,6 +355,15 @@ void test_copy_config_parse_failure(void) {
     TEST_ASSERT_FALSE(swap_copy_transaction_parameters(&params));
 }
 
+void test_copy_extra_id_too_long(void) {
+    char dest[] = RECIPIENT;
+    char extra_id[] = "0123456789abcdefghij";  // 20 chars, no NUL within the Exchange buffer
+    create_transaction_parameters_t params = make_create_params(dest);
+    params.destination_address_extra_id = extra_id;
+
+    TEST_ASSERT_FALSE(swap_copy_transaction_parameters(&params));
+}
+
 void test_copy_config_token_address_wrong_length(void) {
     char dest[] = RECIPIENT;
     create_transaction_parameters_t params = make_create_params(dest);
@@ -388,6 +426,53 @@ void test_check_validity_fee_mismatch(void) {
         swap_check_validity(SWAP_AMOUNT, SWAP_FEE + 1, dest, &token);  // wrong fee
         TEST_FAIL_MESSAGE("expected swap error exit on fee mismatch");
     }
+    TEST_ASSERT_TRUE(g_error_called);
+}
+
+void test_check_validity_memo_match(void) {
+    char extra_id[] = "memo1";
+    stash_swap_with_memo(extra_id);
+
+    TEST_ASSERT_TRUE(check_validity_with_memo("memo1", 5));
+    TEST_ASSERT_FALSE(g_error_called);
+}
+
+void test_check_validity_memo_max_length_match(void) {
+    char extra_id[] = "0123456789abcdefghi";  // 19 chars + NUL
+    stash_swap_with_memo(extra_id);
+
+    TEST_ASSERT_TRUE(check_validity_with_memo("0123456789abcdefghi", 19));
+    TEST_ASSERT_FALSE(g_error_called);
+}
+
+void test_check_validity_memo_mismatch(void) {
+    char extra_id[] = "memo1";
+    stash_swap_with_memo(extra_id);
+
+    TEST_ASSERT_FALSE(check_validity_with_memo("memo2", 5));
+    TEST_ASSERT_TRUE(g_error_called);
+}
+
+void test_check_validity_memo_longer(void) {
+    char extra_id[] = "memo1";
+    stash_swap_with_memo(extra_id);
+
+    TEST_ASSERT_FALSE(check_validity_with_memo("memo1X", 6));
+    TEST_ASSERT_TRUE(g_error_called);
+}
+
+void test_check_validity_memo_shorter(void) {
+    char extra_id[] = "memo1";
+    stash_swap_with_memo(extra_id);
+
+    TEST_ASSERT_FALSE(check_validity_with_memo("memo", 4));
+    TEST_ASSERT_TRUE(g_error_called);
+}
+
+void test_check_validity_memo_unexpected(void) {
+    stash_valid_swap();  // no extra id
+
+    TEST_ASSERT_FALSE(check_validity_with_memo("memo1", 5));
     TEST_ASSERT_TRUE(g_error_called);
 }
 
@@ -611,12 +696,19 @@ int main(void) {
     RUN_TEST(test_copy_success);
     RUN_TEST(test_copy_uppercases_recipient);
     RUN_TEST(test_copy_config_parse_failure);
+    RUN_TEST(test_copy_extra_id_too_long);
     RUN_TEST(test_copy_config_token_address_wrong_length);
 
     RUN_TEST(test_check_validity_success);
     RUN_TEST(test_check_validity_amount_mismatch);
     RUN_TEST(test_check_validity_fee_mismatch);
     RUN_TEST(test_check_validity_destination_mismatch);
+    RUN_TEST(test_check_validity_memo_match);
+    RUN_TEST(test_check_validity_memo_max_length_match);
+    RUN_TEST(test_check_validity_memo_mismatch);
+    RUN_TEST(test_check_validity_memo_longer);
+    RUN_TEST(test_check_validity_memo_shorter);
+    RUN_TEST(test_check_validity_memo_unexpected);
 
     RUN_TEST(test_check_validity_token_match);
     RUN_TEST(test_check_validity_token_mismatch);
