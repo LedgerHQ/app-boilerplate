@@ -148,6 +148,40 @@ class TestsBoilerplate:
         assert e.value.status == BoilerplateErrors.SW_SWAP_FAIL
 
 
+# Token swap whose currency configuration carries the token contract address
+class BoilerplateTokenWithAddressTests(BoilerplateTokenTests):
+    currency_configuration = cal.BOL_USDC_WITH_ADDRESS_CURRENCY_CONFIGURATION
+
+    def perform_final_tx_same_ticker_other_address(self, destination, send_amount, fees, memo):
+        """Provide a token with the approved ticker and decimals at another address, then spend it."""
+        client = BoilerplateCommandSender(self.backend)
+        rapdu = client.provide_dynamic_token(
+            ticker="USDC", decimals=12, token_address=bytes.fromhex(UNKNOWN_TOKEN_ADDRESS)
+        )
+        assert rapdu.status == 0x9000, f"Failed to provide dynamic token: {hex(rapdu.status)}"
+        self._perform_final_tx_with_token(destination, send_amount, fees, memo, UNKNOWN_TOKEN_ADDRESS)
+
+
+class TestsBoilerplateTokenWithAddress:
+    def test_boilerplate_token_with_address(self, backend, exchange_navigation_helper):
+        BoilerplateTokenWithAddressTests(backend, exchange_navigation_helper).run_test("swap_valid_1")
+
+    @pytest.mark.parametrize(
+        "fault_test_to_run",
+        [
+            "perform_final_tx_same_ticker_other_address",
+            "perform_final_tx_token_mismatch",
+            "perform_final_tx_token_unknown",
+        ],
+    )
+    def test_boilerplate_token_with_address_issues(self, backend, exchange_navigation_helper, fault_test_to_run):
+        with pytest.raises(ExceptionRAPDU) as e:
+            test_class = BoilerplateTokenWithAddressTests(backend, exchange_navigation_helper)
+            test_class.perform_final_tx = getattr(test_class, fault_test_to_run)
+            test_class.run_test("swap_valid_1")
+        assert e.value.status == BoilerplateErrors.SW_SWAP_FAIL
+
+
 # CAL Dynamic Token SWAP Tests
 # Demonstrates CAL-signed dynamic tokens (requires Ledger coordination for production)
 # For simpler token support, see BoilerplateTokenTests (hardcoded tokens) instead

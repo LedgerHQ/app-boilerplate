@@ -164,7 +164,12 @@ static void stash_valid_swap(void) {
 
 // swap_parse_config mock: a non-BOL token ("TKN", 6 decimals) so is_token_swap()
 // is true for the stashed swap.
-static uint8_t g_coin_config[4] = {0xaa, 0xbb, 0xcc, 0xdd};
+static uint8_t g_coin_config[] = {3, 'T', 'K', 'N', 6};
+
+#define CONFIG_TOKEN_ADDRESS_BYTE 0x11
+// Same configuration followed by the optional token contract address.
+static uint8_t g_coin_config_with_address[5 + TOKEN_ADDRESS_LEN] = {3, 'T', 'K', 'N', 6};
+static uint8_t g_token_address[TOKEN_ADDRESS_LEN];
 
 static bool parse_config_cb(const uint8_t *config,
                             uint8_t config_len,
@@ -181,12 +186,45 @@ static bool parse_config_cb(const uint8_t *config,
     return true;
 }
 
+// swap_parse_config mock: the native ticker with non-native decimals.
+static bool parse_config_bol_cb(const uint8_t *config,
+                                uint8_t config_len,
+                                char *ticker,
+                                uint8_t ticker_buf_len,
+                                uint8_t *decimals,
+                                int cmock_num_calls) {
+    (void) config;
+    (void) config_len;
+    (void) cmock_num_calls;
+    strncpy(ticker, "BOL", ticker_buf_len - 1);
+    ticker[ticker_buf_len - 1] = '\0';
+    *decimals = EXPONENT_SMALLEST_UNIT + 1;
+    return true;
+}
+
 // Populate G_swap_validated with a token swap (TKN / 6 decimals).
 static void stash_token_swap(void) {
     char dest[] = RECIPIENT;
     create_transaction_parameters_t params = make_create_params(dest);
     params.coin_configuration = g_coin_config;
     params.coin_configuration_length = sizeof(g_coin_config);
+
+    swap_parse_config_AddCallback(parse_config_cb);
+    swap_parse_config_ExpectAnyArgsAndReturn(true);
+    swap_str_to_u64_AddCallback(str_to_u64_cb);
+    swap_str_to_u64_ExpectAnyArgsAndReturn(true);  // amount
+    swap_str_to_u64_ExpectAnyArgsAndReturn(true);  // fee
+
+    TEST_ASSERT_TRUE(swap_copy_transaction_parameters(&params));
+}
+
+// Populate G_swap_validated with a token swap carrying the token address.
+static void stash_token_swap_with_address(void) {
+    char dest[] = RECIPIENT;
+    create_transaction_parameters_t params = make_create_params(dest);
+    memset(g_coin_config_with_address + 5, CONFIG_TOKEN_ADDRESS_BYTE, TOKEN_ADDRESS_LEN);
+    params.coin_configuration = g_coin_config_with_address;
+    params.coin_configuration_length = sizeof(g_coin_config_with_address);
 
     swap_parse_config_AddCallback(parse_config_cb);
     swap_parse_config_ExpectAnyArgsAndReturn(true);
@@ -286,6 +324,21 @@ void test_copy_config_parse_failure(void) {
     swap_parse_config_ExpectAnyArgsAndReturn(false);  // coin config parsing fails
 
     TEST_ASSERT_FALSE(swap_copy_transaction_parameters(&params));
+}
+
+void test_copy_config_token_address_wrong_length(void) {
+    char dest[] = RECIPIENT;
+    create_transaction_parameters_t params = make_create_params(dest);
+    params.coin_configuration = g_coin_config_with_address;
+
+    // One byte short, then one byte of trailing data only.
+    const uint8_t lengths[] = {sizeof(g_coin_config_with_address) - 1, sizeof(g_coin_config) + 1};
+    for (size_t i = 0; i < sizeof(lengths); i++) {
+        params.coin_configuration_length = lengths[i];
+        swap_parse_config_AddCallback(parse_config_cb);
+        swap_parse_config_ExpectAnyArgsAndReturn(true);
+        TEST_ASSERT_FALSE(swap_copy_transaction_parameters(&params));
+    }
 }
 
 // =========================================================================
@@ -392,6 +445,130 @@ void test_check_validity_token_mismatch(void) {
     TEST_ASSERT_TRUE(g_error_called);
 }
 
+void test_check_validity_token_address_match(void) {
+    stash_token_swap_with_address();
+    G_context.tx_info.is_token_tx = true;
+    memset(g_token_address, CONFIG_TOKEN_ADDRESS_BYTE, sizeof(g_token_address));
+    G_context.tx_info.transaction.token_address = g_token_address;
+
+    uint8_t dest[ADDRESS_LEN] = {0};
+    token_info_t token = {.ticker = "TKN", .decimals = 6};
+
+    format_hex_AddCallback(format_hex_cb);
+    format_hex_ExpectAnyArgsAndReturn(ADDRESS_LEN * 2);
+
+    bool ok;
+    if (setjmp(g_exit_jmp) == 0) {
+        ok = swap_check_validity(SWAP_AMOUNT, SWAP_FEE, dest, &token);
+    } else {
+        TEST_FAIL_MESSAGE("unexpected swap error exit on matching token address");
+        return;
+    }
+    TEST_ASSERT_TRUE(ok);
+}
+
+void test_check_validity_token_address_mismatch(void) {
+    stash_token_swap_with_address();
+    G_context.tx_info.is_token_tx = true;
+    memset(g_token_address, CONFIG_TOKEN_ADDRESS_BYTE, sizeof(g_token_address));
+    g_token_address[TOKEN_ADDRESS_LEN - 1] ^= 0x01;
+    G_context.tx_info.transaction.token_address = g_token_address;
+
+    uint8_t dest[ADDRESS_LEN] = {0};
+    // Same ticker and decimals as the approved token, other contract.
+    token_info_t token = {.ticker = "TKN", .decimals = 6};
+
+    if (setjmp(g_exit_jmp) == 0) {
+        swap_check_validity(SWAP_AMOUNT, SWAP_FEE, dest, &token);
+        TEST_FAIL_MESSAGE("expected swap error exit on token address mismatch");
+    }
+    TEST_ASSERT_TRUE(g_error_called);
+}
+
+void test_check_validity_token_address_native_tx(void) {
+    stash_token_swap_with_address();
+    G_context.tx_info.is_token_tx = false;
+
+    uint8_t dest[ADDRESS_LEN] = {0};
+    token_info_t token = {0};
+
+    if (setjmp(g_exit_jmp) == 0) {
+        swap_check_validity(SWAP_AMOUNT, SWAP_FEE, dest, &token);
+        TEST_FAIL_MESSAGE("expected swap error exit on native tx for a token swap");
+    }
+    TEST_ASSERT_TRUE(g_error_called);
+}
+
+void test_check_validity_token_address_match_ticker_mismatch(void) {
+    stash_token_swap_with_address();
+    G_context.tx_info.is_token_tx = true;
+    memset(g_token_address, CONFIG_TOKEN_ADDRESS_BYTE, sizeof(g_token_address));
+    G_context.tx_info.transaction.token_address = g_token_address;
+
+    uint8_t dest[ADDRESS_LEN] = {0};
+    token_info_t token = {.ticker = "OTHER", .decimals = 6};
+
+    if (setjmp(g_exit_jmp) == 0) {
+        swap_check_validity(SWAP_AMOUNT, SWAP_FEE, dest, &token);
+        TEST_FAIL_MESSAGE("expected swap error exit on ticker mismatch");
+    }
+    TEST_ASSERT_TRUE(g_error_called);
+}
+
+void test_check_validity_token_address_match_decimals_mismatch(void) {
+    stash_token_swap_with_address();
+    G_context.tx_info.is_token_tx = true;
+    memset(g_token_address, CONFIG_TOKEN_ADDRESS_BYTE, sizeof(g_token_address));
+    G_context.tx_info.transaction.token_address = g_token_address;
+
+    uint8_t dest[ADDRESS_LEN] = {0};
+    token_info_t token = {.ticker = "TKN", .decimals = 9};
+
+    if (setjmp(g_exit_jmp) == 0) {
+        swap_check_validity(SWAP_AMOUNT, SWAP_FEE, dest, &token);
+        TEST_FAIL_MESSAGE("expected swap error exit on decimals mismatch");
+    }
+    TEST_ASSERT_TRUE(g_error_called);
+}
+
+void test_check_validity_token_decimals_mismatch(void) {
+    stash_token_swap();
+    G_context.tx_info.is_token_tx = true;
+
+    uint8_t dest[ADDRESS_LEN] = {0};
+    token_info_t token = {.ticker = "TKN", .decimals = 9};
+
+    if (setjmp(g_exit_jmp) == 0) {
+        swap_check_validity(SWAP_AMOUNT, SWAP_FEE, dest, &token);
+        TEST_FAIL_MESSAGE("expected swap error exit on decimals mismatch");
+    }
+    TEST_ASSERT_TRUE(g_error_called);
+}
+
+void test_check_validity_native_ticker_other_decimals(void) {
+    char dest_str[] = RECIPIENT;
+    create_transaction_parameters_t params = make_create_params(dest_str);
+    params.coin_configuration = g_coin_config;
+    params.coin_configuration_length = sizeof(g_coin_config);
+    swap_parse_config_AddCallback(parse_config_bol_cb);
+    swap_parse_config_ExpectAnyArgsAndReturn(true);
+    swap_str_to_u64_AddCallback(str_to_u64_cb);
+    swap_str_to_u64_ExpectAnyArgsAndReturn(true);  // amount
+    swap_str_to_u64_ExpectAnyArgsAndReturn(true);  // fee
+    TEST_ASSERT_TRUE(swap_copy_transaction_parameters(&params));
+    G_context.tx_info.is_token_tx = false;
+
+    uint8_t dest[ADDRESS_LEN] = {0};
+    token_info_t token = {0};
+
+    // BOL with non-native decimals is a token swap: a native tx is refused.
+    if (setjmp(g_exit_jmp) == 0) {
+        swap_check_validity(SWAP_AMOUNT, SWAP_FEE, dest, &token);
+        TEST_FAIL_MESSAGE("expected swap error exit on native tx for a token swap");
+    }
+    TEST_ASSERT_TRUE(g_error_called);
+}
+
 void test_check_validity_unexpected_token(void) {
     stash_valid_swap();  // BOL -> is_token_swap() == false
     G_context.tx_info.is_token_tx = true;
@@ -434,6 +611,7 @@ int main(void) {
     RUN_TEST(test_copy_success);
     RUN_TEST(test_copy_uppercases_recipient);
     RUN_TEST(test_copy_config_parse_failure);
+    RUN_TEST(test_copy_config_token_address_wrong_length);
 
     RUN_TEST(test_check_validity_success);
     RUN_TEST(test_check_validity_amount_mismatch);
@@ -442,6 +620,13 @@ int main(void) {
 
     RUN_TEST(test_check_validity_token_match);
     RUN_TEST(test_check_validity_token_mismatch);
+    RUN_TEST(test_check_validity_token_address_match);
+    RUN_TEST(test_check_validity_token_address_mismatch);
+    RUN_TEST(test_check_validity_token_address_native_tx);
+    RUN_TEST(test_check_validity_token_address_match_ticker_mismatch);
+    RUN_TEST(test_check_validity_token_address_match_decimals_mismatch);
+    RUN_TEST(test_check_validity_token_decimals_mismatch);
+    RUN_TEST(test_check_validity_native_ticker_other_decimals);
     RUN_TEST(test_check_validity_unexpected_token);
     RUN_TEST(test_check_validity_token_expected);
 
