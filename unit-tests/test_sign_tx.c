@@ -44,6 +44,7 @@ volatile bool G_swap_response_ready;
 static bool g_read_u8_ret, g_read_path_ret, g_buffer_move_ret;
 static parser_status_e g_deser_status;
 static const char *g_deser_memo;
+static uint64_t g_deser_memo_len;
 static bool g_get_token_info_ret;
 static cx_err_t g_keccak_ret;
 static bool g_swap_check_ret;
@@ -81,6 +82,7 @@ static parser_status_e deser_cb(buffer_t *b, transaction_t *tx, bool is_token, i
     (void) is_token;
     (void) n;
     tx->memo = (uint8_t *) g_deser_memo;
+    tx->memo_len = g_deser_memo_len;
     return g_deser_status;
 }
 // Hand-stub (dynamic_token_info.h is not CMock-mockable).
@@ -151,6 +153,11 @@ static void sched_exit_cb(bolos_task_status_t code, int n) {
     }
 }
 
+static void set_memo(const char *memo, uint64_t memo_len) {
+    g_deser_memo = memo;
+    g_deser_memo_len = memo_len;
+}
+
 void setUp(void) {
     Mockbuffer_Init();
     Mockio_Init();
@@ -184,7 +191,7 @@ void setUp(void) {
     g_read_path_ret = true;
     g_buffer_move_ret = true;
     g_deser_status = PARSING_OK;
-    g_deser_memo = "hello";
+    set_memo("hello", 5);
     g_get_token_info_ret = true;
     g_keccak_ret = CX_OK;
     g_swap_check_ret = true;
@@ -308,7 +315,7 @@ void test_process_hash_failure(void) {
 void test_display_standard(void) {
     buffer_t cdata = make_cdata();
     G_context.req_type = CONFIRM_TRANSACTION;
-    g_deser_memo = "hello";
+    set_memo("hello", 5);
     handler_sign_tx(&cdata, 1, false, false);
     TEST_ASSERT_EQUAL(DISP_STD, g_display);
 }
@@ -316,15 +323,48 @@ void test_display_standard(void) {
 void test_display_blind_sign(void) {
     buffer_t cdata = make_cdata();
     G_context.req_type = CONFIRM_TRANSACTION;
-    g_deser_memo = "Blind-sign";
+    set_memo("Blind-sign", 10);
     handler_sign_tx(&cdata, 1, false, false);
     TEST_ASSERT_EQUAL(DISP_BLIND, g_display);
+}
+
+void test_display_blind_sign_memo_not_nul_terminated(void) {
+    static const uint8_t memo[] = {'B', 'l', 'i', 'n', 'd', '-', 's', 'i', 'g', 'n', 'X'};
+    buffer_t cdata = make_cdata();
+    G_context.req_type = CONFIRM_TRANSACTION;
+    set_memo((const char *) memo, 10);
+    handler_sign_tx(&cdata, 1, false, false);
+    TEST_ASSERT_EQUAL(DISP_BLIND, g_display);
+}
+
+void test_display_blind_sign_memo_longer(void) {
+    buffer_t cdata = make_cdata();
+    G_context.req_type = CONFIRM_TRANSACTION;
+    set_memo("Blind-signX", 11);
+    handler_sign_tx(&cdata, 1, false, false);
+    TEST_ASSERT_EQUAL(DISP_STD, g_display);
+}
+
+void test_display_blind_sign_memo_same_length(void) {
+    buffer_t cdata = make_cdata();
+    G_context.req_type = CONFIRM_TRANSACTION;
+    set_memo("blind-sign", 10);
+    handler_sign_tx(&cdata, 1, false, false);
+    TEST_ASSERT_EQUAL(DISP_STD, g_display);
+}
+
+void test_display_blind_sign_memo_prefix(void) {
+    buffer_t cdata = make_cdata();
+    G_context.req_type = CONFIRM_TRANSACTION;
+    set_memo("Blind-sign", 5);
+    handler_sign_tx(&cdata, 1, false, false);
+    TEST_ASSERT_EQUAL(DISP_STD, g_display);
 }
 
 void test_display_token(void) {
     buffer_t cdata = make_cdata();
     G_context.req_type = CONFIRM_TOKEN_TRANSACTION;
-    g_deser_memo = "hello";
+    set_memo("hello", 5);
     handler_sign_tx(&cdata, 1, false, true);
     TEST_ASSERT_EQUAL(DISP_TOKEN, g_display);
 }
@@ -392,6 +432,10 @@ int main(void) {
 
     RUN_TEST(test_display_standard);
     RUN_TEST(test_display_blind_sign);
+    RUN_TEST(test_display_blind_sign_memo_not_nul_terminated);
+    RUN_TEST(test_display_blind_sign_memo_longer);
+    RUN_TEST(test_display_blind_sign_memo_same_length);
+    RUN_TEST(test_display_blind_sign_memo_prefix);
     RUN_TEST(test_display_token);
 
     RUN_TEST(test_swap_process_error_sends_swap_error);
