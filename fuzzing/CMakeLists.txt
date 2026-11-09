@@ -41,6 +41,8 @@ string(REPLACE " " ";" COMPILATION_FLAGS ${COMPILATION_FLAGS_})
 
 include(extra/TxParser.cmake)
 
+target_compile_options(txparser PRIVATE ${COMPILATION_FLAGS})
+
 add_executable(fuzz_tx_parser fuzz_tx_parser.c)
 
 target_compile_options(fuzz_tx_parser PUBLIC ${COMPILATION_FLAGS})

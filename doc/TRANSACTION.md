@@ -25,7 +25,7 @@ of the public key.
 | `to` | 20 | The destination address |
 | `value` | 8 | The amount in mBOL to send to the destination address |
 | `memo_len` | 1-9 | length of the memo as [varint](#variable-length-integer-varint) |
-| `memo` | var | A text ASCII-encoded of length `memo_len` to show your love |
+| `memo` | var | A text in printable ASCII (0x20 to 0x7E) of length `memo_len` to show your love |
 | `v` | 1 | 0x01 if y-coordinate of R is odd, 0x00 otherwise |
 | `r` | 32 | x-coordinate of R in ECDSA signature |
 | `s` | 32 | x-coordinate of S in ECDSA signature |
@@ -39,7 +39,7 @@ of the public key.
 | `token_address` | 32 | The 32-byte token contract address (must be in token database) |
 | `value` | 8 | The amount in token's smallest unit to send |
 | `memo_len` | 1-9 | length of the memo as [varint](#variable-length-integer-varint) |
-| `memo` | var | A text ASCII-encoded of length `memo_len` to show your love |
+| `memo` | var | A text in printable ASCII (0x20 to 0x7E) of length `memo_len` to show your love |
 | `v` | 1 | 0x01 if y-coordinate of R is odd, 0x00 otherwise |
 | `r` | 32 | x-coordinate of R in ECDSA signature |
 | `s` | 32 | x-coordinate of S in ECDSA signature |

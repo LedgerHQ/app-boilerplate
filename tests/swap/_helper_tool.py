@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -36,13 +37,13 @@ DEVICES_CONF = {
 }
 
 
-def run_cmd(cmd: str, cwd: Path = Path("."), print_output: bool = False, no_throw: bool = False) -> str:
+def run_cmd(cmd: list[str], cwd: Path = Path("."), print_output: bool = False, no_throw: bool = False) -> str:
 
-    print(f"[run_cmd] Running: '{cmd}'' inside '{cwd}'")
+    print(f"[run_cmd] Running: '{' '.join(cmd)}' inside '{cwd}'")
 
     ret = subprocess.run(
         cmd,
-        shell=True,
+        shell=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -69,7 +70,7 @@ def clone_or_pull(repo_url: str, clone_dir: str):
     git_dir = os.path.join(clone_dir, ".git")
     if not os.path.exists(git_dir):
         print(f"Cloning into {clone_dir}")
-        run_cmd(f"rm -rf {clone_dir}")
+        shutil.rmtree(clone_dir, ignore_errors=True)
         Repo.clone_from(repo_url, clone_dir, recursive=True)
     else:
         print(f"Pulling latest changes in {clone_dir}")
@@ -80,22 +81,20 @@ def clone_or_pull(repo_url: str, clone_dir: str):
 
         # Update submodules
         print(f"Updating submodules in {clone_dir}")
-        run_cmd("git submodule sync", cwd=Path(clone_dir))
-        run_cmd("git submodule update --init --recursive", cwd=Path(clone_dir))
+        run_cmd(["git", "submodule", "sync"], cwd=Path(clone_dir))
+        run_cmd(["git", "submodule", "update", "--init", "--recursive"], cwd=Path(clone_dir))
 
 
-def build_app(clone_dir: str, flags: str):
-    cmd = "make clean"
-    run_cmd(cmd, cwd=Path(clone_dir))
+def build_app(clone_dir: str, flags: list[str]):
+    run_cmd(["make", "clean"], cwd=Path(clone_dir))
     for d in DEVICES_CONF.values():
-        sdk = d["sdk"]
-        cmd = f"make -j BOLOS_SDK=${sdk} {flags}"
-        run_cmd(cmd, cwd=Path(clone_dir))
+        sdk = os.environ[d["sdk"]]
+        run_cmd(["make", "-j", f"BOLOS_SDK={sdk}", *flags], cwd=Path(clone_dir))
 
 
 def copy_build_output(clone_dir: str, dest_dir: str):
-    run_cmd(f"mkdir -p {dest_dir}")
-    run_cmd(f"cp -rT {clone_dir}/build {dest_dir}/build")
+    Path(dest_dir).mkdir(parents=True, exist_ok=True)
+    shutil.copytree(Path(clone_dir) / "build", Path(dest_dir) / "build", dirs_exist_ok=True)
 
 
 # ==== Build app-exchange ====
@@ -106,7 +105,7 @@ def clone_and_pull_exchange():
 def build_and_copy_exchange():
     build_app(
         APP_EXCHANGE_CLONE_DIR,
-        flags="TESTING=1 TEST_PUBLIC_KEY=1 TRUSTED_NAME_TEST_KEY=1 DEBUG=1",
+        flags=["TESTING=1", "TEST_PUBLIC_KEY=1", "TRUSTED_NAME_TEST_KEY=1", "DEBUG=1"],
     )
     copy_build_output(APP_EXCHANGE_CLONE_DIR, APP_EXCHANGE_DIR)
 
@@ -119,7 +118,14 @@ def clone_and_pull_ethereum():
 def build_and_copy_ethereum():
     build_app(
         APP_ETHEREUM_CLONE_DIR,
-        flags="COIN=ethereum CHAIN=ethereum CAL_TEST_KEY=1 DOMAIN_NAME_TEST_KEY=1 "
-              "SET_PLUGIN_TEST_KEY=1 NFT_TEST_KEY=1 TRUSTED_NAME_TEST_KEY=1",
+        flags=[
+            "COIN=ethereum",
+            "CHAIN=ethereum",
+            "CAL_TEST_KEY=1",
+            "DOMAIN_NAME_TEST_KEY=1",
+            "SET_PLUGIN_TEST_KEY=1",
+            "NFT_TEST_KEY=1",
+            "TRUSTED_NAME_TEST_KEY=1",
+        ],
     )
     copy_build_output(APP_ETHEREUM_CLONE_DIR, APP_ETHEREUM_DIR)

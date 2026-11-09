@@ -538,3 +538,60 @@ def test_provide_dynamic_token_wrong_tuid_size(backend: BackendInterface) -> Non
 
     # Should fail with INVALID_DYNAMIC_TOKEN
     assert e.value.status == Errors.SW_INVALID_DYNAMIC_TOKEN
+
+
+# Memo bytes outside printable ASCII (0x20 to 0x7E): the transaction is rejected before any review
+NON_PRINTABLE_MEMO_BYTES = {
+    "nul": 0x00,
+    "line_feed": 0x0A,
+    "unit_separator": 0x1F,
+    "del": 0x7F,
+    "first_non_ascii": 0x80,
+    "last_byte": 0xFF,
+}
+
+
+@pytest.mark.parametrize("memo_byte", NON_PRINTABLE_MEMO_BYTES.values(), ids=NON_PRINTABLE_MEMO_BYTES.keys())
+def test_sign_token_tx_memo_not_printable(backend: BackendInterface, memo_byte: int) -> None:
+    client = BoilerplateCommandSender(backend)
+
+    transaction = TokenTransaction(
+        nonce=1,
+        to="0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae",
+        token_address=TOKEN_USDC,
+        value=1000,
+        memo="",
+    )
+    # The client only encodes ASCII text: inject the raw byte inside the memo
+    transaction.memo = b"Hidden" + bytes([memo_byte]) + b"tail"
+
+    with pytest.raises(ExceptionRAPDU) as e:
+        client.sign_token_tx_sync(path=STANDARD_PATH, transaction=transaction.serialize())
+
+    assert e.value.status == Errors.SWO_INCORRECT_DATA
+    assert len(e.value.data) == 0
+
+
+# The first (0x20) and last (0x7E) printable bytes are accepted and displayed
+def test_sign_token_tx_memo_printable_boundaries(
+    backend: BackendInterface, scenario_navigator: NavigateWithScenario
+) -> None:
+    client = BoilerplateCommandSender(backend)
+
+    rapdu = client.get_public_key(path=STANDARD_PATH)
+    _, public_key, _, _ = unpack_get_public_key_response(rapdu.data)
+
+    transaction = TokenTransaction(
+        nonce=1,
+        to="0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae",
+        token_address=TOKEN_USDC,
+        value=1000,
+        memo="~ Edges ~",
+    ).serialize()
+
+    with client.sign_token_tx(path=STANDARD_PATH, transaction=transaction):
+        scenario_navigator.review_approve()
+
+    response = client.get_async_response().data
+    _, der_sig, _ = unpack_sign_tx_response(response)
+    assert check_signature_validity(public_key, der_sig, transaction)

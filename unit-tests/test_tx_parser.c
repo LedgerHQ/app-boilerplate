@@ -1,9 +1,10 @@
 /*
  * Unit tests for src/transaction/{deserialize,serialize}.c.
  *
- * No mock: the transaction code runs against the real SDK buffer, read, write
- * and varint helpers. Each raw transaction is built field by field, its varint
- * memo length encoded here independently of the SDK.
+ * The transaction code runs against the real SDK buffer, read, write and
+ * varint helpers; only is_printable_string() of the SDK is a CMock mock.
+ * Each raw transaction is built field by field, its varint memo length
+ * encoded here independently of the SDK.
  */
 
 #include <stdint.h>
@@ -11,6 +12,8 @@
 #include <string.h>
 
 #include "unity.h"
+
+#include "Mockos_utils.h"
 
 #include "buffer.h"
 #include "deserialize.h"
@@ -32,12 +35,28 @@ static const uint8_t TOKEN_ADDRESS[TOKEN_ADDRESS_LEN] = {
 static uint8_t g_raw[MAX_TX_LEN];
 static uint8_t g_out[MAX_TX_LEN];
 
+static bool g_printable_ret;
+static size_t g_printable_len;
+
+static bool printable_cb(const char *str, size_t len, int cmock_num_calls) {
+    (void) str;
+    (void) cmock_num_calls;
+    g_printable_len = len;
+    return g_printable_ret;
+}
+
 void setUp(void) {
     memset(g_raw, 0, sizeof(g_raw));
     memset(g_out, 0, sizeof(g_out));
+    Mockos_utils_Init();
+    is_printable_string_Stub(printable_cb);
+    g_printable_ret = true;
+    g_printable_len = 0;
 }
 
 void tearDown(void) {
+    Mockos_utils_Verify();
+    Mockos_utils_Destroy();
 }
 
 static size_t put_u64_be(uint8_t *out, uint64_t value) {
@@ -165,12 +184,13 @@ void test_truncated_memo(void) {
     TEST_ASSERT_EQUAL(MEMO_PARSING_ERROR, deserialize_size(raw_len - 1));
 }
 
-void test_memo_not_ascii(void) {
+void test_memo_not_printable(void) {
     uint8_t memo[12];
     fill_memo(memo, sizeof(memo));
-    memo[5] = 0x80;  // first byte outside 7-bit ASCII
     size_t raw_len = build_tx(NONCE, NULL, VALUE, memo, sizeof(memo));
+    g_printable_ret = false;
     TEST_ASSERT_EQUAL(MEMO_ENCODING_ERROR, deserialize_size(raw_len));
+    TEST_ASSERT_EQUAL(sizeof(memo), g_printable_len);
 }
 
 void test_trailing_bytes(void) {
@@ -252,7 +272,7 @@ int main(void) {
     RUN_TEST(test_truncated_to);
     RUN_TEST(test_truncated_value);
     RUN_TEST(test_truncated_memo);
-    RUN_TEST(test_memo_not_ascii);
+    RUN_TEST(test_memo_not_printable);
     RUN_TEST(test_trailing_bytes);
     RUN_TEST(test_serialize_output_too_small);
     RUN_TEST(test_missing_memo_length);

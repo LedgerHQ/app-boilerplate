@@ -149,6 +149,19 @@ static uint16_t process_transaction(bool is_token_tx) {
     return SWO_SUCCESS;
 }
 
+/**
+ * Check whether the memo is exactly the example blind-sign trigger.
+ *
+ * @param[in] tx Parsed transaction, whose memo is not NUL-terminated
+ * @return true if the memo matches BLIND_SIGN_MEMO
+ */
+static bool is_blind_sign_memo(const transaction_t *tx) {
+    static const char BLIND_SIGN_MEMO[] = "Blind-sign";
+
+    return (tx->memo_len == sizeof(BLIND_SIGN_MEMO) - 1) &&
+           (memcmp(tx->memo, BLIND_SIGN_MEMO, sizeof(BLIND_SIGN_MEMO) - 1) == 0);
+}
+
 int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more, bool is_token_tx) {
     uint8_t req_type = is_token_tx ? CONFIRM_TOKEN_TRANSACTION : CONFIRM_TRANSACTION;
     if (chunk == 0) {
@@ -193,7 +206,7 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more, bool is_token_tx)
 #endif  // HAVE_SWAP
 
             // Example to trig a blind-sign flow
-            if (strcmp((char *) G_context.tx_info.transaction.memo, "Blind-sign") == 0) {
+            if (is_blind_sign_memo(&G_context.tx_info.transaction)) {
                 return ui_display_blind_signed_transaction();
             } else if (is_token_tx) {
                 return ui_display_token_transaction();

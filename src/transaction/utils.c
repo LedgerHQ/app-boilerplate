@@ -26,18 +26,16 @@
 #include "ledger_assert.h"
 #endif
 
+#include "os_utils.h"
 #include "types.h"
 
 bool transaction_utils_check_encoding(const uint8_t *memo, uint64_t memo_len) {
     LEDGER_ASSERT(memo != NULL, "NULL memo");
 
-    for (uint64_t i = 0; i < memo_len; i++) {
-        if (memo[i] > 0x7F) {
-            return false;
-        }
+    if (memo_len > MAX_MEMO_LEN) {
+        return false;
     }
-
-    return true;
+    return is_printable_string((const char *) memo, (size_t) memo_len);
 }
 
 bool transaction_utils_format_memo(const uint8_t *memo,

@@ -1,6 +1,6 @@
 import pytest
 from ledger_app_clients.exchange.test_runner import (
-    ALL_TESTS_EXCEPT_MEMO_THORSWAP_AND_FEES,
+    ALL_TESTS_EXCEPT_THORSWAP_AND_FEES,
     ExchangeTestRunner,
 )
 from ragger.error import ExceptionRAPDU
@@ -37,11 +37,11 @@ class BoilerplateTests(ExchangeTestRunner):
     # A valid template address of a supposed trade partner.
     valid_destination_1 = "de0b295669a9fd93d5f28d9ec85e40f4cb697bae"
     # A memo to use associated with the destination address if applicable.
-    valid_destination_memo_1 = ""
+    valid_destination_memo_1 = "Boilerplate memo 1"
     # A second valid template address of a supposed trade partner.
     valid_destination_2 = "9fc3da866e7dF3a1c57ade1a97c9f00a70f010c8"
     # A second memo to use associated with the destination address if applicable.
-    valid_destination_memo_2 = ""
+    valid_destination_memo_2 = "Boilerplate memo 2"
     # The address of the Speculos seed on the BOL_PATH.
     valid_refund = "FD2095A37E72BE2CD575D18FE8F16E78C51EAFA3"
     valid_refund_memo = ""
@@ -62,6 +62,7 @@ class BoilerplateTests(ExchangeTestRunner):
     signature_refusal_error_code = BoilerplateErrors.SWO_CONDITIONS_NOT_SATISFIED
     wrong_amount_error_code = BoilerplateErrors.SW_SWAP_FAIL
     wrong_destination_error_code = BoilerplateErrors.SW_SWAP_FAIL
+    wrong_memo_error_code = BoilerplateErrors.SW_SWAP_FAIL
 
     # The final transaction to craft and send as part of the SWAP finalization.
     # This function will be called by the ExchangeTestRunner in a callback like way
@@ -119,14 +120,14 @@ class BoilerplateTokenTests(BoilerplateTests):
 
 # We use a class to reuse the same Speculos instance (faster performances)
 class TestsBoilerplate:
-    # Run all the tests applicable to our setup: here we don't test fees mismatch, memo mismatch, and Thorswap / LiFi
-    @pytest.mark.parametrize("test_to_run", ALL_TESTS_EXCEPT_MEMO_THORSWAP_AND_FEES)
+    # Run all the tests applicable to our setup: here we don't test fees mismatch, and Thorswap / LiFi
+    @pytest.mark.parametrize("test_to_run", ALL_TESTS_EXCEPT_THORSWAP_AND_FEES)
     def test_boilerplate(self, backend, exchange_navigation_helper, test_to_run):
         # Call run_test method of ExchangeTestRunner
         BoilerplateTests(backend, exchange_navigation_helper).run_test(test_to_run)
 
     # Token swap test - this should fail as the C code currently rejects token swaps
-    @pytest.mark.parametrize("test_to_run", ALL_TESTS_EXCEPT_MEMO_THORSWAP_AND_FEES)
+    @pytest.mark.parametrize("test_to_run", ALL_TESTS_EXCEPT_THORSWAP_AND_FEES)
     def test_boilerplate_token(self, backend, exchange_navigation_helper, test_to_run):
         # Call run_test method of ExchangeTestRunner with token configuration
         BoilerplateTokenTests(backend, exchange_navigation_helper).run_test(test_to_run)
@@ -143,6 +144,40 @@ class TestsBoilerplate:
     def test_boilerplate_token_issues(self, backend, exchange_navigation_helper, fault_test_to_run):
         with pytest.raises(ExceptionRAPDU) as e:
             test_class = BoilerplateTokenTests(backend, exchange_navigation_helper)
+            test_class.perform_final_tx = getattr(test_class, fault_test_to_run)
+            test_class.run_test("swap_valid_1")
+        assert e.value.status == BoilerplateErrors.SW_SWAP_FAIL
+
+
+# Token swap whose currency configuration carries the token contract address
+class BoilerplateTokenWithAddressTests(BoilerplateTokenTests):
+    currency_configuration = cal.BOL_USDC_WITH_ADDRESS_CURRENCY_CONFIGURATION
+
+    def perform_final_tx_same_ticker_other_address(self, destination, send_amount, fees, memo):
+        """Provide a token with the approved ticker and decimals at another address, then spend it."""
+        client = BoilerplateCommandSender(self.backend)
+        rapdu = client.provide_dynamic_token(
+            ticker="USDC", decimals=12, token_address=bytes.fromhex(UNKNOWN_TOKEN_ADDRESS)
+        )
+        assert rapdu.status == 0x9000, f"Failed to provide dynamic token: {hex(rapdu.status)}"
+        self._perform_final_tx_with_token(destination, send_amount, fees, memo, UNKNOWN_TOKEN_ADDRESS)
+
+
+class TestsBoilerplateTokenWithAddress:
+    def test_boilerplate_token_with_address(self, backend, exchange_navigation_helper):
+        BoilerplateTokenWithAddressTests(backend, exchange_navigation_helper).run_test("swap_valid_1")
+
+    @pytest.mark.parametrize(
+        "fault_test_to_run",
+        [
+            "perform_final_tx_same_ticker_other_address",
+            "perform_final_tx_token_mismatch",
+            "perform_final_tx_token_unknown",
+        ],
+    )
+    def test_boilerplate_token_with_address_issues(self, backend, exchange_navigation_helper, fault_test_to_run):
+        with pytest.raises(ExceptionRAPDU) as e:
+            test_class = BoilerplateTokenWithAddressTests(backend, exchange_navigation_helper)
             test_class.perform_final_tx = getattr(test_class, fault_test_to_run)
             test_class.run_test("swap_valid_1")
         assert e.value.status == BoilerplateErrors.SW_SWAP_FAIL
@@ -251,7 +286,7 @@ class BoilerplateDynamicTokenTests(BoilerplateTokenTests):
 class TestsBoilerplateDynamic:
     """Tests for CAL dynamic token swap functionality."""
 
-    @pytest.mark.parametrize("test_to_run", ALL_TESTS_EXCEPT_MEMO_THORSWAP_AND_FEES)
+    @pytest.mark.parametrize("test_to_run", ALL_TESTS_EXCEPT_THORSWAP_AND_FEES)
     def test_boilerplate_dynamic_token(self, backend, exchange_navigation_helper, test_to_run):
         """Test SWAP with CAL-provided dynamic token (USDT with 6 decimals)."""
         # Call run_test method of ExchangeTestRunner with dynamic token configuration

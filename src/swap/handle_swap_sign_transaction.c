@@ -11,6 +11,10 @@
 #include "tokens.h"
 
 #include <stdint.h>
+#include <string.h>
+
+// Size of the Exchange extra id buffer, NUL terminator included
+#define SWAP_EXTRA_ID_SIZE 20
 
 // This is a smart documentation inclusion. The full documentation is available at
 // https://ledgerhq.github.io/app-exchange/
@@ -22,14 +26,40 @@ typedef struct swap_validated_s {
     char recipient[ADDRESS_LEN * 2 + 1];
     uint8_t decimals;
     char ticker[MAX_TICKER_SIZE];
+    bool has_token_address;
+    uint8_t token_address[TOKEN_ADDRESS_LEN];
+    char memo[SWAP_EXTRA_ID_SIZE];
 } swap_validated_t;
 
 /* Global variable used to store swap validation status */
 static swap_validated_t G_swap_validated;
 
 static bool is_token_swap(void) {
-    return (strcmp(G_swap_validated.ticker, "BOL") != 0 ||
+    return (G_swap_validated.has_token_address || strcmp(G_swap_validated.ticker, "BOL") != 0 ||
             G_swap_validated.decimals != EXPONENT_SMALLEST_UNIT);
+}
+
+/**
+ * Parse the optional token contract address following the ticker and decimals
+ * of a coin configuration already parsed by swap_parse_config().
+ *
+ * @return true if the address is absent or exactly TOKEN_ADDRESS_LEN bytes long
+ */
+static bool parse_config_token_address(const uint8_t *config,
+                                       uint8_t config_len,
+                                       swap_validated_t *swap_validated) {
+    // Ticker length byte + ticker + decimals byte
+    size_t offset = 1 + (size_t) config[0] + 1;
+
+    if (config_len == offset) {
+        return true;
+    }
+    if (config_len != offset + TOKEN_ADDRESS_LEN) {
+        return false;
+    }
+    memcpy(swap_validated->token_address, config + offset, TOKEN_ADDRESS_LEN);
+    swap_validated->has_token_address = true;
+    return true;
 }
 
 bool swap_copy_transaction_parameters(create_transaction_parameters_t *params) {
@@ -69,6 +99,17 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t *params) {
     }
     PRINTF("Validated recipient: %s\n", swap_validated.recipient);
 
+    // Save the destination extra id, which the transaction memo must match
+    if (params->destination_address_extra_id != NULL) {
+        size_t memo_len = strnlen(params->destination_address_extra_id, SWAP_EXTRA_ID_SIZE);
+        if (memo_len == SWAP_EXTRA_ID_SIZE) {
+            PRINTF("Destination extra id too long\n");
+            return false;
+        }
+        memcpy(swap_validated.memo, params->destination_address_extra_id, memo_len);
+    }
+    PRINTF("Validated memo: %s\n", swap_validated.memo);
+
     // Parse config and save decimals and ticker
     // If there is no coin_configuration, consider that we are doing a SOL swap
     if (params->coin_configuration == NULL) {
@@ -81,6 +122,12 @@ bool swap_copy_transaction_parameters(create_transaction_parameters_t *params) {
                                sizeof(swap_validated.ticker),
                                &swap_validated.decimals)) {
             PRINTF("Fail to parse coin_configuration\n");
+            return false;
+        }
+        if (!parse_config_token_address(params->coin_configuration,
+                                        params->coin_configuration_length,
+                                        &swap_validated)) {
+            PRINTF("Fail to parse coin_configuration token address\n");
             return false;
         }
     }
@@ -134,7 +181,11 @@ bool swap_check_validity(uint64_t amount,
     if (G_context.tx_info.is_token_tx) {
         if (is_token_swap()) {
             // Check that the token is the expected one
-            if (strcmp(G_swap_validated.ticker, token_info->ticker) != 0 ||
+            if ((G_swap_validated.has_token_address &&
+                 memcmp(G_swap_validated.token_address,
+                        G_context.tx_info.transaction.token_address,
+                        TOKEN_ADDRESS_LEN) != 0) ||
+                strcmp(G_swap_validated.ticker, token_info->ticker) != 0 ||
                 G_swap_validated.decimals != token_info->decimals) {
                 PRINTF("Token info does not match\n");
                 PRINTF("Validated: %s (decimals: %d)\n",
@@ -193,6 +244,21 @@ bool swap_check_validity(uint64_t amount,
         os_sched_exit(0);
     } else {
         PRINTF("Destination is valid\n");
+    }
+
+    size_t memo_len = strlen(G_swap_validated.memo);
+    if (G_context.tx_info.transaction.memo_len != memo_len ||
+        (memo_len > 0 &&
+         memcmp(G_context.tx_info.transaction.memo, G_swap_validated.memo, memo_len) != 0)) {
+        PRINTF("Memo does not match\n");
+        PRINTF("Validated: %s\n", G_swap_validated.memo);
+        send_swap_error_simple(SW_SWAP_FAIL,
+                               SWAP_EC_ERROR_WRONG_DESTINATION,
+                               SWAP_ERROR_WRONG_MEMO);
+        // unreachable
+        os_sched_exit(0);
+    } else {
+        PRINTF("Memo is valid\n");
     }
     return true;
 }
