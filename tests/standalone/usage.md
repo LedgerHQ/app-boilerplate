@@ -7,7 +7,7 @@ This framework allows testing the application on the Speculos emulator or on a r
 ### Install ragger and dependencies
 
 ```shell
-pip install --extra-index-url https://test.pypi.org/simple/ -r requirements.txt
+pip install -r requirements.txt
 sudo apt-get update && sudo apt-get install qemu-user-static
 ```
 
