@@ -1,3 +1,5 @@
+#include <ctype.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -7,6 +9,16 @@
 #include "utils.h"
 #include "tx_types.h"
 #include "format.h"
+
+/* Host version of the SDK helper, whose os.c does not build outside a device target. */
+bool is_printable_string(const char *str, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        if (!isprint((unsigned char) str[i])) {
+            return false;
+        }
+    }
+    return true;
+}
 
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     buffer_t buf = {.ptr = data, .size = size, .offset = 0};

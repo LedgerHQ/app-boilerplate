@@ -82,8 +82,10 @@ ledger_unit_tests_add_test(
 ledger_unit_tests_add_test(
     NAME          test_nbgl_display_transaction
     SOURCES       ${CMAKE_CURRENT_SOURCE_DIR}/../src/ui/nbgl_display_transaction.c
+                  ${CMAKE_CURRENT_SOURCE_DIR}/../src/transaction/utils.c
     MOCK_HEADERS  ${SDK_DIR}/lib_nbgl/include/nbgl_use_case.h
                   ${SDK_DIR}/lib_standard_app/format.h
+                  ${SDK_DIR}/include/os_utils.h
     INCLUDE_DIRS  ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
     COMPILE_DEFS  ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
 )
@@ -133,6 +135,7 @@ ledger_unit_tests_add_test(
 ledger_unit_tests_add_test(
     NAME           test_utils
     SOURCES        ${CMAKE_CURRENT_SOURCE_DIR}/../src/transaction/utils.c
+    MOCK_HEADERS   ${SDK_DIR}/include/os_utils.h
     INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
     COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
 )
@@ -226,6 +229,7 @@ ledger_unit_tests_add_test(
                    ${SDK_DIR}/lib_standard_app/read.c
                    ${SDK_DIR}/lib_standard_app/varint.c
                    ${SDK_DIR}/lib_standard_app/write.c
+    MOCK_HEADERS   ${SDK_DIR}/include/os_utils.h
     INCLUDE_DIRS   ${UT_INCLUDE_DIRS_SDK} ${UT_INCLUDE_DIRS}
     COMPILE_DEFS   ${UT_COMPILE_DEFS_SDK} ${UT_COMPILE_DEFS}
 )

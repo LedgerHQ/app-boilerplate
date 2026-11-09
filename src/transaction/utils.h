@@ -6,7 +6,7 @@
 #include "types.h"
 
 /**
- * Check if memo is encoded using ASCII characters.
+ * Check if memo is encoded using printable ASCII characters (0x20 to 0x7E).
  *
  * @param[in] memo
  *   Pointer to input byte buffer.

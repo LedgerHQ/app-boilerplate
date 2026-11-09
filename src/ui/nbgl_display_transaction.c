@@ -35,6 +35,7 @@
 #include "validate.h"
 #include "tx_types.h"
 #include "menu.h"
+#include "utils.h"
 
 // Buffer where the transaction amount string is written
 static char g_amount[30];
@@ -42,9 +43,13 @@ static char g_amount[30];
 static char g_address[43];
 // Buffer where the token ticker is written
 static char g_token[10];
+// Buffer where the token contract address string is written
+static char g_token_address[2 * TOKEN_ADDRESS_LEN + 1];
+// Buffer where the memo string is written
+static char g_memo[MAX_MEMO_LEN + 1];
 
-// The flow with the most pairs to display is the token signing flow with amount + dest + token
-static nbgl_contentTagValue_t pairs[3];
+// The token signing flow displays token + token address + amount + dest + memo
+static nbgl_contentTagValue_t pairs[5];
 static nbgl_contentTagValueList_t pairList;
 
 // called when long press button on 3rd page is long-touched or when reject footer is touched
@@ -68,6 +73,8 @@ static int ui_display_transaction_bs_token_choice(bool is_blind_signing, bool is
     explicit_bzero(g_amount, sizeof(g_amount));
     explicit_bzero(g_address, sizeof(g_address));
     explicit_bzero(g_token, sizeof(g_token));
+    explicit_bzero(g_token_address, sizeof(g_token_address));
+    explicit_bzero(g_memo, sizeof(g_memo));
 
     // Validate state based on transaction type
     uint8_t expected_req_type;
@@ -112,13 +119,33 @@ static int ui_display_transaction_bs_token_choice(bool is_blind_signing, bool is
         return io_send_sw(SWO_INCORRECT_DATA);
     }
 
+    // Format memo
+    if (!transaction_utils_format_memo(G_context.tx_info.transaction.memo,
+                                       G_context.tx_info.transaction.memo_len,
+                                       g_memo,
+                                       sizeof(g_memo))) {
+        return io_send_sw(SWO_INCORRECT_DATA);
+    }
+
+    // Format token contract address
+    if (is_token_signing && format_hex(G_context.tx_info.transaction.token_address,
+                                       TOKEN_ADDRESS_LEN,
+                                       g_token_address,
+                                       sizeof(g_token_address)) == -1) {
+        return io_send_sw(SWO_INCORRECT_DATA);
+    }
+
     // Setup pairs based on transaction type
     int pair_index = 0;
     if (is_token_signing) {
-        // Token flow: Token, Amount, Address
+        // Token flow: Token, Token address, Amount, Address
         snprintf(g_token, sizeof(g_token), "%s", G_context.tx_info.token_info.ticker);
         pairs[pair_index].item = "Token";
         pairs[pair_index].value = g_token;
+        pair_index++;
+
+        pairs[pair_index].item = "Token address";
+        pairs[pair_index].value = g_token_address;
         pair_index++;
     }
 
@@ -129,6 +156,12 @@ static int ui_display_transaction_bs_token_choice(bool is_blind_signing, bool is
     pairs[pair_index].item = "To";
     pairs[pair_index].value = g_address;
     pair_index++;
+
+    if (G_context.tx_info.transaction.memo_len > 0) {
+        pairs[pair_index].item = "Memo";
+        pairs[pair_index].value = g_memo;
+        pair_index++;
+    }
 
     // Setup list
     pairList.nbMaxLinesForValue = 0;

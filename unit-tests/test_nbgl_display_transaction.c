@@ -5,7 +5,7 @@
  * ui_display_transaction_bs_token_choice():
  *   - ui_display_transaction()              -> clear sign  (nbgl_useCaseReview)
  *   - ui_display_blind_signed_transaction() -> blind sign  (nbgl_useCaseReviewBlindSigning)
- *   - ui_display_token_transaction()        -> token sign  (nbgl_useCaseReview, 3 pairs)
+ *   - ui_display_token_transaction()        -> token sign  (nbgl_useCaseReview, 4 or 5 pairs)
  *
  * The NBGL API and format_*() are CMock mocks; io / validation / menu are host
  * stubs. We assert the guard status words, the formatting failure paths, which
@@ -118,6 +118,17 @@ static void on_review_status(nbgl_reviewStatusType_t reviewStatusType,
 // Address bytes pointed to by the transaction (content is irrelevant: format_hex
 // is mocked, but the field must be a valid pointer).
 static uint8_t g_to[ADDRESS_LEN];
+static uint8_t g_token_address[TOKEN_ADDRESS_LEN];
+static uint8_t g_memo_bytes[] = {'H', 'i', '!'};
+
+static const char *find_pair_value(const char *item) {
+    for (uint8_t i = 0; i < captured_pair_list->nbPairs; i++) {
+        if (strcmp(captured_pair_list->pairs[i].item, item) == 0) {
+            return captured_pair_list->pairs[i].value;
+        }
+    }
+    return NULL;
+}
 
 void setUp(void) {
     Mocknbgl_use_case_Init();
@@ -128,6 +139,9 @@ void setUp(void) {
     G_context.req_type = CONFIRM_TRANSACTION;
     G_context.tx_info.transaction.value = 1234;
     G_context.tx_info.transaction.to = g_to;
+    G_context.tx_info.transaction.token_address = g_token_address;
+    G_context.tx_info.transaction.memo = g_memo_bytes;
+    G_context.tx_info.transaction.memo_len = 0;
     G_context.tx_info.token_info.ticker = "TKN";
     G_context.tx_info.token_info.decimals = 2;
 
@@ -219,7 +233,31 @@ void test_display_transaction_success_starts_review_with_two_pairs(void) {
     TEST_ASSERT_EQUAL(0, blind_review_calls);
     TEST_ASSERT_NOT_NULL(captured_pair_list);
     TEST_ASSERT_EQUAL(2, captured_pair_list->nbPairs);  // Amount + To
+    TEST_ASSERT_NULL(find_pair_value("Memo"));
     TEST_ASSERT_NOT_NULL(captured_choice_cb);
+}
+
+void test_display_transaction_with_memo_shows_memo(void) {
+    G_context.tx_info.transaction.memo_len = sizeof(g_memo_bytes);
+    expect_formatting_ok();
+    nbgl_useCaseReview_AddCallback(on_review);
+    nbgl_useCaseReview_ExpectAnyArgs();
+
+    int ret = ui_display_transaction();
+
+    TEST_ASSERT_EQUAL(0, ret);
+    TEST_ASSERT_EQUAL(3, captured_pair_list->nbPairs);  // Amount + To + Memo
+    TEST_ASSERT_EQUAL_STRING("Hi!", find_pair_value("Memo"));
+}
+
+void test_display_transaction_memo_too_long_incorrect_data(void) {
+    G_context.tx_info.transaction.memo_len = MAX_MEMO_LEN + 1;
+    expect_formatting_ok();
+
+    int ret = ui_display_transaction();
+
+    TEST_ASSERT_EQUAL_HEX16(SWO_INCORRECT_DATA, g_last_sw);
+    TEST_ASSERT_EQUAL(SWO_INCORRECT_DATA, ret);
 }
 
 // =========================================================================
@@ -239,6 +277,18 @@ void test_display_blind_signed_transaction_starts_blind_review(void) {
     TEST_ASSERT_EQUAL(2, captured_pair_list->nbPairs);  // Amount + To
 }
 
+void test_display_blind_signed_transaction_shows_memo(void) {
+    G_context.tx_info.transaction.memo_len = sizeof(g_memo_bytes);
+    expect_formatting_ok();
+    nbgl_useCaseReviewBlindSigning_AddCallback(on_blind_review);
+    nbgl_useCaseReviewBlindSigning_ExpectAnyArgs();
+
+    ui_display_blind_signed_transaction();
+
+    TEST_ASSERT_EQUAL(3, captured_pair_list->nbPairs);  // Amount + To + Memo
+    TEST_ASSERT_EQUAL_STRING("Hi!", find_pair_value("Memo"));
+}
+
 // =========================================================================
 // Token flow
 // =========================================================================
@@ -251,9 +301,10 @@ void test_display_token_transaction_wrong_req_type_conditions_not_satisfied(void
     TEST_ASSERT_EQUAL(SWO_CONDITIONS_NOT_SATISFIED, ret);
 }
 
-void test_display_token_transaction_success_starts_review_with_three_pairs(void) {
+void test_display_token_transaction_success_starts_review_with_four_pairs(void) {
     G_context.req_type = CONFIRM_TOKEN_TRANSACTION;
     expect_formatting_ok();
+    format_hex_ExpectAnyArgsAndReturn(2 * TOKEN_ADDRESS_LEN);
     nbgl_useCaseReview_AddCallback(on_review);
     nbgl_useCaseReview_ExpectAnyArgs();
 
@@ -261,7 +312,35 @@ void test_display_token_transaction_success_starts_review_with_three_pairs(void)
 
     TEST_ASSERT_EQUAL(0, ret);
     TEST_ASSERT_EQUAL(1, review_calls);
-    TEST_ASSERT_EQUAL(3, captured_pair_list->nbPairs);  // Token + Amount + To
+    TEST_ASSERT_EQUAL(4, captured_pair_list->nbPairs);  // Token + Token address + Amount + To
+    TEST_ASSERT_NOT_NULL(find_pair_value("Token address"));
+    TEST_ASSERT_NULL(find_pair_value("Memo"));
+}
+
+void test_display_token_transaction_with_memo_starts_review_with_five_pairs(void) {
+    G_context.req_type = CONFIRM_TOKEN_TRANSACTION;
+    G_context.tx_info.transaction.memo_len = sizeof(g_memo_bytes);
+    expect_formatting_ok();
+    format_hex_ExpectAnyArgsAndReturn(2 * TOKEN_ADDRESS_LEN);
+    nbgl_useCaseReview_AddCallback(on_review);
+    nbgl_useCaseReview_ExpectAnyArgs();
+
+    int ret = ui_display_token_transaction();
+
+    TEST_ASSERT_EQUAL(0, ret);
+    TEST_ASSERT_EQUAL(5, captured_pair_list->nbPairs);
+    TEST_ASSERT_EQUAL_STRING("Hi!", find_pair_value("Memo"));
+}
+
+void test_display_token_transaction_token_address_format_failure_incorrect_data(void) {
+    G_context.req_type = CONFIRM_TOKEN_TRANSACTION;
+    expect_formatting_ok();
+    format_hex_ExpectAnyArgsAndReturn(-1);
+
+    int ret = ui_display_token_transaction();
+
+    TEST_ASSERT_EQUAL_HEX16(SWO_INCORRECT_DATA, g_last_sw);
+    TEST_ASSERT_EQUAL(SWO_INCORRECT_DATA, ret);
 }
 
 // =========================================================================
@@ -312,9 +391,14 @@ int main(void) {
     RUN_TEST(test_display_transaction_amount_format_failure_incorrect_data);
     RUN_TEST(test_display_transaction_address_format_failure_incorrect_data);
     RUN_TEST(test_display_transaction_success_starts_review_with_two_pairs);
+    RUN_TEST(test_display_transaction_with_memo_shows_memo);
+    RUN_TEST(test_display_transaction_memo_too_long_incorrect_data);
     RUN_TEST(test_display_blind_signed_transaction_starts_blind_review);
+    RUN_TEST(test_display_blind_signed_transaction_shows_memo);
     RUN_TEST(test_display_token_transaction_wrong_req_type_conditions_not_satisfied);
-    RUN_TEST(test_display_token_transaction_success_starts_review_with_three_pairs);
+    RUN_TEST(test_display_token_transaction_success_starts_review_with_four_pairs);
+    RUN_TEST(test_display_token_transaction_with_memo_starts_review_with_five_pairs);
+    RUN_TEST(test_display_token_transaction_token_address_format_failure_incorrect_data);
     RUN_TEST(test_review_choice_confirm_validates_and_shows_signed);
     RUN_TEST(test_review_choice_reject_validates_and_shows_rejected);
 
